@@ -29,13 +29,13 @@ public class Intake extends SubsystemBase {
     public Intake() {
         pivotMotorConfig
             .inverted(true)
-            .idleMode(IdleMode.kBrake)
+            .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40);
 
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         intakeMotorConfig
             .inverted(true)
-            .idleMode(IdleMode.kBrake)
+            .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40);
 
         intakeMotor.configure(intakeMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -56,6 +56,10 @@ public class Intake extends SubsystemBase {
     // ^ no? I don't think so
     
     //So, we can just check if the current usage exceeds 30a and then stop the motor.
+
+
+
+    
     public void initIntake() {
         if (!initializing) return;
              
@@ -102,12 +106,16 @@ public class Intake extends SubsystemBase {
         }
     }
     
-    public void startIntake() {
-        intakeMotor.set(IntakeConstants.intakePower); 
+    public void spinIntake(double speed) {
+        intakeMotor.set(speed); 
+    }
+    
+    public void stopIntake() {
+        intakeMotor.stopMotor();
     }
 
-    public void stopIntake() {
-        intakeMotor.set(0.0);
+    public void deployIntake(double speed) {
+        pivotMotor.set(speed);
     }
 
  

@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Shooter;
@@ -68,6 +69,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     private final Shooter shooter = new Shooter();
+    private final Intake intake = new Intake();
     private final Climb climb = new Climb();
     private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
 
@@ -108,7 +110,8 @@ public class RobotContainer {
                     .withRotationalRate(turn);
             })
         );
-        
+
+        subjoystick.rightTrigger().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter));
         //subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
         //subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
         subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.2), shooter));
@@ -120,12 +123,24 @@ public class RobotContainer {
         subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(1), shooter));
         subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
 
-
-        subjoystick.rightTrigger().whileTrue(new RunCommand(() -> {
+        
+        subjoystick.leftTrigger().whileTrue(new RunCommand(() -> {
             shooter.setVelocityTo(shooter.velocityFromDistance(vision.getDistance()));
             shooter.startKickerMotors();
         }, shooter));        
-        subjoystick.rightTrigger().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        subjoystick.leftTrigger().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+
+        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntake(1), intake));
+        subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        subjoystick.rightBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-1), intake));
+        subjoystick.rightBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+
+        subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(1), intake));
+        subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
+        subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-1), intake));
+        subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
+        
+
         
         
         /* 
