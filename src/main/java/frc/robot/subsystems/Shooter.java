@@ -77,11 +77,11 @@ public class Shooter extends SubsystemBase {
 
         kickerConfig1
             .inverted(false)
-            .idleMode(IdleMode.kBrake)
+            .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40);
         kickerConfig2
             .inverted(false)
-            .idleMode(IdleMode.kBrake)
+            .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40);
 
         kicker1.configure(kickerConfig1, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -123,8 +123,8 @@ public class Shooter extends SubsystemBase {
      */
     public void setShooterSpeed(double speed) {
         shooterMotor1.setControl(motorControl.withOutput(speed));
-        kicker1.set(1);
-        kicker2.set(-1);
+        //kicker1.set(.2);
+        //kicker2.set(-.2);
     }
 
     /**

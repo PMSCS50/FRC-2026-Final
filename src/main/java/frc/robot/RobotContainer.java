@@ -77,15 +77,9 @@ public class RobotContainer {
     private SendableChooser<Command> autoChooser;
     // **************************************************************************************************************
 
-
-
     public RobotContainer() {
         
-        CameraServer.startAutomaticCapture();
-        
-        // register commands to pathplanner
-        
-        //NamedCommands.registerCommand("faceAprilTag", new FaceAprilTagRelative(drivetrain, vision, xInput, yInput));
+        CameraServer.startAutomaticCapture();        
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
         
@@ -110,13 +104,16 @@ public class RobotContainer {
                     .withRotationalRate(turn);
             })
         );
-
-        subjoystick.rightTrigger().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter));
+        
+        // *******************************************************************************************************
+        // SHOOTING OPTIONS
+        subjoystick.rightTrigger().whileTrue(
+                new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter)); // 1. Scala
         //subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
         //subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.2), shooter));
+        subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.1), shooter));
         subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        subjoystick.povRight().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
+        subjoystick.povRight().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.2), shooter));
         subjoystick.povRight().onFalse(new RunCommand(() -> shooter.stop(), shooter));
         subjoystick.povLeft().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.8), shooter));
         subjoystick.povLeft().onFalse(new RunCommand(() -> shooter.stop(), shooter));
@@ -135,9 +132,9 @@ public class RobotContainer {
         subjoystick.rightBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-1), intake));
         subjoystick.rightBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(1), intake));
+        subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(.03), intake));
         subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
-        subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-1), intake));
+        subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
         subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
         
 
