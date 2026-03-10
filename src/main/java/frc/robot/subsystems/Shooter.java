@@ -9,8 +9,8 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -29,6 +29,9 @@ public class Shooter extends SubsystemBase {
     private final TalonFX shooterMotor2;
     private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
     private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
+
+    private final VisionSubsystem vision;
+
 
     // ************************
     // MOTOR CONTROLS
@@ -54,7 +57,8 @@ public class Shooter extends SubsystemBase {
     // CONSTRUCTOR
     // ************************
 
-    public Shooter() {
+    public Shooter(VisionSubsystem vision) {
+        this.vision = vision;
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
 
@@ -74,15 +78,16 @@ public class Shooter extends SubsystemBase {
         // Kicker config
         SparkMaxConfig kickerConfig1 = new SparkMaxConfig();
         SparkMaxConfig kickerConfig2 = new SparkMaxConfig();
+        
 
         kickerConfig1
             .inverted(false)
             .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40);
         kickerConfig2
-            .inverted(false)
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(40);
+            .smartCurrentLimit(40)
+            .follow(kicker1, true);
 
         kicker1.configure(kickerConfig1, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         kicker2.configure(kickerConfig2, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -122,104 +127,83 @@ public class Shooter extends SubsystemBase {
      * Also runs kickers at full power.
      */
     public void setShooterSpeed(double speed) {
-        shooterMotor1.setControl(motorControl.withOutput(speed));
-        //kicker1.set(.2);
-        //kicker2.set(-.2);
+        shooterMotor1.setControl(motorControl.withOutput(.2));
+        kicker1.set(speed);
     }
 
-    /**
-     * Closed-loop velocity control in m/s.
-     * Converts to RPM internally and uses PID to hold that speed.
-     * Use this for autonomous and distance-based shooting.
-     */
-    public void setVelocityTo(double newVelocity) {
-        velocity = newVelocity;
-        // VelocityVoltage takes rotations per second, so divide RPM by 60
-        shooterMotor1.setControl(velocityRequest.withVelocity(convertToRPM(velocity) / 60.0));
+     public void rpmControl() {
+        double rpm = vision.rpmFromDistance(vision.getDistance());
+        shooterMotor1.setControl(velocityRequest.withVelocity(rpm / 60.0));
+        
     }
-
-    /** Runs kickers at the configured power from ShooterConstants */
-    public void startKickerMotors() {
-        kicker1.set(ShooterConstants.kickerMotorPower);
-        kicker2.set(-ShooterConstants.kickerMotorPower);
+    public void spinKickers() {
+        kicker1.set(1);
     }
-
-    /** Stops kicker motors */
-    public void stopKickerMotors() {
-        kicker1.set(0);
-        kicker2.set(0);
+    public boolean atCorrectRPM() {
+        double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
+        double currentRPM = rotationsPerSecond * 60.0;
+        double targetRPM = vision.rpmFromDistance(vision.getDistance());
+        return Math.abs(currentRPM - targetRPM) < 50.0;
     }
 
     /** Stops all motors */
     public void stop() {
         shooterMotor1.stopMotor();
         kicker1.stopMotor();
-        kicker2.stopMotor();
     }
 
     /**
      * Calculates required exit velocity (m/s) to reach target at horizontal distance x (meters).
      * Assumes flat ground and fixed shooter angle (phi).
      */
-    public double velocityFromDistance(double x) {
-        double y = 1.8288 - shooterHeight; // target height minus shooter height
+    
 
-        double v = Math.sqrt(
-            (9.807 * x * x) /
-            (2 * Math.cos(phi) * Math.cos(phi) * (x * Math.tan(phi) + shooterHeight - y))
-        );
+    // /**f
+    //  * Velocity calculation variant for shooting while climbing.
+    //  * Accounts for robot height offset and pitch angle.
+    //  */
+    // public double velocityFromDistance(double x, double robotZ, double pitch) {
+    //     double y = 1.8288 - shooterHeight - robotZ;
 
-        // Empirical drag correction — increases with distance
-        double dragFactor = (1 + 0.015 * x) * 1.04;
-        return dragFactor * v;
-    }
+    //     // FIX: was "double phi = phi + pitch" which caused variable shadowing
+    //     double adjustedPhi = this.phi + pitch;
 
-    /**
-     * Velocity calculation variant for shooting while climbing.
-     * Accounts for robot height offset and pitch angle.
-     */
-    public double velocityFromDistance(double x, double robotZ, double pitch) {
-        double y = 1.8288 - shooterHeight - robotZ;
+    //     double v = Math.sqrt(
+    //         (9.807 * x * x) /
+    //         (2 * Math.cos(adjustedPhi) * Math.cos(adjustedPhi) * (x * Math.tan(adjustedPhi) + shooterHeight - y))
+    //     );
 
-        // FIX: was "double phi = phi + pitch" which caused variable shadowing
-        double adjustedPhi = this.phi + pitch;
+    //     double dragFactor = (1 + 0.015 * x) * 1.04;
+    //     return dragFactor * v;
+    // }
 
-        double v = Math.sqrt(
-            (9.807 * x * x) /
-            (2 * Math.cos(adjustedPhi) * Math.cos(adjustedPhi) * (x * Math.tan(adjustedPhi) + shooterHeight - y))
-        );
+    
+    // public double[] correctVandYaw(double dx, double dy, double yaw, double vxField, double vyField) {
+    //     double distance = Math.hypot(dx, dy);
 
-        double dragFactor = (1 + 0.015 * x) * 1.04;
-        return dragFactor * v;
-    }
+    //     double unitX = dx / distance;
+    //     double unitY = dy / distance;
 
-    /* 
-    public double[] correctVandYaw(double dx, double dy, double yaw, double vxField, double vyField) {
-        double distance = Math.hypot(dx, dy);
+    //     double vStationary = velocityFromDistance(distance);
+    //     double vHorizontal = vStationary * Math.cos(phi);
 
-        double unitX = dx / distance;
-        double unitY = dy / distance;
+    //     double correctedVx = vHorizontal * unitX;
+    //     double correctedVy = vHorizontal * unitY;
 
-        double vStationary = velocityFromDistance(distance);
-        double vHorizontal = vStationary * Math.cos(phi);
+    //     if (Math.hypot(vxField, vyField) > 0.01) {
+    //         correctedVx -= vxField;
+    //         correctedVy -= vyField;
 
-        double correctedVx = vHorizontal * unitX;
-        double correctedVy = vHorizontal * unitY;
+    //         double correctedYaw = Math.atan2(correctedVy, correctedVx);
+    //         double correction = MathUtil.angleModulus(correctedYaw - yaw);
 
-        if (Math.hypot(vxField, vyField) > 0.01) {
-            correctedVx -= vxField;
-            correctedVy -= vyField;
+    //         correction = MathUtil.clamp(correction, -0.2, 0.2);
+    //         yaw += correction;
+    //     }
 
-            double correctedYaw = Math.atan2(correctedVy, correctedVx);
-            double correction = MathUtil.angleModulus(correctedYaw - yaw);
-
-            correction = MathUtil.clamp(correction, -0.2, 0.2);
-            yaw += correction;
-        }
-
-        return new double[]{ correctedVx, correctedVy, yaw };
-    }
-        */
+    //     return new double[]{ correctedVx, correctedVy, yaw };
+    // }
+        
 
 
 
@@ -234,20 +218,9 @@ public class Shooter extends SubsystemBase {
     }
 
    
-    public boolean atCorrectRPM() {
-        // Phoenix 6: getVelocity() returns rotations per second
-        double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
-        double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = convertToRPM(velocity);
-
-        // Use tolerance instead of exact equality
-        return Math.abs(currentRPM - targetRPM) < 50.0;
-    }
+    
 
    
-    private double convertToRPM(double velocity) {
-        double wheelRadius = 0.0508; // meters (~2 inches)
-        double c = 1.0;             // tuning constant, adjust if needed
-        return c * (velocity * 60.0) / (2.0 * Math.PI * wheelRadius);
-    }
+
+   
 }

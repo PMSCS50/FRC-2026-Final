@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
+// import frc.robot.subsystems.L3Climb;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Shooter;
@@ -57,21 +58,25 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.Velocity);
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
+
     // **************************************************************************************************************
 
     // **************************************************************************************************************
     // ACTUAL IMPORTANT STUFF
-    private PhotonCamera cam1 = new PhotonCamera("camera1_2585"); // 
+    private PhotonCamera cam1 = new PhotonCamera("camera1_2585"); //
+    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+ 
+    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandXboxController subjoystick = new CommandXboxController(1);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    private final Shooter shooter = new Shooter();
+    private final Shooter shooter = new Shooter(vision);
     private final Intake intake = new Intake();
     private final Climb climb = new Climb();
-    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
+
+    // private final L3Climb oliverClimb = new L3Climb();
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -79,11 +84,22 @@ public class RobotContainer {
 
     public RobotContainer() {
         
-        CameraServer.startAutomaticCapture();        
+        // CameraServer.startAutomaticCapture();        
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
         
+        // NamedCommands.registerCommand("alignToTag", new PV_Align(drivetrain, vision, vision.getBestTarget()));
+        // NamedCommands.registerCommand("climbAscend", new ClimbPull(climb));
+        // NamedCommands.registerCommand("climbDescend", new ClimbPush(climb));
+        // NamedCommands.registerCommand("intakeForward", new IntakeForward(intake));
+        // NamedCommands.registerCommand("intakeBack", new IntakeBack(intake));
+        // NamedCommands.registerCommand("rotate180Deg", new Rotate180Deg(drivetrain));
+        // NamedCommands.registerCommsnd("shoot", new ShootWithoutAim(shooter, vision));
+        // NamedCommands.registerCommand("aimShoot", new AimAndShoot(drivetrain, vision, shooter, () -> 0, () -> 0));
 
+        // //for olivers climb if we implement it
+        // NamedCommands.registerCommand("L1Ascend", new L1Ascend(oliverClimb));
+        // NamedCommands.registerCommand("L1Descend", new L1Descend(oliverClimb));
         configureBindings();
     }
 
@@ -92,50 +108,91 @@ public class RobotContainer {
 
         joystick.a().whileTrue(new FaceTag(drivetrain, vision, 17));
 
+        if (vision.hasTargets()) {
+            SmartDashboard.putNumber("Vision X", vision.getX());
+            SmartDashboard.putNumber("Vision Y", vision.getY());
+            SmartDashboard.putNumber("Vision Yaw", vision.getYawRad());
+        }
+
+        // drivetrain.setDefaultCommand(
+        //     drivetrain.applyRequest(() -> {
+        //         double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
+        //         double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
+        //         double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
+
+        //         return drive
+        //             .withVelocityX(forward)
+        //             .withVelocityY(translation)
+        //             .withRotationalRate(turn);
+        //     })
+        // );
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
                 double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
                 double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
                 double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
 
+                if (joystick.a().getAsBoolean() && vision.hasTargets() && vision.getTargetId() == 4) {
+                    double kp = 0.03;
+
+                    turn = - kp * MaxAngularRate * vision.getYawRad(); 
+                }
                 return drive
                     .withVelocityX(forward)
                     .withVelocityY(translation)
                     .withRotationalRate(turn);
             })
+
         );
-        
+
+
         // *******************************************************************************************************
         // SHOOTING OPTIONS
-        subjoystick.rightTrigger().whileTrue(
-                new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter)); // 1. Scala
-        //subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
+        // subjoystick.rightTrigger().whileTrue(
+        //         new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter)); // 1. Scala
+        // //subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
         //subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.1), shooter));
-        subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        subjoystick.povRight().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.2), shooter));
-        subjoystick.povRight().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        subjoystick.povLeft().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.8), shooter));
-        subjoystick.povLeft().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(1), shooter));
-        subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+
+
+        // subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.20), shooter));
+        // subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        // subjoystick.povRight().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
+        // subjoystick.povRight().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        // subjoystick.povLeft().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.75), shooter));
+        // subjoystick.povLeft().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        // subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(1), shooter));
+        // subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+
+        // subjoystick.b().whileTrue(new AimAndShoot(drivetrain, vision, shooter, () -> 0,() -> 0));
+
+        subjoystick.povDown().whileTrue(new RunCommand(() -> intake.spinIntake(0.25), intake));
+        subjoystick.povDown().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        subjoystick.povRight().whileTrue(new RunCommand(() -> intake.spinIntake(0.50), intake));
+        subjoystick.povRight().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        subjoystick.povLeft().whileTrue(new RunCommand(() -> intake.spinIntake(0.75), intake));
+        subjoystick.povLeft().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        subjoystick.povUp().whileTrue(new RunCommand(() -> intake.spinIntake(1), intake));
+        subjoystick.povUp().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+
+       
+        
+
+
 
         
-        subjoystick.leftTrigger().whileTrue(new RunCommand(() -> {
-            shooter.setVelocityTo(shooter.velocityFromDistance(vision.getDistance()));
-            shooter.startKickerMotors();
-        }, shooter));        
+              
         subjoystick.leftTrigger().onFalse(new RunCommand(() -> shooter.stop(), shooter));
 
-        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntake(1), intake));
+        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-1), intake));
         subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
-        subjoystick.rightBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-1), intake));
+        subjoystick.rightBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-0.8), intake));
         subjoystick.rightBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(.03), intake));
-        subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
-        subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
-        subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
+
+        // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(.03), intake));
+        // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
+        // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
+        // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
         
 
         
@@ -193,7 +250,7 @@ public class RobotContainer {
         }
 
         // align to reef tag
-        joystick.leftStick().onTrue(new AlignToReefTagRelative(drivetrain, false));
+        //joystick.leftStick().onTrue(new AlignToReefTagRelative(drivetrain, false));
         // subjoystick.a().whileTrue(
         //     new RunCommand(() -> {
         //         if (climb.isPressed()) {

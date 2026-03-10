@@ -29,16 +29,16 @@ import edu.wpi.first.math.geometry.Rotation3d;
  */
 public final class Constants {
       // values of 50
-      public static final class L3ClimbConstants {
-        public static final int climbMotor1CanId = 51;
-        public static final int climbMotor2CanId = 52;
-        public static final int slideMotor1CanId = 53;
-        public static final int slideMotor2CanId = 54;
+      // public static final class L3ClimbConstants {
+      //   public static final int climbMotor1CanId = 51;
+      //   public static final int climbMotor2CanId = 52;
+      //   public static final int slideMotor1CanId = 53;
+      //   public static final int slideMotor2CanId = 54;
 
-        public static final double climbSpeed = 0.78;
-        public static final double climbMax = 30;
-        public static final double slideSpeed = 0.6;
-      }
+      //   public static final double climbSpeed = 0.78;
+      //   public static final double climbMax = 30;
+      //   public static final double slideSpeed = 0.6;
+      // }
 
       public static final class VisionConstants{
         public static final Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));

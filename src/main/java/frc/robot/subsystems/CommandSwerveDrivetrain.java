@@ -16,6 +16,8 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -23,6 +25,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -254,6 +257,38 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
+
+    @Override
+    public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> visionStdDevs) {
+
+    double xStd = visionStdDevs.get(0, 0);
+    double yStd = visionStdDevs.get(1, 0);
+    double yawStd = visionStdDevs.get(2, 0);
+
+    // Reject ambiguous measurements
+    if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
+    return;
+    }
+
+    // Soft clamp
+    xStd = Math.max(xStd, 0.05);
+    yStd = Math.max(yStd, 0.05);
+    yawStd = Math.max(yawStd, 0.02);
+
+    Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
+
+    super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
+    }
+
+    //get robot pose
+    public Pose2d getPose() {
+        return getState().Pose;
+    }
+
+    public ChassisSpeeds getSpeeds() {
+        return getState().Speeds;
+    }
+
 
     @Override
     public void periodic() {

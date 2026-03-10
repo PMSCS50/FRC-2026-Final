@@ -12,6 +12,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -33,9 +34,13 @@ public class VisionSubsystem extends SubsystemBase {
 
     // Robot to Camera Transform
     private static final Transform3d ROBOT_TO_CAMERA =
+        // new Transform3d(
+        //     new Translation3d(0.072, -.072, 0.495),
+        //     new Rotation3d(0, Math.toRadians(10), 0)
+        // );
         new Transform3d(
-            new Translation3d(0.33, 0, 0.09),
-            new Rotation3d(0, 0, 0)
+            new Translation3d(0.25, -.072, 0.09),
+            new Rotation3d(0, Math.toRadians(10), 0)
         );
 
     // Raw vision state
@@ -80,6 +85,9 @@ public class VisionSubsystem extends SubsystemBase {
         }
     }
 
+    public PhotonPipelineResult getLatestResult() {
+        return camera.getLatestResult();
+    }
 
     @Override
     public void periodic() {
@@ -227,15 +235,46 @@ public class VisionSubsystem extends SubsystemBase {
 
     /** Robot yaw relative to tag (radians) */
     public double getYawRad() {
-        return tagToRobot != null ? tagToRobot.getRotation().getZ() : 0.0;
+        if (tagToRobot == null) return 0.0;
+        return MathUtil.angleModulus(tagToRobot.getRotation().getZ() - Math.PI);
     }
+
 
     public double getDistance() {
         return tagToRobot != null ? Math.hypot(tagToRobot.getX(),tagToRobot.getY()): 0.0;
     }
+    
 
     /** Current vision measurement standard deviations */
     public Matrix<N3, N1> getEstimationStdDevs() {
         return visionStdDevs;
     }
+
+    double shooterHeight = 0.508;
+    double phi = Math.toRadians(70);
+
+
+    public double rpmFromDistance(double distance) {
+        double y = 1.8288 - shooterHeight; // target height minus shooter height
+
+        double shooterVelocity = Math.sqrt(
+            (9.807 * distance * distance) /
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) + shooterHeight - y))
+        );
+
+        // Empirical drag correction — increases with distance
+        double dragFactor = (1 + 0.015 * distance) * 1.04;
+        shooterVelocity *= dragFactor;
+        double wheelRadius = 0.0508; // meters (2 inches)
+        double c = 1.0;
+        return c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius) / 100;
+    }
+
+
+    
+    
+    
+
+    
+    
 }
