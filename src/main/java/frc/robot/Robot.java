@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 
 public class Robot extends LoggedRobot {
@@ -41,17 +40,16 @@ public class Robot extends LoggedRobot {
   //private Logger Logger;
 
   public Robot() {
-    Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
+    Logger.recordMetadata("ProjectName", "MyProject");
 
     if (isReal()) {
-      Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
-      Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+      Logger.addDataReceiver(new WPILOGWriter());
+      Logger.addDataReceiver(new NT4Publisher());
     } else {
-      Logger.addDataReceiver(new NT4Publisher()); // ← this is all you need for live sim
-      // ← NO NT4Publisher! AdvantageScope can't connect  
+      Logger.addDataReceiver(new NT4Publisher());
     }
 
-    Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
+    Logger.start();
     m_robotContainer = new RobotContainer();
   }
 
