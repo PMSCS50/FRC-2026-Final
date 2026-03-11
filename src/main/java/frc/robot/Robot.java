@@ -14,12 +14,16 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import com.ctre.phoenix6.Utils;
 
+import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -54,6 +58,13 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
+  public void robotInit() {
+    DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
+    SmartDashboard.putData("Field", field);
+  }
+
+  @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
     field.setRobotPose(m_robotContainer.drivetrain.getPose());
@@ -77,13 +88,6 @@ public class Robot extends LoggedRobot {
         m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
       }
     }
-  }
-
-  @Override
-  public void robotInit() {
-    DataLogManager.start();
-    DriverStation.startDataLog(DataLogManager.getLog());
-    SmartDashboard.putData("Field", field);
   }
 
   @Override
@@ -140,9 +144,7 @@ public class Robot extends LoggedRobot {
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
     SmartDashboard.putData("Field", field);
-
-    // Reset drivetrain pose so sim starts clean
-    //m_robotContainer.drivetrain.resetPose(m_robotContainer.drivetrain.getState().Pose);
+    
     m_robotContainer.drivetrain.resetPose(
         new Pose2d(2.0, 2.0, Rotation2d.fromDegrees(0)) // x, y, heading
     );
