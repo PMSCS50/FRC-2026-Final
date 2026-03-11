@@ -17,18 +17,19 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import org.littletonrobotics.junction.Logger;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -117,6 +118,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     /* The SysId routine to test */
     private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+
 
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -258,26 +260,31 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+    /** 
+     * Uses builtin TunerSwerveDriveTrain poseestimator to update current fieldToRobot.
+     * Basically PhotonPoseEstimator gives vision estimation for this to give final position.
+     * We can get the fieldToRobot pose by calling drivetrain.getPose();
+    */
     @Override
     public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> visionStdDevs) {
 
-    double xStd = visionStdDevs.get(0, 0);
-    double yStd = visionStdDevs.get(1, 0);
-    double yawStd = visionStdDevs.get(2, 0);
+        double xStd = visionStdDevs.get(0, 0);
+        double yStd = visionStdDevs.get(1, 0);
+        double yawStd = visionStdDevs.get(2, 0);
 
-    // Reject ambiguous measurements
-    if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
-    return;
-    }
+        // Reject ambiguous measurements
+        if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
+            return;
+        }
 
-    // Soft clamp
-    xStd = Math.max(xStd, 0.05);
-    yStd = Math.max(yStd, 0.05);
-    yawStd = Math.max(yawStd, 0.02);
+        // Soft clamp
+        xStd = Math.max(xStd, 0.05);
+        yStd = Math.max(yStd, 0.05);
+        yawStd = Math.max(yawStd, 0.02);
 
-    Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
+        Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
 
-    super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
+        super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
     }
 
     //get robot pose
@@ -288,7 +295,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public ChassisSpeeds getSpeeds() {
         return getState().Speeds;
     }
-
 
     @Override
     public void periodic() {
@@ -309,6 +315,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        Logger.recordOutput("Drive/Pose", getState().Pose);
+        Logger.recordOutput("Drive/Speeds", getState().Speeds);
+        Logger.recordOutput("Drive/ModuleStates", getState().ModuleStates);
+        Logger.recordOutput("Drive/ModuleTargets", getState().ModuleTargets);
     }
 
     private void startSimThread() {
@@ -324,5 +335,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
+        
     }
 }
+
