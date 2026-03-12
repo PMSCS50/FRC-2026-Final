@@ -194,11 +194,16 @@ public class RobotContainer {
         // subjoystick.povRight().onFalse(new RunCommand(() -> shooter.stopKicker(), shooter));
         // subjoystick.povLeft().onFalse(new RunCommand(() -> shooter.stopKicker(), shooter));
 
-        subjoystick.povUp().onTrue(new InstantCommand (() -> shooterSpeed += Math.min(.05, 1)));
-        subjoystick.povRight().onTrue(new InstantCommand (() -> shooterSpeed -= Math.min(.05, 1)));
-        subjoystick.povLeft().onTrue(new InstantCommand (() -> shooterSpeed = 0.05));
-        subjoystick.povDown().onTrue(new RunCommand(() -> shooter.setShooterSpeed(shooterSpeed)));
-        subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop()));
+        // subjoystick.povUp().onTrue(new InstantCommand (() -> shooterSpeed += Math.min(.05, 1)));
+        // subjoystick.povRight().onTrue(new InstantCommand (() -> shooterSpeed -= Math.min(.05, 1)));
+        // subjoystick.povLeft().onTrue(new InstantCommand (() -> shooterSpeed = 0.05));
+        // subjoystick.povDown().onTrue(new RunCommand(() -> shooter.setShooterSpeed(shooterSpeed)));
+        // subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop()));
+
+
+        subjoystick.povDown().whileTrue(new FixedPIDShooting(shooter, .6, vision));
+
+        // subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.rpmControl(1)));
 
 
 

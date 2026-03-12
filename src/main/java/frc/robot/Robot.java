@@ -49,7 +49,9 @@ public class Robot extends TimedRobot {
       }
     }
     SmartDashboard.putNumber("intake speed", RobotContainer.intakeSpeed);
-    SmartDashboard.putNumber("intake speed", RobotContainer.shooterSpeed);
+    SmartDashboard.putNumber("shooter speed", RobotContainer.shooterSpeed);
+    SmartDashboard.putNumber("pivot speed", RobotContainer.pivotSpeed);
+
 
     SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", Shooter.shooterMotor1.get());
 

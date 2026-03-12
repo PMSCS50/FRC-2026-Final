@@ -110,101 +110,16 @@ public class VisionSubsystem extends SubsystemBase {
             targetId = target.getFiducialId();
 
             // Camera - Tag
-            Transform3d cameraToTag = getTarget(26);
-
+            Transform3d cameraToTag = target.getBestCameraToTarget();
             // Robot - Tag
             Transform3d robotToTag = ROBOT_TO_CAMERA.plus(cameraToTag);
 
             // Tag - Robot
             tagToRobot = robotToTag.inverse();
         }
-
-        // Part 2: Field-relative pose estimation
-        // Feeds vision measurements into drivetrain pose estimator
-        // Only runs if field layout loaded successfully
-        if (photonPoseEstimator == null) return;
-
-        Optional<EstimatedRobotPose> estimatedPose = estimateMultiTagPose();
-
-        estimatedPose.ifPresent(est -> {
-            // Update standard deviations based on how many tags we see and how far away they are
-            updateEstimationStdDevs(estimatedPose, est.targetsUsed);
-
-            // Feed the vision measurement into the drivetrain's pose estimator
-            // This improves odometry accuracy over time
-            drivetrain.addVisionMeasurement(
-                est.estimatedPose.toPose2d(),
-                est.timestampSeconds,
-                visionStdDevs
-            );
-        });
     }
 
 
-    /**
-     * Attempts to estimate the robot's field-relative pose using visible AprilTags.
-     * Uses multi-tag PNP when multiple tags are visible, falls back to lowest
-     * ambiguity single-tag when only one tag is visible.
-     */
-    private Optional<EstimatedRobotPose> estimateMultiTagPose() {
-        Optional<EstimatedRobotPose> latestEstimate = Optional.empty();
-
-        // getAllUnreadResults() gets every frame since the last call
-        // We process all of them and keep the most recent valid estimate
-        for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est = photonPoseEstimator.update(result);
-            if (est.isPresent()) {
-                latestEstimate = est;
-                updateEstimationStdDevs(est, result.getTargets());
-            }
-        }
-
-        return latestEstimate;
-    }
-
-    /**
-     * Updates visionStdDevs based on number of visible tags and their distance.
-     *
-     * With 2+ tags: lower standard deviations (trust vision more)
-     * With 1 tag:  higher standard deviations (trust vision less)
-     * Further away: higher standard deviations (measurements less reliable at range)
-     */
-    private void updateEstimationStdDevs(
-            Optional<EstimatedRobotPose> estimatedPose,
-            List<PhotonTrackedTarget> targets) {
-
-        if (estimatedPose.isEmpty() || targets.isEmpty()) {
-            // No estimate — use very high std devs so drivetrain ignores this measurement
-            visionStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-            return;
-        }
-
-        int numTags = targets.size();
-
-        // Calculate average distance from camera to all visible tags
-        double avgDist = 0.0;
-        for (PhotonTrackedTarget tgt : targets) {
-            avgDist += tgt.getBestCameraToTarget().getTranslation().getNorm();
-        }
-        avgDist /= numTags;
-
-        if (numTags >= 2) {
-            // Multiple tags visible — high confidence
-            // Scale std devs with distance (further = less confident)
-            visionStdDevs = VecBuilder.fill(
-                0.5 * avgDist,   // X std dev (meters)
-                0.5 * avgDist,   // Y std dev (meters)
-                Math.toRadians(5) // Rotation std dev (radians) — kept tighter
-            );
-        } else {
-            // Single tag — lower confidence, scale more aggressively with distance
-            visionStdDevs = VecBuilder.fill(
-                1.0 * avgDist,    // X std dev (meters)
-                1.0 * avgDist,    // Y std dev (meters)
-                Math.toRadians(10) // Rotation std dev (radians)
-            );
-        }
-    }
 
 
     // ************************
@@ -315,3 +230,107 @@ public class VisionSubsystem extends SubsystemBase {
     
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //     // Part 2: Field-relative pose estimation
+    //     // Feeds vision measurements into drivetrain pose estimator
+    //     // Only runs if field layout loaded successfully
+    //     if (photonPoseEstimator == null) return;
+
+    //     Optional<EstimatedRobotPose> estimatedPose = estimateMultiTagPose();
+
+    //     estimatedPose.ifPresent(est -> {
+    //         // Update standard deviations based on how many tags we see and how far away they are
+    //         updateEstimationStdDevs(estimatedPose, est.targetsUsed);
+
+    //         // Feed the vision measurement into the drivetrain's pose estimator
+    //         // This improves odometry accuracy over time
+    //         drivetrain.addVisionMeasurement(
+    //             est.estimatedPose.toPose2d(),
+    //             est.timestampSeconds,
+    //             visionStdDevs
+    //         );
+    //     });
+    // }
+
+
+    // /**
+    //  * Attempts to estimate the robot's field-relative pose using visible AprilTags.
+    //  * Uses multi-tag PNP when multiple tags are visible, falls back to lowest
+    //  * ambiguity single-tag when only one tag is visible.
+    //  */
+    // private Optional<EstimatedRobotPose> estimateMultiTagPose() {
+    //     Optional<EstimatedRobotPose> latestEstimate = Optional.empty();
+
+    //     // getAllUnreadResults() gets every frame since the last call
+    //     // We process all of them and keep the most recent valid estimate
+    //     for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
+    //         Optional<EstimatedRobotPose> est = photonPoseEstimator.update(result);
+    //         if (est.isPresent()) {
+    //             latestEstimate = est;
+    //             updateEstimationStdDevs(est, result.getTargets());
+    //         }
+    //     }
+
+    //     return latestEstimate;
+    // }
+
+    // /**
+    //  * Updates visionStdDevs based on number of visible tags and their distance.
+    //  *
+    //  * With 2+ tags: lower standard deviations (trust vision more)
+    //  * With 1 tag:  higher standard deviations (trust vision less)
+    //  * Further away: higher standard deviations (measurements less reliable at range)
+    //  */
+    // private void updateEstimationStdDevs(
+    //         Optional<EstimatedRobotPose> estimatedPose,
+    //         List<PhotonTrackedTarget> targets) {
+
+    //     if (estimatedPose.isEmpty() || targets.isEmpty()) {
+    //         // No estimate — use very high std devs so drivetrain ignores this measurement
+    //         visionStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+    //         return;
+    //     }
+
+    //     int numTags = targets.size();
+
+    //     // Calculate average distance from camera to all visible tags
+    //     double avgDist = 0.0;
+    //     for (PhotonTrackedTarget tgt : targets) {
+    //         avgDist += tgt.getBestCameraToTarget().getTranslation().getNorm();
+    //     }
+    //     avgDist /= numTags;
+
+    //     if (numTags >= 2) {
+    //         // Multiple tags visible — high confidence
+    //         // Scale std devs with distance (further = less confident)
+    //         visionStdDevs = VecBuilder.fill(
+    //             0.5 * avgDist,   // X std dev (meters)
+    //             0.5 * avgDist,   // Y std dev (meters)
+    //             Math.toRadians(5) // Rotation std dev (radians) — kept tighter
+    //         );
+    //     } else {
+    //         // Single tag — lower confidence, scale more aggressively with distance
+    //         visionStdDevs = VecBuilder.fill(
+    //             1.0 * avgDist,    // X std dev (meters)
+    //             1.0 * avgDist,    // Y std dev (meters)
+    //             Math.toRadians(10) // Rotation std dev (radians)
+    //         );
+    //     }
+    // }
