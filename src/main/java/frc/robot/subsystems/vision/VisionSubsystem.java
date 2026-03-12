@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.vision;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +9,7 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
+
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -22,6 +23,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.Constants.VisionConstants.*;
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -57,6 +60,7 @@ public class VisionSubsystem extends SubsystemBase {
 
 
     public VisionSubsystem(String cameraName, CommandSwerveDrivetrain drivetrain) {
+        
         this.camera = new PhotonCamera(cameraName);
         this.drivetrain = drivetrain;
 

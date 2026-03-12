@@ -31,8 +31,11 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 // import frc.robot.subsystems.L3Climb;
 import frc.robot.subsystems.Climb;
-import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.vision.VisionIOReal;
+import frc.robot.subsystems.vision.VisionIOSim;
+import frc.robot.subsystems.vision.VisionSimSystem;
+import frc.robot.subsystems.vision.VisionSubsystem;
 import edu.wpi.first.cameraserver.CameraServer;
 
 public class RobotContainer {
@@ -65,24 +68,41 @@ public class RobotContainer {
     // ACTUAL IMPORTANT STUFF
     private PhotonCamera cam1 = new PhotonCamera("camera1_2585"); //
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
- 
-    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandXboxController subjoystick = new CommandXboxController(1);
 
-
-    private final Shooter shooter = new Shooter(vision);
-    private final Intake intake = new Intake();
-    private final Climb climb = new Climb();
-
     // private final L3Climb oliverClimb = new L3Climb();
+    private final Intake intake;
+    //private final Shooter shooter;
+    private final Climb climb;
+    private final VisionSimSystem vision;
+    
+    
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
     // **************************************************************************************************************
 
     public RobotContainer() {
+        switch (Constants.currentMode) {
+            case REAL -> {
+                vision = new VisionSimSystem(drivetrain, new VisionIOReal("meow"));
+                //shooter = new Shooter(vision);
+            }
+
+            case SIM -> {
+                vision = new VisionSimSystem(drivetrain, new VisionIOSim("meow"));
+                //shooter = new Shooter(vision);
+            }
+
+            default -> {
+                vision = new VisionSimSystem(drivetrain, new VisionIOReal("meow"));
+            }
+        }
+        
+        intake = new Intake();
+        climb = new Climb();
         
         // CameraServer.startAutomaticCapture();        
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
@@ -106,7 +126,7 @@ public class RobotContainer {
     
     private void configureBindings() {
 
-        joystick.a().whileTrue(new FaceTag(drivetrain, vision, 17));
+        //joystick.a().whileTrue(new FaceTag(drivetrain, vision, 17));
 
         if (vision.hasTargets()) {
             SmartDashboard.putNumber("Vision X", vision.getX());
@@ -181,7 +201,7 @@ public class RobotContainer {
 
         
               
-        subjoystick.leftTrigger().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        //subjoystick.leftTrigger().onFalse(new RunCommand(() -> shooter.stop(), shooter));
 
         subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-1), intake));
         subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
@@ -265,9 +285,9 @@ public class RobotContainer {
         // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb(), climb));
         
         
-        joystick.x().onTrue( 
-            new PV_Align(drivetrain, vision, 4)  // 17 = target AprilTag ID  
-        );
+        // joystick.x().onTrue( 
+        //     new PV_Align(drivetrain, vision, 4)  // 17 = target AprilTag ID  
+        // );
         
         
         // ************************************************************************************

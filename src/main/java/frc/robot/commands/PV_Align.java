@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.vision.VisionSubsystem;
 
 public class PV_Align extends Command {
 

@@ -5,15 +5,18 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -28,24 +31,68 @@ import edu.wpi.first.math.geometry.Rotation3d;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-      // values of 50
-      // public static final class L3ClimbConstants {
-      //   public static final int climbMotor1CanId = 51;
-      //   public static final int climbMotor2CanId = 52;
-      //   public static final int slideMotor1CanId = 53;
-      //   public static final int slideMotor2CanId = 54;
+  public static final Mode simMode = Mode.SIM;
+  public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
-      //   public static final double climbSpeed = 0.78;
-      //   public static final double climbMax = 30;
-      //   public static final double slideSpeed = 0.6;
-      // }
+  public static enum Mode {
+    /** Running on a real robot. */
+    REAL,
 
-      public static final class VisionConstants{
-        public static final Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
-        public static final double distanceToTag = 1;
-        public static final AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    /** Running a physics simulator. */
+    SIM,
 
-      }
+    /** Replaying from a log file. */
+    REPLAY
+}
+// values of 50
+// public static final class L3ClimbConstants {
+//   public static final int climbMotor1CanId = 51;
+//   public static final int climbMotor2CanId = 52;
+//   public static final int slideMotor1CanId = 53;
+//   public static final int slideMotor2CanId = 54;
+
+//   public static final double climbSpeed = 0.78;
+//   public static final double climbMax = 30;
+//   public static final double slideSpeed = 0.6;
+// }
+
+public static final class VisionConstants{
+  
+  public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
+  public static double distanceToTag = 1;
+  public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+
+  public static String camera0Name = "camera0_2585";
+  public static String camera1Name = "camera1_2585";
+
+  public static Transform3d robotToCamera1 = new Transform3d(
+    new Translation3d(0.25, -.072, 0.09),
+    new Rotation3d(0, Math.toRadians(10), 0)
+  );
+
+  // Basic filtering thresholds
+  public static double maxAmbiguity = 0.3;
+  public static double maxZError = 0.75;
+
+  // Standard deviation baselines, for 1 meter distance and 1 tag
+  // (Adjusted automatically based on distance and # of tags)
+  public static double linearStdDevBaseline = 0.02; // Meters
+  public static double angularStdDevBaseline = 0.06; // Radians
+
+  // Standard deviation multipliers for each camera
+  // (Adjust to trust some cameras more than others)
+  public static double[] cameraStdDevFactors =
+    new double[] {
+      1.0, // Camera 0
+      1.0 // Camera 1
+    };
+
+  // Multipliers to apply for MegaTag 2 observations
+  public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
+  public static double angularStdDevMegatag2Factor =
+    Double.POSITIVE_INFINITY; // No rotation data available
+
+}
       // values of 20
        public static final class IntakeConstants {
         public static final int pivotMotorCanId = 21;
