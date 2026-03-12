@@ -11,6 +11,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
@@ -34,7 +35,7 @@ public class Intake extends SubsystemBase {
 
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         intakeMotorConfig
-            .inverted(true)
+            .inverted(false)
             .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40);
 
@@ -117,6 +118,15 @@ public class Intake extends SubsystemBase {
     public void deployIntake(double speed) {
         pivotMotor.set(speed);
     }
+
+    public void movePivot(double speed) {
+        pivotMotor.set(speed);
+    }
+    public void stopPivot() {
+        pivotMotor.stopMotor();
+    }
+    
+
 
  
 }

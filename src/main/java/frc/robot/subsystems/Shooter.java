@@ -16,6 +16,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 
@@ -25,52 +26,47 @@ public class Shooter extends SubsystemBase {
     // MOTORS
     // ************************
 
-    private final TalonFX shooterMotor1;
-    private final TalonFX shooterMotor2;
-    private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
-    private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
+    public static TalonFX shooterMotor1;
+        private final TalonFX shooterMotor2;
+        private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
+        private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
+    
+        private final VisionSubsystem vision;
+    
+    
+        // ************************
+        // MOTOR CONTROLS
+        // ************************
+    
+        // DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
+        private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
+    
+        // VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
+        private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
+    
+        // ************************
+        // SHOOTER PHYSICS CONSTANTS
+        // ************************
+    
+        private double velocity = 0.0;
+        private final double shooterAngle = 70.0;                  // degrees
+        private final double phi = Math.toRadians(shooterAngle);   // radians
+        private final double shooterHeight = 0.508;                // meters from ground
+    
+    
 
-    private final VisionSubsystem vision;
-
-
-    // ************************
-    // MOTOR CONTROLS
-    // ************************
-
-    // DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
-    private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
-
-    // VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
-    private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
-
-    // ************************
-    // SHOOTER PHYSICS CONSTANTS
-    // ************************
-
-    private double velocity = 0.0;
-    private final double shooterAngle = 70.0;                  // degrees
-    private final double phi = Math.toRadians(shooterAngle);   // radians
-    private final double shooterHeight = 0.508;                // meters from ground
-
-
-    // ************************
     // CONSTRUCTOR
-    // ************************
-
     public Shooter(VisionSubsystem vision) {
         this.vision = vision;
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
 
-        // Build and apply shared config
         TalonFXConfiguration shooterConfig = new TalonFXConfiguration();
         configureShooterMotor(shooterConfig);
 
-        // Motor 1 specific: set direction
         shooterConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         shooterMotor1.getConfigurator().apply(shooterConfig);
 
-        // Motor 2: reset invert to default before applying, then follow motor 1
         shooterConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         shooterMotor2.getConfigurator().apply(shooterConfig);
         shooterMotor2.setControl(new Follower(shooterMotor1.getDeviceID(), MotorAlignmentValue.Opposed));
@@ -101,9 +97,9 @@ public class Shooter extends SubsystemBase {
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
         // Velocity PID gains — tune these on the real robot
-        config.Slot0.kS = 0.1;   // static friction compensation (volts)
+        config.Slot0.kS = 0;   // static friction compensation (volts)
         config.Slot0.kV = 0.12;  // velocity feedforward
-        config.Slot0.kP = 0.11;  // proportional
+        config.Slot0.kP = .8;  // proportional
         config.Slot0.kI = 0;     // integral
         config.Slot0.kD = 0;     // derivative
     }
@@ -114,7 +110,11 @@ public class Shooter extends SubsystemBase {
     // ************************
 
     @Override
-    public void periodic() {}
+    public void periodic(
+        // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity)
+        // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
+        
+    ) {}
 
 
     // ************************
@@ -127,18 +127,38 @@ public class Shooter extends SubsystemBase {
      * Also runs kickers at full power.
      */
     public void setShooterSpeed(double speed) {
-        shooterMotor1.setControl(motorControl.withOutput(.2));
-        kicker1.set(speed);
+        shooterMotor1.setControl(motorControl.withOutput(speed));
+        kicker1.set(1);
     }
 
-     public void rpmControl() {
+     public void rpmControl(double distance) {
+        double rpm = vision.rpmFromDistance(distance);
+        double rps = rpm / 60;
+        shooterMotor1.setControl(velocityRequest.withVelocity(rps));
+        SmartDashboard.putNumber("Target RPM", rpm);
+        SmartDashboard.putNumber("Target RPS", rps);
+        SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        SmartDashboard.putNumber("Distance", vision.getDistance());
+    }
+    // public void rpmControl(double distance) {
+    //     double rpm = vision.rpmFromDistance(distance);
+    //     double percentOutput = rpm / 6000.0;
+    //     shooterMotor1.setControl(motorControl.withOutput(percentOutput));
+    //     SmartDashboard.putNumber("Target RPM", rpm);
+    //     SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
+    //     SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
+    //     SmartDashboard.putNumber("Distance", vision.getDistance());
+    // }
+    public void rpmControlDuty() {
         double rpm = vision.rpmFromDistance(vision.getDistance());
-        shooterMotor1.setControl(velocityRequest.withVelocity(rpm / 60.0));
-        
+        double percentOutput = rpm / 2500.0;
+        shooterMotor1.setControl(motorControl.withOutput(percentOutput));
     }
     public void spinKickers() {
         kicker1.set(1);
     }
+
     public boolean atCorrectRPM() {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
@@ -149,6 +169,9 @@ public class Shooter extends SubsystemBase {
     /** Stops all motors */
     public void stop() {
         shooterMotor1.stopMotor();
+        // kicker1.stopMotor();
+    }
+    public void stopKicker() {
         kicker1.stopMotor();
     }
 

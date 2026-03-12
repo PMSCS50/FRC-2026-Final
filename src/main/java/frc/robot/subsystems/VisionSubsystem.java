@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -89,6 +90,8 @@ public class VisionSubsystem extends SubsystemBase {
         return camera.getLatestResult();
     }
 
+
+
     @Override
     public void periodic() {
         // --------------------
@@ -107,7 +110,7 @@ public class VisionSubsystem extends SubsystemBase {
             targetId = target.getFiducialId();
 
             // Camera - Tag
-            Transform3d cameraToTag = target.getBestCameraToTarget();
+            Transform3d cameraToTag = getTarget(26);
 
             // Robot - Tag
             Transform3d robotToTag = ROBOT_TO_CAMERA.plus(cameraToTag);
@@ -243,6 +246,12 @@ public class VisionSubsystem extends SubsystemBase {
     public double getDistance() {
         return tagToRobot != null ? Math.hypot(tagToRobot.getX(),tagToRobot.getY()): 0.0;
     }
+
+    public double getDistance2() {
+        return tagToRobot != null ? Math.hypot((tagToRobot.getX() + .6),tagToRobot.getY()): 0.0;
+    }
+
+
     
 
     /** Current vision measurement standard deviations */
@@ -259,19 +268,47 @@ public class VisionSubsystem extends SubsystemBase {
 
         double shooterVelocity = Math.sqrt(
             (9.807 * distance * distance) /
-            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) + shooterHeight - y))
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - y))
         );
 
         // Empirical drag correction — increases with distance
-        double dragFactor = (1 + 0.015 * distance) * 1.04;
+        double dragFactor = (1 + 0.0000001 * distance*distance) * 1.031;
         shooterVelocity *= dragFactor;
         double wheelRadius = 0.0508; // meters (2 inches)
-        double c = 1.0;
-        return c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius) / 100;
+        double c = 2.1; // 2.125 overshot, but was perfect when in a row - 2.1 per
+        double rpm = c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius);
+        SmartDashboard.putNumber("Shooter rpm", rpm);
+
+        return rpm;
+    }
+    
+
+    // Add to VisionSubsystem
+    public boolean hasTarget2(int id) {
+        if (!hasTarget) return false;
+        for (PhotonTrackedTarget t : camera.getLatestResult().getTargets()) {
+            if (t.getFiducialId() == id) return true;
+        }
+        return false;
     }
 
-
-    
+    public double getDistanceToTarget(int id) {
+        for (PhotonTrackedTarget t : camera.getLatestResult().getTargets()) {
+            if (t.getFiducialId() == id) {
+                Transform3d robotToTag = ROBOT_TO_CAMERA.plus(t.getBestCameraToTarget());
+                return Math.hypot((robotToTag.getX() + .6), robotToTag.getY());
+            }
+        }
+        return 0.0;
+    }
+     
+    public Transform3d getTarget(int id) {
+        if (!hasTarget) return null;
+        for (PhotonTrackedTarget t : camera.getLatestResult().getTargets()) {
+            if (t.getFiducialId() == id) return t.getBestCameraToTarget();
+        }
+        return camera.getLatestResult().getTargets().get(0).getBestCameraToTarget();
+    }
     
     
 

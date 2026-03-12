@@ -7,7 +7,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.VisionSubsystem;
 
 
-public class Intaking extends Command{
+public class Intaking extends Command {
 
     private final Intake intake;
     private final VisionSubsystem vision;
