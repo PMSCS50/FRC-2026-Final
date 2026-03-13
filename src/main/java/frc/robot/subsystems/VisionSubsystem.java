@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -73,13 +72,14 @@ public class VisionSubsystem extends SubsystemBase {
         // Set up pose estimator
         // MULTI_TAG_PNP_ON_COPROCESSOR uses multiple tags for a more accurate estimate
         // Falls back to LOWEST_AMBIGUITY when only one tag is visible
+        // Removed MULTITAGPNPCOPROCESSOR because that constructor is deprecated.
         if (tagFieldLayout != null) {
             photonPoseEstimator = new PhotonPoseEstimator(
                 tagFieldLayout,
-                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
                 ROBOT_TO_CAMERA
             );
-            photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+            //also deprecated, use individual methods
+            //photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
         } else {
             photonPoseEstimator = null;
         }
@@ -143,19 +143,19 @@ public class VisionSubsystem extends SubsystemBase {
      * Uses multi-tag PNP when multiple tags are visible, falls back to lowest
      * ambiguity single-tag when only one tag is visible.
      */
-    private Optional<EstimatedRobotPose> estimateMultiTagPose() {
+    //update() is deprecated. Use individual posestrategy functions instead 
+    public Optional<EstimatedRobotPose> estimateMultiTagPose() {
+
         Optional<EstimatedRobotPose> latestEstimate = Optional.empty();
 
-        // getAllUnreadResults() gets every frame since the last call
-        // We process all of them and keep the most recent valid estimate
-        for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est = photonPoseEstimator.update(result);
-            if (est.isPresent()) {
-                latestEstimate = est;
-                updateEstimationStdDevs(est, result.getTargets());
+        for (var result : camera.getAllUnreadResults()) {
+            latestEstimate = photonPoseEstimator.estimateCoprocMultiTagPose(result);
+            if (latestEstimate.isEmpty()) {
+                latestEstimate = photonPoseEstimator.estimateLowestAmbiguityPose(result);
             }
+            updateEstimationStdDevs(latestEstimate, result.getTargets());
         }
-
+        
         return latestEstimate;
     }
 
@@ -208,9 +208,22 @@ public class VisionSubsystem extends SubsystemBase {
     // GETTER METHODS
     // ************************
 
-    /** Returns true if the camera currently sees the specified tag ID */
+    /** Returns true if tag ID is best tag ID */
     public boolean hasTarget(int desiredId) {
         return hasTarget && targetId == desiredId && tagToRobot != null;
+    }
+
+    /** Returns true if tag ID is visible */
+    public boolean hasTarget2(int desiredId) {
+        if (!hasTarget || tagToRobot == null){ 
+            return false;
+        }
+        for (PhotonTrackedTarget target : camera.getLatestResult().getTargets()) {
+            if (desiredId == target.getFiducialId()) { 
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Returns true if the camera currently sees any target */
@@ -243,6 +256,18 @@ public class VisionSubsystem extends SubsystemBase {
     public double getDistance() {
         return tagToRobot != null ? Math.hypot(tagToRobot.getX(),tagToRobot.getY()): 0.0;
     }
+
+    public double getDistanceToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
+    }
+
+    //Field-relative angle to target pose. 
+    //If we can get this working, we can use it to aim directly at the hub
+    public Rotation2d getYawToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose);
+    }
     
 
     /** Current vision measurement standard deviations */
@@ -259,15 +284,15 @@ public class VisionSubsystem extends SubsystemBase {
 
         double shooterVelocity = Math.sqrt(
             (9.807 * distance * distance) /
-            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) + shooterHeight - y))
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - y))
         );
 
         // Empirical drag correction — increases with distance
-        double dragFactor = (1 + 0.015 * distance) * 1.04;
+        double dragFactor = (1 + 0.000001 * distance * distance) * 1.031;
         shooterVelocity *= dragFactor;
         double wheelRadius = 0.0508; // meters (2 inches)
-        double c = 1.0;
-        return c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius) / 100;
+        double c = 2.1;
+        return c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius);
     }
 
 

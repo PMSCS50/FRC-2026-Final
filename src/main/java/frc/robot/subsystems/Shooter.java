@@ -18,6 +18,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.Constants;
 
 public class Shooter extends SubsystemBase {
 
@@ -132,7 +133,8 @@ public class Shooter extends SubsystemBase {
     }
 
      public void rpmControl() {
-        double rpm = vision.rpmFromDistance(vision.getDistance());
+        //double rpm = vision.rpmFromDistance(vision.getDistance());
+        double rpm = vision.rpmFromDistance(vision.getDistanceToPose(Constants.BlueHub));
         shooterMotor1.setControl(velocityRequest.withVelocity(rpm / 60.0));
         
     }
@@ -142,8 +144,9 @@ public class Shooter extends SubsystemBase {
     public boolean atCorrectRPM() {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = vision.rpmFromDistance(vision.getDistance());
-        return Math.abs(currentRPM - targetRPM) < 50.0;
+        //double targetRPM = vision.rpmFromDistance(vision.getDistance());
+        double targetRPM = vision.rpmFromDistance(vision.getDistanceToPose(Constants.BlueHub));
+        return Math.abs(currentRPM - targetRPM) < targetRPM * 0.05; // within 5% of target RPM
     }
 
     /** Stops all motors */

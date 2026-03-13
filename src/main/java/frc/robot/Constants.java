@@ -89,7 +89,8 @@ public final class Constants {
         
       }
       
-
+      public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+      public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
       public static final double X_REEF_ALIGNMENT_P = 2;
       public static final double Y_REEF_ALIGNMENT_P = 3;
       public static final double ROT_REEF_ALIGNMENT_P = 0.1625;
