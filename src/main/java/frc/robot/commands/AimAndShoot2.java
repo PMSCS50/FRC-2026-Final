@@ -17,6 +17,8 @@ public class AimAndShoot2 implements Command {
     private final VisionSubsystem vision;
     private final PIDController rotController;
 
+    private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
+
     public AimAndShoot2(CommandSwerveDrivetrain drivetrain, VisionSubsystem vision, Shooter shooter) {
         this.drivetrain = drivetrain;
         this.vision = vision;

@@ -150,7 +150,7 @@ public class VisionSubsystem extends SubsystemBase {
 
         for (var result : camera.getAllUnreadResults()) {
             latestEstimate = photonPoseEstimator.estimateCoprocMultiTagPose(result);
-            if (latestEstimate.isEmpty()) {
+            if (latestEstimate.isEmpty() || result.getTargets().size() == 1) {
                 latestEstimate = photonPoseEstimator.estimateLowestAmbiguityPose(result);
             }
             updateEstimationStdDevs(latestEstimate, result.getTargets());
