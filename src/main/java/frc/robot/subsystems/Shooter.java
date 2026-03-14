@@ -132,20 +132,20 @@ public class Shooter extends SubsystemBase {
         kicker1.set(speed);
     }
 
-     public void rpmControl() {
-        //double rpm = vision.rpmFromDistance(vision.getDistance());
-        double rpm = vision.rpmFromDistance(vision.getDistanceToPose(Constants.BlueHub));
+     public void rpmControl(double distance) {
+        double rpm = vision.rpmFromDistance(distance);
+        //double rpm = vision.rpmFromDistance(vision.getDistanceToPose(Constants.HubPose));
         shooterMotor1.setControl(velocityRequest.withVelocity(rpm / 60.0));
         
     }
     public void spinKickers() {
         kicker1.set(1);
     }
-    public boolean atCorrectRPM() {
+    public boolean atCorrectRPM(double distance) {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        //double targetRPM = vision.rpmFromDistance(vision.getDistance());
-        double targetRPM = vision.rpmFromDistance(vision.getDistanceToPose(Constants.BlueHub));
+        double targetRPM = vision.rpmFromDistance(distance);
+        //double targetRPM = vision.rpmFromDistance(vision.getDistanceToPose(Constants.HubPose));
         return Math.abs(currentRPM - targetRPM) < targetRPM * 0.05; // within 5% of target RPM
     }
 

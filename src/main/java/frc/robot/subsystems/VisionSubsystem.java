@@ -262,8 +262,6 @@ public class VisionSubsystem extends SubsystemBase {
         return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
     }
 
-    //Field-relative angle to target pose. 
-    //If we can get this working, we can use it to aim directly at the hub
     public Rotation2d getYawToPose(Pose2d targetPose) {
         if (drivetrain.getPose() == null) return 0.0;
         return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose);

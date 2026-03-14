@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -89,8 +90,9 @@ public final class Constants {
         
       }
       
-      public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-      public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+      private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+      private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+      public static final Pose2d HubPose = DriverStation.getAlliance() == DriverStation.Alliance.Red ? RedHub : BlueHub;
       public static final double X_REEF_ALIGNMENT_P = 2;
       public static final double Y_REEF_ALIGNMENT_P = 3;
       public static final double ROT_REEF_ALIGNMENT_P = 0.1625;
