@@ -11,7 +11,8 @@ import frc.robot.Constants;
 //With this, we can aim directly at the hub instead of relying on AprilTags
 //However, we need to make sure our fieldToRobot updating is correct.
 
-public class AimAndShoot2 implements Command {
+public class AimAndShoot2 extends Command {
+
     private final CommandSwerveDrivetrain drivetrain;
     private final Shooter shooter;
     private final VisionSubsystem vision;
@@ -39,12 +40,13 @@ public class AimAndShoot2 implements Command {
     public void execute() {
         double theta = vision.getYawToPose(Constants.HubPose);
         double distance = vision.getDistanceToPose(Constants.HubPose);
-        double rotOutput = rotController.calculate(theta);
+        double rotSpeed = rotController.calculate(theta);
         drivetrain.setControl(
             drive.withVelocityX(0)
             .withVelocityY(0)
             .withRotationalRate(rotSpeed)
         );
+        
         if (rotController.atSetpoint()) {
             shooter.rpmControl(distance);
             if (shooter.atCorrectRPM(distance)) {
