@@ -25,9 +25,7 @@ public class AimAndShoot2 extends Command {
     private final PIDController rotController;
 
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
-
-    //error in robotcontainer: The constructor AimAndShoot2(CommandSwerveDrivetrain, VisionSimSystem, Shooter) is undefinedJava(134217858)
-
+    
     public AimAndShoot2(CommandSwerveDrivetrain drivetrain, VisionSimSystem vision, Shooter shooter) {
         this.drivetrain = drivetrain;
         this.vision = vision;

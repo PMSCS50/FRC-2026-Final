@@ -36,6 +36,7 @@ import frc.robot.subsystems.vision.VisionIOReal;
 import frc.robot.subsystems.vision.VisionIOSim;
 import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.Pathfinder;
 import edu.wpi.first.cameraserver.CameraServer;
 
 public class RobotContainer {
@@ -61,6 +62,11 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.Velocity);
 
     private final Telemetry logger = new Telemetry(MaxSpeed); // What does this actually do?
+
+    //Go to Pathfinder.java for more information.
+    //THIS IS NOT FOR REBUILT. It is something potentially for next year and years to come.
+    //Go to line 
+    private final Pathfinder pathfinder = new Pathfinder(3,3,2 * Math.PI, 2 * Math.PI);
 
     // **************************************************************************************************************
 
@@ -308,7 +314,19 @@ public class RobotContainer {
         // ************************************************************************************
 
 
+        /*
+        Here, we use Pathfinder to create a path to a specific Pose2d, even on teleop.
+        Then it will follow the path as long as the button is held
+        Releasing button will stop the path following and allow for manual control again.
+        We can basically create waypoints on the field and map them to certain buttons.
+        This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
+            we can just make a button for it and use Pathfinder to get there.
 
+        In the context of REBUILT, we could use this in teleop to replace PV_Align
+
+        joystick.rightTrigger().whileTrue(Pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
+        
+        */
        
         
     }
@@ -332,7 +350,6 @@ public class RobotContainer {
         /* Run the path selected from the auto chooser */
         // return null;
         //return autoChooser.getSelected();
-        return new PV_Align(drivetrain, vision, 25).withTimeout(5); // run for 5 seconds then stop
-
+        return new AimAndShoot2(drivetrain, vision, shooter).withTimeout(5); // run for 5 seconds then stop
     }
 }
