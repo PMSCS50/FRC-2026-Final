@@ -21,17 +21,28 @@ public class PV_Align extends Command {
 
     private static final double DESIRED_DISTANCE_METERS = 1.5;
     
-    private PIDController xController = new PIDController(0, 0, 0); // kp = 1.45, ki = .001
-    private final PIDController yController = new PIDController(1.1, 0, 0); // kp = 1
-    private final PIDController rotController = new PIDController(0, 0, 0); // kp = 2.5
+    private PIDController xController = new PIDController(1.45, 0.001, 0); // kp = 1.45, ki = .001
+    private final PIDController yController = new PIDController(1, 0, 0); // kp = 1
+    private final PIDController rotController = new PIDController(2.5, 0, 0); // kp = 2.5
     private Timer settleTimer;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
     private double SETTLETIME = .1;
-    public PV_Align(
-        CommandSwerveDrivetrain drivetrain,
-        VisionSubsystem vision,
-        int targetId
-    ) {
+
+    public PV_Align(CommandSwerveDrivetrain drivetrain, VisionSubsystem vision) {
+        this.drivetrain = drivetrain;
+        this.vision = vision;
+        this.targetId = vision.getTargetId();
+
+        rotController.enableContinuousInput(-Math.PI, Math.PI);
+
+        xController.setTolerance(0.05);
+        yController.setTolerance(0.05);
+        rotController.setTolerance(Math.toRadians(5));
+
+        addRequirements(drivetrain, vision);
+    }
+
+    public PV_Align(CommandSwerveDrivetrain drivetrain, VisionSubsystem vision, int targetId) {
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.targetId = targetId;
@@ -43,9 +54,6 @@ public class PV_Align extends Command {
         rotController.setTolerance(Math.toRadians(5));
 
         addRequirements(drivetrain, vision);
-       
-        
-
     }
 
     @Override
@@ -64,12 +72,7 @@ public class PV_Align extends Command {
 
         SmartDashboard.putBoolean("rotSetpoint", rotController.atSetpoint());
         SmartDashboard.putNumber("rot Difference", vision.getYawRad() - rotController.getSetpoint());
-        
 
-        
-
-        
-        
         SmartDashboard.putNumber("x Difference", vision.getX() - xController.getSetpoint());
         SmartDashboard.putBoolean("x Setpoint", xController.atSetpoint());
 
@@ -78,13 +81,6 @@ public class PV_Align extends Command {
 
         SmartDashboard.putNumber("settle timer", settleTimer.get());
 
-
-
-
-
-
-
-        
         if (!vision.hasTarget(targetId)) {
             drivetrain.setControl(new SwerveRequest.Idle());
             return;
