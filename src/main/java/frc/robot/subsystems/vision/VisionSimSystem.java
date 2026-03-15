@@ -1,9 +1,9 @@
 package frc.robot.subsystems.vision;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.PhotonUtils;
+
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -64,8 +66,6 @@ public class VisionSimSystem extends SubsystemBase {
 
         // Pull all sensor data into the logged inputs snapshot.
         // AdvantageKit records every field of inputs to the log automatically.
-        io.updateInputs(inputs);
-
         io.updateInputs(inputs);
 
         // All recordOutput calls first
@@ -144,11 +144,22 @@ public class VisionSimSystem extends SubsystemBase {
             : 0.0;
     }
 
+    
+
     /** Current vision measurement standard deviations. */
     public Matrix<N3, N1> getEstimationStdDevs() {
         return visionStdDevs;
     }
 
+    public double getDistanceToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
+    }
+
+    public double getYawToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose).getRadians();
+    }
 
     // ========================
     // SHOOTER RPM CALCULATION

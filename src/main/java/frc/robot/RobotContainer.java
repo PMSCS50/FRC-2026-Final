@@ -74,7 +74,7 @@ public class RobotContainer {
 
     // private final L3Climb oliverClimb = new L3Climb();
     private final Intake intake;
-    //private final Shooter shooter;
+    private final Shooter shooter;
     private final Climb climb;
     private final VisionSimSystem vision;
     
@@ -88,16 +88,17 @@ public class RobotContainer {
         switch (Constants.currentMode) {
             case REAL -> {
                 vision = new VisionSimSystem(drivetrain, new VisionIOReal("meow"));
-                //shooter = new Shooter(vision);
+                shooter = new Shooter(vision);
             }
 
             case SIM -> {
                 vision = new VisionSimSystem(drivetrain, new VisionIOSim("meow"));
-                //shooter = new Shooter(vision);
+                shooter = new Shooter(vision);
             }
 
             default -> {
                 vision = new VisionSimSystem(drivetrain, new VisionIOReal("meow"));
+                shooter = new Shooter(vision);
             }
         }
         
@@ -120,6 +121,7 @@ public class RobotContainer {
         // //for olivers climb if we implement it
         // NamedCommands.registerCommand("L1Ascend", new L1Ascend(oliverClimb));
         // NamedCommands.registerCommand("L1Descend", new L1Descend(oliverClimb));
+        NamedCommands.registerCommand("Shoot", new AimAndShoot2(drivetrain, vision, shooter));
         configureBindings();
     }
 
@@ -208,12 +210,13 @@ public class RobotContainer {
         subjoystick.rightBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-0.8), intake));
         subjoystick.rightBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-
+        // the constructor is correct i dont know wtf this thing is on about.
         // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(.03), intake));
         // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
-        
+        //yo bro gotta eat dinner ill be back in 30 min ok got it
+
 
         
         
@@ -260,7 +263,7 @@ public class RobotContainer {
         //     })
         // );
 
-        joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
         joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
         if(joystick.getLeftX() > 0.5){
@@ -283,6 +286,7 @@ public class RobotContainer {
         
         // subjoystick.b().whileTrue(new RunCommand(() -> climb.runClimb(), climb));
         // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb(), climb));
+        subjoystick.b().whileTrue(new RunCommand(() -> new AimAndShoot2(drivetrain, vision, shooter)));
         
         
         // joystick.x().onTrue( 
@@ -327,6 +331,8 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         /* Run the path selected from the auto chooser */
         // return null;
-        return autoChooser.getSelected();
+        //return autoChooser.getSelected();
+        return new AimAndShoot2(drivetrain, vision, shooter).withTimeout(5); // run for 5 seconds then stop
+
     }
 }

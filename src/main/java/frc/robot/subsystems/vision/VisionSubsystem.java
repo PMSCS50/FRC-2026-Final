@@ -16,6 +16,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -24,7 +25,8 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.Constants.VisionConstants.*;
+import org.photonvision.PhotonUtils;
+import frc.robot.Constants.VisionConstants;
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -247,6 +249,18 @@ public class VisionSubsystem extends SubsystemBase {
     public double getDistance() {
         return tagToRobot != null ? Math.hypot(tagToRobot.getX(),tagToRobot.getY()): 0.0;
     }
+
+    
+    public double getDistanceToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
+    }
+
+    public double getYawToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose).getRadians();
+    }
+    
     
 
     /** Current vision measurement standard deviations */

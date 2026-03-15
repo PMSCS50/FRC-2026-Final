@@ -32,10 +32,7 @@ import frc.robot.Constants.VisionConstants;
 public class VisionIOSim implements VisionIO {
 
     // Robot-to-camera transform (matches VisionIOReal)
-    private static final Transform3d ROBOT_TO_CAMERA = new Transform3d(
-        new Translation3d(0.25, -0.072, 0.09),
-        new Rotation3d(0, Math.toRadians(10), 0)
-    );
+    private static final Transform3d ROBOT_TO_CAMERA = VisionConstants.robotToCamera1;
 
     private final VisionSystemSim visionSim;
     private final PhotonCamera camera;

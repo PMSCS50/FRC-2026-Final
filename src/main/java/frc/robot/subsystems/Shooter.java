@@ -18,7 +18,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.subsystems.vision.VisionSimSystem;
+import frc.robot.Constants;
 
 public class Shooter extends SubsystemBase {
 
@@ -31,7 +32,7 @@ public class Shooter extends SubsystemBase {
     private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
     private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
 
-    private final VisionSubsystem vision;
+    private final VisionSimSystem vision;
 
 
     // ************************
@@ -58,7 +59,7 @@ public class Shooter extends SubsystemBase {
     // CONSTRUCTOR
     // ************************
 
-    public Shooter(VisionSubsystem vision) {
+    public Shooter(VisionSimSystem vision) {
         this.vision = vision;
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
@@ -132,19 +133,21 @@ public class Shooter extends SubsystemBase {
         kicker1.set(speed);
     }
 
-     public void rpmControl() {
-        double rpm = vision.rpmFromDistance(vision.getDistance());
+    public void rpmControl(double distance) {
+        double rpm = vision.rpmFromDistance(distance);
+        //double rpm = vision.rpmFromDistance(vision.getDistanceToPose(Constants.HubPose));
         shooterMotor1.setControl(velocityRequest.withVelocity(rpm / 60.0));
         
     }
     public void spinKickers() {
         kicker1.set(1);
     }
-    public boolean atCorrectRPM() {
+    public boolean atCorrectRPM(double distance) {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = vision.rpmFromDistance(vision.getDistance());
-        return Math.abs(currentRPM - targetRPM) < 50.0;
+        double targetRPM = vision.rpmFromDistance(distance);
+        //double targetRPM = vision.rpmFromDistance(vision.getDistanceToPose(Constants.HubPose));
+        return Math.abs(currentRPM - targetRPM) < targetRPM * 0.05; // within 5% of target RPM
     }
 
     /** Stops all motors */
