@@ -289,10 +289,14 @@ public class RobotContainer {
         // ************************************************************************************
 
         /*
-        Here, we can use Pathfinder to create a path to a specific Pose2d, even on teleop.
+        Here, we use Pathfinder to create a path to a specific Pose2d, even on teleop.
         Then it will follow the path as long as the button is held
         Releasing button will stop the path following and allow for manual control again.
-        Could be very useful for alignment to specific locations.
+        We can basically create waypoints on the field and map them to certain buttons.
+        This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
+            we can just make a button for it and use Pathfinder to get there.
+
+        In the context of REBUILT, we could use this in teleop 
 
         joystick.rightTrigger().whileTrue(Pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
         

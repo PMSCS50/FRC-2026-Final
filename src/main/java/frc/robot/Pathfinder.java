@@ -4,8 +4,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 
 //EXPERIMENT FOR NEXT YEAR
-//NOT FOR 2026 REBUILT
-//Basically, this class can use PathPlanner's AutoBuilder to create a path on-the-fly between them and follow it.
+//NOT NECESSARILY FOR 2026 REBUILT
+//Basically, this class can use PathPlanner's AutoBuilder to create a path on-the-fly between two poses and follow it.
 //In simpler terms, we can comfortably go to ANY POSE ON THE FIELD while avoiding obstacles.
 
 public class Pathfinder {
@@ -23,4 +23,4 @@ public class Pathfinder {
 
 //This is it. AutoBuilder does everything for us.
 
-//Go to line 291 in RobotContainer.java for an application of this class.
+//Go to line 301 in RobotContainer.java for an application of this class.
