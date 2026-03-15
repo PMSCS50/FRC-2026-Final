@@ -59,12 +59,13 @@ public class Robot extends LoggedRobot {
     }
 
     Logger.start();
+
+    Pathfinding.setPathfinder(new LocalADStarAK());
     m_robotContainer = new RobotContainer();
   }
 
   @Override
   public void robotInit() {
-    Pathfinding.setPathfinder(new LocalADStarAK());
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
     SmartDashboard.putData("Field", field);

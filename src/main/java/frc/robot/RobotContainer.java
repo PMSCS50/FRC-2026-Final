@@ -37,6 +37,7 @@ import frc.robot.subsystems.vision.VisionIOSim;
 import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.Pathfinder;
+import frc.robot.Constants.VisionConstants;
 import edu.wpi.first.cameraserver.CameraServer;
 
 public class RobotContainer {
@@ -292,7 +293,7 @@ public class RobotContainer {
         
         // subjoystick.b().whileTrue(new RunCommand(() -> climb.runClimb(), climb));
         // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb(), climb));
-        subjoystick.b().whileTrue(new RunCommand(() -> new AimAndShoot2(drivetrain, vision, shooter)));
+        //subjoystick.b().whileTrue(new RunCommand(() -> new AimAndShoot2(drivetrain, vision, shooter)));
         
         
         // joystick.x().onTrue( 
@@ -306,6 +307,8 @@ public class RobotContainer {
         joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.400)));
         joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
+        joystick.rightTrigger().onTrue(pathfinder.makePathTo(VisionConstants.Center));
+        joystick.leftTrigger().whileTrue(new AimAndShoot2(drivetrain, vision, shooter));
         // ************************************************************************************
         //rollers for subsystems
         // ************************************************************************************
@@ -323,11 +326,7 @@ public class RobotContainer {
             we can just make a button for it and use Pathfinder to get there.
 
         In the context of REBUILT, we could use this in teleop to replace PV_Align
-
-        joystick.rightTrigger().whileTrue(Pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
-        
         */
-       
         
     }
     // changing drivetrain speed
@@ -350,6 +349,6 @@ public class RobotContainer {
         /* Run the path selected from the auto chooser */
         // return null;
         //return autoChooser.getSelected();
-        return new AimAndShoot2(drivetrain, vision, shooter).withTimeout(5); // run for 5 seconds then stop
+        return pathfinder.makePathTo(VisionConstants.Center); // run for 5 seconds then stop
     }
 }

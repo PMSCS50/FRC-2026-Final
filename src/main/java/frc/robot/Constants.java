@@ -77,6 +77,8 @@ public class Constants {
         public static Pose2d getHubPose() {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
         }
+        public static final Pose2d Center = new Pose2d(8.270494, 4.034536, Rotation2d.fromDegrees(0));
+
         // Basic filtering thresholds
         public static double maxAmbiguity = 0.3;
         public static double maxZError = 0.75;
