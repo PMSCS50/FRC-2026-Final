@@ -286,7 +286,9 @@ public class VisionSubsystem extends SubsystemBase {
         );
 
         // Empirical drag correction — increases with distance
-        double dragFactor = (1 + 0.000001 * distance * distance) * 1.031;
+        //From testing, drag for FUEL is so miniscule i dont think we have to worry about it.
+        //double dragFactor = (1 + 0.000001 * distance * distance) * 1.031;
+        double dragFactor = 1;
         shooterVelocity *= dragFactor;
         double wheelRadius = 0.0508; // meters (2 inches)
         double c = 2.1;

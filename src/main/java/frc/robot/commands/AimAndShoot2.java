@@ -24,7 +24,7 @@ public class AimAndShoot2 extends Command {
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.shooter = shooter;
-        rotController = new PIDController(1, 0, 0);
+        rotController = new PIDController(10,0.05, 0.005); //PID tuned in advantagekit
         rotController.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(drivetrain, vision, shooter);
@@ -32,7 +32,7 @@ public class AimAndShoot2 extends Command {
 
     @Override
     public void initialize() {
-        rotController.setTolerance(0.02);
+        rotController.setTolerance(0.000001);
         rotController.setSetpoint(0);
     }
 
