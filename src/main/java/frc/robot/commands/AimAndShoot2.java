@@ -32,7 +32,7 @@ public class AimAndShoot2 extends Command {
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.shooter = shooter;
-        rotController = new PIDController(1, 0, 0);
+        rotController = new PIDController(10, .05, .005);
         rotController.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(drivetrain, vision, shooter);
@@ -40,13 +40,14 @@ public class AimAndShoot2 extends Command {
 
     @Override
     public void initialize() {
-        rotController.setTolerance(0.02);
+        rotController.setTolerance(0.00001);
         rotController.setSetpoint(0);
     }
 
     @Override
     public void execute() {
-        double theta = vision.getYawToPose(VisionConstants.getHubPose()) + Math.PI;
+        double theta = -vision.getYawToPose(VisionConstants.getHubPose());
+        // So what do you think
         double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
         double rotSpeed = rotController.calculate(theta);
 

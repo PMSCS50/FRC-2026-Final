@@ -27,6 +27,7 @@ public interface VisionIO {
         // Pose estimation output
         public boolean hasEstimatedPose = false;
         public Pose2d estimatedPose = new Pose2d();
+        public double distanceToHub = 0;
         public double estimatedPoseTimestamp = 0.0;
 
         // Standard deviations for the estimated pose [x, y, theta]

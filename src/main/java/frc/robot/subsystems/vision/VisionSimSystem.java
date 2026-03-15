@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.ArrayList;
@@ -161,6 +162,15 @@ public class VisionSimSystem extends SubsystemBase {
         return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose).getRadians();
     }
 
+    public double getShooterVelocity(double distance) {
+        double y = 1.8288 - shooterHeight;
+        double shooterVelocity = Math.sqrt(
+            (9.807 * distance * distance) /
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) + shooterHeight - y))
+        );
+        return shooterVelocity;
+    }
+
     // ========================
     // SHOOTER RPM CALCULATION
     // (pure math — no IO dependency, unchanged from original)
@@ -170,14 +180,10 @@ public class VisionSimSystem extends SubsystemBase {
     private final double phi = Math.toRadians(70);
 
     public double rpmFromDistance(double distance) {
-        double y = 1.8288 - shooterHeight;
 
-        double shooterVelocity = Math.sqrt(
-            (9.807 * distance * distance) /
-            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) + shooterHeight - y))
-        );
+        double shooterVelocity = getShooterVelocity(distance);
 
-        double dragFactor = (1 + 0.015 * distance) * 1.04;
+        double dragFactor = (1 + 0.000001 * distance * distance) * 1.031;
         shooterVelocity *= dragFactor;
 
         double wheelRadius = 0.0508;

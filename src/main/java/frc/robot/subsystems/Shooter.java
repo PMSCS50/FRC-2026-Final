@@ -16,6 +16,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.vision.VisionSimSystem;
@@ -116,7 +117,11 @@ public class Shooter extends SubsystemBase {
     // ************************
 
     @Override
-    public void periodic() {}
+    public void periodic() {
+        double distance = vision.getDistanceToPose(Constants.VisionConstants.getHubPose());
+        SmartDashboard.putNumber("distanceToHub", distance);
+        SmartDashboard.putNumber("shooterVelocity", vision.getShooterVelocity(distance));
+    }
 
 
     // ************************
