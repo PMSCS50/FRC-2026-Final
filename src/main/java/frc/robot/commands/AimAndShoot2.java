@@ -5,7 +5,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.VisionSubsystem;
 import edu.wpi.first.math.controller.PIDController;
-import frc.robot.Constants;
+import frc.robot.Constants.VisionConstants;
 
 //Alternate AimAndShoot that uses PhotonUtils.getYawToPose() and PhotonVision.getDistanceToPose().
 //With this, we can aim directly at the hub instead of relying on AprilTags
@@ -38,8 +38,8 @@ public class AimAndShoot2 extends Command {
 
     @Override
     public void execute() {
-        double theta = vision.getYawToPose(Constants.HubPose);
-        double distance = vision.getDistanceToPose(Constants.HubPose);
+        double theta = -vision.getYawToPose(VisionConstants.getHubPose());
+        double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
         double rotSpeed = rotController.calculate(theta);
         drivetrain.setControl(
             drive.withVelocityX(0)

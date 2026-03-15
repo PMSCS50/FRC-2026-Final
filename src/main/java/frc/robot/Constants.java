@@ -41,10 +41,47 @@ public final class Constants {
       //   public static final double slideSpeed = 0.6;
       // }
 
-      public static final class VisionConstants{
-        public static final Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
-        public static final double distanceToTag = 1;
-        public static final AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+      public static class VisionConstants{
+        
+        public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
+        public static double distanceToTag = 1;
+        public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+
+        public static String camera0Name = "camera0_2585";
+        public static String camera1Name = "camera1_2585";
+
+        public static Transform3d robotToCamera1 = new Transform3d(
+          new Translation3d(0.25, -.072, 0.09),
+          new Rotation3d(0, Math.toRadians(10), 0)
+        );
+
+        // Hub Positions
+        private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+        private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+        public static Pose2d getHubPose() {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
+        }
+        // Basic filtering thresholds
+        public static double maxAmbiguity = 0.3;
+        public static double maxZError = 0.75;
+
+        // Standard deviation baselines, for 1 meter distance and 1 tag
+        // (Adjusted automatically based on distance and # of tags)
+        public static double linearStdDevBaseline = 0.02; // Meters
+        public static double angularStdDevBaseline = 0.06; // Radians
+
+        // Standard deviation multipliers for each camera
+        // (Adjust to trust some cameras more than others)
+        public static double[] cameraStdDevFactors =
+          new double[] {
+            1.0, // Camera 0
+            1.0 // Camera 1
+          };
+
+        // Multipliers to apply for MegaTag 2 observations
+        public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
+        public static double angularStdDevMegatag2Factor =
+        Double.POSITIVE_INFINITY; // No rotation data available
 
       }
       // values of 20
@@ -92,7 +129,6 @@ public final class Constants {
       
       private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
       private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-      public static final Pose2d HubPose = DriverStation.getAlliance() == DriverStation.Alliance.Red ? RedHub : BlueHub;
       public static final double X_REEF_ALIGNMENT_P = 2;
       public static final double Y_REEF_ALIGNMENT_P = 3;
       public static final double ROT_REEF_ALIGNMENT_P = 0.1625;
