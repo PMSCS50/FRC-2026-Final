@@ -132,7 +132,7 @@ public class Shooter extends SubsystemBase {
         kicker1.set(speed);
     }
 
-     public void rpmControl(double distance) {
+    public void rpmControl(double distance) {
         double rpm = vision.rpmFromDistance(distance);
         //double rpm = vision.rpmFromDistance(vision.getDistanceToPose(Constants.HubPose));
         shooterMotor1.setControl(velocityRequest.withVelocity(rpm / 60.0));

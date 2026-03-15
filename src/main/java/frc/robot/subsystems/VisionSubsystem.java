@@ -262,9 +262,9 @@ public class VisionSubsystem extends SubsystemBase {
         return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
     }
 
-    public Rotation2d getYawToPose(Pose2d targetPose) {
+    public double getYawToPose(Pose2d targetPose) {
         if (drivetrain.getPose() == null) return 0.0;
-        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose);
+        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose).getRadians();
     }
     
 
