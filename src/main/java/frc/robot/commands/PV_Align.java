@@ -8,6 +8,8 @@ import edu.wpi.first.wpilibj.shuffleboard.*;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 
+import java.lang.annotation.Target;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -21,12 +23,27 @@ public class PV_Align extends Command {
 
     private static final double DESIRED_DISTANCE_METERS = 1.5;
     
-    private PIDController xController = new PIDController(0, 0, 0); // kp = 1.45, ki = .001
-    private final PIDController yController = new PIDController(1.1, 0, 0); // kp = 1
-    private final PIDController rotController = new PIDController(0, 0, 0); // kp = 2.5
+    private PIDController xController = new PIDController(1.45, 0.001, 0); // kp = 1.45, ki = .001
+    private final PIDController yController = new PIDController(1, 0, 0); // kp = 1
+    private final PIDController rotController = new PIDController(2.5, 0, 0); // kp = 2.5
     private Timer settleTimer;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
     private double SETTLETIME = .1;
+
+    public PV_Align(CommandSwerveDrivetrain drivetrain, VisionSimSystem vision) {
+        this.drivetrain = drivetrain;
+        this.vision = vision;
+        this.targetId = vision.getTargetId();
+
+        rotController.enableContinuousInput(-Math.PI, Math.PI);
+
+        xController.setTolerance(0.05);
+        yController.setTolerance(0.05);
+        rotController.setTolerance(Math.toRadians(5));
+
+        addRequirements(drivetrain, vision);
+    }
+
     public PV_Align(CommandSwerveDrivetrain drivetrain, VisionSimSystem vision, int targetId) {
         this.drivetrain = drivetrain;
         this.vision = vision;

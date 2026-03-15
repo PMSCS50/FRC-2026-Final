@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -78,18 +79,30 @@ public class VisionSimSystem extends SubsystemBase {
                     .ifPresent(pose -> visibleTagPoses.add(pose.toPose2d()));
             }
         }
+
         Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
         Logger.recordOutput("Vision/VisibleTags", visibleTagPoses.toArray(new Pose2d[0]));
+        if (VisionConstants.aprilTagLayout != null && inputs.hasTarget) {
+            VisionConstants.aprilTagLayout
+                .getTagPose(inputs.targetId)
+                .ifPresent(pose -> Logger.recordOutput("Vision/bestTargetPose", pose));
+        }
 
         // processInputs always last
-        Logger.processInputs("Vision", inputs); 
+        Logger.processInputs("Vision", inputs);
 
         // Rebuild the std-dev Matrix from the logged double array
-        visionStdDevs = VecBuilder.fill(
-            inputs.visionStdDevs[0],
-            inputs.visionStdDevs[1],
-            inputs.visionStdDevs[2]
-        );
+        if (inputs.visionStdDevs != null && inputs.visionStdDevs.length >= 3) {
+            visionStdDevs = VecBuilder.fill(
+                inputs.visionStdDevs[0],
+                inputs.visionStdDevs[1],
+                inputs.visionStdDevs[2]
+            );
+        } else {
+            visionStdDevs = VecBuilder.fill(
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            );
+        }
 
         // Feed pose estimate into drivetrain if valid
         if (inputs.hasEstimatedPose) {
@@ -183,11 +196,11 @@ public class VisionSimSystem extends SubsystemBase {
 
         double shooterVelocity = getShooterVelocity(distance);
 
-        double dragFactor = (1 + 0.000001 * distance * distance) * 1.031;
+        double dragFactor = 1;
         shooterVelocity *= dragFactor;
 
         double wheelRadius = 0.0508;
-        double c = 1.0;
+        double c = 2.1;
         return c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius) / 100;
     }
 }
