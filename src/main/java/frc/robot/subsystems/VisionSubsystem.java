@@ -21,6 +21,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.commands.CommandSwerveDrivetrain;
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -63,7 +65,7 @@ public class VisionSubsystem extends SubsystemBase {
         // If this fails, vision pose estimation will be disabled but
         // tag-relative alignment (getX, getY, getYawRad) still works
         try {
-            tagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
+            tagFieldLayout = VisionConstants.aprilTagLayoutAndyMark;
         } catch (Exception e) {
             tagFieldLayout = null;
             DriverStation.reportError("VisionSubsystem: Failed to load field layout - " + e.getMessage(), false);
