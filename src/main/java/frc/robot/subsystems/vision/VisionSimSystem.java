@@ -3,13 +3,18 @@ package frc.robot.subsystems.vision;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.littletonrobotics.junction.Logger;
 import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 /**
@@ -60,7 +65,23 @@ public class VisionSimSystem extends SubsystemBase {
         // Pull all sensor data into the logged inputs snapshot.
         // AdvantageKit records every field of inputs to the log automatically.
         io.updateInputs(inputs);
-        Logger.processInputs("Vision", inputs);
+
+        io.updateInputs(inputs);
+
+        // All recordOutput calls first
+        List<Pose2d> visibleTagPoses = new ArrayList<>();
+        if (VisionConstants.aprilTagLayout != null) {
+            for (int id : inputs.visibleTagIds) {
+                VisionConstants.aprilTagLayout
+                    .getTagPose(id)
+                    .ifPresent(pose -> visibleTagPoses.add(pose.toPose2d()));
+            }
+        }
+        Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
+        Logger.recordOutput("Vision/VisibleTags", visibleTagPoses.toArray(new Pose2d[0]));
+
+        // processInputs always last
+        Logger.processInputs("Vision", inputs); 
 
         // Rebuild the std-dev Matrix from the logged double array
         visionStdDevs = VecBuilder.fill(

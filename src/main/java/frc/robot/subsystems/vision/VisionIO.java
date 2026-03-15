@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 
 public interface VisionIO {
@@ -38,6 +39,9 @@ public interface VisionIO {
 
         // Average distance to visible tags
         public double avgTagDistMeters = 0.0;
+
+        // Expose full list (maybe)
+        public int[] visibleTagIds = new int[0];
     }
 
     /** Updates the set of loggable inputs. */

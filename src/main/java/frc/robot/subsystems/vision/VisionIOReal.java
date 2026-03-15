@@ -65,6 +65,11 @@ public class VisionIOReal implements VisionIO {
             inputs.tagToRobotY = tagToRobot.getY();
             inputs.tagToRobotZ = tagToRobot.getZ();
             inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
+
+            // Update inputs.visibleTagIds
+            inputs.visibleTagIds = result.getTargets().stream()
+                .mapToInt(PhotonTrackedTarget::getFiducialId)
+                .toArray();
         } else {
             inputs.hasTarget = false;
             inputs.targetId = -1;
