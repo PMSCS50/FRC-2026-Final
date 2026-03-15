@@ -28,6 +28,8 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import com.pathplanner.lib.pathfinding.Pathfinding;
+import frc.robot.LocalADStarAK;
 
 
 public class Robot extends LoggedRobot {
@@ -44,6 +46,7 @@ public class Robot extends LoggedRobot {
   //private Logger Logger;
 
   public Robot() {
+    
     Logger.recordMetadata("ProjectName", "MyProject");
 
     if (isReal()) {
@@ -59,9 +62,11 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotInit() {
+    Pathfinding.setPathfinder(new LocalADStarAK());
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
     SmartDashboard.putData("Field", field);
+    PathfindingCommand.warmupCommand().schedule();
   }
 
   @Override

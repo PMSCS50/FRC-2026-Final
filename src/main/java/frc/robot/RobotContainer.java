@@ -33,6 +33,7 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Shooter;
+import frc.robot.Pathfinder;
 import edu.wpi.first.cameraserver.CameraServer;
 
 public class RobotContainer {
@@ -58,6 +59,11 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.Velocity);
 
     private final Telemetry logger = new Telemetry(MaxSpeed); // What does this actually do?
+
+    //Go to Pathfinder.java for more information.
+    //THIS IS NOT FOR REBUILT. It is something potentially for next year and years to come.
+    //Go to line 
+    private final Pathfinder pathfinder = new Pathfinder(3,3,2 * Math.PI, 2 * Math.PI);
 
     // **************************************************************************************************************
 
@@ -196,7 +202,6 @@ public class RobotContainer {
         
 
         
-        
         /* 
 
         drivetrain.setDefaultCommand(
@@ -283,9 +288,15 @@ public class RobotContainer {
         
         // ************************************************************************************
 
+        /*
+        Here, we can use Pathfinder to create a path to a specific Pose2d, even on teleop.
+        Then it will follow the path as long as the button is held
+        Releasing button will stop the path following and allow for manual control again.
+        Could be very useful for alignment to specific locations.
 
-
-       
+        joystick.rightTrigger().whileTrue(Pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
+        
+        */
         
     }
     // changing drivetrain speed
