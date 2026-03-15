@@ -11,12 +11,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.subsystems.vision.VisionSimSystem;
 
 public class PV_Align extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final VisionSubsystem vision;
+    private final VisionSimSystem vision;
     private final int targetId;
 
     private static final double DESIRED_DISTANCE_METERS = 1.5;
@@ -27,11 +27,7 @@ public class PV_Align extends Command {
     private Timer settleTimer;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
     private double SETTLETIME = .1;
-    public PV_Align(
-        CommandSwerveDrivetrain drivetrain,
-        VisionSubsystem vision,
-        int targetId
-    ) {
+    public PV_Align(CommandSwerveDrivetrain drivetrain, VisionSimSystem vision, int targetId) {
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.targetId = targetId;
@@ -43,9 +39,6 @@ public class PV_Align extends Command {
         rotController.setTolerance(Math.toRadians(5));
 
         addRequirements(drivetrain, vision);
-       
-        
-
     }
 
     @Override
@@ -64,12 +57,7 @@ public class PV_Align extends Command {
 
         SmartDashboard.putBoolean("rotSetpoint", rotController.atSetpoint());
         SmartDashboard.putNumber("rot Difference", vision.getYawRad() - rotController.getSetpoint());
-        
 
-        
-
-        
-        
         SmartDashboard.putNumber("x Difference", vision.getX() - xController.getSetpoint());
         SmartDashboard.putBoolean("x Setpoint", xController.atSetpoint());
 
@@ -78,19 +66,11 @@ public class PV_Align extends Command {
 
         SmartDashboard.putNumber("settle timer", settleTimer.get());
 
-
-
-
-
-
-
-        
         if (!vision.hasTarget(targetId)) {
             drivetrain.setControl(new SwerveRequest.Idle());
             return;
         }
 
-        
         // double xVel = MathUtil.clamp(xController.calculate(
         //     vision.getX(), DESIRED_DISTANCE_METERS
         // ),-2,0.05);

@@ -332,7 +332,7 @@ public class RobotContainer {
         /* Run the path selected from the auto chooser */
         // return null;
         //return autoChooser.getSelected();
-        return new AimAndShoot2(drivetrain, vision, shooter).withTimeout(5); // run for 5 seconds then stop
+        return new PV_Align(drivetrain, vision).withTimeout(5); // run for 5 seconds then stop
 
     }
 }
