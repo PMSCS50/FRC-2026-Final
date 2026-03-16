@@ -128,7 +128,7 @@ public class RobotContainer {
         // //for olivers climb if we implement it
         // NamedCommands.registerCommand("L1Ascend", new L1Ascend(oliverClimb));
         // NamedCommands.registerCommand("L1Descend", new L1Descend(oliverClimb));
-        NamedCommands.registerCommand("Shoot", new AimAndShoot2(drivetrain, vision, shooter));
+        //NamedCommands.registerCommand("Shoot", new AimAndShoot2(drivetrain, vision, shooter));
         configureBindings();
     }
 
@@ -307,8 +307,13 @@ public class RobotContainer {
         joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.400)));
         joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
-        joystick.rightTrigger().onTrue(pathfinder.makePathTo(VisionConstants.Center));
-        joystick.leftTrigger().whileTrue(new AimAndShoot2(drivetrain, vision, shooter));
+        joystick.rightTrigger().onTrue(pathfinder.makePathTo(VisionConstants.getCenter()));
+        joystick.leftTrigger().whileTrue(new AimAndShoot2(
+            drivetrain, 
+            vision, 
+            shooter,
+            () -> joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper,
+            () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper));
         // ************************************************************************************
         //rollers for subsystems
         // ************************************************************************************
@@ -349,6 +354,6 @@ public class RobotContainer {
         /* Run the path selected from the auto chooser */
         // return null;
         //return autoChooser.getSelected();
-        return pathfinder.makePathTo(VisionConstants.Center); // run for 5 seconds then stop
+        return pathfinder.makePathTo(VisionConstants.getCenter()); // run for 5 seconds then stop
     }
 }

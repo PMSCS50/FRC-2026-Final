@@ -10,6 +10,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
+
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -77,7 +80,18 @@ public class Constants {
         public static Pose2d getHubPose() {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
         }
-        public static final Pose2d Center = new Pose2d(8.270494, 4.034536, Rotation2d.fromDegrees(0));
+
+        public static final LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
+        public static final LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
+        public static final LoggedNetworkNumber centerRot = new LoggedNetworkNumber("Vision/Center/Rot", 0.0);
+
+        public static Pose2d getCenter() {
+            return new Pose2d(
+                centerX.get(),
+                centerY.get(),
+                Rotation2d.fromDegrees(centerRot.get())
+            );
+        }
 
         // Basic filtering thresholds
         public static double maxAmbiguity = 0.3;
