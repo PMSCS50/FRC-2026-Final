@@ -39,13 +39,13 @@ import java.util.List;
  *       0.47,    // drag coeff (smooth sphere)
  *       0.2,     // Magnus coeff
  *       1.225,   // air density kg/m^3
- *       0.43,    // exit height from floor, measure from CAD
+ *       0.508,    // exit height from floor, measure from CAD
  *       0.1016,  // wheel diameter, measure with calipers
- *       1.83,    // target height, from game manual
- *       0.6,     // slip factor (0=no grip, 1=perfect), tune on robot
- *       45.0,    // launch angle degrees from horizontal
+ *       1.8288,    // target height, from game manual
+ *       0.5,     // slip factor (0=no grip, 1=perfect), tune on robot
+ *       70.0,    // launch angle degrees from horizontal
  *       0.001,   // sim timestep
- *       1500, 6000, 25, 5.0  // RPM range, search iters, max sim time
+ *       1500, 6000, 25, 60.0  // RPM range, search iters, max sim time
  *   );
  *   ProjectileSimulator sim = new ProjectileSimulator(params);
  *   GeneratedLUT lut = sim.generateLUT();
@@ -75,7 +75,9 @@ public class ProjectileSimulator {
       double rpmMin,
       double rpmMax,
       int binarySearchIters,
-      double maxSimTime) {}
+      double maxSimTime) {
+        
+      }
 
   public record TrajectoryResult(
       double zAtTarget, double tof, boolean reachedTarget, double maxHeight, double apexX) {}

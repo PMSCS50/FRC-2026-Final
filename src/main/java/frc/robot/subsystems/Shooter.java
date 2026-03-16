@@ -22,6 +22,9 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.Constants;
 
+import frc.firecontrol.ProjectileSimulator;
+import frc.firecontrol.ProjectileSimulator.*;
+
 public class Shooter extends SubsystemBase {
 
     // ************************
@@ -54,6 +57,8 @@ public class Shooter extends SubsystemBase {
     private final double shooterAngle = 70.0;                  // degrees
     private final double phi = Math.toRadians(shooterAngle);   // radians
     private final double shooterHeight = 0.508;                // meters from ground
+
+    // sim shooter
 
 
     // ************************
