@@ -42,10 +42,6 @@ public class Climb extends SubsystemBase {
         
         
 
-        
-        
-        
-
        climbMotor.configure(climbMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
 
@@ -54,8 +50,9 @@ public class Climb extends SubsystemBase {
     @Override
     public void periodic() {
         limitSwitchHook.get();
-        SmartDashboard.putBoolean("Climb limit switch", limitSwitchHook.get());
-        SmartDashboard.putNumber("Climb position", climbEncoder.getPosition());
+        // SmartDashboard.putBoolean("Climb limit switch", limitSwitchHook.get());
+        // SmartDashboard.putBoolean("Climb limit switch", limitSwitchTop.get());
+        // SmartDashboard.putBoolean("Climb limit switch", limitSwitchBottom.get());
     }
 
    public void pull(){

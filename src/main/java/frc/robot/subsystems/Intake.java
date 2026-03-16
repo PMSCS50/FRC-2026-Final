@@ -1,6 +1,9 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -11,120 +14,140 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
+    private final SparkClosedLoopController pivotClosedLoopController;
 
     private final SparkMaxConfig pivotMotorConfig = new SparkMaxConfig();
     private final SparkMax pivotMotor = new SparkMax(IntakeConstants.pivotMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
 
+    private final SparkClosedLoopController intakeClosedLoopController;
+
     private final SparkMaxConfig intakeMotorConfig = new SparkMaxConfig();
     private final SparkMax intakeMotor = new SparkMax(IntakeConstants.intakeMotorCanId, MotorType.kBrushless);
+    private final RelativeEncoder intakeEncoder = intakeMotor.getEncoder();
+    
+    // calculations for freespinning neo
+    public static final class NeoMotorConstants {
+        public static final double kFreeSpeedRpm = 5676;
+    }
+    public static final double kIntakeMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
+    
+
 
     //for starting the intake
     private final Timer initTimer = new Timer();
     public boolean initializing = false;
     
     public Intake() {
+        pivotClosedLoopController = pivotMotor.getClosedLoopController();
+        intakeClosedLoopController = intakeMotor.getClosedLoopController();
         pivotMotorConfig
             .inverted(true)
-            .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(40);
-
+            .idleMode(IdleMode.kBrake)
+            .smartCurrentLimit(40).closedLoopRampRate(1);
+        pivotMotorConfig.closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .pid(0, 0, 0)
+            .outputRange(-1, 1)
+            .feedForward.kV(1.0 / kIntakeMotorFreeSpeedRps / 60);
+    
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
         intakeMotorConfig
             .inverted(false)
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(40);
+            .smartCurrentLimit(40).closedLoopRampRate(1);
+        intakeMotorConfig.closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            // .pid(0.0025, 0, .1) // p = 0.01 pulses // d = .01 seems alright
+            .pid(0, 0, 0)
+            .outputRange(-1, 1)
+            .feedForward.kV(.0021); // current value = .00017618
+            
 
         intakeMotor.configure(intakeMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
- 
+
     }
+
 
     @Override
-    public void periodic() {
+    public void periodic() {}
 
-    }
-
-    public void initinitIntake() {
-        initTimer.restart();
-        initializing = true;
-    }
-
-    //When the intake hits the bumper, the stalled motor will use a huge amount of current (probably reaching 40a limit).
-    // ^ no? I don't think so
-    
-    //So, we can just check if the current usage exceeds 30a and then stop the motor.
-
-
-
-    
-    public void initIntake() {
-        if (!initializing) return;
-             
-        double ampThreshold = 30;  
-        double timeoutSeconds = 2.0;
-
-        double current = pivotMotor.getOutputCurrent();
-
-        if (initTimer.hasElapsed(timeoutSeconds)) {
-            pivotMotor.set(0);
-            initializing = false;
-            return;
-        }
-
-        if (current < ampThreshold) {
-            pivotMotor.set(IntakeConstants.pivotPower);
-        } else {
-            pivotMotor.set(0);
-            pivotEncoder.setPosition(0);
-            initializing = false;
-        }
-    }
-    
-    public void outitIntake() {
-        if (!initializing) return;
-             
-        double ampThreshold = 30;  
-        double timeoutSeconds = 2.0;
-
-        double current = pivotMotor.getOutputCurrent();
-
-        if (initTimer.hasElapsed(timeoutSeconds)) {
-            pivotMotor.set(0);
-            initializing = false;
-            return;
-        }
-
-        if (current < ampThreshold) {
-            pivotMotor.set(-IntakeConstants.pivotPower);
-        } else {
-            pivotMotor.set(0);
-            pivotEncoder.setPosition(0);
-            initializing = false;
-        }
-    }
-    
-    public void spinIntake(double speed) {
-        intakeMotor.set(speed); 
-    }
-    
     public void stopIntake() {
         intakeMotor.stopMotor();
-    }
-
-    public void deployIntake(double speed) {
-        pivotMotor.set(speed);
-    }
-
-    public void movePivot(double speed) {
-        pivotMotor.set(speed);
     }
     public void stopPivot() {
         pivotMotor.stopMotor();
     }
+    public void stopAll() {
+        intakeMotor.stopMotor();
+        pivotMotor.stopMotor();
+    }
+
+    public void spinIntakePID(double percent) {
+        double targetRPM = 5676 * percent;
+        intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
+    }
+    public void spinIntakePIDTimed(double percent, double time) {
+        double targetRPM = 5676 * percent;
+        intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
+    }
+
+    public void spinPivotPID(double percent) {
+        double targetRPM = 5676 * percent;
+        pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
+    }
+
+    public void spinIntakeDuty(double speed) {
+        intakeMotor.set(speed); 
+    }
+    public void spinPivotDuty(double speed) {
+        pivotMotor.set(speed);
+    }
+    
+    
+    public SparkMaxConfig getPivotMotorConfig() {
+        return pivotMotorConfig;
+    }
+
+    public SparkMax getPivotMotor() {
+        return pivotMotor;
+    }
+
+    public RelativeEncoder getPivotEncoder() {
+        return pivotEncoder;
+    }
+
+    public RelativeEncoder getIntakeEncoder() {
+        return intakeEncoder;
+    }
+
+
+
+    // public SparkMaxConfig getIntakeMotorConfig() {
+    //     return intakeMotorConfig;
+    // }
+
+    // public SparkMax getIntakeMotor() {
+    //     return intakeMotor;
+    // }
+
+    // public Timer getInitTimer() {
+    //     return initTimer;
+    // }
+
+    // public boolean isInitializing() {
+    //     return initializing;
+    // }
+
+    // public void setInitializing(boolean initializing) {
+    //     this.initializing = initializing;
+    // }
     
 
 

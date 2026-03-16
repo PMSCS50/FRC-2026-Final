@@ -9,13 +9,11 @@ import frc.robot.subsystems.VisionSubsystem;
 public class FixedPIDShooting extends Command {
 
     private final Shooter shooter;
-    private double amount;
-    private VisionSubsystem vision;
-    
-        public FixedPIDShooting(Shooter shooter, double amount, VisionSubsystem vision) {
+    private double distance;
+
+        public FixedPIDShooting(Shooter shooter, double distance) {
             this.shooter = shooter;
-            this.amount = amount;
-            this.vision = vision;
+            this.distance = distance;
         addRequirements(shooter);
         
     }
@@ -24,19 +22,11 @@ public class FixedPIDShooting extends Command {
     public void initialize() {}
 
     @Override
-    // public void execute() {
-    //     if (vision.hasTargets() && vision.getTargetId() == targetId) {
-    //         shooter.rpmControl();
-    //         if (shooter.atCorrectRPM()) {
-    //             shooter.spinKickers();
-    //         }
-    //     } else {
-    //         shooter.stop(); // lost target — stop spinning
-    //     }
-    // }
+    
     public void execute() {
-        shooter.rpmControl(amount);
-        if ((Math.abs(shooter.getVelocity() * 60) - Math.abs(vision.rpmFromDistance(amount))) < 50) {
+
+        shooter.rpmControl(distance);
+        if (shooter.atCorrectRPMFixed(distance)) {
             shooter.spinKickers();
         } else {
             shooter.stop();

@@ -1,25 +1,21 @@
 package frc.robot.subsystems;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.HashMap;
 
-import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.PhotonUtils;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -30,40 +26,23 @@ public class VisionSubsystem extends SubsystemBase {
     private final CommandSwerveDrivetrain drivetrain;
     private final PhotonPoseEstimator photonPoseEstimator;
 
-    // Field layout initialization
     private static AprilTagFieldLayout tagFieldLayout;
 
-    // Robot to Camera Transform
     private static final Transform3d ROBOT_TO_CAMERA =
-        // new Transform3d(
-        //     new Translation3d(0.072, -.072, 0.495),
-        //     new Rotation3d(0, Math.toRadians(10), 0)
-        // );
         new Transform3d(
-            new Translation3d(0.25, -.072, 0.09),
+            new Translation3d(0.072, -.072, 0.495),
             new Rotation3d(0, Math.toRadians(10), 0)
         );
 
-    // Raw vision state
-    private PhotonTrackedTarget target;
     private boolean hasTarget = false;
     private int targetId = -1;
-    private Transform3d tagToRobot = null;
-
-    // Pose estimation standard deviations
-    // Lower values = trust vision more. Higher values = trust vision less.
-    private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
-
-
-
+    private PhotonPipelineResult result = null;
+    private final HashMap<Integer, Transform3d> tagTransforms = new HashMap<>();
 
     public VisionSubsystem(String cameraName, CommandSwerveDrivetrain drivetrain) {
         this.camera = new PhotonCamera(cameraName);
         this.drivetrain = drivetrain;
 
-        // Load field layout with error handling
-        // If this fails, vision pose estimation will be disabled but
-        // tag-relative alignment (getX, getY, getYawRad) still works
         try {
             tagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
         } catch (Exception e) {
@@ -71,9 +50,6 @@ public class VisionSubsystem extends SubsystemBase {
             DriverStation.reportError("VisionSubsystem: Failed to load field layout - " + e.getMessage(), false);
         }
 
-        // Set up pose estimator
-        // MULTI_TAG_PNP_ON_COPROCESSOR uses multiple tags for a more accurate estimate
-        // Falls back to LOWEST_AMBIGUITY when only one tag is visible
         if (tagFieldLayout != null) {
             photonPoseEstimator = new PhotonPoseEstimator(
                 tagFieldLayout,
@@ -86,251 +62,121 @@ public class VisionSubsystem extends SubsystemBase {
         }
     }
 
-    public PhotonPipelineResult getLatestResult() {
-        return camera.getLatestResult();
-    }
-
-
-
     @Override
     public void periodic() {
-        // --------------------
-        // Part 1: Tag-relative tracking (getX, getY, getYawRad)
-        // This is the same as before — used by PV_Align and FaceTag
-        // --------------------
-        PhotonPipelineResult result = camera.getLatestResult();
+        result = camera.getLatestResult();
+        hasTarget = result.hasTargets();
+        tagTransforms.clear();
 
-        if (!result.hasTargets()) {
-            hasTarget = false;
+        if (!hasTarget) {
             targetId = -1;
-            tagToRobot = null;
-        } else {
-            target = result.getBestTarget();
-            hasTarget = true;
-            targetId = target.getFiducialId();
-
-            // Camera - Tag
-            Transform3d cameraToTag = target.getBestCameraToTarget();
-            // Robot - Tag
-            Transform3d robotToTag = ROBOT_TO_CAMERA.plus(cameraToTag);
-
-            // Tag - Robot
-            tagToRobot = robotToTag.inverse();
+            return;
         }
+
+        for (PhotonTrackedTarget t : result.getTargets()) {
+            Transform3d camToTag = t.getBestCameraToTarget();
+            Transform3d robotToTag = ROBOT_TO_CAMERA.plus(camToTag);
+            tagTransforms.put(t.getFiducialId(), robotToTag.inverse());
+        }
+
+        targetId = result.getBestTarget().getFiducialId();
+
+        SmartDashboard.putNumber("Vision Target ID", targetId);
+        SmartDashboard.putNumber("Vision X", getX(targetId));
+        SmartDashboard.putNumber("Vision Y", getY(targetId));
+        SmartDashboard.putNumber("Vision Yaw", getYawRad(targetId));
+        SmartDashboard.putNumber("Vision Distance", getDistance(targetId));
     }
-
-
-
 
     // ************************
     // GETTER METHODS
     // ************************
 
-    /** Returns true if the camera currently sees the specified tag ID */
-    public boolean hasTarget(int desiredId) {
-        return hasTarget && targetId == desiredId && tagToRobot != null;
+    public boolean hasTarget(int id) {
+        return tagTransforms.containsKey(id);
     }
 
-    /** Returns true if the camera currently sees any target */
     public boolean hasTargets() {
         return hasTarget;
     }
 
-    /** Returns the ID of the best visible tag, or -1 if no target */
     public int getTargetId() {
         return targetId;
     }
 
-    /** Forward/back distance from robot to tag face (meters) */
-    public double getX() {
-        return tagToRobot != null ? tagToRobot.getX() : 0.0;
+    public PhotonPipelineResult getResult() {
+        return result;
     }
 
-    /** Left/right distance from robot to tag face (meters) */
-    public double getY() {
-        return tagToRobot != null ? tagToRobot.getY() : 0.0;
+    public Transform3d getTransformToTag(int id) {
+        return tagTransforms.getOrDefault(id, null);
     }
 
-    /** Robot yaw relative to tag (radians) */
-    public double getYawRad() {
-        if (tagToRobot == null) return 0.0;
-        return MathUtil.angleModulus(tagToRobot.getRotation().getZ() - Math.PI);
+    public double getX(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? tag.getX() : 0.0;
     }
 
-
-    public double getDistance() {
-        return tagToRobot != null ? Math.hypot(tagToRobot.getX(),tagToRobot.getY()): 0.0;
+    public double getY(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? tag.getY() : 0.0;
     }
 
-    public double getDistance2() {
-        return tagToRobot != null ? Math.hypot((tagToRobot.getX() + .6),tagToRobot.getY()): 0.0;
+    public double getYawRad(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        if (tag == null) return 0.0;
+        return MathUtil.angleModulus(tag.getRotation().getZ() - Math.PI);
     }
 
-
-    
-
-    /** Current vision measurement standard deviations */
-    public Matrix<N3, N1> getEstimationStdDevs() {
-        return visionStdDevs;
+    public double getDistance(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? Math.hypot(tag.getX(), tag.getY()) : 0.0;
     }
+
+    public double getDistance2(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? Math.hypot(tag.getX() + 0.6, tag.getY()) : 0.0;
+    }
+
+    public double getYawToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose).getRadians();
+    }
+
+    public double getDistanceToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
+    }
+
+    // ************************
+    // SHOOTER HELPERS
+    // ************************
 
     double shooterHeight = 0.508;
     double phi = Math.toRadians(70);
 
-
     public double rpmFromDistance(double distance) {
-        double y = 1.8288 - shooterHeight; // target height minus shooter height
-
+        double y = 1.8288 - shooterHeight;
         double shooterVelocity = Math.sqrt(
             (9.807 * distance * distance) /
             (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - y))
         );
-
-        // Empirical drag correction — increases with distance
-        double dragFactor = (1 + 0.0000001 * distance*distance) * 1.031;
+        double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
         shooterVelocity *= dragFactor;
-        double wheelRadius = 0.0508; // meters (2 inches)
-        double c = 2.1; // 2.125 overshot, but was perfect when in a row - 2.1 per
+        double wheelRadius = 0.0508;
+        double c = 0.5;
         double rpm = c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius);
         SmartDashboard.putNumber("Shooter rpm", rpm);
-
         return rpm;
     }
-    
 
-    // Add to VisionSubsystem
-    public boolean hasTarget2(int id) {
-        if (!hasTarget) return false;
-        for (PhotonTrackedTarget t : camera.getLatestResult().getTargets()) {
-            if (t.getFiducialId() == id) return true;
-        }
-        return false;
-    }
-
-    public double getDistanceToTarget(int id) {
-        for (PhotonTrackedTarget t : camera.getLatestResult().getTargets()) {
-            if (t.getFiducialId() == id) {
-                Transform3d robotToTag = ROBOT_TO_CAMERA.plus(t.getBestCameraToTarget());
-                return Math.hypot((robotToTag.getX() + .6), robotToTag.getY());
-            }
-        }
-        return 0.0;
-    }
-     
-    public Transform3d getTarget(int id) {
-        if (!hasTarget) return null;
-        for (PhotonTrackedTarget t : camera.getLatestResult().getTargets()) {
-            if (t.getFiducialId() == id) return t.getBestCameraToTarget();
-        }
-        return camera.getLatestResult().getTargets().get(0).getBestCameraToTarget();
-    }
-    
-    
-
-    
-    
+    public double rpsFromDistanceRegression(double distance) {
+        double rps = -0.3039109023 * distance * distance 
+                + 6.81380687 * distance 
+                + 40.82402705 - .5;
+        SmartDashboard.putNumber("Shooter rps regression", rps);
+        double rpm = rps * 60;
+        SmartDashboard.putNumber("Shooter rpm regression", rpm);
+        return rpm;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //     // Part 2: Field-relative pose estimation
-    //     // Feeds vision measurements into drivetrain pose estimator
-    //     // Only runs if field layout loaded successfully
-    //     if (photonPoseEstimator == null) return;
-
-    //     Optional<EstimatedRobotPose> estimatedPose = estimateMultiTagPose();
-
-    //     estimatedPose.ifPresent(est -> {
-    //         // Update standard deviations based on how many tags we see and how far away they are
-    //         updateEstimationStdDevs(estimatedPose, est.targetsUsed);
-
-    //         // Feed the vision measurement into the drivetrain's pose estimator
-    //         // This improves odometry accuracy over time
-    //         drivetrain.addVisionMeasurement(
-    //             est.estimatedPose.toPose2d(),
-    //             est.timestampSeconds,
-    //             visionStdDevs
-    //         );
-    //     });
-    // }
-
-
-    // /**
-    //  * Attempts to estimate the robot's field-relative pose using visible AprilTags.
-    //  * Uses multi-tag PNP when multiple tags are visible, falls back to lowest
-    //  * ambiguity single-tag when only one tag is visible.
-    //  */
-    // private Optional<EstimatedRobotPose> estimateMultiTagPose() {
-    //     Optional<EstimatedRobotPose> latestEstimate = Optional.empty();
-
-    //     // getAllUnreadResults() gets every frame since the last call
-    //     // We process all of them and keep the most recent valid estimate
-    //     for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
-    //         Optional<EstimatedRobotPose> est = photonPoseEstimator.update(result);
-    //         if (est.isPresent()) {
-    //             latestEstimate = est;
-    //             updateEstimationStdDevs(est, result.getTargets());
-    //         }
-    //     }
-
-    //     return latestEstimate;
-    // }
-
-    // /**
-    //  * Updates visionStdDevs based on number of visible tags and their distance.
-    //  *
-    //  * With 2+ tags: lower standard deviations (trust vision more)
-    //  * With 1 tag:  higher standard deviations (trust vision less)
-    //  * Further away: higher standard deviations (measurements less reliable at range)
-    //  */
-    // private void updateEstimationStdDevs(
-    //         Optional<EstimatedRobotPose> estimatedPose,
-    //         List<PhotonTrackedTarget> targets) {
-
-    //     if (estimatedPose.isEmpty() || targets.isEmpty()) {
-    //         // No estimate — use very high std devs so drivetrain ignores this measurement
-    //         visionStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-    //         return;
-    //     }
-
-    //     int numTags = targets.size();
-
-    //     // Calculate average distance from camera to all visible tags
-    //     double avgDist = 0.0;
-    //     for (PhotonTrackedTarget tgt : targets) {
-    //         avgDist += tgt.getBestCameraToTarget().getTranslation().getNorm();
-    //     }
-    //     avgDist /= numTags;
-
-    //     if (numTags >= 2) {
-    //         // Multiple tags visible — high confidence
-    //         // Scale std devs with distance (further = less confident)
-    //         visionStdDevs = VecBuilder.fill(
-    //             0.5 * avgDist,   // X std dev (meters)
-    //             0.5 * avgDist,   // Y std dev (meters)
-    //             Math.toRadians(5) // Rotation std dev (radians) — kept tighter
-    //         );
-    //     } else {
-    //         // Single tag — lower confidence, scale more aggressively with distance
-    //         visionStdDevs = VecBuilder.fill(
-    //             1.0 * avgDist,    // X std dev (meters)
-    //             1.0 * avgDist,    // Y std dev (meters)
-    //             Math.toRadians(10) // Rotation std dev (radians)
-    //         );
-    //     }
-    // }
+}

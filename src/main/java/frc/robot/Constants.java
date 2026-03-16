@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -43,7 +44,21 @@ public final class Constants {
       public static final class VisionConstants{
         public static final Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
         public static final double distanceToTag = 1;
-        public static final AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+        public static final AprilTagFieldLayout aprilTagLayout;
+        static {
+            AprilTagFieldLayout layout = null;
+            try {
+                layout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+            } catch (Exception e) {
+                DriverStation.reportError("Failed to load AprilTag layout: " + e.getMessage(), false);
+            }
+            aprilTagLayout = layout;
+}
+        private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+        private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d. fromDegrees(0));
+        public static Pose2d getHubPose() {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
+        }
 
       }
       // values of 20
@@ -53,6 +68,10 @@ public final class Constants {
 
         public static final double pivotPower = 0.1;
         public static final double intakePower = 0.4;
+
+        public static final double kP = 0;
+        public static final double kI = 0;
+        public static final double kD = 0;
       }
 
       // values of 30

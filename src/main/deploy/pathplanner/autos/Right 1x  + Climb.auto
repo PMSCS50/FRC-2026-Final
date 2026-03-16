@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Right - Neutral"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Right - Neutral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              }
+            ]
           }
         },
         {

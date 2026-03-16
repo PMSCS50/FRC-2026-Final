@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.Climb;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
 public class Robot extends TimedRobot {
@@ -48,12 +50,24 @@ public class Robot extends TimedRobot {
         m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
       }
     }
-    SmartDashboard.putNumber("intake speed", RobotContainer.intakeSpeed);
     SmartDashboard.putNumber("shooter speed", RobotContainer.shooterSpeed);
     SmartDashboard.putNumber("pivot speed", RobotContainer.pivotSpeed);
 
 
-    SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", Shooter.shooterMotor1.get());
+
+
+
+    SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", Shooter.shooterMotor1.getVelocity().getValueAsDouble());
+    
+    SmartDashboard.putBoolean("test button", RobotContainer.subjoystick.a().getAsBoolean());
+
+
+    SmartDashboard.putNumber("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
+    SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getHookLimit());    
+    SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getBottomLimit());
+    SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getTopLimit());
+
+
 
 
   }

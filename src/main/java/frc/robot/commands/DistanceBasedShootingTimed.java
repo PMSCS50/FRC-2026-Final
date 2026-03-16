@@ -1,25 +1,32 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.VisionSubsystem;
 
-public class DistanceBasedShooting extends Command {
+public class DistanceBasedShootingTimed extends Command {
 
     private final Shooter shooter;
     private final VisionSubsystem vision;
-    private final int targetId;
+    private int targetId;
+    private Timer shootingTimer;
+    private double time;
     
-    public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId) {
+    public DistanceBasedShootingTimed(Shooter shooter, VisionSubsystem vision, int targetId, double time) {
         this.shooter = shooter;
         this.vision = vision;
         this.targetId = targetId;
+        this.time = time;
         addRequirements(shooter);
     }
 
     @Override
-    public void initialize() {}
+    public void initialize() {
+        shootingTimer = new Timer();
+        shootingTimer.start();
+    }
 
     @Override
     public void execute() {
@@ -44,6 +51,6 @@ public class DistanceBasedShooting extends Command {
 
     @Override
     public boolean isFinished() {
-        return false;
+        return shootingTimer.hasElapsed(time);
     }
 }

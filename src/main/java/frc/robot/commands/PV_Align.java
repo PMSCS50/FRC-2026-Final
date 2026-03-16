@@ -20,6 +20,7 @@ public class PV_Align extends Command {
     private final int targetId;
 
     private static final double DESIRED_DISTANCE_METERS = 1.5;
+    private double xSetpoint, ySetpoint, rotSetpoint;
     
     private PIDController xController = new PIDController(0, 0, 0); // kp = 1.45, ki = .001
     private final PIDController yController = new PIDController(1.1, 0, 0); // kp = 1
@@ -30,7 +31,10 @@ public class PV_Align extends Command {
     public PV_Align(
         CommandSwerveDrivetrain drivetrain,
         VisionSubsystem vision,
-        int targetId
+        int targetId,
+        double xSetpoint,
+        double ySetpoint,
+        double rotSetpoint
     ) {
         this.drivetrain = drivetrain;
         this.vision = vision;
@@ -58,22 +62,22 @@ public class PV_Align extends Command {
 
     @Override
     public void execute() {
-        SmartDashboard.putNumber("Vision X", vision.getX());
-        SmartDashboard.putNumber("Vision Y", vision.getY());
-        SmartDashboard.putNumber("Vision Yaw", vision.getYawRad());
+        SmartDashboard.putNumber("Vision X", vision.getX(targetId));
+        SmartDashboard.putNumber("Vision Y", vision.getY(targetId));
+        SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(targetId));
 
         SmartDashboard.putBoolean("rotSetpoint", rotController.atSetpoint());
-        SmartDashboard.putNumber("rot Difference", vision.getYawRad() - rotController.getSetpoint());
+        SmartDashboard.putNumber("rot Difference", vision.getYawRad(targetId) - rotController.getSetpoint());
         
 
         
 
         
         
-        SmartDashboard.putNumber("x Difference", vision.getX() - xController.getSetpoint());
+        SmartDashboard.putNumber("x Difference", vision.getX(targetId) - xController.getSetpoint());
         SmartDashboard.putBoolean("x Setpoint", xController.atSetpoint());
 
-        SmartDashboard.putNumber("y Difference", vision.getY() - yController.getSetpoint());
+        SmartDashboard.putNumber("y Difference", vision.getY(targetId) - yController.getSetpoint());
         SmartDashboard.putBoolean("y Setpoint", yController.atSetpoint());
 
         SmartDashboard.putNumber("settle timer", settleTimer.get());
@@ -108,7 +112,7 @@ public class PV_Align extends Command {
         double rotVel = 0;
 
         if (!xController.atSetpoint()) {
-            xVel = xController.calculate(vision.getX(), DESIRED_DISTANCE_METERS);
+            xVel = xController.calculate(vision.getX(targetId), xSetpoint);
         } else {
             xVel = 0;
         }
@@ -126,12 +130,12 @@ public class PV_Align extends Command {
         //     }
         // }
         if (!yController.atSetpoint()) {
-            yVel = yController.calculate(vision.getY(), 0);
+            yVel = yController.calculate(vision.getY(targetId), ySetpoint);
         } else {
             yVel = 0;
         }
         if (!rotController.atSetpoint()) {
-            rotVel = rotController.calculate(vision.getYawRad(), 0);
+            rotVel = rotController.calculate(vision.getYawRad(targetId), rotSetpoint);
         } else {
             rotVel = 0;
            
