@@ -81,15 +81,27 @@ public class Constants {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
         }
 
-        public static final LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
-        public static final LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
-        public static final LoggedNetworkNumber centerRot = new LoggedNetworkNumber("Vision/Center/Rot", 0.0);
+        public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
+        public static LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
+        public static LoggedNetworkNumber centerRot = new LoggedNetworkNumber("Vision/Center/Rot", 0.0);
 
         public static Pose2d getCenter() {
             return new Pose2d(
                 centerX.get(),
                 centerY.get(),
                 Rotation2d.fromDegrees(centerRot.get())
+            );
+        }
+
+        public static LoggedNetworkNumber aimX = new LoggedNetworkNumber("Vision/Aimpose/X", 2);
+        public static LoggedNetworkNumber aimY = new LoggedNetworkNumber("Vision/Aimpose/Y", 2);
+        public static LoggedNetworkNumber aimRot = new LoggedNetworkNumber("Vision/Aimpose/Rot", 0.0);
+
+        public static Pose2d getAimPose() {
+            return new Pose2d(
+                aimX.get(),
+                aimY.get(),
+                Rotation2d.fromDegrees(aimRot.get())
             );
         }
 

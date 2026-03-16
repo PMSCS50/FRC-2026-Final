@@ -1,26 +1,20 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.vision.VisionSimSystem;
-import frc.robot.subsystems.vision.VisionSubsystem;
-
 import java.util.function.DoubleSupplier;
-
-import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
+//import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.vision.VisionSimSystem;
 
-// Aims to the hub and shoots with a velocity based on the distance to the hub. Aiming works in sim, shooting has not been tested.
-public class AimAndShoot2 extends Command {
-
+public class AimToPose extends Command{
     private CommandSwerveDrivetrain drivetrain;
-    private Shooter shooter;
     private VisionSimSystem vision;
     private final PIDController rotController;
     private final DoubleSupplier xSupplier;
@@ -29,8 +23,8 @@ public class AimAndShoot2 extends Command {
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
         .withDeadband(0.1)
         .withDriveRequestType(DriveRequestType.Velocity);
-        
-    public AimAndShoot2(
+
+    public AimToPose(
             CommandSwerveDrivetrain drivetrain,
             VisionSimSystem vision, 
             Shooter shooter, 
@@ -39,14 +33,13 @@ public class AimAndShoot2 extends Command {
     
         this.drivetrain = drivetrain;
         this.vision = vision;
-        this.shooter = shooter;
         this.xSupplier = xSupplier;
         this.ySupplier = ySupplier;
 
         rotController = new PIDController(10, .05, .005);
         rotController.enableContinuousInput(-Math.PI, Math.PI);
 
-        addRequirements(drivetrain, vision, shooter);
+        addRequirements(drivetrain, vision);
     }
 
     @Override
@@ -57,8 +50,8 @@ public class AimAndShoot2 extends Command {
 
     @Override
     public void execute() {
-        double theta = -vision.getYawToPose(VisionConstants.getHubPose());
-        double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
+        double theta = -vision.getYawToPose(VisionConstants.getAimPose());
+        //double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
         double rotSpeed = rotController.calculate(theta);
 
         // Driver still controls translation, command controls rotation
@@ -68,15 +61,6 @@ public class AimAndShoot2 extends Command {
                 .withVelocityY(ySupplier.getAsDouble())
                 .withRotationalRate(rotSpeed)
         );
-        
-        if (rotController.atSetpoint()) {
-            shooter.rpmControl(distance);
-            if (shooter.atCorrectRPM(distance)) {
-                shooter.spinKickers();
-            }
-        } else {
-            shooter.stop();
-        }
     }
 
     @Override
@@ -86,12 +70,12 @@ public class AimAndShoot2 extends Command {
             .withVelocityX(0)
             .withVelocityY(0)
             .withRotationalRate(0)
-    );
-        shooter.stop();
+        );
     }
 
     @Override
     public boolean isFinished() {
         return false; 
     }
+    
 }

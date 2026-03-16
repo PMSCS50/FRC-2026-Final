@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Set;
+
 import org.photonvision.PhotonCamera;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -23,6 +25,7 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -307,8 +310,15 @@ public class RobotContainer {
         joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.400)));
         joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
-        joystick.rightTrigger().onTrue(pathfinder.makePathTo(VisionConstants.getCenter()));
-        joystick.leftTrigger().whileTrue(new AimAndShoot2(
+
+        joystick.rightTrigger().onTrue(
+            Commands.defer(
+                () -> pathfinder.makePathTo(VisionConstants.getCenter()),
+                Set.of(drivetrain)
+            )
+        );
+
+        joystick.leftTrigger().whileTrue(new AimToPose(
             drivetrain, 
             vision, 
             shooter,
