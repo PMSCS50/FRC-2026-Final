@@ -21,7 +21,10 @@
           "incKey": 82,
           "keyRate": 0.009999999776482582
         },
-        {},
+        {
+          "decKey": 76,
+          "incKey": 79
+        },
         {
           "decKey": 263,
           "incKey": 262
@@ -52,8 +55,7 @@
     {
       "axisConfig": [
         {
-          "decKey": 74,
-          "incKey": 76
+          "decKey": 74
         },
         {
           "decKey": 73,
