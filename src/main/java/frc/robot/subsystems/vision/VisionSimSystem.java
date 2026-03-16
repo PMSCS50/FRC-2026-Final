@@ -82,7 +82,10 @@ public class VisionSimSystem extends SubsystemBase {
 
         Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
         Logger.recordOutput("Vision/VisibleTags", visibleTagPoses.toArray(new Pose2d[0]));
-        Logger.recordOutput("CenterPose", VisionConstants.getCenter());
+
+        Logger.recordOutput("Vision/PathfindToPose", VisionConstants.getCenter());
+        Logger.recordOutput("Vision/AimPose", VisionConstants.getAimPose());
+
         if (VisionConstants.aprilTagLayout != null && inputs.hasTarget) {
             VisionConstants.aprilTagLayout
                 .getTagPose(inputs.targetId)

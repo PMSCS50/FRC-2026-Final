@@ -61,7 +61,7 @@ public class FuelPhysicsSim {
 
   private static final double GRAVITY = 9.81; // m/s^2
   private static final double AIR_DENSITY = 1.225; // kg/m^3, standard atmosphere
-  private static final double BALL_MASS = 0.226796; // kg, game manual 5.10.1 midpoint
+  private static final double BALL_MASS = 0.215; // kg, game manual 5.10.1 midpoint
   private static final double BALL_DIAMETER = 0.1501; // m, game manual 5.10.1
   private static final double BALL_RADIUS = BALL_DIAMETER / 2.0;
   private static final double BALL_CROSS_AREA = Math.PI * BALL_RADIUS * BALL_RADIUS;
@@ -380,8 +380,8 @@ public class FuelPhysicsSim {
     public boolean ccdEnabled = true;
     public boolean velocityDependentCOR = true;
     public boolean spinDecayEnabled = true;
-    public int solverIterations = 4;
-    public int subticks = 5;
+    public int solverIterations = 1;
+    public int subticks = 2;
     public double spinDecayTau = 3.0; // seconds
     public double sleepVelocityThreshold = 0.01; // m/s
     public int sleepFrameThreshold = 10; // consecutive frames
