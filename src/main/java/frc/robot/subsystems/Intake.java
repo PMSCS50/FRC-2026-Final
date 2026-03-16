@@ -39,6 +39,12 @@ public class Intake extends SubsystemBase {
     
 
 
+// Add to pivotMotorConfig in Intake constructor — replace current closedLoop config:
+
+
+// Add this method to Intake.java:
+
+
     //for starting the intake
     private final Timer initTimer = new Timer();
     public boolean initializing = false;
@@ -52,10 +58,10 @@ public class Intake extends SubsystemBase {
             .smartCurrentLimit(40).closedLoopRampRate(1);
         pivotMotorConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(0, 0, 0)
-            .outputRange(-1, 1)
-            .feedForward.kV(1.0 / kIntakeMotorFreeSpeedRps / 60);
-    
+            .pid(0.1, 0, 0) 
+            .outputRange(-0.5, 0.5)  
+            .positionWrappingEnabled(false);
+        
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         intakeMotorConfig
@@ -109,6 +115,8 @@ public class Intake extends SubsystemBase {
     public void spinPivotDuty(double speed) {
         pivotMotor.set(speed);
     }
+
+
     
     
     public SparkMaxConfig getPivotMotorConfig() {
@@ -125,6 +133,21 @@ public class Intake extends SubsystemBase {
 
     public RelativeEncoder getIntakeEncoder() {
         return intakeEncoder;
+    }
+    public double getPivotPosition() {
+        return pivotEncoder.getPosition();
+    }
+
+    public void resetPivot() {
+        pivotEncoder.setPosition(0);
+    }
+
+    public void goToPosition(double targetRotations) {
+        pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kPosition);
+    }
+
+    public boolean atPosition(double targetRotations, double toleranceRotations) {
+        return Math.abs(getPivotPosition() - targetRotations) < toleranceRotations;
     }
 
 

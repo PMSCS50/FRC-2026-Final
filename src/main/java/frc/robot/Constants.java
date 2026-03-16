@@ -5,16 +5,21 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -41,24 +46,73 @@ public final class Constants {
       //   public static final double slideSpeed = 0.6;
       // }
 
-      public static final class VisionConstants{
-        public static final Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
-        public static final double distanceToTag = 1;
-        public static final AprilTagFieldLayout aprilTagLayout;
-        static {
-            AprilTagFieldLayout layout = null;
-            try {
-                layout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
-            } catch (Exception e) {
-                DriverStation.reportError("Failed to load AprilTag layout: " + e.getMessage(), false);
-            }
-            aprilTagLayout = layout;
-}
+      public static class VisionConstants{
+        
+        public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
+        public static double distanceToTag = 1;
+        public static AprilTagFieldLayout aprilTagLayoutWelded = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+        public static AprilTagFieldLayout aprilTagLayoutAndymark = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
+
+        public static String camera0Name = "camera0_2585";
+        public static String camera1Name = "camera1_2585";
+
+        public static Transform3d robotToCamera1 = new Transform3d(
+          new Translation3d(0.25, -.072, 0.09),
+          new Rotation3d(0, Math.toRadians(10), 0)
+        );
+
+        // Hub Positions
         private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-        private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d. fromDegrees(0));
+        private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
         public static Pose2d getHubPose() {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
         }
+
+        public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
+        public static LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
+        public static LoggedNetworkNumber centerRot = new LoggedNetworkNumber("Vision/Center/Rot", 0.0);
+
+        public static Pose2d getCenter() {
+            return new Pose2d(
+                centerX.get(),
+                centerY.get(),
+                Rotation2d.fromDegrees(centerRot.get())
+            );
+        }
+
+        public static LoggedNetworkNumber aimX = new LoggedNetworkNumber("Vision/Aimpose/X", 2);
+        public static LoggedNetworkNumber aimY = new LoggedNetworkNumber("Vision/Aimpose/Y", 2);
+        public static LoggedNetworkNumber aimRot = new LoggedNetworkNumber("Vision/Aimpose/Rot", 0.0);
+
+        public static Pose2d getAimPose() {
+            return new Pose2d(
+                aimX.get(),
+                aimY.get(),
+                Rotation2d.fromDegrees(aimRot.get())
+            );
+        }
+
+        // Basic filtering thresholds
+        public static double maxAmbiguity = 0.3;
+        public static double maxZError = 0.75;
+
+        // Standard deviation baselines, for 1 meter distance and 1 tag
+        // (Adjusted automatically based on distance and # of tags)
+        public static double linearStdDevBaseline = 0.02; // Meters
+        public static double angularStdDevBaseline = 0.06; // Radians
+
+        // Standard deviation multipliers for each camera
+        // (Adjust to trust some cameras more than others)
+        public static double[] cameraStdDevFactors =
+          new double[] {
+            1.0, // Camera 0
+            1.0 // Camera 1
+          };
+
+        // Multipliers to apply for MegaTag 2 observations
+        public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
+        public static double angularStdDevMegatag2Factor =
+        Double.POSITIVE_INFINITY; // No rotation data available
 
       }
       // values of 20
@@ -72,6 +126,9 @@ public final class Constants {
         public static final double kP = 0;
         public static final double kI = 0;
         public static final double kD = 0;
+
+        public static final double kPivotSetpointA = 0.0;  
+        public static final double kPivotSetpointB = 10.0;  
       }
 
       // values of 30

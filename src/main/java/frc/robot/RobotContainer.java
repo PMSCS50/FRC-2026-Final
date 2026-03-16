@@ -16,6 +16,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.filter.Debouncer;
 //import frc.robot.commands.ChaseTagCommand;
 import frc.robot.commands.*;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -75,6 +76,10 @@ public class RobotContainer {
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
 
+    //Go to Pathfinder.java for more information.
+    //THIS IS NOT FOR REBUILT. It is something potentially for next year and years to come.
+    //Go to line 
+    private final Pathfinder pathfinder = new Pathfinder(3,3,2 * Math.PI, 2 * Math.PI);
 
     private final Shooter shooter = new Shooter(vision);
     private final Intake intake = new Intake();
@@ -247,8 +252,21 @@ public class RobotContainer {
         // subsystems controller | left and right bumpers | subsystem RunCommand()
         // ************************************************************************************
 
-    }
+        
+        /*
+        Here, we use Pathfinder to create a path to a specific Pose2d, even on teleop.
+        Then it will follow the path as long as the button is held
+        Releasing button will stop the path following and allow for manual control again.
+        We can basically create waypoints on the field and map them to certain buttons.
+        This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
+            we can just make a button for it and use Pathfinder to get there.
 
+        In the context of REBUILT, we could use this in teleop 
+        */
+        joystick.rightTrigger().whileTrue(pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
+        
+        
+    }
 
 
 

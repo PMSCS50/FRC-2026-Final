@@ -178,5 +178,5 @@ public class VisionSubsystem extends SubsystemBase {
         double rpm = rps * 60;
         SmartDashboard.putNumber("Shooter rpm regression", rpm);
         return rpm;
-}
+    }
 }
