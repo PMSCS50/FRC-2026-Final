@@ -111,7 +111,6 @@ public class    Shooter extends SubsystemBase {
 
     @Override
     public void periodic(
-        // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity)
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
         
     ) {}
@@ -129,14 +128,14 @@ public class    Shooter extends SubsystemBase {
     public void setShooterSpeed(double speed) {
         shooterMotor1.setControl(motorControl.withOutput(speed));
         kicker1.set(1);
-        SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        // SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
+        // SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
    
 
      public void rpmControl(double distance) {
-        double rpm = vision.rpsFromDistanceRegression(distance);
+        double rpm = vision.rpmFromDistanceRegression(distance);
         double rps = rpm / 60;
         shooterMotor1.setControl(velocityRequest.withVelocity(rps));
         SmartDashboard.putNumber("Target RPM", rpm);
@@ -144,17 +143,9 @@ public class    Shooter extends SubsystemBase {
         SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
-    // public void rpmControl(double distance) {
-    //     double rpm = vision.rpmFromDistance(distance);
-    //     double percentOutput = rpm / 6000.0;
-    //     shooterMotor1.setControl(motorControl.withOutput(percentOutput));
-    //     SmartDashboard.putNumber("Target RPM", rpm);
-    //     SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
-    //     SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
-    //     SmartDashboard.putNumber("Distance", vision.getDistance());
-    // }
+
     public void rpmControlDuty(int id) {
-        double rpm = vision.rpmFromDistance(vision.getDistance(id));
+        double rpm = vision.rpmFromDistanceRegression(vision.getDistance(id));
         double percentOutput = rpm / 2500.0;
         shooterMotor1.setControl(motorControl.withOutput(percentOutput));
         
@@ -168,7 +159,7 @@ public class    Shooter extends SubsystemBase {
 
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = vision.rpsFromDistanceRegression(vision.getDistance(id));
+        double targetRPM = vision.rpmFromDistanceRegression(vision.getDistance(id));
         return Math.abs(currentRPM - targetRPM) < 200.0;
         
     }
@@ -176,7 +167,7 @@ public class    Shooter extends SubsystemBase {
     public boolean atCorrectRPMFixed(double distance) {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60;
-        double targetRPM = vision.rpsFromDistanceRegression(distance);
+        double targetRPM = vision.rpmFromDistanceRegression(distance);
         return Math.abs(currentRPM - targetRPM) < 200.0;
     }
 

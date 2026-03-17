@@ -164,8 +164,8 @@ public class VisionSubsystem extends SubsystemBase {
         double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
         shooterVelocity *= dragFactor;
         double wheelRadius = 0.0508;
-        double c = 0.5;
-        double rpm = c * (shooterVelocity * 60.0) / (2.0 * Math.PI * wheelRadius);
+        double c = 1.06;
+        double rpm = c * (shooterVelocity * 60.0) / (Math.PI * wheelRadius);
         SmartDashboard.putNumber("Shooter rpm", rpm);
         return rpm;
     }
