@@ -42,6 +42,7 @@ import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.Pathfinder;
 import frc.robot.Constants.VisionConstants;
 import edu.wpi.first.cameraserver.CameraServer;
+import frc.firecontrol.FuelPhysicsSim;
 
 public class RobotContainer {
 
@@ -87,6 +88,7 @@ public class RobotContainer {
     private final Shooter shooter;
     private final Climb climb;
     private final VisionSimSystem vision;
+    public final FuelPhysicsSim ballSim;
     
     
 
@@ -114,6 +116,7 @@ public class RobotContainer {
         
         intake = new Intake();
         climb = new Climb();
+        ballSim = new FuelPhysicsSim("Sim/Fuel");
         
         // CameraServer.startAutomaticCapture();        
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
@@ -318,12 +321,13 @@ public class RobotContainer {
             )
         );
 
-        joystick.leftTrigger().whileTrue(new AimToPose(
+        joystick.leftTrigger().whileTrue(new AimAndShoot2(
             drivetrain, 
-            vision, 
+            vision,
             shooter,
             () -> joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper,
-            () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper));
+            () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper, 
+            ballSim));
         // ************************************************************************************
         //rollers for subsystems
         // ************************************************************************************

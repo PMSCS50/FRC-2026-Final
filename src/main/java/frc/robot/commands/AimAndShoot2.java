@@ -6,6 +6,8 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
 
+import static edu.wpi.first.units.Units.Degree;
+
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -14,7 +16,11 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.VisionConstants;
+import frc.firecontrol.FuelPhysicsSim;
 
 // Aims to the hub and shoots with a velocity based on the distance to the hub. Aiming works in sim, shooting has not been tested.
 public class AimAndShoot2 extends Command {
@@ -25,6 +31,7 @@ public class AimAndShoot2 extends Command {
     private final PIDController rotController;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
+    private FuelPhysicsSim ballSim;
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
         .withDeadband(0.1)
@@ -35,13 +42,15 @@ public class AimAndShoot2 extends Command {
             VisionSimSystem vision, 
             Shooter shooter, 
             DoubleSupplier xSupplier,
-            DoubleSupplier ySupplier) {
+            DoubleSupplier ySupplier,
+            FuelPhysicsSim ballSim) {
     
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.shooter = shooter;
         this.xSupplier = xSupplier;
         this.ySupplier = ySupplier;
+        this.ballSim = ballSim;
 
         rotController = new PIDController(10, .05, .005);
         rotController.enableContinuousInput(-Math.PI, Math.PI);
@@ -51,7 +60,7 @@ public class AimAndShoot2 extends Command {
 
     @Override
     public void initialize() {
-        rotController.setTolerance(0.00001);
+        rotController.setTolerance(2);
         rotController.setSetpoint(0);
     }
 
@@ -60,6 +69,19 @@ public class AimAndShoot2 extends Command {
         double theta = -vision.getYawToPose(VisionConstants.getHubPose());
         double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
         double rotSpeed = rotController.calculate(theta);
+
+        double linVelocity = vision.getShooterVelocity(distance) * .2;
+        double xVelocity = linVelocity * Math.cos(1.22173);
+        double yVelocity = linVelocity * Math.sin(1.22173);
+        Rotation2d robotHeading = drivetrain.getPose().getRotation();
+        
+        Translation3d shooterVelocity = new Translation3d(
+            xVelocity * Math.cos(robotHeading.getRadians()),
+            xVelocity * Math.sin(robotHeading.getRadians()),
+            yVelocity
+        );
+
+        Translation3d drivePose = new Translation3d(xSupplier.getAsDouble(), ySupplier.getAsDouble(), 0);
 
         // Driver still controls translation, command controls rotation
         drivetrain.setControl(
@@ -70,12 +92,7 @@ public class AimAndShoot2 extends Command {
         );
         
         if (rotController.atSetpoint()) {
-            shooter.rpmControl(distance);
-            if (shooter.atCorrectRPM(distance)) {
-                shooter.spinKickers();
-            }
-        } else {
-            shooter.stop();
+            ballSim.launchBall(drivePose, shooterVelocity, vision.rpmFromDistance(distance));
         }
     }
 

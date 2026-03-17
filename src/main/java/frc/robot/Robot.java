@@ -49,7 +49,7 @@ public class Robot extends LoggedRobot {
   private final boolean kUseLimelight = false;
 
   //private Logger Logger;
-  FuelPhysicsSim ballSim = new FuelPhysicsSim("Sim/Fuel");
+  //FuelPhysicsSim ballSim = new FuelPhysicsSim("Sim/Fuel");
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "MyProject");
@@ -65,8 +65,8 @@ public class Robot extends LoggedRobot {
 
     Pathfinding.setPathfinder(new LocalADStarAK());
     m_robotContainer = new RobotContainer();
-    ballSim.enable();
-    ballSim.placeFieldBalls();  
+    m_robotContainer.ballSim.enable();
+    m_robotContainer.ballSim.placeFieldBalls();  
   }
 
   @Override
@@ -162,15 +162,14 @@ public class Robot extends LoggedRobot {
         new Pose2d(2.0, 2.0, Rotation2d.fromDegrees(0)) // x, y, heading
     );
 
-    ballSim.configureRobot(.858, .858, 1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
+    m_robotContainer.ballSim.configureRobot(.858, .858, 1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
 
   }
 
     
   @Override
   public void simulationPeriodic() {
-    ballSim.configureRobot(.858, .858, 1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
-    ballSim.tick();              // runs physics, publishes to NT
+    m_robotContainer.ballSim.tick();              // runs physics, publishes to NT
     field.setRobotPose(m_robotContainer.drivetrain.getPose());
  }
  
