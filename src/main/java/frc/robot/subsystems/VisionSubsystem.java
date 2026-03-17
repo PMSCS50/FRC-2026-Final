@@ -80,12 +80,6 @@ public class VisionSubsystem extends SubsystemBase {
         }
 
         targetId = result.getBestTarget().getFiducialId();
-
-        SmartDashboard.putNumber("Vision Target ID", targetId);
-        SmartDashboard.putNumber("Vision X", getX(targetId));
-        SmartDashboard.putNumber("Vision Y", getY(targetId));
-        SmartDashboard.putNumber("Vision Yaw", getYawRad(targetId));
-        SmartDashboard.putNumber("Vision Distance", getDistance(targetId));
     }
 
     // ************************
@@ -133,10 +127,10 @@ public class VisionSubsystem extends SubsystemBase {
         return tag != null ? Math.hypot(tag.getX(), tag.getY()) : 0.0;
     }
 
-    public double getDistance2(int id) {
-        Transform3d tag = tagTransforms.get(id);
-        return tag != null ? Math.hypot(tag.getX() + 0.6, tag.getY()) : 0.0;
-    }
+    // public double getDistance2(int id) {
+    //     Transform3d tag = tagTransforms.get(id);
+    //     return tag != null ? Math.hypot(tag.getX() + 0.6, tag.getY()) : 0.0;
+    // }
 
     public double getYawToPose(Pose2d targetPose) {
         if (drivetrain.getPose() == null) return 0.0;
@@ -155,22 +149,22 @@ public class VisionSubsystem extends SubsystemBase {
     double shooterHeight = 0.508;
     double phi = Math.toRadians(70);
 
-    public double rpmFromDistance(double distance) {
-        double y = 1.8288 - shooterHeight;
-        double shooterVelocity = Math.sqrt(
-            (9.807 * distance * distance) /
-            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - y))
-        );
-        double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
-        shooterVelocity *= dragFactor;
-        double wheelRadius = 0.0508;
-        double c = 1.06;
-        double rpm = c * (shooterVelocity * 60.0) / (Math.PI * wheelRadius);
-        SmartDashboard.putNumber("Shooter rpm", rpm);
-        return rpm;
-    }
+    // public double rpmFromDistance(double distance) {
+    //     double y = 1.8288 - shooterHeight;
+    //     double shooterVelocity = Math.sqrt(
+    //         (9.807 * distance * distance) /
+    //         (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - y))
+    //     );
+    //     double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
+    //     shooterVelocity *= dragFactor;
+    //     double wheelRadius = 0.0508;
+    //     double c = 1.06;
+    //     double rpm = c * (shooterVelocity * 60.0) / (Math.PI * wheelRadius);
+    //     SmartDashboard.putNumber("Shooter rpm", rpm);
+    //     return rpm;
+    // }
 
-    public double rpsFromDistanceRegression(double distance) {
+    public double rpmFromDistanceRegression(double distance) {
         double rps = -0.3039109023 * distance * distance 
                 + 6.81380687 * distance 
                 + 40.82402705 - .5;

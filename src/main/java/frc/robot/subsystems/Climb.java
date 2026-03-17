@@ -50,9 +50,8 @@ public class Climb extends SubsystemBase {
     @Override
     public void periodic() {
         limitSwitchHook.get();
-        // SmartDashboard.putBoolean("Climb limit switch", limitSwitchHook.get());
-        // SmartDashboard.putBoolean("Climb limit switch", limitSwitchTop.get());
-        // SmartDashboard.putBoolean("Climb limit switch", limitSwitchBottom.get());
+        limitSwitchBottom.get();
+        limitSwitchTop.get();
     }
 
    public void pull(){

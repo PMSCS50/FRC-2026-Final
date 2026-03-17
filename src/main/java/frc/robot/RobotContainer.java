@@ -108,6 +108,8 @@ public class RobotContainer {
 
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
+        CameraServer.startAutomaticCapture();
+
         configureBindings();
     }
 
