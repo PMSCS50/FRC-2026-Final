@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.VisionConstants;
 import frc.firecontrol.FuelPhysicsSim;
+import edu.wpi.first.wpilibj.Timer;
 
 // Aims to the hub and shoots with a velocity based on the distance to the hub. Aiming works in sim, shooting has not been tested.
 public class AimAndShoot2 extends Command {
@@ -32,6 +33,9 @@ public class AimAndShoot2 extends Command {
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
     private FuelPhysicsSim ballSim;
+
+    private final Timer shootTimer = new Timer();
+    private static final double SHOOT_COOLDOWN = 0.00000001;
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
         .withDeadband(0.1)
@@ -62,6 +66,7 @@ public class AimAndShoot2 extends Command {
     public void initialize() {
         rotController.setTolerance(2);
         rotController.setSetpoint(0);
+        shootTimer.restart();
     }
 
     @Override
@@ -70,9 +75,9 @@ public class AimAndShoot2 extends Command {
         double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
         double rotSpeed = rotController.calculate(theta);
 
-        double linVelocity = vision.getShooterVelocity(distance) * .2;
-        double xVelocity = linVelocity * Math.cos(1.22173);
-        double yVelocity = linVelocity * Math.sin(1.22173);
+        double linVelocity = vision.getShooterVelocity(distance) * 1.5;
+        double xVelocity = linVelocity * Math.cos(1.39626);
+        double yVelocity = linVelocity * Math.sin(1.39626);
         Rotation2d robotHeading = drivetrain.getPose().getRotation();
         
         Translation3d shooterVelocity = new Translation3d(
@@ -81,7 +86,9 @@ public class AimAndShoot2 extends Command {
             yVelocity
         );
 
-        Translation3d drivePose = new Translation3d(xSupplier.getAsDouble(), ySupplier.getAsDouble(), 0);
+        Translation3d drivePose = new Translation3d(drivetrain.getPose().getX(), drivetrain.getPose().getY(), 0);
+        Translation3d drivePose1 = new Translation3d(drivetrain.getPose().getX(), drivetrain.getPose().getY(), 2*Math.PI/3);
+        Translation3d drivePose2 = new Translation3d(drivetrain.getPose().getX(), drivetrain.getPose().getY(), 4*Math.PI/3);
 
         // Driver still controls translation, command controls rotation
         drivetrain.setControl(
@@ -91,8 +98,11 @@ public class AimAndShoot2 extends Command {
                 .withRotationalRate(rotSpeed)
         );
         
-        if (rotController.atSetpoint()) {
+        if (rotController.atSetpoint() && shootTimer.hasElapsed(SHOOT_COOLDOWN)) {
             ballSim.launchBall(drivePose, shooterVelocity, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose1, shooterVelocity, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose2, shooterVelocity, vision.rpmFromDistance(distance));
+            shootTimer.restart();
         }
     }
 

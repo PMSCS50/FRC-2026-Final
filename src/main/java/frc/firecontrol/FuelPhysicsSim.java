@@ -184,7 +184,7 @@ public class FuelPhysicsSim {
   private static final int GRID_ROWS = (int) Math.ceil(FIELD_WIDTH / CELL_SIZE);
 
   // Max balls
-  private static final int MAX_BALLS = 2000;
+  private static final int MAX_BALLS = 100000;
 
   // Bump ramp segments (XZ line segments extruded along Y)
 
