@@ -6,7 +6,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
 
-import static edu.wpi.first.units.Units.Degree;
+//import static edu.wpi.first.units.Units.Degree;
 
 import java.util.function.DoubleSupplier;
 
@@ -35,7 +35,7 @@ public class AimAndShoot2 extends Command {
     private FuelPhysicsSim ballSim;
 
     private final Timer shootTimer = new Timer();
-    private static final double SHOOT_COOLDOWN = 0.00000001;
+    private static final double SHOOT_COOLDOWN = .05;
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
         .withDeadband(0.1)
@@ -74,21 +74,97 @@ public class AimAndShoot2 extends Command {
         double theta = -vision.getYawToPose(VisionConstants.getHubPose());
         double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
         double rotSpeed = rotController.calculate(theta);
+        double aimAngle = Math.PI/3;
 
         double linVelocity = vision.getShooterVelocity(distance) * 1.5;
-        double xVelocity = linVelocity * Math.cos(1.39626);
-        double yVelocity = linVelocity * Math.sin(1.39626);
-        Rotation2d robotHeading = drivetrain.getPose().getRotation();
+        double xVelocity = linVelocity * Math.cos(aimAngle);
+        double yVelocity = linVelocity * Math.sin(aimAngle);
+        double robotHeading = drivetrain.getPose().getRotation().getRadians();
+        double robotHeading2 = robotHeading + 1 * Math.PI/6;
+        double robotHeading3 = robotHeading + 2 * Math.PI/6;
+        double robotHeading4 = robotHeading + 3 * Math.PI/6;
+        double robotHeading5 = robotHeading + 4 * Math.PI/6;
+        double robotHeading6 = robotHeading + 5 * Math.PI/6;
+        double robotHeading7 = robotHeading + 6 * Math.PI/6;
+        double robotHeading8 = robotHeading + 7 * Math.PI/6;
+        double robotHeading9 = robotHeading + 8 * Math.PI/6;
+        double robotHeading10 = robotHeading + 9 * Math.PI/6;
+        double robotHeading11 = robotHeading + 10 * Math.PI/6;
+        double robotHeading12 = robotHeading + 11 * Math.PI/6;
         
         Translation3d shooterVelocity = new Translation3d(
-            xVelocity * Math.cos(robotHeading.getRadians()),
-            xVelocity * Math.sin(robotHeading.getRadians()),
+            xVelocity * Math.cos(robotHeading),
+            xVelocity * Math.sin(robotHeading),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity1 = new Translation3d(
+            xVelocity * Math.cos(robotHeading2),
+            xVelocity * Math.sin(robotHeading2),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity2 = new Translation3d(
+            xVelocity * Math.cos(robotHeading3),
+            xVelocity * Math.sin(robotHeading3),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity3 = new Translation3d(
+            xVelocity * Math.cos(robotHeading4),
+            xVelocity * Math.sin(robotHeading4),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity4 = new Translation3d(
+            xVelocity * Math.cos(robotHeading5),
+            xVelocity * Math.sin(robotHeading5),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity5 = new Translation3d(
+            xVelocity * Math.cos(robotHeading6),
+            xVelocity * Math.sin(robotHeading6),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity6 = new Translation3d(
+            xVelocity * Math.cos(robotHeading7),
+            xVelocity * Math.sin(robotHeading7),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity7 = new Translation3d(
+            xVelocity * Math.cos(robotHeading8),
+            xVelocity * Math.sin(robotHeading8),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity8 = new Translation3d(
+            xVelocity * Math.cos(robotHeading9),
+            xVelocity * Math.sin(robotHeading9),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity9 = new Translation3d(
+            xVelocity * Math.cos(robotHeading10),
+            xVelocity * Math.sin(robotHeading10),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity10 = new Translation3d(
+            xVelocity * Math.cos(robotHeading11),
+            xVelocity * Math.sin(robotHeading11),
+            yVelocity
+        );
+
+        Translation3d shooterVelocity11 = new Translation3d(
+            xVelocity * Math.cos(robotHeading12),
+            xVelocity * Math.sin(robotHeading12),
             yVelocity
         );
 
         Translation3d drivePose = new Translation3d(drivetrain.getPose().getX(), drivetrain.getPose().getY(), 0);
-        Translation3d drivePose1 = new Translation3d(drivetrain.getPose().getX(), drivetrain.getPose().getY(), 2*Math.PI/3);
-        Translation3d drivePose2 = new Translation3d(drivetrain.getPose().getX(), drivetrain.getPose().getY(), 4*Math.PI/3);
 
         // Driver still controls translation, command controls rotation
         drivetrain.setControl(
@@ -100,8 +176,17 @@ public class AimAndShoot2 extends Command {
         
         if (rotController.atSetpoint() && shootTimer.hasElapsed(SHOOT_COOLDOWN)) {
             ballSim.launchBall(drivePose, shooterVelocity, vision.rpmFromDistance(distance));
-            ballSim.launchBall(drivePose1, shooterVelocity, vision.rpmFromDistance(distance));
-            ballSim.launchBall(drivePose2, shooterVelocity, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity1, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity2, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity3, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity4, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity5, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity6, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity7, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity8, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity9, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity10, vision.rpmFromDistance(distance));
+            ballSim.launchBall(drivePose, shooterVelocity11, vision.rpmFromDistance(distance));
             shootTimer.restart();
         }
     }
