@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "Left - Depot - Depot Shoot"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Left - Depot - Depot Shoot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeOn"
+                }
+              }
+            ]
           }
         },
         {

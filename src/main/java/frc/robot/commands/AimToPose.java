@@ -57,7 +57,7 @@ public class AimToPose extends Command{
     
         this.drivetrain = drivetrain;
         this.vision = vision;
-        this.targetPose = aprilTagLayout.getTagPose(tagId).toPose2d();
+        //this.targetPose = aprilTagLayout.getTagPose(tagId).toPose3d();
         this.xSupplier = xSupplier;
         this.ySupplier = ySupplier;
 

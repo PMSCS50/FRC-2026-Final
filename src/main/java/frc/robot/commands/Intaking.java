@@ -10,11 +10,10 @@ import frc.robot.subsystems.vision.VisionSubsystem;
 public class Intaking extends Command{
 
     private final Intake intake;
-    private final VisionSubsystem vision;
+    //private final VisionSubsystem vision;
 
-    public Intaking (Intake intake, CommandSwerveDrivetrain drivetrain, VisionSubsystem vision) {
+    public Intaking (Intake intake, CommandSwerveDrivetrain drivetrain) {
         this.intake = intake;
-        this.vision = vision;
         addRequirements(intake);
     }
 

@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -84,7 +85,7 @@ public class RobotContainer {
     private final CommandXboxController subjoystick = new CommandXboxController(1);
 
     // private final L3Climb oliverClimb = new L3Climb();
-    private final Intake intake;
+    public final Intake intake;
     private final Shooter shooter;
     private final Climb climb;
     private final VisionSimSystem vision;
@@ -133,6 +134,9 @@ public class RobotContainer {
         // NamedCommands.registerCommand("L1Ascend", new L1Ascend(oliverClimb));
         // NamedCommands.registerCommand("L1Descend", new L1Descend(oliverClimb));
         NamedCommands.registerCommand("Shoot", new AutoShoot(drivetrain, shooter, vision, ballSim));
+        NamedCommands.registerCommand("Shoot", new AutoShoot(drivetrain, shooter, vision, ballSim));
+        NamedCommands.registerCommand("IntakeOn", new Intaking(intake, drivetrain));
+
         configureBindings();
 
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
@@ -224,58 +228,14 @@ public class RobotContainer {
         subjoystick.rightBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-0.8), intake));
         subjoystick.rightBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        // the constructor is correct i dont know wtf this thing is on about.
         // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(.03), intake));
         // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
 
-        
-        
-        /* 
-
-        drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() -> {
-                double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
-                double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
-                double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
-
-                if (joystick.a().getAsBoolean() && vision.hasTargets() && vision.getTargetID() == 18) {
-                    double kp = 0.03;
-
-                    turn = - kp * MaxAngularRate * Math.toRadians(vision.getTargetYaw()); 
-                }
-                return drive
-                    .withVelocityX(forward)
-                    .withVelocityY(translation)
-                    .withRotationalRate(turn);
-            })
-
-        );
-        */
         //joystick.x().onTrue(new PV_Align(drivetrain, vision));
-
-        
-        // drivetrain.setDefaultCommand(
-        //     drivetrain.applyRequest(() -> {
-        //         double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
-        //         double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
-        //         double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * 1.5;
-        //         if (joystick.a().getAsBoolean() && vision.hasTargets()) {
-        //             double kp = 0.03;
-        //             turn = -vision.getTargetYaw() * kp * MaxAngularRate;
-        //         }
-            
-        //         return drive
-        //             .withVelocityX(forward)
-        //             .withVelocityY(translation)
-        //             .withRotationalRate(turn);
-                
-                
-        //     })
-        // );
-
         //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+
         joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
         if(joystick.getLeftX() > 0.5){
@@ -283,18 +243,6 @@ public class RobotContainer {
         } else {
             joystick.leftStick().onTrue(new RunCommand(() -> this.setSpeed(0.5)));
         }
-
-        // align to reef tag
-        //joystick.leftStick().onTrue(new AlignToReefTagRelative(drivetrain, false));
-        // subjoystick.a().whileTrue(
-        //     new RunCommand(() -> {
-        //         if (climb.isPressed()) {
-        //             climb.runClimb();
-        //         } else {
-        //             climb.stopClimb();
-        //         }
-        //     }, climb)
-        // );
         
         // subjoystick.b().whileTrue(new RunCommand(() -> climb.runClimb(), climb));
         // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb(), climb));

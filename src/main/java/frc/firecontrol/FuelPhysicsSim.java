@@ -1029,6 +1029,24 @@ public class FuelPhysicsSim {
     }
   }
 
+  public void removeNearestGroundBall(Translation2d position) {
+    SimBall nearest = null;
+    double nearestDist = Double.MAX_VALUE;
+
+    for (SimBall ball : balls) {
+        if (ball.pos.getZ() > BALL_RADIUS + 0.1) continue; // skip airborne
+        double dist = ball.pos.toTranslation2d().getDistance(position);
+        if (dist < nearestDist) {
+            nearestDist = dist;
+            nearest = ball;
+        }
+    }
+
+    if (nearest != null) {
+        nearest.outOfBounds = true; // FuelPhysicsSim removes flagged balls each tick
+    }
+  }
+
 
 
   /** Compute acceleration: gravity + drag + Magnus lift. Magnus only kicks in when airborne. */

@@ -107,7 +107,8 @@ public class Intake extends SubsystemBase {
     }
     
     public void spinIntake(double speed) {
-        intakeMotor.set(speed); 
+        intakeMotor.set(speed);
+        
     }
     
     public void stopIntake() {
@@ -116,6 +117,10 @@ public class Intake extends SubsystemBase {
 
     public void deployIntake(double speed) {
         pivotMotor.set(speed);
+    }
+
+    public boolean isRunning() {
+        return intakeMotor.get() != 0;
     }
 
  

@@ -162,6 +162,12 @@ public class Robot extends LoggedRobot {
     );
 
     m_robotContainer.ballSim.configureRobot(.858, .858, .1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
+    m_robotContainer.ballSim.addIntakeZone(
+    0.3, 0.5,           // 30-50cm in front of robot center
+    -0.2, 0.2,          // 20cm wide
+    () -> m_robotContainer.intake.isRunning()
+    );  // only active when intake is on
+    m_robotContainer.ballSim.placeFieldBalls();
 
   }
 
