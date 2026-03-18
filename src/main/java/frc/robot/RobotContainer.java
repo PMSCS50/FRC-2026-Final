@@ -119,8 +119,6 @@ public class RobotContainer {
         ballSim = new FuelPhysicsSim("Sim/Fuel");
         
         // CameraServer.startAutomaticCapture();        
-        autoChooser = AutoBuilder.buildAutoChooser("Tests");
-        SmartDashboard.putData("Auto Mode", autoChooser);
         
         // NamedCommands.registerCommand("alignToTag", new PV_Align(drivetrain, vision, vision.getBestTarget()));
         // NamedCommands.registerCommand("climbAscend", new ClimbPull(climb));
@@ -134,8 +132,11 @@ public class RobotContainer {
         // //for olivers climb if we implement it
         // NamedCommands.registerCommand("L1Ascend", new L1Ascend(oliverClimb));
         // NamedCommands.registerCommand("L1Descend", new L1Descend(oliverClimb));
-        //NamedCommands.registerCommand("Shoot", new AimAndShoot2(drivetrain, vision, shooter));
+        NamedCommands.registerCommand("Shoot", new AutoShoot(drivetrain, shooter, vision, ballSim));
         configureBindings();
+
+        autoChooser = AutoBuilder.buildAutoChooser("Tests");
+        SmartDashboard.putData("Auto Mode", autoChooser);
     }
 
     
@@ -228,8 +229,6 @@ public class RobotContainer {
         // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
-        //yo bro gotta eat dinner ill be back in 30 min ok got it
-
 
         
         
@@ -321,7 +320,7 @@ public class RobotContainer {
             )
         );
 
-        joystick.leftTrigger().whileTrue(new AimAndShoot2(
+        joystick.leftTrigger().whileTrue(new AimAndShoot(
             drivetrain, 
             vision,
             shooter,

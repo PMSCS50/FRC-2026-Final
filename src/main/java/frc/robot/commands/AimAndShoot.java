@@ -1,177 +1,136 @@
-// package frc.robot.commands;
+package frc.robot.commands;
 
-// import com.ctre.phoenix6.swerve.SwerveRequest;
-// import edu.wpi.first.math.controller.PIDController;
-// // import frc.robot.generated.TunerConstants;
-// // import edu.wpi.first.wpilibj.Timer;
-// // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-// import edu.wpi.first.wpilibj2.command.Command;
-// // import com.ctre.phoenix6.swerve.SwerveRequest;
-// import edu.wpi.first.math.kinematics.ChassisSpeeds;
-// import org.photonvision.targeting.PhotonPipelineResult;
-// import org.photonvision.targeting.PhotonTrackedTarget;
-// import edu.wpi.first.math.geometry.Translation3d;
-// import edu.wpi.first.math.geometry.Rotation2d;
-// // import frc.robot.Constants;
-// import frc.robot.subsystems.CommandSwerveDrivetrain;
-// import frc.robot.subsystems.VisionSubsystem;
-// import frc.robot.subsystems.Shooter;
-// // import frc.robot.Constants.ShooterConstants;
-// import java.lang.Math;
-// import java.util.function.DoubleSupplier;
-// import java.util.Optional;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.vision.VisionSimSystem;
+import frc.robot.subsystems.vision.VisionSubsystem;
 
+//import static edu.wpi.first.units.Units.Degree;
 
-// public class AimAndShoot extends Command {
+import java.util.function.DoubleSupplier;
 
-//     private final CommandSwerveDrivetrain drivetrain;
-//     private final VisionSubsystem vision;
-//     private final Shooter shooter;
+import org.littletonrobotics.junction.Logger;
 
-//     private final PIDController rotController;
-//     private final DoubleSupplier xInput;
-//     private final DoubleSupplier yInput;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 
-//     private double speedLimiter = 0.5;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.VisionConstants;
+import frc.firecontrol.FuelPhysicsSim;
+import edu.wpi.first.wpilibj.Timer;
 
-//     private double vx;
-//     private double vy;
+import edu.wpi.first.math.MatBuilder;
 
-//     private final SwerveRequest.RobotCentric drive =
-//             new SwerveRequest.RobotCentric();
+// Aims to the hub and shoots with a velocity based on the distance to the hub. Aiming works in sim, shooting has not been tested.
+public class AimAndShoot extends Command {
 
-//     public AimAndShoot(
-//             CommandSwerveDrivetrain drivetrain,
-//             VisionSubsystem vision,
-//             Shooter shooter,
-//             DoubleSupplier xInput,
-//             DoubleSupplier yInput
-//         ) {
-//         this.drivetrain = drivetrain;
-//         this.vision = vision;
-//         this.shooter = shooter;
-//         this.xInput = xInput;
-//         this.yInput = yInput;
+    private CommandSwerveDrivetrain drivetrain;
+    private Shooter shooter;
+    private VisionSimSystem vision;
+    private final PIDController rotController;
+    private final DoubleSupplier xSupplier;
+    private final DoubleSupplier ySupplier;
+    private FuelPhysicsSim ballSim;
 
-//         rotController = new PIDController(
-//                 1, 0, 0
-//         );
+    private final Timer shootTimer = new Timer();
+    private static final double SHOOT_COOLDOWN = .25;
 
-//         rotController.enableContinuousInput(-Math.PI, Math.PI);
-
-//         addRequirements(drivetrain, shooter);
-//     }
-
-
-//     @Override
-//     public void initialize() {      
-          
-//         rotController.setTolerance(0.07);
-//     }
-
-//     @Override
-//     public void execute() {
-//         vx = xInput.getAsDouble() * speedLimiter;
-//         vy = yInput.getAsDouble() * speedLimiter;
-//         if (vision.hasTargets()) {
-//             PhotonPipelineResult result = vision.getLatestResult();
-//             Optional<PhotonTrackedTarget> targetOptional = result.getTargets().stream()
-//                             .filter(t -> t.getFiducialId() == 4)
-//                             .findFirst();
-
-//             if (targetOptional.isPresent()) {
-//                 PhotonTrackedTarget target = targetOptional.get();
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+        .withDeadband(0.1)
+        .withDriveRequestType(DriveRequestType.Velocity);
+        
+    public AimAndShoot(
+            CommandSwerveDrivetrain drivetrain,
+            VisionSimSystem vision, 
+            Shooter shooter, 
+            DoubleSupplier xSupplier,
+            DoubleSupplier ySupplier,
+            FuelPhysicsSim ballSim) {
     
-//                 // 1. Get Distance (Direct 3D vector, ignores height constants)
-//                 //This should actually be TargetToShooter btw. we need to mount camera for this.
-//                 Translation3d translation = target.getBestCameraToTarget().inverse().getTranslation();
-//                 double aprilTagToHub = -0.610816; //negative due to tagspace
-                
-//                 double dx = translation.getX() + aprilTagToHub; //forward distance to hub (RobotToApriltagX + AprilTagToHubX)
-//                 double dy = translation.getY(); //horizontal distance to the hub
-                
-//                 double distance = Math.hypot(dx,dy);
-//                 double phi = Math.toRadians(70);
-                
-//                 //2. get target and robot yaw
-//                 double yaw = Math.atan2(dy,dx);
-//                 Rotation2d robotYaw = drivetrain.getPose().getRotation();
-                
-//                 //3. get field speeds
-//                 ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drivetrain.getSpeeds(),robotYaw);
+        this.drivetrain = drivetrain;
+        this.vision = vision;
+        this.shooter = shooter;
+        this.xSupplier = xSupplier;
+        this.ySupplier = ySupplier;
+        this.ballSim = ballSim;
 
-//                 double vxField = fieldSpeeds.vxMetersPerSecond;
-//                 double vyField = fieldSpeeds.vyMetersPerSecond;
+        rotController = new PIDController(10, .05, .005);
+        rotController.enableContinuousInput(-Math.PI, Math.PI);
 
-//                 //3.5 convert fieldSpeeds into tagSpeeds.
-//                 double cos = Math.cos(yaw);
-//                 double sin = Math.sin(yaw);
+        addRequirements(drivetrain, vision, shooter);
+    }
 
-//                 double vxTag =  vxField * cos + vyField * sin;
-//                 double vyTag = -vxField * sin + vyField * cos;
+    @Override
+    public void initialize() {
+        rotController.setTolerance(2);
+        rotController.setSetpoint(0);
+        shootTimer.restart();
+    }
 
-//                 //4. find and correct values of vv, vy (for shooter, not driving), and yaw
-//                 double[] correctedValues = shooter.correctVandYaw(dx,dy,yaw, vxTag, vyTag);
-//                 double correctedVx = correctedValues[0];
-//                 double correctedVy = correctedValues[1];
-//                 double bestYaw = correctedValues[2];
+    @Override
+    public void execute() {
+        double theta = -vision.getYawToPose(VisionConstants.getHubPose());
+        double distance = vision.getDistanceToPose(VisionConstants.getHubPose());
+        double rotSpeed = rotController.calculate(theta);
+        double aimAngle = Math.PI/3;
+        double shooterOffset = -.229;
 
-//                 // 5. Control Loop
-//                 rotController.setSetpoint(bestYaw);
-//                 double rotSpeed = rotController.calculate(robotYaw.getRadians());
-//                 drivetrain.setControl(
-//                     drive.withVelocityX(vx)
-//                     .withVelocityY(vy)
-//                     .withRotationalRate(rotSpeed));
-    
-//                 if (rotController.atSetpoint()) {
-//                     double correctedHorizontal = Math.hypot(correctedVx, correctedVy);
-//                     double correctedVelocity = correctedHorizontal / Math.cos(phi);
+        double linVelocity = vision.getShooterVelocity(distance);
+        double xVelocity = linVelocity * Math.cos(aimAngle);
+        double yVelocity = linVelocity * Math.sin(aimAngle);
+        double robotHeading = drivetrain.getPose().getRotation().getRadians();
+        
+        Translation3d drivePose = new Translation3d(
+            drivetrain.getPose().getX() + shooterOffset * Math.cos(robotHeading),
+            drivetrain.getPose().getY() + shooterOffset * Math.sin(robotHeading),
+            .5
+        );
 
-//                     shooter.setVelocityTo(correctedVelocity);
-//                     //kickermotors should start when velocity is at right speed but we will do that later
-//                     shooter.startKickerMotors();
-                    
-//                 } else {
-//                     shooter.stop();
-//                     shooter.stopKickerMotors();
-//                 }
-//                 return; // Exit early since we found our target
-//             } else {
-//                 drivetrain.setControl(
-//                     drive.withVelocityX(vx)
-//                     .withVelocityY(vy)
-//                     .withRotationalRate(0)
-//                 ); 
-//                 shooter.stop();
-//             }
-//         } else {
-//             drivetrain.setControl(
-//                 drive
-//                 .withVelocityX(vx)
-//                 .withVelocityY(vy)
-//                 .withRotationalRate(0)
-//             );
-//             shooter.stop();
-//             shooter.stopKickerMotors();
-//             return;
-//         }
+        //[c,-s, 0]
+        //[s, c, 0]
+        //[0, 0, 1]
+        Translation3d shooterVelocity = new Translation3d(
+            xVelocity * Math.cos(robotHeading),
+            xVelocity * Math.sin(robotHeading),
+            yVelocity 
+        );
 
-//     }
+        // Driver still controls translation, command controls rotation
+        drivetrain.setControl(
+            drive
+                .withVelocityX(xSupplier.getAsDouble())
+                .withVelocityY(ySupplier.getAsDouble())
+                .withRotationalRate(rotSpeed)
+        );
+        
+        if (rotController.atSetpoint() && shootTimer.hasElapsed(SHOOT_COOLDOWN)) {
+            ballSim.launchBall(drivePose, shooterVelocity, vision.rpmFromDistance(distance));
+            shootTimer.restart();
+        }
+    }
 
-//     @Override
-//     public void end(boolean interrupted) {
-//         drivetrain.setControl(
-//             drive.withVelocityX(vx)
-//                 .withVelocityY(vy)
-//                 .withRotationalRate(0)
-//         );
-//         shooter.stop();
-//     }
+    @Override
+    public void end(boolean interrupted) {
+        drivetrain.setControl(
+        drive
+            .withVelocityX(0)
+            .withVelocityY(0)
+            .withRotationalRate(0)
+    );
+        shooter.stop();
+    }
 
-
-//     @Override
-//     public boolean isFinished() {
-//         return false;
-//     }
-// }
+    @Override
+    public boolean isFinished() {
+        return false; 
+    }
+}

@@ -1,66 +1,38 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.vision.VisionSimSystem;
-import frc.robot.subsystems.vision.VisionSubsystem;
-
-//import static edu.wpi.first.units.Units.Degree;
-
-import java.util.function.DoubleSupplier;
-
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Constants.VisionConstants;
-import frc.firecontrol.FuelPhysicsSim;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.firecontrol.FuelPhysicsSim;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.vision.VisionSimSystem;
 
-import edu.wpi.first.math.MatBuilder;
-
-// Aims to the hub and shoots with a velocity based on the distance to the hub. Aiming works in sim, shooting has not been tested.
-public class AimAndShoot2 extends Command {
+public class AutoShoot extends Command {
 
     private CommandSwerveDrivetrain drivetrain;
     private Shooter shooter;
     private VisionSimSystem vision;
-    private final PIDController rotController;
-    private final DoubleSupplier xSupplier;
-    private final DoubleSupplier ySupplier;
     private FuelPhysicsSim ballSim;
 
+    private final PIDController rotController;
     private final Timer shootTimer = new Timer();
+    private final Timer endTimer = new Timer();
     private static final double SHOOT_COOLDOWN = .25;
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
         .withDeadband(0.1)
         .withDriveRequestType(DriveRequestType.Velocity);
-        
-    public AimAndShoot2(
-            CommandSwerveDrivetrain drivetrain,
-            VisionSimSystem vision, 
-            Shooter shooter, 
-            DoubleSupplier xSupplier,
-            DoubleSupplier ySupplier,
-            FuelPhysicsSim ballSim) {
-    
+
+    public AutoShoot(CommandSwerveDrivetrain drivetrain, Shooter shooter, VisionSimSystem vision, FuelPhysicsSim ballSim) {
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.shooter = shooter;
-        this.xSupplier = xSupplier;
-        this.ySupplier = ySupplier;
         this.ballSim = ballSim;
 
         rotController = new PIDController(10, .05, .005);
@@ -69,11 +41,14 @@ public class AimAndShoot2 extends Command {
         addRequirements(drivetrain, vision, shooter);
     }
 
+    // Called when the command is initially scheduled.
     @Override
     public void initialize() {
         rotController.setTolerance(2);
         rotController.setSetpoint(0);
         shootTimer.restart();
+        endTimer.restart();
+        //RobotContainer.ballSim.addBall(RobotContainer.drivetrain.getPose().plus(new Translation3d(0, 0, 1.5)), new Translation3d(0, 0, 10));
     }
 
     @Override
@@ -95,23 +70,14 @@ public class AimAndShoot2 extends Command {
             .5
         );
 
-        //[c,-s, 0]
-        //[s, c, 0]
-        //[0, 0, 1]
         Translation3d shooterVelocity = new Translation3d(
             xVelocity * Math.cos(robotHeading),
             xVelocity * Math.sin(robotHeading),
             yVelocity 
         );
 
-        // Driver still controls translation, command controls rotation
-        drivetrain.setControl(
-            drive
-                .withVelocityX(xSupplier.getAsDouble())
-                .withVelocityY(ySupplier.getAsDouble())
-                .withRotationalRate(rotSpeed)
-        );
-        
+        drivetrain.setControl(drive.withRotationalRate(rotSpeed));
+
         if (rotController.atSetpoint() && shootTimer.hasElapsed(SHOOT_COOLDOWN)) {
             ballSim.launchBall(drivePose, shooterVelocity, vision.rpmFromDistance(distance));
             shootTimer.restart();
@@ -120,17 +86,12 @@ public class AimAndShoot2 extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        drivetrain.setControl(
-        drive
-            .withVelocityX(0)
-            .withVelocityY(0)
-            .withRotationalRate(0)
-    );
         shooter.stop();
     }
 
     @Override
     public boolean isFinished() {
-        return false; 
+        return endTimer.hasElapsed(4);
     }
+    
 }

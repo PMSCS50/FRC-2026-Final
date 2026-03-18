@@ -29,12 +29,6 @@
           }
         },
         {
-          "type": "wait",
-          "data": {
-            "waitTime": 4.0
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "Depot Shoot - Climb"

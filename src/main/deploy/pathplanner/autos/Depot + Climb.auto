@@ -7,31 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Left - Depot"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Depot - Depot Shoot"
+            "pathName": "Left - Depot - Depot Shoot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Shoot"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 4.0
           }
         },
         {
