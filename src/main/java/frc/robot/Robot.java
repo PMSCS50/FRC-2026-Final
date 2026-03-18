@@ -65,8 +65,7 @@ public class Robot extends LoggedRobot {
 
     Pathfinding.setPathfinder(new LocalADStarAK());
     m_robotContainer = new RobotContainer();
-    m_robotContainer.ballSim.enable();
-    m_robotContainer.ballSim.placeFieldBalls();  
+    m_robotContainer.ballSim.enable();  
   }
 
   @Override
@@ -162,7 +161,7 @@ public class Robot extends LoggedRobot {
         new Pose2d(2.0, 2.0, Rotation2d.fromDegrees(0)) // x, y, heading
     );
 
-    m_robotContainer.ballSim.configureRobot(.858, .858, 1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
+    m_robotContainer.ballSim.configureRobot(.858, .858, .1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
 
   }
 
