@@ -253,10 +253,10 @@ public class RobotContainer {
 
 
 
-        subjoystick.x().whileTrue(new RunCommand(() -> intake.spinPivotDuty(.6), intake));
+        subjoystick.x().whileTrue(new RunCommand(() -> intake.spinPivotDuty(.3), intake));
         subjoystick.x().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
 
-        subjoystick.y().whileTrue(new RunCommand(() -> intake.spinPivotDuty(-.6), intake));
+        subjoystick.y().whileTrue(new RunCommand(() -> intake.spinPivotDuty(-.3), intake));
         subjoystick.y().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
         
 
@@ -294,7 +294,7 @@ public class RobotContainer {
         // subsystems controller | left and right bumpers | subsystem RunCommand()
         // ***********************************************************************  *************
         
-        joystick.x().whileTrue(new AimToPose(drivetrain, vision, 26, xInput, yInput));
+        // joystick.x().whileTrue(new AimToPose(drivetrain, vision, 26, xInput, yInput));
         // joystick.a().whileTrue(new AimToPose(drivetrain, vision, VisionConstants.getHubPose(), xInput, yInput));
         
         
@@ -323,11 +323,11 @@ public class RobotContainer {
 
         joystick.rightTrigger().whileTrue(new PV_Orient(drivetrain, vision, 26, 0, xInput , yInput));
         
-        Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
+        // Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
 
-        joystick.rightTrigger().onTrue(climbPath);
+        // joystick.rightTrigger().onTrue(climbPath);
 
-        joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
+        // joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
         
         
     }

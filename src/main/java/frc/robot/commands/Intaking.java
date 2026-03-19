@@ -31,7 +31,7 @@ public class Intaking extends Command {
 
     @Override
     public void execute() {
-        intake.spinIntakePID(.8);
+        intake.spinIntakePID(1);
         
     }
 
@@ -44,6 +44,6 @@ public class Intaking extends Command {
     @Override
     public boolean isFinished() {
 
-        return false; // runs until interrupted by path planner
+        return intakingTimer.hasElapsed(time);
     }
 } 

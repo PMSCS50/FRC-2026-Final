@@ -13,7 +13,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 1.0
+            "waitTime": 0.25
           }
         },
         {
@@ -29,9 +29,22 @@
           }
         },
         {
-          "type": "wait",
+          "type": "parallel",
           "data": {
-            "waitTime": 4.0
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "T-2 Distance Based Shooting"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              }
+            ]
           }
         },
         {
@@ -47,12 +60,6 @@
           }
         },
         {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "Neutral - Right Shallow"
@@ -62,6 +69,25 @@
           "type": "path",
           "data": {
             "pathName": "Right - Right Shooting"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "T-2 Distance Based Shooting"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              }
+            ]
           }
         }
       ]

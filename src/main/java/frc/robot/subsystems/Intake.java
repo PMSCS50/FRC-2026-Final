@@ -58,7 +58,7 @@ public class Intake extends SubsystemBase {
             .smartCurrentLimit(40).closedLoopRampRate(1);
         pivotMotorConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(10, 0, 0) 
+            .pid(.04, 0, 0) // .05,0,0 works with .4, .4
             .outputRange(-0.5, 0.5)  
             .positionWrappingEnabled(false);
 

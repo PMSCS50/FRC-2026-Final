@@ -128,11 +128,16 @@ public final class Constants {
         public static final double kD = 0;
 
         public static final double kPivotSetpointA = 0.0;  
-        public static final double kPivotSetpointB = .25;  
+        public static final double kPivotSetpointB = 30; 
+        
+        public static final double pivotUpPosition   = 0/* rotations */;
+        public static final double pivotDownPosition = 0.5;
+        public static final double pivotTolerance    = 0.05; // rotations, tune as needed
       }
 
       // values of 30
       public static final class ShooterConstants {
+
         public static final int shooterMotorCanId1 = 31;
         public static final int shooterMotorCanId2 = 32;
 

@@ -5,15 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Left - Depot"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 2.0
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Left - Depot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              }
+            ]
           }
         },
         {
@@ -23,9 +30,22 @@
           }
         },
         {
-          "type": "wait",
+          "type": "parallel",
           "data": {
-            "waitTime": 2.0
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "T-26 Distance Based Shooting"
+                }
+              }
+            ]
           }
         },
         {

@@ -23,9 +23,22 @@
           }
         },
         {
-          "type": "wait",
+          "type": "parallel",
           "data": {
-            "waitTime": 2.0
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "T-2 Distance Based Shooting"
+                }
+              }
+            ]
           }
         },
         {
@@ -35,9 +48,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Right - Neutral"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Right - Neutral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              }
+            ]
           }
         }
       ]

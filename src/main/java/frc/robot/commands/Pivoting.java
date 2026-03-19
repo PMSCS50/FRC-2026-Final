@@ -9,7 +9,7 @@ public class Pivoting extends Command {
 
     private static final double SETPOINT_A = IntakeConstants.kPivotSetpointA; // 0.0 (up)
     private static final double SETPOINT_B = IntakeConstants.kPivotSetpointB; // down
-    private static final double TOLERANCE = 0.5;
+    private static final double TOLERANCE = 0.05;
 
     private final Intake intake;
     private final double targetSetpoint;
@@ -27,7 +27,7 @@ public class Pivoting extends Command {
 
     @Override
     public void execute() {
-        SmartDashboard.putNumber("pivot location", intake.getIntakeEncoder().getPosition());
+        SmartDashboard.putNumber("pivot location", intake.getPivotEncoder().getPosition());
     }
 
     @Override
