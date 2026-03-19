@@ -75,15 +75,14 @@ public class Robot extends LoggedRobot {
 
 
 
-    SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", Shooter.shooterMotor1.getVelocity().getValueAsDouble());
+    SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
     
-    SmartDashboard.putBoolean("test button", RobotContainer.subjoystick.a().getAsBoolean());
 
 
     SmartDashboard.putNumber("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
     SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getHookLimit());    
-    SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getBottomLimit());
-    SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getTopLimit());
+    SmartDashboard.putBoolean("climb 2 boolean", m_robotContainer.getClimb().getBottomLimit());
+    SmartDashboard.putBoolean("climb 3 boolean", m_robotContainer.getClimb().getTopLimit());
 
 
 

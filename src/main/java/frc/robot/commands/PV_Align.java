@@ -22,9 +22,9 @@ public class PV_Align extends Command {
     private static final double DESIRED_DISTANCE_METERS = 1.5;
     private double xSetpoint, ySetpoint, rotSetpoint;
     
-    private PIDController xController = new PIDController(0, 0, 0); // kp = 1.45, ki = .001
+    private PIDController xController = new PIDController(1.1, 0, 0); // kp = 1.45, ki = .001
     private final PIDController yController = new PIDController(1.1, 0, 0); // kp = 1
-    private final PIDController rotController = new PIDController(0, 0, 0); // kp = 2.5
+    private final PIDController rotController = new PIDController(1, 0, 0); // kp = 2.5
     private Timer settleTimer;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
     private double SETTLETIME = .1;
@@ -39,6 +39,9 @@ public class PV_Align extends Command {
         this.drivetrain = drivetrain;
         this.vision = vision;
         this.targetId = targetId;
+        this.xSetpoint = xSetpoint;
+        this.ySetpoint = ySetpoint;
+        this.rotSetpoint = rotSetpoint;
 
         rotController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -83,29 +86,10 @@ public class PV_Align extends Command {
         SmartDashboard.putNumber("settle timer", settleTimer.get());
 
 
-
-
-
-
-
-        
         if (!vision.hasTarget(targetId)) {
             drivetrain.setControl(new SwerveRequest.Idle());
             return;
         }
-
-        
-        // double xVel = MathUtil.clamp(xController.calculate(
-        //     vision.getX(), DESIRED_DISTANCE_METERS
-        // ),-2,0.05);
-
-        // double yVel = yController.calculate(
-        //     vision.getY(), 0
-        // );
-
-        // double rotVel = rotController.calculate(
-        //     vision.getYawRad(), 0
-        // );
         
         double xVel = 0;
         double yVel = 0;
@@ -116,19 +100,6 @@ public class PV_Align extends Command {
         } else {
             xVel = 0;
         }
-        // if (!yController.atSetpoint()) {
-        //     yVel = yController.calculate(vision.getY(), 0);
-        //     settleTimer.stop();
-        //     settleTimer.reset();
-        // } else {
-        //     settleTimer.start();
-        //     if (this.settleTimer.hasElapsed(SETTLETIME)) {
-        //         yVel = 0;
-            
-        //     } else {
-        //         yVel = yController.calculate(vision.getY(), 0);
-        //     }
-        // }
         if (!yController.atSetpoint()) {
             yVel = yController.calculate(vision.getY(targetId), ySetpoint);
         } else {

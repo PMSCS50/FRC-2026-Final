@@ -62,8 +62,8 @@ public final class Constants {
         );
 
         // Hub Positions
-        private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-        private static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+        private static final Pose2d RedHub = new Pose2d(11.912, 3.024, Rotation2d.fromDegrees(0));
+        static final Pose2d BlueHub = new Pose2d(4.628, 3.024, Rotation2d.fromDegrees(0));
         public static Pose2d getHubPose() {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
         }
@@ -128,7 +128,7 @@ public final class Constants {
         public static final double kD = 0;
 
         public static final double kPivotSetpointA = 0.0;  
-        public static final double kPivotSetpointB = 10.0;  
+        public static final double kPivotSetpointB = .25;  
       }
 
       // values of 30

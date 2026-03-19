@@ -28,8 +28,6 @@ public class FixedPIDShooting extends Command {
         shooter.rpmControl(distance);
         if (shooter.atCorrectRPMFixed(distance)) {
             shooter.spinKickers();
-        } else {
-            shooter.stop();
         }
     }
 

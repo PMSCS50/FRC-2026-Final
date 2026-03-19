@@ -38,6 +38,7 @@ public class VisionSubsystem extends SubsystemBase {
     private int targetId = -1;
     private PhotonPipelineResult result = null;
     private final HashMap<Integer, Transform3d> tagTransforms = new HashMap<>();
+    private final HashMap<Integer, PhotonTrackedTarget> tagPhotonTrack = new HashMap<>();
 
     public VisionSubsystem(String cameraName, CommandSwerveDrivetrain drivetrain) {
         this.camera = new PhotonCamera(cameraName);
@@ -77,6 +78,7 @@ public class VisionSubsystem extends SubsystemBase {
             Transform3d camToTag = t.getBestCameraToTarget();
             Transform3d robotToTag = ROBOT_TO_CAMERA.plus(camToTag);
             tagTransforms.put(t.getFiducialId(), robotToTag.inverse());
+            tagPhotonTrack.put(t.fiducialId, t);
         }
 
         targetId = result.getBestTarget().getFiducialId();
@@ -121,6 +123,16 @@ public class VisionSubsystem extends SubsystemBase {
         if (tag == null) return 0.0;
         return MathUtil.angleModulus(tag.getRotation().getZ() - Math.PI);
     }
+
+    public double getTargetYaw(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        PhotonTrackedTarget t = tagPhotonTrack.get(id);
+        if (tag == null) return 0.0;
+        double targetYaw = t.getYaw();
+        return targetYaw;
+
+    }
+
 
     public double getDistance(int id) {
         Transform3d tag = tagTransforms.get(id);
@@ -173,4 +185,6 @@ public class VisionSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Shooter rpm regression", rpm);
         return rpm;
     }
+
+    
 }

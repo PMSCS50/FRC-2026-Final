@@ -93,13 +93,13 @@ public class    Shooter extends SubsystemBase {
     private void configureShooterMotor(TalonFXConfiguration config) {
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLimit = 20.0;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
         // Velocity PID gains — tune these on the real robot
         config.Slot0.kS = 0;   // static friction compensation (volts)
         config.Slot0.kV = 0.1150;  // velocity feedforward
-        config.Slot0.kP = .03; // .8   // proportional
+        config.Slot0.kP = .05; // .8   // proportional
         config.Slot0.kI = 0;     // integral
         config.Slot0.kD = 0;     // derivative
     }
@@ -110,10 +110,11 @@ public class    Shooter extends SubsystemBase {
     // ************************
 
     @Override
-    public void periodic(
+    public void periodic()   
+    {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
-        
-    ) {}
+
+    }
 
 
     // ************************
@@ -160,7 +161,7 @@ public class    Shooter extends SubsystemBase {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
         double targetRPM = vision.rpmFromDistanceRegression(vision.getDistance(id));
-        return Math.abs(currentRPM - targetRPM) < 200.0;
+        return Math.abs(currentRPM - targetRPM) < 500.0;
         
     }
 
@@ -178,6 +179,9 @@ public class    Shooter extends SubsystemBase {
     }
     public void stopKicker() {
         kicker1.stopMotor();
+    }
+    public double getVelocity() {
+        return shooterMotor1.getVelocity().getValueAsDouble();
     }
 
     /**
@@ -236,14 +240,8 @@ public class    Shooter extends SubsystemBase {
 
 
     /** Returns the current target velocity in m/s */
-    public double getVelocity() {
-        return shooterMotor1.getVelocity().getValueAsDouble();
-    }
+    
 
-    /** Returns true if the shooter is currently running */
-    public boolean isShooting() {
-        return Math.abs(velocity) > 0.01;
-    }
 
    
     

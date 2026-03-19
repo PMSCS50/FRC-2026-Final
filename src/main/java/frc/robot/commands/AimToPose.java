@@ -43,7 +43,7 @@ public class AimToPose extends Command{
         this.xSupplier = xSupplier;
         this.ySupplier = ySupplier;
 
-        rotController = new PIDController(10, .05, .005);
+        rotController = new PIDController(4, .05, .005);
         rotController.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(drivetrain, vision);

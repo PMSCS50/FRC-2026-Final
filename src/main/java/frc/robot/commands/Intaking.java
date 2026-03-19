@@ -45,6 +45,6 @@ public class Intaking extends Command {
     @Override
     public boolean isFinished() {
 
-        return this.intakingTimer.hasElapsed(time); // runs until interrupted by path planner
+        return false; // runs until interrupted by path planner
     }
 } 

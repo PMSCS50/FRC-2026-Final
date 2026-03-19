@@ -49,6 +49,7 @@ public class Intake extends SubsystemBase {
     public boolean initializing = false;
     
     public Intake() {
+        pivotEncoder.setPosition(0);
         pivotClosedLoopController = pivotMotor.getClosedLoopController();
         intakeClosedLoopController = intakeMotor.getClosedLoopController();
         pivotMotorConfig
@@ -57,9 +58,11 @@ public class Intake extends SubsystemBase {
             .smartCurrentLimit(40).closedLoopRampRate(1);
         pivotMotorConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(0.1, 0, 0) 
+            .pid(10, 0, 0) 
             .outputRange(-0.5, 0.5)  
             .positionWrappingEnabled(false);
+
+
         
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -105,7 +108,7 @@ public class Intake extends SubsystemBase {
 
     public void spinPivotPID(double percent) {
         double targetRPM = 5676 * percent;
-        pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
+        pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kPosition);
     }
 
     public void spinIntakeDuty(double speed) {

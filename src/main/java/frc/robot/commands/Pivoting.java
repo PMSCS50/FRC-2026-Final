@@ -1,56 +1,42 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.VisionSubsystem;
-
 
 public class Pivoting extends Command {
 
-    private final Intake intake;
-
-    private static final double SETPOINT_A = IntakeConstants.kPivotSetpointA;
-    private static final double SETPOINT_B = IntakeConstants.kPivotSetpointB;
+    private static final double SETPOINT_A = IntakeConstants.kPivotSetpointA; // 0.0 (up)
+    private static final double SETPOINT_B = IntakeConstants.kPivotSetpointB; // down
     private static final double TOLERANCE = 0.5;
 
-    private double currentTarget;
-    private int totalTrips;     
-    private int tripsCompleted;
+    private final Intake intake;
+    private final double targetSetpoint;
 
-    public Pivoting(Intake intake, int trips) {
+    public Pivoting(Intake intake, boolean forward) {
         this.intake = intake;
-        this.totalTrips = trips;
+        this.targetSetpoint = forward ? SETPOINT_B : SETPOINT_A;
         addRequirements(intake);
     }
 
     @Override
     public void initialize() {
-        intake.resetPivot();
-        tripsCompleted = 0;
-        currentTarget = SETPOINT_B; 
-        intake.goToPosition(currentTarget);
+        intake.goToPosition(targetSetpoint);
     }
 
     @Override
     public void execute() {
-        if (intake.atPosition(currentTarget, TOLERANCE)) {
-            tripsCompleted++;
-            // flip target
-            currentTarget = (currentTarget == SETPOINT_A) ? SETPOINT_B : SETPOINT_A;
-            intake.goToPosition(currentTarget);
-        }
-    }
-
-    @Override
-    public void end(boolean interrupted) {
-        intake.stopPivot();
+        SmartDashboard.putNumber("pivot location", intake.getIntakeEncoder().getPosition());
     }
 
     @Override
     public boolean isFinished() {
-        return tripsCompleted >= totalTrips;
+        return intake.atPosition(targetSetpoint, TOLERANCE);
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        intake.goToPosition(intake.getPivotPosition()); // hold position
     }
 }
