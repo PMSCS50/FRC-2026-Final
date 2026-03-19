@@ -42,6 +42,7 @@ import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.Pathfinder;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.Constants.ClimbConstants;
 import edu.wpi.first.cameraserver.CameraServer;
 import frc.firecontrol.FuelPhysicsSim;
 
@@ -293,7 +294,7 @@ public class RobotContainer {
 
         In the context of REBUILT, we could use this in teleop to replace PV_Align
         */
-        Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
+        Command climbPath = pathfinder.makePathTo(ClimbConstants.getClimbPose(), drivetrain, vision);
 
         joystick.rightTrigger().onTrue(climbPath);
 
