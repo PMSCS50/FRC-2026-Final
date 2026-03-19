@@ -107,6 +107,7 @@ public class VisionSimSystem extends SubsystemBase {
                 Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
             );
         }
+        
 
         // Feed pose estimate into drivetrain if valid
         if (inputs.hasEstimatedPose) {

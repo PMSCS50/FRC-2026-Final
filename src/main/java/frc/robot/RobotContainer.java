@@ -135,7 +135,6 @@ public class RobotContainer {
         // NamedCommands.registerCommand("L1Ascend", new L1Ascend(oliverClimb));
         // NamedCommands.registerCommand("L1Descend", new L1Descend(oliverClimb));
         NamedCommands.registerCommand("Shoot", new AutoShoot(drivetrain, shooter, vision, ballSim));
-        NamedCommands.registerCommand("Shoot", new AutoShoot(drivetrain, shooter, vision, ballSim));
         NamedCommands.registerCommand("IntakeOn", new Intaking(intake, drivetrain));
 
         configureBindings();
@@ -147,65 +146,40 @@ public class RobotContainer {
     
     private void configureBindings() {
 
-        //joystick.a().whileTrue(new FaceTag(drivetrain, vision, 17));
-
+        // Push vision data to SmartDashboard
         if (vision.hasTargets()) {
             SmartDashboard.putNumber("Vision X", vision.getX());
             SmartDashboard.putNumber("Vision Y", vision.getY());
             SmartDashboard.putNumber("Vision Yaw", vision.getYawRad());
         }
 
-        // drivetrain.setDefaultCommand(
-        //     drivetrain.applyRequest(() -> {
-        //         double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
-        //         double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
-        //         double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
+        /*******************************************************************************************************/
+        //SUBSYSTEMS CONTROLLER - junk stuff that are not important for sim for now, but potentially important for competition.
 
-        //         return drive
-        //             .withVelocityX(forward)
-        //             .withVelocityY(translation)
-        //             .withRotationalRate(turn);
-        //     })
-        // );
-        drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() -> {
-                double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
-                double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
-                double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
+        // Shooting
+        subjoystick.rightTrigger().whileTrue(
+                new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter));
+        subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
+        subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
 
-                if (joystick.a().getAsBoolean() && vision.hasTargets() && vision.getTargetId() == 4) {
-                    double kp = 0.03;
+        subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.20), shooter));
+        subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        subjoystick.povRight().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
+        subjoystick.povRight().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        subjoystick.povLeft().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.75), shooter));
+        subjoystick.povLeft().onFalse(new RunCommand(() -> shooter.stop(), shooter));
+        subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(1), shooter));
+        subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
 
-                    turn = - kp * MaxAngularRate * vision.getYawRad(); 
-                }
-                return drive
-                    .withVelocityX(forward)
-                    .withVelocityY(translation)
-                    .withRotationalRate(turn);
-            })
+        subjoystick.b().whileTrue(new AimAndShoot(
+            drivetrain, 
+            vision,
+            shooter,
+            () -> joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper,
+            () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper, 
+            ballSim));
 
-        );
-
-
-        // *******************************************************************************************************
-        // SHOOTING OPTIONS
-        // subjoystick.rightTrigger().whileTrue(
-        //         new RunCommand(() -> shooter.setShooterSpeed(subjoystick.getLeftY()), shooter)); // 1. Scala
-        // //subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
-        //subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-
-
-        // subjoystick.povDown().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.20), shooter));
-        // subjoystick.povDown().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        // subjoystick.povRight().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.5), shooter));
-        // subjoystick.povRight().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        // subjoystick.povLeft().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(0.75), shooter));
-        // subjoystick.povLeft().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-        // subjoystick.povUp().whileTrue(new RunCommand(() -> shooter.setShooterSpeed(1), shooter));
-        // subjoystick.povUp().onFalse(new RunCommand(() -> shooter.stop(), shooter));
-
-        // subjoystick.b().whileTrue(new AimAndShoot(drivetrain, vision, shooter, () -> 0,() -> 0));
-
+        // Intake
         subjoystick.povDown().whileTrue(new RunCommand(() -> intake.spinIntake(0.25), intake));
         subjoystick.povDown().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
         subjoystick.povRight().whileTrue(new RunCommand(() -> intake.spinIntake(0.50), intake));
@@ -214,15 +188,6 @@ public class RobotContainer {
         subjoystick.povLeft().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
         subjoystick.povUp().whileTrue(new RunCommand(() -> intake.spinIntake(1), intake));
         subjoystick.povUp().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
-
-       
-        
-
-
-
-        
-              
-        //subjoystick.leftTrigger().onFalse(new RunCommand(() -> shooter.stop(), shooter));
 
         subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntake(-1), intake));
         subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
@@ -233,42 +198,42 @@ public class RobotContainer {
         // subjoystick.x().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(-.03), intake));
         // subjoystick.y().whileTrue(new RunCommand(() -> intake.deployIntake(0), intake));
+        
+        // subjoystick.b().whileTrue(new RunCommand(() -> climb.runClimb(), climb));
+        // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb(), climb));
+        //subjoystick.b().whileTrue(new RunCommand(() -> new AimAndShoot2(drivetrain, vision, shooter)));        
+        
+        
+        /*******************************************************************************************************/
+        // DRIVETRAIN CONTROLLER - drivetrain, shooter, intake
 
-        //joystick.x().onTrue(new PV_Align(drivetrain, vision));
-        //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        // Driving
+        drivetrain.setDefaultCommand(
+            drivetrain.applyRequest(() -> {
+                double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
+                double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
+                double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
 
-        joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
+                return drive
+                    .withVelocityX(forward)
+                    .withVelocityY(translation)
+                    .withRotationalRate(turn);
+            })
+        );
 
         if(joystick.getLeftX() > 0.5){
             joystick.leftStick().onTrue(new RunCommand(() -> this.setSpeed(1.0)));
         } else {
             joystick.leftStick().onTrue(new RunCommand(() -> this.setSpeed(0.5)));
         }
-        
-        // subjoystick.b().whileTrue(new RunCommand(() -> climb.runClimb(), climb));
-        // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb(), climb));
-        //subjoystick.b().whileTrue(new RunCommand(() -> new AimAndShoot2(drivetrain, vision, shooter)));
-        
-        
-        // joystick.x().onTrue( 
-        //     new PV_Align(drivetrain, vision, 4)  // 17 = target AprilTag ID  
-        // );
-        
-        
-        // ************************************************************************************
-        // drivetrain controller | pov buttons | subsystem RunCommand()
+
+        // Drivetrain speed control
         joystick.povUp().whileTrue(new RunCommand(() -> this.setSpeed(1.0)));
         joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.400)));
         joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
-        joystick.rightTrigger().onTrue(
-            Commands.defer(
-                () -> pathfinder.makePathTo(VisionConstants.getCenter()),
-                Set.of(drivetrain)
-            )
-        );
-
+        // Shooting
         joystick.leftTrigger().whileTrue(new AimAndShoot(
             drivetrain, 
             vision,
@@ -276,33 +241,36 @@ public class RobotContainer {
             () -> joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper,
             () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper, 
             ballSim));
-        // ************************************************************************************
-        //rollers for subsystems
-        // ************************************************************************************
-        // subsystems controller | left and right bumpers | subsystem RunCommand()
-        
-        // ************************************************************************************
 
-
-        /*
-        Here, we use Pathfinder to create a path to a specific Pose2d, even on teleop.
-        Then it will follow the path as long as the button is held
-        Releasing button will stop the path following and allow for manual control again.
-        We can basically create waypoints on the field and map them to certain buttons.
-        This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
-            we can just make a button for it and use Pathfinder to get there.
-
-        In the context of REBUILT, we could use this in teleop to replace PV_Align
-        */
-        Command climbPath = pathfinder.makePathTo(ClimbConstants.getClimbPose(), drivetrain, vision);
-
+        // Pathing to climb
+        Command climbPath = pathfinder.makePathTo(ClimbConstants.getClimbPose());
         joystick.rightTrigger().onTrue(climbPath);
-
         joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
+
+        // joystick.rightTrigger().onTrue(
+        //     Commands.defer(
+        //         () -> pathfinder.makePathTo(VisionConstants.getCenter()),
+        //         Set.of(drivetrain)
+        //     )
+        // );
+
+        // Intake
+        joystick.a().whileTrue(new Intaking(intake, drivetrain));
+        joystick.b().whileTrue(new Intaking(intake, drivetrain));
+        joystick.x().whileTrue(new Intaking(intake, drivetrain));
+        joystick.y().whileTrue(new Intaking(intake, drivetrain));
+
+        //joystick.a().whileTrue(new FaceTag(drivetrain, vision, 17));
+        //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        //joystick.x().onTrue(new PV_Align(drivetrain, vision));
+        //joystick.x().onTrue( 
+        //    new PV_Align(drivetrain, vision, 4)  // 17 = target AprilTag ID  
+        //);
+        //joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
         
     }
-    // changing drivetrain speed
-    //   crawl, low, mid, high
+
+    // Change drivetrain speed: Crawl, Low, Mid, High
     public void setSpeed(double spe){
         speedLimiter = spe;
         if(spe == 0.066) SmartDashboard.putString( "Swerve Speed", "CRAWL");
@@ -311,15 +279,13 @@ public class RobotContainer {
         if(spe == 1.0) SmartDashboard.putString("Swerve Speed", "HIGH");
     }
 
+    // Flip driving direction (for when the robot is driving backwards)
     public void flipDirection(double newDir){
         this.directionFlipper = newDir;
     }
-    //  setting the 
     
-
+    // Run autonomous from autoChooser
     public Command getAutonomousCommand() {
-        /* Run the path selected from the auto chooser */
-        // return null;q
         return autoChooser.getSelected();
         //return pathfinder.makePathTo(VisionConstants.getCenter()); // run for 5 seconds then stop
     }
