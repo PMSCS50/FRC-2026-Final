@@ -9,20 +9,21 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.VisionSubsystem;
+import edu.wpi.first.wpilibj.DriverStation;
 
-public class AimAndShoot extends Command {
+//AimAndShoot without the need of a target id.
+
+public class AimAndShoot2 extends Command {
 
     private final Shooter shooter;
     private final VisionSubsystem vision;
-    private final int targetId;
     private final CommandSwerveDrivetrain drivetrain;
     private final PIDController rotController;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
 
-    public AimAndShoot(CommandSwerveDrivetrain drivetrain, Shooter shooter, VisionSubsystem vision, int targetId) {
+    public AimAndShoot2(CommandSwerveDrivetrain drivetrain, Shooter shooter, VisionSubsystem vision) {
         this.shooter = shooter;
         this.vision = vision;
-        this.targetId = targetId;
         this.drivetrain = drivetrain;
         rotController = new PIDController(1, 0, 0);
         rotController.enableContinuousInput(-Math.PI, Math.PI);
@@ -47,20 +48,17 @@ public class AimAndShoot extends Command {
                  .withRotationalRate(rotSpeed)
         );
 
-        SmartDashboard.putNumber("Distance to tag", vision.getDistance(targetId));
         SmartDashboard.putNumber("Distance to hub", distance);
         SmartDashboard.putNumber("Shooter velocity", shooter.getVelocity());
         SmartDashboard.putNumber("Rotation error", theta);
 
         if (rotController.atSetpoint()) {
-            if (vision.hasTarget(targetId)) {
-                shooter.rpmControl(distance);
-                if (shooter.atCorrectRPMFixed(distance)) {
-                    shooter.spinKickers();
-                }
-            } else {
-                shooter.stop();
+
+            shooter.rpmControl(distance);
+            if (shooter.atCorrectRPMFixed(distance)) {
+                shooter.spinKickers();
             }
+            
         } else {
             shooter.stop();
         }

@@ -40,6 +40,7 @@ import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Shooter;
 import edu.wpi.first.cameraserver.CameraServer;
+import frc.robot.Constants;
 
 
 public class RobotContainer {
@@ -220,6 +221,11 @@ public class RobotContainer {
         subjoystick.povLeft().whileTrue(new DistanceBasedShooting(shooter, vision, 21)); // left side
         
 
+        subjoystick.b().whileTrue(new AimAndShoot2(drivetrain, shooter, vision));
+        subjoystick.a().whileTrue(new AimToPose(Constants.VisionConstants.getHubPose(), drivetrain, vision, 
+        () -> joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper, 
+        () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper));
+
         
 
         
@@ -309,13 +315,19 @@ public class RobotContainer {
         This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
             we can just make a button for it and use Pathfinder to get there.
 
-        In the context of REBUILT, we could use this in teleop 
+        In the context of REBUILT, we could use this in teleop to align to climb perfectly
         */
         // joystick.rightTrigger().whileTrue(pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
 
         joystick.rightBumper().whileTrue(new PV_Align(drivetrain, vision, 26, 1.5, 0, 0));
 
         joystick.rightTrigger().whileTrue(new PV_Orient(drivetrain, vision, 26, 0, xInput , yInput));
+        
+        Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
+
+        joystick.rightTrigger().onTrue(climbPath);
+
+        joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
         
         
     }
