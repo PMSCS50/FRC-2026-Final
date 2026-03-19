@@ -36,6 +36,7 @@ import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Shooter;
 import edu.wpi.first.cameraserver.CameraServer;
+import frc.robot.Constants;
 
 
 public class RobotContainer {
@@ -179,7 +180,9 @@ public class RobotContainer {
 
 
         subjoystick.povDown().whileTrue(new DistanceBasedShooting(shooter, vision, 26));
-        
+        subjoystick.b().whileTrue(new AimToPose(Constants.VisionConstants.getHubPose(), drivetrain, vision, 
+        () -> joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper, 
+        () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper));
 
         
 

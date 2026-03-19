@@ -31,9 +31,9 @@ public class AimToPose extends Command{
         .withDriveRequestType(DriveRequestType.Velocity);
 
     public AimToPose(
+            Pose2d targetPose, // The Pose2d we want to aim at
             CommandSwerveDrivetrain drivetrain,
-            VisionSubsystem vision, 
-            Pose2d targetPose, 
+            VisionSubsystem vision,  
             DoubleSupplier xSupplier,
             DoubleSupplier ySupplier) {
     
@@ -50,9 +50,9 @@ public class AimToPose extends Command{
     }
 
     public AimToPose(
+            int tagID, // The ID of the AprilTag we want to aim at
             CommandSwerveDrivetrain drivetrain,
             VisionSubsystem vision, 
-            int tagID, 
             DoubleSupplier xSupplier,
             DoubleSupplier ySupplier) {
     
