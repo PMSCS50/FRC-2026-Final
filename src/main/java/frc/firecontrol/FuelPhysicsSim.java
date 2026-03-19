@@ -185,6 +185,7 @@ public class FuelPhysicsSim {
 
   // Max balls
   private static final int MAX_BALLS = 500;
+  public static final int MAX_STORAGE = 50; // for spatial hash overflow handling
 
   // Bump ramp segments (XZ line segments extruded along Y)
 
@@ -591,6 +592,7 @@ public class FuelPhysicsSim {
   private double robotWidth;
   private double robotLength;
   private double bumperHeight;
+  public double storage;
 
   // Intakes
   private final List<IntakeZone> intakes = new ArrayList<>();
@@ -765,9 +767,14 @@ public class FuelPhysicsSim {
    */
   public void launchBall(Translation3d pos, Translation3d vel, double spinRPM) {
     // Convert RPM to 3D omega: backspin is rotation around -Y axis
+    if (storage == 0) {
+      return;
+    }
+
     double omegaY = -spinRPM * 2.0 * Math.PI / 60.0;
     Translation3d omega = new Translation3d(0, omegaY, 0);
     launchBall(pos, vel, omega);
+    storage--;
   }
 
   /**
@@ -1915,6 +1922,7 @@ public class FuelPhysicsSim {
       if (intake.shouldIntake(ball, robotPose, bumperHeight)) {
         ball.intaked = true;
         totalIntaked++;
+        storage++;
         return;
       }
     }

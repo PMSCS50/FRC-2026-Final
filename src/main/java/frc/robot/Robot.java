@@ -165,7 +165,7 @@ public class Robot extends LoggedRobot {
     m_robotContainer.ballSim.addIntakeZone(
     0.3, 0.5,           // 30-50cm in front of robot center
     -0.2, 0.2,          // 20cm wide
-    () -> m_robotContainer.intake.isRunning()
+    () -> m_robotContainer.intake.isRunning() && m_robotContainer.ballSim.storage < FuelPhysicsSim.MAX_STORAGE
     );  // only active when intake is on
     m_robotContainer.ballSim.placeFieldBalls();
 
@@ -176,6 +176,7 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {
     m_robotContainer.ballSim.tick();              // runs physics, publishes to NT
     field.setRobotPose(m_robotContainer.drivetrain.getPose());
+    Logger.recordOutput("Storage", m_robotContainer.ballSim.storage);
  }
  
 }
