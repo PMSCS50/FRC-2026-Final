@@ -293,6 +293,11 @@ public class RobotContainer {
 
         In the context of REBUILT, we could use this in teleop to replace PV_Align
         */
+        Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
+
+        joystick.rightTrigger().onTrue(climbPath);
+
+        joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
         
     }
     // changing drivetrain speed
