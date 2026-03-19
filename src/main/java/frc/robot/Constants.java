@@ -47,6 +47,30 @@ public final class Constants {
       // }
 
       public static class VisionConstants{
+
+
+        public static final int blueMiddleTagId = 26;
+        public static final int redMiddleTagId = 10;
+
+        public static final int blueLeftTagId = 21;
+        public static final int redLeftTagId = 5;
+
+        public static final int blueRightTagId = 18;
+        public static final int redRightTagId = 2;
+
+        public static int getMiddleTagId () {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redMiddleTagId : blueMiddleTagId;
+        }
+        public static int getLeftTagId () {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redLeftTagId : blueLeftTagId;
+        }
+        public static int getRightTagId () {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redRightTagId : blueRightTagId;
+        }
+
+
+        
+        
         
         public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
         public static double distanceToTag = 1;

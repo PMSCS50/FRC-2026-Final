@@ -96,6 +96,8 @@ public class RobotContainer {
     private SendableChooser<Command> autoChooser;
     public static double xPush, yPush;
 
+    public static double turnMultiplier = 1;
+
     
     // **************************************************************************************************************
 
@@ -106,13 +108,13 @@ public class RobotContainer {
         
 
 
-        NamedCommands.registerCommand("T-26 Distance Based Shooting", new DistanceBasedShootingTimed(shooter, vision, 26, 4));
+        NamedCommands.registerCommand("T-26 Distance Based Shooting", new DistanceBasedShootingTimed(shooter, vision, VisionConstants.getMiddleTagId(), 4));
         NamedCommands.registerCommand("T-2 Distance Based Shooting", new DistanceBasedShootingTimed(shooter, vision, 2, 4)); // right side
         NamedCommands.registerCommand("T-5 Distance Based Shooting", new DistanceBasedShootingTimed(shooter, vision, 5, 4)); // left side
         
 
         NamedCommands.registerCommand("Intaking", new Intaking(intake, vision, 3));
-        NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, 26, 1.5, 0, 0));
+        NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
 
@@ -131,16 +133,17 @@ public class RobotContainer {
         yPush = joystick.getLeftX() * MaxSpeed * directionFlipper * speedLimiter;
 
         if (vision.hasTargets()) {
-            SmartDashboard.putNumber("Vision X", vision.getX(26));
-            SmartDashboard.putNumber("Vision Y", vision.getY(26));
-            SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(26));
+            SmartDashboard.putNumber("Vision X", vision.getX(VisionConstants.getMiddleTagId()));
+            SmartDashboard.putNumber("Vision Y", vision.getY(VisionConstants.getMiddleTagId()));
+            SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(VisionConstants.getMiddleTagId()));
         }
 
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
                 double forward = -joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
                 double translation = -joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
-                double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
+                double turn = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper * turnMultiplier;
+                
 
                 return drive
                     .withVelocityX(forward)
@@ -156,7 +159,7 @@ public class RobotContainer {
                 double forward = -joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
                 double translation = -joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
                 double turn = vision.hasTargets() 
-                    ? -vision.getTargetYaw(4) * 0.03 * MaxAngularRate 
+                    ? -vision.getTargetYaw(VisionConstants.getMiddleTagId()) * 0.03 * MaxAngularRate 
                     : 0;
                 return drive
                     .withVelocityX(forward)
@@ -216,9 +219,9 @@ public class RobotContainer {
 
 
 
-        subjoystick.povDown().whileTrue(new DistanceBasedShooting(shooter, vision, 26));
-        subjoystick.povRight().whileTrue(new DistanceBasedShooting(shooter, vision, 18)); // right side
-        subjoystick.povLeft().whileTrue(new DistanceBasedShooting(shooter, vision, 21)); // left side
+        subjoystick.povDown().whileTrue(new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId(), VisionConstants.getLeftTagId(), VisionConstants.getRightTagId()));
+        // subjoystick.povRight().whileTrue(new DistanceBasedShooting(shooter, vision, 18)); // right side
+        // subjoystick.povLeft().whileTrue(new DistanceBasedShooting(shooter, vision, 21)); // left side
         
 
         subjoystick.b().whileTrue(new AimAndShoot2(drivetrain, shooter, vision));
@@ -276,7 +279,6 @@ public class RobotContainer {
         // DRIVETRAIN JOYSTICK
         // *******************************************************************************************************
 
-
         joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
         joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0))); 
 
@@ -285,7 +287,7 @@ public class RobotContainer {
         // ************************************************************************************
         // drivetrain controller | pov buttons | subsystem RunCommand()
         joystick.povUp().whileTrue(new RunCommand(() -> this.setSpeed(1.0)));
-        joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.400)));
+        joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.500)));
         joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
         // ************************************************************************************
@@ -294,15 +296,12 @@ public class RobotContainer {
         // subsystems controller | left and right bumpers | subsystem RunCommand()
         // ***********************************************************************  *************
         
-        // joystick.x().whileTrue(new AimToPose(drivetrain, vision, 26, xInput, yInput));
         // joystick.a().whileTrue(new AimToPose(drivetrain, vision, VisionConstants.getHubPose(), xInput, yInput));
         
         
         
         joystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
         joystick.leftTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
-        // joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        // joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
         
 
 
@@ -319,9 +318,9 @@ public class RobotContainer {
         */
         // joystick.rightTrigger().whileTrue(pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
 
-        joystick.rightBumper().whileTrue(new PV_Align(drivetrain, vision, 26, 1.5, 0, 0));
+        joystick.rightBumper().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
 
-        joystick.rightTrigger().whileTrue(new PV_Orient(drivetrain, vision, 26, 0, xInput , yInput));
+        joystick.rightTrigger().whileTrue(new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0, xInput , yInput));
         
         // Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
 
@@ -337,18 +336,23 @@ public class RobotContainer {
 
     // changing drivetrain speed
     //   crawl, low, mid, high
-    public void setSpeed(double spe){
+    public void setSpeed(double spe) {
         speedLimiter = spe;
-        if(spe == 0.066) SmartDashboard.putString( "Swerve Speed", "CRAWL");
-        if(spe == 0.2) SmartDashboard.putString("Swerve Speed", "LOW");
-        if(spe == 0.5) SmartDashboard.putString("Swerve Speed", "MID");
-        if(spe == 1.0) SmartDashboard.putString("Swerve Speed", "HIGH");
+        if(spe == 0.1) {
+            SmartDashboard.putString( "Swerve Speed", "CRAWL");
+            turnMultiplier = .2;
+        } else {
+            turnMultiplier = 1;
+            if(spe == 0.2) SmartDashboard.putString("Swerve Speed", "LOW");
+            if(spe == 0.5) SmartDashboard.putString("Swerve Speed", "MID");
+            if(spe == 1.0) SmartDashboard.putString("Swerve Speed", "HIGH");
+        }
+        
     }
 
     public void flipDirection(double newDir){
         this.directionFlipper = newDir;
     }
-    //  setting the 
     
 
     public Command getAutonomousCommand() {
