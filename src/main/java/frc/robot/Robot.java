@@ -158,7 +158,7 @@ public class Robot extends LoggedRobot {
     // SmartDashboard.putData("Field", field);
     
     m_robotContainer.drivetrain.resetPose(
-        new Pose2d(2.0, 2.0, Rotation2d.fromDegrees(0)) // x, y, heading
+        new Pose2d(0.125, 0.125, Rotation2d.fromDegrees(0)) // x, y, heading
     );
 
     m_robotContainer.ballSim.configureRobot(.858, .858, .1, () -> m_robotContainer.drivetrain.getPose(), () -> m_robotContainer.drivetrain.getState().Speeds);
@@ -168,6 +168,8 @@ public class Robot extends LoggedRobot {
     () -> m_robotContainer.intake.isRunning() && m_robotContainer.ballSim.storage < FuelPhysicsSim.MAX_STORAGE
     );  // only active when intake is on
     m_robotContainer.ballSim.placeFieldBalls();
+
+    //m_robotContainer.drivetrain.resetPose(new Pose2d(2, 2, Rotation2d.fromDegrees(90)));
 
   }
 

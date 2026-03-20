@@ -169,6 +169,7 @@ public class Constants {
         public static final double climbSpeed = .1;
         public static final double climbMax = 15.0;
         private static final Pose2d RedClimb = new Pose2d(14.494, 4.318, Rotation2d.fromDegrees(0));
+        //private static final Pose2d RedClimb = new Pose2d(16.125, 7.125, Rotation2d.fromDegrees(0));
         private static final Pose2d BlueClimb = new Pose2d(1.067, 4.039, Rotation2d.fromDegrees(180));
         public static Pose2d getClimbPose() {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
