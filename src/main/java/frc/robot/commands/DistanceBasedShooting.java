@@ -22,6 +22,11 @@ public class DistanceBasedShooting extends Command {
         addRequirements(shooter);
     }
 
+    // Replace the single-tag constructor with:
+    public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId) {
+        this(shooter, vision, targetId, targetId, targetId);
+    }
+
     // public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId) {
     //     this.shooter = shooter;
     //     this.vision = vision;
