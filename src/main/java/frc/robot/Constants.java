@@ -127,6 +127,14 @@ public class Constants {
         public static double angularStdDevMegatag2Factor =
         Double.POSITIVE_INFINITY; // No rotation data available
 
+        // Climb positions
+        private static final Pose2d RedClimb = new Pose2d(15.497, 4.321, Rotation2d.fromDegrees(0));
+        //private static final Pose2d RedClimb = new Pose2d(16.125, 7.125, Rotation2d.fromDegrees(0));
+        private static final Pose2d BlueClimb = new Pose2d(1.016, 3.721, Rotation2d.fromDegrees(180));
+        public static Pose2d getClimbPose() {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
+        }
+
       }
       // values of 20
        public class IntakeConstants {
@@ -167,14 +175,7 @@ public class Constants {
       public class ClimbConstants{
         public static final int climbMotorCanId = 41;
         public static final double climbSpeed = .1;
-        public static final double climbMax = 15.0;
-        private static final Pose2d RedClimb = new Pose2d(14.494, 4.318, Rotation2d.fromDegrees(0));
-        //private static final Pose2d RedClimb = new Pose2d(16.125, 7.125, Rotation2d.fromDegrees(0));
-        private static final Pose2d BlueClimb = new Pose2d(1.067, 4.039, Rotation2d.fromDegrees(180));
-        public static Pose2d getClimbPose() {
-          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
-        }
-        
+        public static final double climbMax = 15.0;        
       }
       
       //public static final Pose2d HubPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Red ? hubPositionRed.RedHub : hubPositionBlue.BlueHub;

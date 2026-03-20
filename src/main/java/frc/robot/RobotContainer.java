@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
@@ -68,16 +69,15 @@ public class RobotContainer {
     private final SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric()
             .withDriveRequestType(DriveRequestType.Velocity);
 
-    private final Telemetry logger = new Telemetry(MaxSpeed); // What does this actually do?
+    private final Telemetry logger = new Telemetry(MaxSpeed);
 
     //Go to Pathfinder.java for more information.
     //THIS IS NOT FOR REBUILT. It is something potentially for next year and years to come.
     //Go to line 
-    private final Pathfinder pathfinder = new Pathfinder(3,3,2 * Math.PI, 2 * Math.PI);
 
     // **************************************************************************************************************
 
-    // **************************************************************************************************************
+    // ******************************************************** ******************************************************
     // ACTUAL IMPORTANT STUFF
     private PhotonCamera cam1 = new PhotonCamera("camera1_2585"); //
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
@@ -92,7 +92,7 @@ public class RobotContainer {
     private final VisionSimSystem vision;
     public final FuelPhysicsSim ballSim;
     
-    
+     private final Pathfinder pathfinder = new Pathfinder(3,3,2 * Math.PI, 2 * Math.PI, drivetrain);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -243,9 +243,20 @@ public class RobotContainer {
             ballSim));
 
         // Pathing to climb
-        Command climbPath = pathfinder.makePathTo(ClimbConstants.getClimbPose());
-        joystick.rightTrigger().onTrue(climbPath);
-        joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
+        joystick.rightTrigger().whileTrue(
+            Commands.repeatingSequence(
+                Commands.defer(
+                    () -> pathfinder.pathToClimb(),
+                    Set.of(drivetrain)
+                )
+            ).until(
+                () -> drivetrain.getPose().getTranslation()
+                    .getDistance(pathfinder.ClimbPose.getTranslation()) < 0.1 // meters
+            )
+        );
+
+ 
+        //joystick.rightTrigger().onFalse(pathfinder.));    
 
         // joystick.rightTrigger().onTrue(
         //     Commands.defer(

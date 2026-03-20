@@ -35,6 +35,7 @@ import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import frc.firecontrol.FuelPhysicsSim;
 import frc.robot.LocalADStarAK;
+import frc.robot.Constants.VisionConstants;
 
 
 public class Robot extends LoggedRobot {
@@ -169,16 +170,17 @@ public class Robot extends LoggedRobot {
     );  // only active when intake is on
     m_robotContainer.ballSim.placeFieldBalls();
 
-    //m_robotContainer.drivetrain.resetPose(new Pose2d(2, 2, Rotation2d.fromDegrees(90)));
+    m_robotContainer.drivetrain.resetPose(new Pose2d(2, 2, Rotation2d.fromDegrees(0)));
 
   }
 
     
   @Override
   public void simulationPeriodic() {
-    m_robotContainer.ballSim.tick();              // runs physics, publishes to NT
+    //m_robotContainer.ballSim.tick();              // runs physics, publishes to NT
     field.setRobotPose(m_robotContainer.drivetrain.getPose());
     Logger.recordOutput("Storage", m_robotContainer.ballSim.storage);
+    Logger.recordOutput("ClimbPose", VisionConstants.getClimbPose());
  }
  
 }

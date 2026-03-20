@@ -3,6 +3,7 @@
   "robotLength": 0.858,
   "holonomicMode": true,
   "pathFolders": [
+    "Trench Paths",
     "New Left",
     "New Middle",
     "New Right",
@@ -11,6 +12,7 @@
   "autoFolders": [
     "Left",
     "Middle",
+    "Trench Warfare",
     "Right"
   ],
   "defaultMaxVel": 3.0,
