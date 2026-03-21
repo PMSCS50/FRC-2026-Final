@@ -17,7 +17,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Left - Neutral"
+                  "pathName": "Right - Neutral"
                 }
               },
               {
@@ -30,21 +30,15 @@
           }
         },
         {
-          "type": "wait",
+          "type": "path",
           "data": {
-            "waitTime": 0.2
+            "pathName": "Neutral - Right Quick"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Neutral - Left Quick"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Left - Left Shoot"
+            "pathName": "Right - Outpost Shoot"
           }
         },
         {
@@ -54,13 +48,13 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "4 sec Intaking"
+                  "name": "4 sec Middle Distance Based Shooting"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "4 sec Middle Distance Based Shooting"
+                  "name": "4 sec Intaking"
                 }
               }
             ]
@@ -69,7 +63,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Left Shoot - Left"
+            "pathName": "Outpost Shoot - OOW"
           }
         },
         {
@@ -79,7 +73,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Left - Neutral Shallow"
+                  "pathName": "Right - Neutral"
                 }
               },
               {
@@ -90,42 +84,11 @@
               }
             ]
           }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Neutral - Left Shallow"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Left - Left Shoot"
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "4 sec Intaking"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "4 sec Middle Distance Based Shooting"
-                }
-              }
-            ]
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Left",
+  "folder": "Right",
   "choreoAuto": false
 }

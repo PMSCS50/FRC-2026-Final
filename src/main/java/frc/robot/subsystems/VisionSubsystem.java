@@ -150,7 +150,12 @@ public class VisionSubsystem extends SubsystemBase {
         Transform3d tag = tagTransforms.get(id);
         if (tag == null) return 0.0;
         return Math.toDegrees(Math.atan2(tag.getY(), tag.getX()));
-}
+    }
+    public double getYawFromHub(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        if (tag == null) return 0.0;
+        return Math.toDegrees(Math.atan2(tag.getY(), (tag.getX() + .610816)));
+    }
 
     public double getDistance(int id) {
         Transform3d tag = tagTransforms.get(id);

@@ -52,9 +52,9 @@ public class PV_Orient extends Command {
     @Override
     public void execute() {
 
-        SmartDashboard.putNumber("Vision Yaw", vision.getTargetYaw(targetId));
+        SmartDashboard.putNumber("Vision Yaw", vision.getYawFromHub(targetId));
         SmartDashboard.putBoolean("rotSetpoint", rotController.atSetpoint());
-        SmartDashboard.putNumber("rot Difference", vision.getTargetYaw(targetId) - rotController.getSetpoint());
+        SmartDashboard.putNumber("rot Difference", vision.getYawFromHub(targetId) - rotController.getSetpoint());
 
 
         SmartDashboard.putNumber("settle timer", settleTimer.get());

@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.IntakeConstants;
@@ -10,6 +11,8 @@ public class Pivoting extends Command {
     private static final double SETPOINT_A = IntakeConstants.kPivotSetpointA; // 0.0 (up)
     private static final double SETPOINT_B = IntakeConstants.kPivotSetpointB; // down
     private static final double TOLERANCE = 0.05;
+
+    
 
     private final Intake intake;
     private final double targetSetpoint;

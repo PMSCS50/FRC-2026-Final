@@ -68,6 +68,10 @@ public final class Constants {
           return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redRightTagId : blueRightTagId;
         }
 
+        public static int getDirectionFlipper() {
+          return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? -1 : -1;
+        }
+
 
         
         

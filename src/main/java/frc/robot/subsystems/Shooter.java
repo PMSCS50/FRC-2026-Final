@@ -99,7 +99,7 @@ public class    Shooter extends SubsystemBase {
         // Velocity PID gains — tune these on the real robot
         config.Slot0.kS = 0;   // static friction compensation (volts)
         config.Slot0.kV = 0.1150;  // velocity feedforward
-        config.Slot0.kP = .05; // .8   // proportional
+        config.Slot0.kP = .2; // .8   // proportional
         config.Slot0.kI = 0;     // integral
         config.Slot0.kD = 0;     // derivative
     }
@@ -169,7 +169,7 @@ public class    Shooter extends SubsystemBase {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60;
         double targetRPM = vision.rpmFromDistanceRegression(distance);
-        return Math.abs(currentRPM - targetRPM) < 200.0;
+        return Math.abs(currentRPM - targetRPM) < 1000.0;
     }
 
     /** Stops all motors */
