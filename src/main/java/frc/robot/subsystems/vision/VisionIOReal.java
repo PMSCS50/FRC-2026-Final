@@ -37,10 +37,10 @@ public class VisionIOReal implements VisionIO {
         if (VisionConstants.aprilTagLayout != null) {
             photonPoseEstimator = new PhotonPoseEstimator(
                 VisionConstants.aprilTagLayout,
-                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                //PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, DEPRECATED
                 ROBOT_TO_CAMERA
             );
-            photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+            //photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY); DEPRECATED
         } else {
             photonPoseEstimator = null;
         }
@@ -90,7 +90,10 @@ public class VisionIOReal implements VisionIO {
         List<PhotonTrackedTarget> latestTargets = List.of();
 
         for (PhotonPipelineResult r : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est = photonPoseEstimator.update(r);
+            Optional<EstimatedRobotPose> est = photonPoseEstimator.estimateCoprocMultiTagPose(r);
+            if (est.isEmpty()) {
+                est = photonPoseEstimator.estimateLowestAmbiguityPose(r);
+            }
             if (est.isPresent()) {
                 latestEst = est;
                 latestTargets = r.getTargets();
