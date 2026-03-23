@@ -82,7 +82,7 @@ public final class Constants {
         public static AprilTagFieldLayout aprilTagLayoutAndymark = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
         public static String pvCameraName = "Teacher's-Camera-In-Girl's-Bathroom";        
-        public static String llCameraName = "peepee_peeper"; //Our robot sees other robots pee, so it is pp-peeper
+        public static String llCameraName = "ppppr"; //peepee-peeper
 
         public static Transform3d robotToCamera1 = new Transform3d(
           new Translation3d(0.25, -.072, 0.09),
