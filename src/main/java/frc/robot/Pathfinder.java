@@ -29,10 +29,12 @@ public class Pathfinder {
 
     public static PathConstraints CONSTRAINTS;
     private CommandSwerveDrivetrain drivetrain;
-    public Pose2d ClimbPose = Constants.VisionConstants.getClimbPose();
+    //Define destination pose in RobotContainer so that we can use this to get to other areas
+    public Pose2d destPose;
 
-    public Pathfinder(double vmax, double amax, double omegamax, double alphamax, CommandSwerveDrivetrain drivetrain) {
-        CONSTRAINTS = new PathConstraints(vmax, amax, omegamax, alphamax);
+    public Pathfinder(Pose2d destPose, double vmax, double amax, double omegamax, double alphamax, CommandSwerveDrivetrain drivetrain) {
+        this.destPose = destPose;
+        this.CONSTRAINTS = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.drivetrain = drivetrain;
     }
 
@@ -56,7 +58,7 @@ public class Pathfinder {
                 List<Pose2d> poses = pathForDistance.getPathPoses();
                 double dist = drivetrain.getPose().getTranslation()
                     .getDistance(poses.get(0).getTranslation());
-                if (dist < minDist && abs(drivetrain.getPose().getX() - ClimbPose.getX()) > abs(poses.get(0).getX() - ClimbPose.getX())) {
+                if (dist < minDist && abs(drivetrain.getPose().getX() - destPose.getX()) > abs(poses.get(0).getX() - destPose.getX())) {
                     minDist = dist;
                     closestPath = path;
                     //closestPathName = name;
@@ -94,6 +96,5 @@ public class Pathfinder {
     }
 }
 
-//This is it. AutoBuilder does everything for us.
 
 //Go to line 327 in RobotContainer.java for an application of this class.

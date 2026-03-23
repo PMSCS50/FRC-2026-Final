@@ -92,7 +92,7 @@ public class RobotContainer {
     private final VisionSimSystem vision;
     public final FuelPhysicsSim ballSim;
     
-     private final Pathfinder pathfinder = new Pathfinder(3,3,2 * Math.PI, 2 * Math.PI, drivetrain);
+     private final Pathfinder pathfinder = new Pathfinder(ClimbConstants.getClimbPose(),3,3,2 * Math.PI, 2 * Math.PI, drivetrain);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
