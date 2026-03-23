@@ -261,23 +261,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> visionStdDevs) {
 
-    double xStd = visionStdDevs.get(0, 0);
-    double yStd = visionStdDevs.get(1, 0);
-    double yawStd = visionStdDevs.get(2, 0);
+        double xStd = visionStdDevs.get(0, 0);
+        double yStd = visionStdDevs.get(1, 0);
+        double yawStd = visionStdDevs.get(2, 0);
 
-    // Reject ambiguous measurements
-    if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
-    return;
-    }
+        // Reject ambiguous measurements
+        if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
+        return;
+        }
 
-    // Soft clamp
-    xStd = Math.max(xStd, 0.05);
-    yStd = Math.max(yStd, 0.05);
-    yawStd = Math.max(yawStd, 0.02);
+        // Soft clamp
+        xStd = Math.max(xStd, 0.05);
+        yStd = Math.max(yStd, 0.05);
+        yawStd = Math.max(yawStd, 0.02);
 
-    Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
+        Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
 
-    super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
+        super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
     }
 
     //get robot pose

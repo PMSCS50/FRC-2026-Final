@@ -22,7 +22,8 @@ import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
 //Limelight VisionSubsystem with MegaTag2. 
 //Organized the methods of LimelightHelpers into a more cohesive subsystem.
-//and added some utility methods for accessing tag transforms and pose estimates.
+
+//HOLY SHIT LIMELIGHT IS WAY BETTER THAN PHOTONVISION
 
 public class VisionLL extends SubsystemBase {
 
@@ -33,28 +34,23 @@ public class VisionLL extends SubsystemBase {
     private static final double CAM_PITCH_DEG  =  -Math.toRadians(10);
     private static final double CAM_YAW_DEG    =  0.0;
 
-    private final String limelightName;
+    private final String LLname;
     private final CommandSwerveDrivetrain drivetrain;
 
     private boolean hasTarget = false;
 
     private int targetId = -1;
-
-
+    private final HashMap<Integer, Transform3d> tagTransforms = new HashMap<>();
     private Transform3d tagToRobot = null;
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
 
-
-    private final HashMap<Integer, Transform3d> tagTransforms = new HashMap<>();
-
-
-    public LimelightVisionSubsystem(String limelightName, CommandSwerveDrivetrain drivetrain) {
-        this.limelightName = limelightName;
+    public LimelightVisionSubsystem(String LLname, CommandSwerveDrivetrain drivetrain) {
+        this.LLname = LLname;
         this.drivetrain = drivetrain;
 
         LimelightHelpers.setCameraPose_RobotSpace(
-            limelightName,
+            LLname,
             CAM_FORWARD_M, CAM_SIDE_M, CAM_UP_M,
             CAM_ROLL_DEG,  CAM_PITCH_DEG, CAM_YAW_DEG
         );
@@ -63,37 +59,38 @@ public class VisionLL extends SubsystemBase {
     @Override
     public void periodic() {
 
-
         // MegaTag2 PoseEstimation requires an up-to-date robot orientation BEFORE the pose
         // estimate is read, otherwise the firmware uses a stale heading and
         // translation accuracy degrades
         double currentYawDeg = drivetrain.getState().Pose.getRotation().getDegrees();
         LimelightHelpers.SetRobotOrientation(
-            limelightName,
+            LLname,
             currentYawDeg,
-            0, 0, 0, 0, 0  // yaw rate / pitch / roll not required
+            0, 0, 0, 0, 0
         );
 
-        hasTarget = LimelightHelpers.getTV(limelightName);
+        hasTarget = LimelightHelpers.getTV(LLname);
 
         if (!hasTarget) {
-            targetId   = -1;
+            targetId = -1;
             tagToRobot = null;
             tagTransforms.clear();
             return;
         }
 
-        targetId = (int) LimelightHelpers.getFiducialID(limelightName);
+        //TargetID
+        targetId = (int) LimelightHelpers.getFiducialID(LLname);
 
-
-        Pose3d tagToRobotPose = LimelightHelpers.getBotPose3d_TargetSpace(limelightName);
+        //tagToRobot
+        Pose3d robotPoseInTagSpace = LimelightHelpers.getBotPose3d_TargetSpace(LLname);
         tagToRobot = new Transform3d(
-            tagToRobotPose.getTranslation(),
-            tagToRobotPose.getRotation()
+            robotPoseInTagSpace.getTranslation(),
+            robotPoseInTagSpace.getRotation()
         );
 
+        //tagTransforms HashMap
         tagTransforms.clear();
-        LimelightResults results = LimelightHelpers.getLatestResults(limelightName);
+        LimelightResults results = LimelightHelpers.getLatestResults(LLname);
         for (LimelightTarget_Fiducial target : results.targets_Fiducials) {
             int id = (int) target.fiducialID;
             Pose3d robotPoseInTagSpace = target.getRobotPose_TargetSpace();
@@ -103,7 +100,7 @@ public class VisionLL extends SubsystemBase {
             ));
         }
 
-        // --- 6. MegaTag2 field pose + std-devs → drivetrain ------------------
+        //Pose estimation with MegaTag2
         Optional<PoseEstimate> estimatedRobotPose = estimateFieldPose();
 
         estimatedRobotPose.ifPresent(erp -> {
@@ -160,26 +157,17 @@ public class VisionLL extends SubsystemBase {
         return transform != null ? transform.getX() : 0.0;
     }
 
-    public Map<Integer, Transform3d> getTagTransforms() {
-        return Collections.unmodifiableMap(tagTransforms);
+    public Transform3d getTransformToTag(int id) {
+        return tagTransforms.getOrDefault(id, null);
     }
 
-    public Optional<Transform3d> getTagTransform(int tagId) {
-        return Optional.ofNullable(tagTransforms.get(tagId));
-    }
-
-    public boolean hasTagTransform(int tagId) {
-        return tagTransforms.containsKey(tagId);
-    }
     public double getDistance(int id) {
         Transform3d tag = tagTransforms.get(id);
         return tag != null ? Math.hypot(tag.getX(), tag.getY()) : 0.0;
     }
 
     public Optional<PoseEstimate> estimateFieldPose() {
-        double headingDeg = drivetrain.getPose().getRotation().getDegrees()
-        LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
-        PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
+        PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(LLname);
 
         if (!LimelightHelpers.validPoseEstimate(pe)) {
             return Optional.empty();
