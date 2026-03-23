@@ -81,9 +81,8 @@ public final class Constants {
         public static AprilTagFieldLayout aprilTagLayoutWelded = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
         public static AprilTagFieldLayout aprilTagLayoutAndymark = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
-        public static String pvCameraName = "Aerosmith"; //Jojo Reference
-        //public static String camera1Name = "camera1_2585";
-        public static String llCameraName = "Solid-State-Scouter"; //DBZ Reference
+        public static String pvCameraName = "Teacher's-Camera-In-Girl's-Bathroom";        //public static String camera1Name = "camera1_2585";
+        public static String llCameraName = "peepee_peeper"; //Our robot sees other robots pee, so it is pp-peeper
 
         public static Transform3d robotToCamera1 = new Transform3d(
           new Translation3d(0.25, -.072, 0.09),
