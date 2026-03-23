@@ -12,11 +12,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
+import edu.wpi.first.apriltag.AprilaprilTagLayout;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.LimelightHelpers.LimelightResults;
 import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
@@ -45,6 +47,8 @@ public class VisionLL extends SubsystemBase {
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
 
+    private static AprilaprilTagLayout aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
+
     public LimelightVisionSubsystem(String LLname, CommandSwerveDrivetrain drivetrain) {
         this.LLname = LLname;
         this.drivetrain = drivetrain;
@@ -54,6 +58,14 @@ public class VisionLL extends SubsystemBase {
             CAM_FORWARD_M, CAM_SIDE_M, CAM_UP_M,
             CAM_ROLL_DEG,  CAM_PITCH_DEG, CAM_YAW_DEG
         );
+    }
+
+    static {
+        //Limelight demands a .fmap file of the april tag layout
+        //Kevin, make sure you change the path this goes to.
+        //Also upload the map to the Limelight interface
+        //Once you are done, delete this static constructor from the code.
+        aprilTagLayout.serialize("PMSCS50/FRC-2026-Final/src/main/java/frc/robot/generated/AprilTagLayout2026AndymarkFMAP.json");
     }
 
     @Override
