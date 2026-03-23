@@ -46,7 +46,7 @@ public class VisionLL extends SubsystemBase {
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
 
-    public LimelightVisionSubsystem(String LLname, CommandSwerveDrivetrain drivetrain) {
+    public VisionLL(String LLname, CommandSwerveDrivetrain drivetrain) {
         this.LLname = LLname;
         this.drivetrain = drivetrain;
 
