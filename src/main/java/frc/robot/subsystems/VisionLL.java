@@ -47,7 +47,7 @@ public class VisionLL extends SubsystemBase {
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
 
-    private static AprilaprilTagLayout aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
+    private static AprilTagFieldLayout aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
 
     public LimelightVisionSubsystem(String LLname, CommandSwerveDrivetrain drivetrain) {
         this.LLname = LLname;
