@@ -96,10 +96,10 @@ public class VisionLL extends SubsystemBase {
         LimelightResults results = LimelightHelpers.getLatestResults(limelightName);
         for (LimelightTarget_Fiducial target : results.targets_Fiducials) {
             int id = (int) target.fiducialID;
-            Pose3d robotInTagFrame = target.getRobotPose_TargetSpace();
+            Pose3d robotPoseInTagSpace = target.getRobotPose_TargetSpace();
             tagTransforms.put(id, new Transform3d(
-                robotInTagFrame.getTranslation(),
-                robotInTagFrame.getRotation()
+                robotPoseInTagSpace.getTranslation(),
+                robotPoseInTagSpace.getRotation()
             ));
         }
 
@@ -171,8 +171,14 @@ public class VisionLL extends SubsystemBase {
     public boolean hasTagTransform(int tagId) {
         return tagTransforms.containsKey(tagId);
     }
+    public double getDistance(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? Math.hypot(tag.getX(), tag.getY()) : 0.0;
+    }
 
     public Optional<PoseEstimate> estimateFieldPose() {
+        double headingDeg = drivetrain.getPose().getRotation().getDegrees()
+        LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
         PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
 
         if (!LimelightHelpers.validPoseEstimate(pe)) {
@@ -204,5 +210,42 @@ public class VisionLL extends SubsystemBase {
     public Matrix<N3, N1> getEstimationStdDevs() {
         return visionStdDevs;
     }
+
+    //***************
+    //SHOOTER HELPERS
+    //***************
+    
+    double shooterHeight = 0.508;
+    double phi = Math.toRadians(70);
+
+    public double rpmFromDistanceRegression(double distance) {
+        double rps = -0.3039109023 * distance * distance
+                + 6.81380687 * distance
+                + 40.82402705 - .5;
+        SmartDashboard.putNumber("Shooter rps regression", rps);
+        double rpm = rps * 60;
+        SmartDashboard.putNumber("Shooter rpm regression", rpm);
+        return rpm;
+    }
+
+    //Added my model back. My dumbass realized c is actually slip factor. We measure that empirically
+    public double rpmFromDistance(double distance) {
+        double height = 1.8288 - shooterHeight;
+
+        double v = Math.sqrt(
+            (9.807 * distance * distance) / 
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - height))
+        );
+
+        double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
+        v *= dragFactor;
+
+        double wheelRadius = 0.0508;
+        double slip = 0.95;
+        double wheelRPM = (v * 60.0) / (slip * Math.PI * wheelRadius);
+        return wheelRPM;
+    }
+
+
 
 }
