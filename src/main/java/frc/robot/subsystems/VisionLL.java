@@ -26,11 +26,11 @@ import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
 public class VisionLL extends SubsystemBase {
 
-    private static final double CAM_FORWARD_M  =  0.23;   // meters
-    private static final double CAM_SIDE_M     =  0.051;  // meters (positive = left)
-    private static final double CAM_UP_M       =  0.25;   // meters
+    private static final double CAM_FORWARD_M  =  0.072;   // meters
+    private static final double CAM_SIDE_M     =  -.072;  // meters (positive = left)
+    private static final double CAM_UP_M       =  0.495;   // meters
     private static final double CAM_ROLL_DEG   =  0.0;
-    private static final double CAM_PITCH_DEG  =  0.0;
+    private static final double CAM_PITCH_DEG  =  -Math.toRadians(10);
     private static final double CAM_YAW_DEG    =  0.0;
 
     private final String limelightName;
