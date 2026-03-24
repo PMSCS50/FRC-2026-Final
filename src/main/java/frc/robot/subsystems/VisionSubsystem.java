@@ -104,7 +104,7 @@ public class VisionLL extends SubsystemBase {
 
         //Pose estimation with MegaTag2
         Optional<PoseEstimate> estimatedRobotPose = estimateFieldPose();
-
+        
         estimatedRobotPose.ifPresent(erp -> {
             updateEstimationStdDevs(erp);
             drivetrain.addVisionMeasurement(

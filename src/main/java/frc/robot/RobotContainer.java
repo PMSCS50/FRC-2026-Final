@@ -76,7 +76,7 @@ public class RobotContainer {
     // ACTUAL IMPORTANT STUFF
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
  
-    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
+    private final VisionSubsystem vision = new VisionSubsystem(VisionConstants.llCameraName, drivetrain);
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
