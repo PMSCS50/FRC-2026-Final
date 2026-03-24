@@ -27,7 +27,7 @@ import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
 //HOLY SHIT LIMELIGHT IS WAY BETTER THAN PHOTONVISION
 
-public class VisionLL extends SubsystemBase {
+public class VisionSubsystem extends SubsystemBase {
 
     private static final double CAM_FORWARD_M  =  0.072;   // meters
     private static final double CAM_SIDE_M     =  -.072;  // meters (positive = left)
@@ -47,7 +47,7 @@ public class VisionLL extends SubsystemBase {
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
 
-    public VisionLL(String LLname, CommandSwerveDrivetrain drivetrain) {
+    public VisionSubsystem(String LLname, CommandSwerveDrivetrain drivetrain) {
         this.LLname = LLname;
         this.drivetrain = drivetrain;
 
