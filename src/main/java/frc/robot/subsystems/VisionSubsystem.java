@@ -146,6 +146,11 @@ public class VisionSubsystem extends SubsystemBase {
         return tagToRobot != null ? tagToRobot.getY() : 0.0;
     }
 
+    //both getZ() and getZ(int id) are temporary until I get something clarified
+    public double getZ() {
+        return tagToRobot != null ? tagToRobot.getZ() : 0.0;
+    }
+
     public double getYawRad() {
         return tagToRobot != null ? tagToRobot.getRotation().getZ() : 0.0;
     }
@@ -158,6 +163,12 @@ public class VisionSubsystem extends SubsystemBase {
     public double getY(int id) {
         Transform3d transform = tagTransforms.get(id);
         return transform != null ? transform.getX() : 0.0;
+    }
+
+    //both getZ() and getZ(int id) are temporary until I get something clarified
+    public double getZ(int id) {
+        Transform3d transform = tagTransforms.get(id);
+        return transform != null ? transform.getZ() : 0.0;
     }
 
     public double getYawRad(int id) {
