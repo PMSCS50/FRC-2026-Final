@@ -120,8 +120,14 @@ public class VisionLL extends SubsystemBase {
         return hasTarget;
     }
 
+    //If best target is desired target, return true
     public boolean hasTarget(int desiredId) {
         return hasTarget && targetId == desiredId && tagToRobot != null;
+    }
+
+    //If limelight sees desired target, return true
+    public boolean seesTarget(int desiredId) {
+        return tagTransforms.containsKey(desiredId);
     }
 
     public int getTargetId() {
@@ -220,6 +226,7 @@ public class VisionLL extends SubsystemBase {
 
     //We can use this next year ig
     public double rpmFromDistance(double distance) {
+        distance += 0.610816;
         double height = 1.8288 - shooterHeight;
 
         double v = Math.sqrt(
@@ -231,7 +238,7 @@ public class VisionLL extends SubsystemBase {
         v *= dragFactor;
 
         double wheelRadius = 0.0508;
-        double slip = 0.854;
+        double slip = 0.94;
         double wheelRPM = (v * 60.0) / (slip * Math.PI * wheelRadius);
         return wheelRPM;
     }
