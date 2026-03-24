@@ -150,17 +150,6 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
-
-    public void rpmControl2(double distance) {
-        double rpm = vision.rpmFromDistance(distance);
-        double rps = rpm / 60;
-        shooterMotor1.setControl(velocityRequest.withVelocity(rps));
-        SmartDashboard.putNumber("Target RPM", rpm);
-        SmartDashboard.putNumber("Target RPS", rps);
-        SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
-    }
-
     
 
     public void rpmControlDuty(int id) {

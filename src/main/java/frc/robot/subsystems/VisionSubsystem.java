@@ -218,11 +218,12 @@ public class VisionLL extends SubsystemBase {
         return rpm;
     }
 
+    //We can use this next year ig
     public double rpmFromDistance(double distance) {
         double height = 1.8288 - shooterHeight;
 
         double v = Math.sqrt(
-            (9.807 * distance * distance) / 
+            (9.81 * distance * distance) / 
             (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - height))
         );
 
@@ -230,7 +231,7 @@ public class VisionLL extends SubsystemBase {
         v *= dragFactor;
 
         double wheelRadius = 0.0508;
-        double slip = 0.95;
+        double slip = 0.854;
         double wheelRPM = (v * 60.0) / (slip * Math.PI * wheelRadius);
         return wheelRPM;
     }
