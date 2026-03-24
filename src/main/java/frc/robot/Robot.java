@@ -13,6 +13,8 @@ import com.ctre.phoenix6.Utils;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -44,6 +46,12 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
   }
 
+
+  @Override
+  public void robotInit() {
+      DataLogManager.start();
+      DriverStation.startDataLog(DataLogManager.getLog());
+    }
   @Override
   public void robotPeriodic() {
 
@@ -84,6 +92,8 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putBoolean("climb 2 boolean", m_robotContainer.getClimb().getBottomLimit());
     SmartDashboard.putBoolean("climb 3 boolean", m_robotContainer.getClimb().getTopLimit());
     SmartDashboard.putNumber("pivot amount", m_robotContainer.getIntake().getPivotEncoder().getPosition());
+
+    Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getPose());
 
 
 

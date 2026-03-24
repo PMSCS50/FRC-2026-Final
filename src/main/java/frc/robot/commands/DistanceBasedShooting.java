@@ -1,7 +1,9 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.VisionSubsystem;
 
@@ -12,6 +14,12 @@ public class DistanceBasedShooting extends Command {
     private final int targetId;
     private final int leftId;
     private final int rightId;
+    private double currentDistanceMiddle;
+    private double currentDistanceLeft;
+    private double currentDistanceRight;
+    private Timer shootingTimer;
+    private double time;
+
     
     public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId, int leftId, int rightId) {
         this.shooter = shooter;
@@ -37,7 +45,9 @@ public class DistanceBasedShooting extends Command {
 
 
     @Override
-    public void initialize() {}
+    public void initialize() {
+        
+    }
 
     @Override
     public void execute() {
@@ -87,6 +97,8 @@ public class DistanceBasedShooting extends Command {
         //         shooter.spinKickers();
         //     }
         // }
+
+
 
         if (vision.hasTarget(targetId)) {
             shooter.rpmControl(vision.getDistance(targetId));

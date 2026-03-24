@@ -42,6 +42,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Pivoting Back"
+          }
+        },
+        {
           "type": "parallel",
           "data": {
             "commands": [
@@ -64,6 +70,12 @@
           "type": "path",
           "data": {
             "pathName": "Outpost Shoot - OOW"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Forward Pivoting"
           }
         },
         {

@@ -34,6 +34,9 @@ public class VisionSubsystem extends SubsystemBase {
 
     private static AprilTagFieldLayout tagFieldLayout;
 
+
+    
+
     private static final Transform3d ROBOT_TO_CAMERA =
         new Transform3d(
             new Translation3d(0.072, -.072, 0.495),
@@ -99,6 +102,8 @@ public class VisionSubsystem extends SubsystemBase {
                 );
             });
         }
+
+
     }
 
     // ************************

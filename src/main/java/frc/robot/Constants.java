@@ -34,18 +34,6 @@ import edu.wpi.first.math.geometry.Transform3d;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-      // values of 50
-      // public static final class L3ClimbConstants {
-      //   public static final int climbMotor1CanId = 51;
-      //   public static final int climbMotor2CanId = 52;
-      //   public static final int slideMotor1CanId = 53;
-      //   public static final int slideMotor2CanId = 54;
-
-      //   public static final double climbSpeed = 0.78;
-      //   public static final double climbMax = 30;
-      //   public static final double slideSpeed = 0.6;
-      // }
-
       public static class VisionConstants{
 
 
@@ -156,7 +144,7 @@ public final class Constants {
         public static final double kD = 0;
 
         public static final double kPivotSetpointA = 0.0;  
-        public static final double kPivotSetpointB = 30; 
+        public static final double kPivotSetpointB = 33; 
         
         public static final double pivotUpPosition   = 0/* rotations */;
         public static final double pivotDownPosition = 0.5;

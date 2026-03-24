@@ -40,6 +40,6 @@ public class Pivoting extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        intake.goToPosition(intake.getPivotPosition()); // hold position
+        intake.goToPosition(targetSetpoint); // hold position
     }
 }

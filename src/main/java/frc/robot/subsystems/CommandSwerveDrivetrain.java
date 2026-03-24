@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
@@ -137,6 +139,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
         configureAutoBuilder();
+        configureSignalLogging();
     }
 
     /**
@@ -292,6 +295,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
+        for (int i = 0; i < getModules().length; i++) {
+            var module = getModule(i);
+            
+            // Drive motor signals
+           double driveStatorCurrent = module.getDriveMotor().getStatorCurrent().getValueAsDouble();
+           double driveSupplyCurrent = module.getDriveMotor().getSupplyCurrent().getValueAsDouble();
+           double driveVoltage      = module.getDriveMotor().getMotorVoltage().getValueAsDouble();
+            // Steer motor signals
+           double steerStatorCurrent = module.getSteerMotor().getStatorCurrent().getValueAsDouble();
+           double steerSupplyCurrent = module.getSteerMotor().getSupplyCurrent().getValueAsDouble();
+           double steerVoltage       = module.getSteerMotor().getMotorVoltage().getValueAsDouble();
+           // Logger.recordOutput(getModule(i), module.getDriveMotor().getStatorCurrent().getValueasDouble()); 
+        }
+
+        
+            
+
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -324,5 +344,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
+    }
+    private void configureSignalLogging() {
+        for (int i = 0; i < getModules().length; i++) {
+            var module = getModule(i);
+            // Phoenix automatically logs these at the CANivore rate
+            // Just ensure signal update frequency is set
+            module.getDriveMotor().getStatorCurrent().setUpdateFrequency(50);
+            module.getDriveMotor().getSupplyCurrent().setUpdateFrequency(50);
+            module.getDriveMotor().getMotorVoltage().setUpdateFrequency(50);
+            module.getSteerMotor().getStatorCurrent().setUpdateFrequency(50);
+            module.getSteerMotor().getSupplyCurrent().setUpdateFrequency(50);
+            module.getSteerMotor().getMotorVoltage().setUpdateFrequency(50);
+        }
+        SignalLogger.start(); // starts .hoot logging
     }
 }

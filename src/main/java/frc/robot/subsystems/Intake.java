@@ -5,6 +5,9 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
+
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -84,7 +87,13 @@ public class Intake extends SubsystemBase {
 
 
     @Override
-    public void periodic() {}
+    public void periodic() {
+        Logger.recordOutput("Intake/Velocity", intakeEncoder.getVelocity());
+        Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
+        Logger.recordOutput("Intake/Volts", intakeMotor.getBusVoltage());
+
+
+    }
 
     public void stopIntake() {
         intakeMotor.stopMotor();
@@ -114,7 +123,7 @@ public class Intake extends SubsystemBase {
     public void spinIntakeDuty(double speed) {
         intakeMotor.set(speed); 
     }
-    public void spinPivotDuty(double speed) {
+    public void spinPivotDuty(double speed) { 
         pivotMotor.set(speed);
     }
 
@@ -150,6 +159,10 @@ public class Intake extends SubsystemBase {
 
     public boolean atPosition(double targetRotations, double toleranceRotations) {
         return Math.abs(getPivotPosition() - targetRotations) < toleranceRotations;
+
+    }
+    public SparkMax getIntake() {
+        return intakeMotor;
     }
 
 

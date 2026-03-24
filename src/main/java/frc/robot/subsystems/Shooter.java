@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
@@ -113,6 +115,10 @@ public class    Shooter extends SubsystemBase {
     public void periodic()   
     {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
+        Logger.recordOutput("Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
+        Logger.recordOutput("Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        
 
     }
 
