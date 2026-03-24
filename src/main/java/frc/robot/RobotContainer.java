@@ -211,12 +211,15 @@ public class RobotContainer {
         subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
 
     // Letters
-        // subjoystick.a()
-        subjoystick.b().onTrue(new RunCommand(() -> intake.resetPivot(), intake));
-        subjoystick.x().whileTrue(new RunCommand(() -> intake.spinPivotDuty(.3), intake));
-        subjoystick.x().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
-        subjoystick.y().whileTrue(new RunCommand(() -> intake.spinPivotDuty(-.3), intake));
-        subjoystick.y().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
+        subjoystick.a().whileTrue(new RunCommand(() -> climb.pullClimbDuty(.2)));
+        subjoystick.a().onFalse(new RunCommand(() -> climb.stopClimb()));
+        subjoystick.b().whileTrue(new RunCommand(() -> climb.pullClimbDuty(-.2)));
+        subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb()));
+        // subjoystick.b().onTrue(new RunCommand(() -> intake.resetPivot(), intake));
+        // subjoystick.x().whileTrue(new RunCommand(() -> intake.spinPivotDuty(.3), intake));
+        // subjoystick.x().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
+        // subjoystick.y().whileTrue(new RunCommand(() -> intake.spinPivotDuty(-.3), intake));
+        // subjoystick.y().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
         
 
 

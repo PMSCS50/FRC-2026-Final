@@ -54,6 +54,21 @@ public class Climb extends SubsystemBase {
         limitSwitchTop.get();
     }
 
+    public void pullClimbDuty(double speed) {
+        climbMotor.set(speed);
+    }
+
+    public void stopClimb() {
+        climbMotor.stopMotor();
+
+    } 
+
+
+
+
+
+
+
    public void pull(){
         if (limitSwitchHook.get()) {
             if (!limitSwitchTop.get()) {
@@ -72,9 +87,7 @@ public class Climb extends SubsystemBase {
         }
     }
 
-    public void stopClimb() {
-        climbMotor.set(0);
-    }
+
 
     public void reset(){
         climbMotor.set(-ClimbConstants.climbSpeed);

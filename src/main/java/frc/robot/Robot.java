@@ -93,7 +93,7 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putBoolean("climb 3 boolean", m_robotContainer.getClimb().getTopLimit());
     SmartDashboard.putNumber("pivot amount", m_robotContainer.getIntake().getPivotEncoder().getPosition());
 
-    Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getPose());
+    Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
 
 
 

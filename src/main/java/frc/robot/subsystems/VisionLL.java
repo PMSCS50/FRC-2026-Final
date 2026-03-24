@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -94,7 +95,7 @@ public class VisionLL extends SubsystemBase {
         LimelightResults results = LimelightHelpers.getLatestResults(LLname);
         for (LimelightTarget_Fiducial target : results.targets_Fiducials) {
             int id = (int) target.fiducialID;
-            Pose3d robotPoseInTagSpace = target.getRobotPose_TargetSpace();
+            robotPoseInTagSpace = target.getRobotPose_TargetSpace();
             tagTransforms.put(id, new Transform3d(
                 robotPoseInTagSpace.getTranslation(),
                 robotPoseInTagSpace.getRotation()

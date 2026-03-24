@@ -234,4 +234,22 @@ public class VisionSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Shooter rpm regression", rpm);
         return rpm;
     }
+
+    //Added my model back. My dumbass realized c is actually slip factor. We can measure that empirically
+    public double rpmFromDistance(double distance) {
+        double height = 1.8288 - shooterHeight;
+
+        double v = Math.sqrt(
+            (9.807 * distance * distance) / 
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - height))
+        );
+
+        double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
+        v *= dragFactor;
+
+        double wheelRadius = 0.0508;
+        double slip = 0.95;
+        double wheelRPM = (v * 60.0) / (slip * Math.PI * wheelRadius);
+        return wheelRPM;
+    }
 }
