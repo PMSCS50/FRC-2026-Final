@@ -152,7 +152,8 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public double getYawRad() {
-        return tagToRobot != null ? tagToRobot.getRotation().getZ() : 0.0;
+        //return tagToRobot != null ? tagToRobot.getRotation().getZ() : 0.0;
+        return LimelightHelpers.getTX(LLname) * Math.PI/180;
     }
 
     public double getX(int id) {
