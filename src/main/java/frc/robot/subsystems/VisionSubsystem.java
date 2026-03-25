@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -112,6 +114,7 @@ public class VisionSubsystem extends SubsystemBase {
                 erp.timestampSeconds,
                 visionStdDevs
             );
+            Logger.recordOutput("Estimated Pose", erp.pose.toString());
         });
     }
 
