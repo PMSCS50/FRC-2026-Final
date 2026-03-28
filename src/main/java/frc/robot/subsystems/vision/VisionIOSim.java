@@ -23,67 +23,65 @@ import frc.robot.Constants.VisionConstants;
 /**
  * AdvantageKit simulation implementation of VisionIO.
  *
- * Uses PhotonVision's VisionSystemSim driven by the robot's simulated
- * ground-truth pose (supplied each cycle by the subsystem/drivetrain).
+ * We can't run LimelightHelpers in simulation (it needs real NT data from
+ * the LL firmware), so we keep PhotonVision's VisionSystemSim here to
+ * generate synthetic detections — but we write the results into VisionIOInputs
+ * using the SAME field layout and std-dev logic as VisionIOReal, so the
+ * subsystem layer (VisionSimSystem) sees identical data in sim and on hardware.
  *
- * Follows the AK pattern: all real sensor calls happen here, results are
- * written into VisionIOInputs, and the subsystem only reads inputs.
+ * The only sim-specific call is updateSimPose(), which VisionSimSystem calls
+ * every loop to push the drivetrain's ground-truth pose into VisionSystemSim.
  */
 public class VisionIOSim implements VisionIO {
 
-    // Robot-to-camera transform (matches VisionIOReal)
-    private static final Transform3d ROBOT_TO_CAMERA = VisionConstants.robotToCamera1;
+    // Must match VisionIOReal mounting constants
+    private static final Transform3d ROBOT_TO_CAMERA = new Transform3d(
+        new Translation3d(0.072, -0.072, 0.495),
+        new Rotation3d(0, Math.toRadians(10), 0)
+    );
 
     private final VisionSystemSim visionSim;
     private final PhotonCamera camera;
     private final PhotonCameraSim cameraSim;
     private final PhotonPoseEstimator photonPoseEstimator;
 
-    /**
-     * @param cameraName Name of the simulated camera (must match NT name)
-     */
     public VisionIOSim(String cameraName) {
-        // VisionSystemSim owns the simulated field + all camera sims
         visionSim = new VisionSystemSim("main");
 
-        if (VisionConstants.aprilTagLayout != null) {
-            visionSim.addAprilTags(VisionConstants.aprilTagLayout);
+        if (VisionConstants.aprilTagLayoutAndymark != null) {
+            visionSim.addAprilTags(VisionConstants.aprilTagLayoutAndymark);
         }
 
-        // Camera intrinsics — adjust as needed to match your real camera
+        // Camera intrinsics — tune to match your real Limelight 4 FOV
         var cameraProperties = new SimCameraProperties();
         cameraProperties.setCalibration(960, 720, edu.wpi.first.math.geometry.Rotation2d.fromDegrees(90));
         cameraProperties.setCalibError(0.25, 0.08);
-        cameraProperties.setFPS(20);
-        cameraProperties.setAvgLatencyMs(35);
+        cameraProperties.setFPS(30);
+        cameraProperties.setAvgLatencyMs(20);
         cameraProperties.setLatencyStdDevMs(5);
 
-        camera = new PhotonCamera(cameraName);
+        camera    = new PhotonCamera(cameraName);
         cameraSim = new PhotonCameraSim(camera, cameraProperties);
-
-        // Enable wireframe rendering in the sim dashboard (optional, useful for tuning)
         cameraSim.enableDrawWireframe(true);
 
         visionSim.addCamera(cameraSim, ROBOT_TO_CAMERA);
 
-        if (VisionConstants.aprilTagLayout != null) {
+        if (VisionConstants.aprilTagLayoutAndymark != null) {
             photonPoseEstimator = new PhotonPoseEstimator(
-                VisionConstants.aprilTagLayout,
-                //PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, DEPRECATED
+                VisionConstants.aprilTagLayoutAndymark,
+                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
                 ROBOT_TO_CAMERA
             );
-            //photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY); DEPRECATED
+            photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
         } else {
             photonPoseEstimator = null;
         }
     }
 
     /**
-     * Must be called each loop with the robot's true simulated pose so that
-     * VisionSystemSim can ray-cast against the field and produce synthetic detections.
-     *
-     * In your subsystem's periodic(), pass drivetrain.getSimulatedDriveTrainPose()
-     * (or equivalent) here.
+     * Push the robot's true simulated pose into VisionSystemSim so it can
+     * ray-cast against the field and produce synthetic tag detections.
+     * Called every loop by VisionSimSystem.periodic() when in simulation.
      */
     public void updateSimPose(Pose2d robotSimPose) {
         visionSim.update(robotSimPose);
@@ -91,42 +89,78 @@ public class VisionIOSim implements VisionIO {
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        // Read latest synthetic result from sim camera
         PhotonPipelineResult result = camera.getLatestResult();
 
-        // --- Tag-relative tracking ---
+        // --- Primary target + per-tag arrays ----------------------------------
         if (result.hasTargets()) {
             PhotonTrackedTarget best = result.getBestTarget();
             inputs.hasTarget = true;
-            inputs.targetId = best.getFiducialId();
+            inputs.targetId  = best.getFiducialId();
 
+            // Primary tagToRobot (mirrors VisionIOReal: botpose_targetspace)
             Transform3d cameraToTag = best.getBestCameraToTarget();
-            Transform3d robotToTag = ROBOT_TO_CAMERA.plus(cameraToTag);
-            Transform3d tagToRobot = robotToTag.inverse();
+            Transform3d robotToTag  = ROBOT_TO_CAMERA.plus(cameraToTag);
+            Transform3d tagToRobot  = robotToTag.inverse();
 
             inputs.hasTagTransform = true;
-            inputs.tagToRobotX = tagToRobot.getX();
-            inputs.tagToRobotY = tagToRobot.getY();
-            inputs.tagToRobotZ = tagToRobot.getZ();
+            inputs.tagToRobotX    = tagToRobot.getX();
+            inputs.tagToRobotY    = tagToRobot.getY();
+            inputs.tagToRobotZ    = tagToRobot.getZ();
             inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
 
-            // Update inputs.visibleTagIds
-            inputs.visibleTagIds = result.getTargets().stream()
-                .mapToInt(PhotonTrackedTarget::getFiducialId)
-                .toArray();
+            // Per-tag parallel arrays (mirrors VisionIOReal's JSON loop)
+            List<PhotonTrackedTarget> allTargets = result.getTargets();
+            int n = allTargets.size();
+
+            int[]    ids   = new int[n];
+            double[] txArr = new double[n];
+            double[] tyArr = new double[n];
+            double[] tzArr = new double[n];
+            double[] trArr = new double[n];
+
+            for (int i = 0; i < n; i++) {
+                PhotonTrackedTarget t    = allTargets.get(i);
+                Transform3d c2t         = t.getBestCameraToTarget();
+                Transform3d r2t         = ROBOT_TO_CAMERA.plus(c2t);
+                Transform3d t2r         = r2t.inverse();
+                ids[i]   = t.getFiducialId();
+                txArr[i] = t2r.getX();
+                tyArr[i] = t2r.getY();
+                tzArr[i] = t2r.getZ();
+                trArr[i] = t2r.getRotation().getZ();
+            }
+
+            inputs.visibleTagIds     = ids;
+            inputs.allTagToRobotX    = txArr;
+            inputs.allTagToRobotY    = tyArr;
+            inputs.allTagToRobotZ    = tzArr;
+            inputs.allTagToRobotRotZ = trArr;
+
+            // Hub distance from primary tag
+            inputs.distanceToHub = Math.hypot(inputs.tagToRobotX, inputs.tagToRobotY);
+
         } else {
-            inputs.hasTarget = false;
-            inputs.targetId = -1;
+            inputs.hasTarget       = false;
+            inputs.targetId        = -1;
             inputs.hasTagTransform = false;
-            inputs.tagToRobotX = 0.0;
-            inputs.tagToRobotY = 0.0;
-            inputs.tagToRobotZ = 0.0;
-            inputs.tagToRobotRotZ = 0.0;
+            inputs.tagToRobotX     = 0.0;
+            inputs.tagToRobotY     = 0.0;
+            inputs.tagToRobotZ     = 0.0;
+            inputs.tagToRobotRotZ  = 0.0;
+            inputs.visibleTagIds     = new int[0];
+            inputs.allTagToRobotX    = new double[0];
+            inputs.allTagToRobotY    = new double[0];
+            inputs.allTagToRobotZ    = new double[0];
+            inputs.allTagToRobotRotZ = new double[0];
+            inputs.distanceToHub     = 0.0;
         }
 
-        // --- Pose estimation ---
+        // --- Pose estimation --------------------------------------------------
         if (photonPoseEstimator == null) {
             inputs.hasEstimatedPose = false;
+            inputs.visionStdDevs = new double[] {
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            };
             return;
         }
 
@@ -134,43 +168,41 @@ public class VisionIOSim implements VisionIO {
         List<PhotonTrackedTarget> latestTargets = List.of();
 
         for (PhotonPipelineResult r : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est = photonPoseEstimator.estimateCoprocMultiTagPose(r);
-            if (est.isEmpty()) {
-                est = photonPoseEstimator.estimateLowestAmbiguityPose(r);
-            }
+            Optional<EstimatedRobotPose> est = photonPoseEstimator.update(r);
             if (est.isPresent()) {
-                latestEst = est;
+                latestEst     = est;
                 latestTargets = r.getTargets();
             }
         }
 
         if (latestEst.isPresent()) {
             EstimatedRobotPose est = latestEst.get();
-            inputs.hasEstimatedPose = true;
-            inputs.estimatedPose = est.estimatedPose.toPose2d();
+            inputs.hasEstimatedPose       = true;
+            inputs.estimatedPose          = est.estimatedPose.toPose2d();
             inputs.estimatedPoseTimestamp = est.timestampSeconds;
 
-            int numTags = latestTargets.size();
+            int    numTags = latestTargets.size();
             double avgDist = 0.0;
             for (PhotonTrackedTarget t : latestTargets) {
                 avgDist += t.getBestCameraToTarget().getTranslation().getNorm();
             }
             avgDist = numTags > 0 ? avgDist / numTags : 0.0;
 
-            inputs.numTagsUsed = numTags;
+            inputs.numTagsUsed      = numTags;
             inputs.avgTagDistMeters = avgDist;
 
+            // Match VisionIOReal std-dev logic exactly (MegaTag2 style: pin yaw)
             if (numTags >= 2) {
                 inputs.visionStdDevs = new double[] {
                     0.5 * avgDist,
                     0.5 * avgDist,
-                    Math.toRadians(5)
+                    9999.0
                 };
             } else {
                 inputs.visionStdDevs = new double[] {
                     1.0 * avgDist,
                     1.0 * avgDist,
-                    Math.toRadians(10)
+                    9999.0
                 };
             }
         } else {
@@ -181,7 +213,7 @@ public class VisionIOSim implements VisionIO {
         }
     }
 
-    /** Exposes the VisionSystemSim for dashboard/debug use (e.g., SimGUI field overlay). */
+    /** Exposes VisionSystemSim for SimGUI field overlay / debug use. */
     public VisionSystemSim getVisionSim() {
         return visionSim;
     }

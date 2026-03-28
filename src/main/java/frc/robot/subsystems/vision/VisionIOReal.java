@@ -1,140 +1,180 @@
 package frc.robot.subsystems.vision;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
-
-import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 
+import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.LimelightResults;
+import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
+import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.Constants.VisionConstants;
 
+import java.util.Optional;
+
 /**
- * Real hardware implementation of VisionIO.
- * Talks directly to a physical PhotonCamera over NetworkTables.
+ * Real hardware implementation of VisionIO using a Limelight 4.
+ *
+ * Mirrors VisionSubsystem (the non-AK Limelight subsystem) exactly —
+ * all the same LimelightHelpers calls, same std-dev logic, same
+ * tagToRobot and per-tag HashMap semantics — but writes results into
+ * VisionIOInputs so AdvantageKit can log and replay everything.
+ *
+ * SetRobotOrientation() is called here (not in the subsystem) so that
+ * MegaTag2 is always seeded before the pose estimate is read, even in
+ * the IO layer.
  */
 public class VisionIOReal implements VisionIO {
 
-    private final PhotonCamera camera;
-    private final PhotonPoseEstimator photonPoseEstimator;
+    private final String llName;
+    private final AprilTagFieldLayout aprilTagLayout;
 
-    // Robot-to-camera transform (same as original)
-    private static final Transform3d ROBOT_TO_CAMERA = new Transform3d(
-        new Translation3d(0.25, -0.072, 0.09),
-        new Rotation3d(0, Math.toRadians(10), 0)
-    );
+    // Camera mounting — must match VisionSubsystem constants
+    private static final double CAM_FORWARD_M =  0.072;
+    private static final double CAM_SIDE_M    = -0.072;
+    private static final double CAM_UP_M      =  0.495;
+    private static final double CAM_ROLL_DEG  =  0.0;
+    private static final double CAM_PITCH_DEG = -Math.toDegrees(Math.toRadians(10)); // store as degrees for LL
+    private static final double CAM_YAW_DEG   =  0.0;
 
+    /**
+     * @param cameraName  Limelight NT hostname (e.g. "limelight" or "limelight-front")
+     * @param robotYawDegSupplier  Supplier for current robot yaw — used to seed MegaTag2.
+     *                             Pass drivetrain.getState().Pose.getRotation().getDegrees()
+     *                             from your periodic call.
+     */
     public VisionIOReal(String cameraName) {
-        this.camera = new PhotonCamera(cameraName);
+        this.llName = cameraName;
+        this.aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
 
-        if (VisionConstants.aprilTagLayout != null) {
-            photonPoseEstimator = new PhotonPoseEstimator(
-                VisionConstants.aprilTagLayout,
-                //PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, DEPRECATED
-                ROBOT_TO_CAMERA
-            );
-            //photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY); DEPRECATED
-        } else {
-            photonPoseEstimator = null;
-        }
+        // Tell the Limelight where the camera is mounted once at construction
+        LimelightHelpers.setCameraPose_RobotSpace(
+            llName,
+            CAM_FORWARD_M, CAM_SIDE_M, CAM_UP_M,
+            CAM_ROLL_DEG,  CAM_PITCH_DEG, CAM_YAW_DEG
+        );
+    }
+
+    /**
+     * Called every loop by VisionSimSystem.periodic().
+     * Passes the current robot yaw so MegaTag2 can be seeded before reading.
+     */
+    public void setRobotYaw(double yawDegrees) {
+        LimelightHelpers.SetRobotOrientation(
+            llName, yawDegrees, 0, 0, 0, 0, 0
+        );
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        PhotonPipelineResult result = camera.getLatestResult();
 
-        // --- Tag-relative tracking ---
-        if (result.hasTargets()) {
-            PhotonTrackedTarget best = result.getBestTarget();
-            inputs.hasTarget = true;
-            inputs.targetId = best.getFiducialId();
+        // --- Primary target presence & ID ------------------------------------
+        inputs.hasTarget = LimelightHelpers.getTV(llName);
 
-            Transform3d cameraToTag = best.getBestCameraToTarget();
-            Transform3d robotToTag = ROBOT_TO_CAMERA.plus(cameraToTag);
-            Transform3d tagToRobot = robotToTag.inverse();
-
-            inputs.hasTagTransform = true;
-            inputs.tagToRobotX = tagToRobot.getX();
-            inputs.tagToRobotY = tagToRobot.getY();
-            inputs.tagToRobotZ = tagToRobot.getZ();
-            inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
-
-            // Update inputs.visibleTagIds
-            inputs.visibleTagIds = result.getTargets().stream()
-                .mapToInt(PhotonTrackedTarget::getFiducialId)
-                .toArray();
-        } else {
-            inputs.hasTarget = false;
-            inputs.targetId = -1;
+        if (!inputs.hasTarget) {
+            inputs.targetId        = -1;
             inputs.hasTagTransform = false;
-            inputs.tagToRobotX = 0.0;
-            inputs.tagToRobotY = 0.0;
-            inputs.tagToRobotZ = 0.0;
-            inputs.tagToRobotRotZ = 0.0;
-        }
-
-        // --- Pose estimation ---
-        if (photonPoseEstimator == null) {
-            inputs.hasEstimatedPose = false;
+            inputs.tagToRobotX     = 0.0;
+            inputs.tagToRobotY     = 0.0;
+            inputs.tagToRobotZ     = 0.0;
+            inputs.tagToRobotRotZ  = 0.0;
+            inputs.visibleTagIds       = new int[0];
+            inputs.allTagToRobotX      = new double[0];
+            inputs.allTagToRobotY      = new double[0];
+            inputs.allTagToRobotZ      = new double[0];
+            inputs.allTagToRobotRotZ   = new double[0];
+            inputs.hasEstimatedPose    = false;
+            inputs.distanceToHub       = 0.0;
+            inputs.visionStdDevs = new double[] {
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            };
             return;
         }
 
-        Optional<EstimatedRobotPose> latestEst = Optional.empty();
-        List<PhotonTrackedTarget> latestTargets = List.of();
+        inputs.targetId = (int) LimelightHelpers.getFiducialID(llName);
 
-        for (PhotonPipelineResult r : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est = photonPoseEstimator.estimateCoprocMultiTagPose(r);
-            if (est.isEmpty()) {
-                est = photonPoseEstimator.estimateLowestAmbiguityPose(r);
-            }
-            if (est.isPresent()) {
-                latestEst = est;
-                latestTargets = r.getTargets();
-            }
+        // --- Primary tagToRobot (botpose_targetspace) -------------------------
+        // botpose_targetspace = robot's pose in the primary tag's frame = tagToRobot
+        Pose3d primaryTagToRobot = LimelightHelpers.getBotPose3d_TargetSpace(llName);
+        inputs.hasTagTransform = true;
+        inputs.tagToRobotX    = primaryTagToRobot.getX();
+        inputs.tagToRobotY    = primaryTagToRobot.getY();
+        inputs.tagToRobotZ    = primaryTagToRobot.getZ();
+        inputs.tagToRobotRotZ = primaryTagToRobot.getRotation().getZ();
+
+        // --- Per-tag HashMap → parallel arrays --------------------------------
+        // getLatestResults() parses full JSON; each fiducial exposes
+        // getRobotPose_TargetSpace() = tagToRobot for that specific tag.
+        LimelightResults results = LimelightHelpers.getLatestResults(llName);
+        LimelightTarget_Fiducial[] fiducials = results.targets_Fiducials;
+
+        int n = fiducials.length;
+        int[]    ids   = new int[n];
+        double[] txArr = new double[n];
+        double[] tyArr = new double[n];
+        double[] tzArr = new double[n];
+        double[] trArr = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            Pose3d t2r = fiducials[i].getRobotPose_TargetSpace();
+            ids[i]   = (int) fiducials[i].fiducialID;
+            txArr[i] = t2r.getX();
+            tyArr[i] = t2r.getY();
+            tzArr[i] = t2r.getZ();
+            trArr[i] = t2r.getRotation().getZ();
         }
 
-        if (latestEst.isPresent()) {
-            EstimatedRobotPose est = latestEst.get();
-            inputs.hasEstimatedPose = true;
-            inputs.estimatedPose = est.estimatedPose.toPose2d();
-            inputs.estimatedPoseTimestamp = est.timestampSeconds;
+        inputs.visibleTagIds     = ids;
+        inputs.allTagToRobotX    = txArr;
+        inputs.allTagToRobotY    = tyArr;
+        inputs.allTagToRobotZ    = tzArr;
+        inputs.allTagToRobotRotZ = trArr;
 
-            // Compute std devs
-            int numTags = latestTargets.size();
-            double avgDist = 0.0;
-            for (PhotonTrackedTarget t : latestTargets) {
-                avgDist += t.getBestCameraToTarget().getTranslation().getNorm();
-            }
-            avgDist = numTags > 0 ? avgDist / numTags : 0.0;
+        // --- Hub distance (tag-space geometry) --------------------------------
+        inputs.distanceToHub = computeHubDistance(inputs);
 
-            inputs.numTagsUsed = numTags;
-            inputs.avgTagDistMeters = avgDist;
+        // --- MegaTag2 pose estimate -------------------------------------------
+        PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llName);
 
-            if (numTags >= 2) {
-                inputs.visionStdDevs = new double[] {
-                    0.5 * avgDist,
-                    0.5 * avgDist,
-                    Math.toRadians(5)
-                };
-            } else {
-                inputs.visionStdDevs = new double[] {
-                    1.0 * avgDist,
-                    1.0 * avgDist,
-                    Math.toRadians(10)
-                };
-            }
-        } else {
+        if (!LimelightHelpers.validPoseEstimate(pe)) {
             inputs.hasEstimatedPose = false;
             inputs.visionStdDevs = new double[] {
                 Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
             };
+            return;
+        }
+
+        inputs.hasEstimatedPose       = true;
+        inputs.estimatedPose          = pe.pose;
+        inputs.estimatedPoseTimestamp = pe.timestampSeconds;
+        inputs.numTagsUsed            = pe.tagCount;
+        inputs.avgTagDistMeters       = pe.avgTagDist;
+
+        // MegaTag2 std-devs
+        if (pe.tagCount >= 2) {
+            inputs.visionStdDevs = new double[] {
+                0.5 * pe.avgTagDist,
+                0.5 * pe.avgTagDist,
+                Math.toRadians(5) // 5 degrees in radians
+            };
+        } else {
+            inputs.visionStdDevs = new double[] {
+                1.0 * pe.avgTagDist,
+                1.0 * pe.avgTagDist,
+                Math.toRadians(10) // 10 degrees in radians
+            };
         }
     }
+
+    // /**
+    //  * Computes the straight-line distance from the robot to the hub using
+    //  * tag-space geometry, mirroring VisionSubsystem.getDistance(id).
+    //  * Returns 0 if no tags are visible.
+    //  */
+    // private double computeHubDistance(VisionIOInputs inputs) {
+    //     if (!inputs.hasTagTransform) return 0.0;
+    //     return Math.hypot(inputs.tagToRobotX, inputs.tagToRobotY);
+    // }
 }
