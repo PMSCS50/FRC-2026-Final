@@ -21,173 +21,81 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
-    private final SparkClosedLoopController pivotClosedLoopController;
-
-    private final SparkMaxConfig pivotMotorConfig = new SparkMaxConfig();
-    private final SparkMax pivotMotor = new SparkMax(IntakeConstants.pivotMotorCanId, MotorType.kBrushless);
-    private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
 
     private final SparkClosedLoopController intakeClosedLoopController;
 
     private final SparkMaxConfig intakeMotorConfig = new SparkMaxConfig();
     private final SparkMax intakeMotor = new SparkMax(IntakeConstants.intakeMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder intakeEncoder = intakeMotor.getEncoder();
-    
+
     // calculations for freespinning neo
     public static final class NeoMotorConstants {
         public static final double kFreeSpeedRpm = 5676;
     }
+
     public static final double kIntakeMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
-    
 
+    private int unStallCount = 0;
+    public boolean pivotStalled;
 
-// Add to pivotMotorConfig in Intake constructor — replace current closedLoop config:
-
-
-// Add this method to Intake.java:
-
-
-    //for starting the intake
-    private final Timer initTimer = new Timer();
+    // for starting the intake
     public boolean initializing = false;
-    
+
     public Intake() {
-        pivotEncoder.setPosition(0);
-        pivotClosedLoopController = pivotMotor.getClosedLoopController();
         intakeClosedLoopController = intakeMotor.getClosedLoopController();
-        pivotMotorConfig
-            .inverted(true)
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(40).closedLoopRampRate(1);
-        pivotMotorConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(.04, 0, 0) // .05,0,0 works with .4, .4
-            .outputRange(-0.5, 0.5)  
-            .positionWrappingEnabled(false);
-
-
-        
-        pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
+ 
         intakeMotorConfig
-            .inverted(false)
-            .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(40).closedLoopRampRate(1);
+                .inverted(false)
+                .idleMode(IdleMode.kCoast)
+                .smartCurrentLimit(40).closedLoopRampRate(.3);
         intakeMotorConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            // .pid(0.0025, 0, .1) // p = 0.01 pulses // d = .01 seems alright
-            .pid(0, 0, 0)
-            .outputRange(-1, 1)
-            .feedForward.kV(.0021); // current value = .00017618
-            
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                // .pid(0.0025, 0, .1) // p = 0.01 pulses // d = .01 seems alright
+                .pid(.01, 0, 0)
+                .outputRange(-.95, .95).feedForward.kV(.6); // current value = .00017618
 
         intakeMotor.configure(intakeMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     }
 
-
     @Override
     public void periodic() {
+
+
         Logger.recordOutput("Intake/Velocity", intakeEncoder.getVelocity());
         Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
         Logger.recordOutput("Intake/Volts", intakeMotor.getBusVoltage());
 
+        SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
+    }
 
+ 
+
+    public boolean pivotIsStalled() {
+        return pivotStalled;
     }
 
     public void stopIntake() {
         intakeMotor.stopMotor();
-    }
-    public void stopPivot() {
-        pivotMotor.stopMotor();
-    }
-    public void stopAll() {
-        intakeMotor.stopMotor();
-        pivotMotor.stopMotor();
     }
 
     public void spinIntakePID(double percent) {
         double targetRPM = 5676 * percent;
         intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
     }
-    public void spinIntakePIDTimed(double percent, double time) {
-        double targetRPM = 5676 * percent;
-        intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
-    }
+    
 
-    public void spinPivotPID(double percent) {
-        double targetRPM = 5676 * percent;
-        pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kPosition);
-    }
 
     public void spinIntakeDuty(double speed) {
-        intakeMotor.set(speed); 
+        intakeMotor.set(speed);
     }
-    public void spinPivotDuty(double speed) { 
-        pivotMotor.set(speed);
-    }
-
 
     
-    
-    public SparkMaxConfig getPivotMotorConfig() {
-        return pivotMotorConfig;
-    }
-
-    public SparkMax getPivotMotor() {
-        return pivotMotor;
-    }
-
-    public RelativeEncoder getPivotEncoder() {
-        return pivotEncoder;
-    }
-
     public RelativeEncoder getIntakeEncoder() {
         return intakeEncoder;
     }
-    public double getPivotPosition() {
-        return pivotEncoder.getPosition();
-    }
 
-    public void resetPivot() {
-        pivotEncoder.setPosition(0);
-    }
-
-    public void goToPosition(double targetRotations) {
-        pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kPosition);
-    }
-
-    public boolean atPosition(double targetRotations, double toleranceRotations) {
-        return Math.abs(getPivotPosition() - targetRotations) < toleranceRotations;
-
-    }
     public SparkMax getIntake() {
         return intakeMotor;
     }
-
-
-
-    // public SparkMaxConfig getIntakeMotorConfig() {
-    //     return intakeMotorConfig;
-    // }
-
-    // public SparkMax getIntakeMotor() {
-    //     return intakeMotor;
-    // }
-
-    // public Timer getInitTimer() {
-    //     return initTimer;
-    // }
-
-    // public boolean isInitializing() {
-    //     return initializing;
-    // }
-
-    // public void setInitializing(boolean initializing) {
-    //     this.initializing = initializing;
-    // }
-    
-
-
- 
 }

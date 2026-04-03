@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -10,13 +12,22 @@ public class FixedPIDShooting extends Command {
 
     private final Shooter shooter;
     private double distance;
+    // private DoubleSupplier supplier;
+   
+    // public FixedPIDShooting(Shooter shooter, DoubleSupplier supplier) {
+    //     this.shooter = shooter;
+    //     this.supplier = supplier;
+    //     addRequirements(shooter);
 
-        public FixedPIDShooting(Shooter shooter, double distance) {
-            this.shooter = shooter;
-            this.distance = distance;
-        addRequirements(shooter);
-        
+
+    // }
+
+    public FixedPIDShooting(Shooter shooter, double distance) {
+        this.shooter = shooter;
+        this.distance = distance;
     }
+
+    
 
     @Override
     public void initialize() {}
@@ -25,11 +36,12 @@ public class FixedPIDShooting extends Command {
     
     public void execute() {
 
+        // double speed = supplier != null ? supplier.getAsDouble() : distance;
         shooter.rpmControl(distance);
-        if (shooter.atCorrectRPMFixed(distance)) {
+        if (shooter.atCorrectRPMFixed(distance)) { 
             shooter.spinKickers();
         }
-    }
+    }   
 
     @Override
     public void end(boolean interrupted) {

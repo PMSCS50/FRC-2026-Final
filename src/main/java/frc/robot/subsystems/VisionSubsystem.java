@@ -1,187 +1,160 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.Logger;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
+import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonUtils;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
+
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.LimelightHelpers;
-import frc.robot.LimelightHelpers.PoseEstimate;
-import frc.robot.LimelightHelpers.RawFiducial;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.LimelightHelpers.LimelightResults;
-import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
-
-//Limelight VisionSubsystem with MegaTag2. 
-//Organized the methods of LimelightHelpers into a more cohesive subsystem.
-
-//HOLY SHIT LIMELIGHT IS WAY BETTER THAN PHOTONVISION
 
 public class VisionSubsystem extends SubsystemBase {
 
-    private static final double CAM_FORWARD_M  =  0.072;   // meters
-    private static final double CAM_SIDE_M     =  -.072;  // meters (positive = left)
-    private static final double CAM_UP_M       =  0.495;   // meters
-    private static final double CAM_ROLL_DEG   =  0.0;
-    private static final double CAM_PITCH_DEG  =  -Math.toRadians(10);
-    private static final double CAM_YAW_DEG    =  0.0;
-
-    private final String LLname;
+    private final PhotonCamera camera;
     private final CommandSwerveDrivetrain drivetrain;
+    private final PhotonPoseEstimator photonPoseEstimator;
+
+    private static AprilTagFieldLayout tagFieldLayout;
+
+    private static final Transform3d ROBOT_TO_CAMERA =
+        new Transform3d(
+            new Translation3d(0.072, -.072, 0.495),
+            new Rotation3d(0, -Math.toRadians(10), 0)
+        );
 
     private boolean hasTarget = false;
-
     private int targetId = -1;
+    private PhotonPipelineResult result = null;
     private final HashMap<Integer, Transform3d> tagTransforms = new HashMap<>();
-    private Transform3d tagToRobot = null;
-
+    private final HashMap<Integer, PhotonTrackedTarget> tagPhotonTrack = new HashMap<>();
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(0, 0, 0);
 
-    public VisionSubsystem(String LLname, CommandSwerveDrivetrain drivetrain) {
-        this.LLname = LLname;
+    public VisionSubsystem(String cameraName, CommandSwerveDrivetrain drivetrain) {
+        this.camera = new PhotonCamera(cameraName);
         this.drivetrain = drivetrain;
 
-        LimelightHelpers.setCameraPose_RobotSpace(
-            LLname,
-            CAM_FORWARD_M, CAM_SIDE_M, CAM_UP_M,
-            CAM_ROLL_DEG,  CAM_PITCH_DEG, CAM_YAW_DEG
-        );
+        try {
+            tagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
+        } catch (Exception e) {
+            tagFieldLayout = null;
+            DriverStation.reportError("VisionSubsystem: Failed to load field layout - " + e.getMessage(), false);
+        }
+
+        if (tagFieldLayout != null) {
+            photonPoseEstimator = new PhotonPoseEstimator(
+                tagFieldLayout,
+                ROBOT_TO_CAMERA
+            );
+        } else {
+            photonPoseEstimator = null;
+        }
     }
 
     @Override
     public void periodic() {
-
-        // MegaTag2 PoseEstimation requires an up-to-date robot orientation BEFORE the pose
-        // estimate is read, otherwise the firmware uses a stale heading and
-        // translation accuracy degrades
-        double currentYawDeg = drivetrain.getState().Pose.getRotation().getDegrees();
-        LimelightHelpers.SetRobotOrientation(
-            LLname,
-            currentYawDeg,
-            0, 0, 0, 0, 0
-        );
-
-        hasTarget = LimelightHelpers.getTV(LLname);
+        result = camera.getLatestResult();
+        hasTarget = result.hasTargets();
+        tagTransforms.clear();
 
         if (!hasTarget) {
             targetId = -1;
-            tagToRobot = null;
-            tagTransforms.clear();
             return;
         }
 
-        //TargetID
-        targetId = (int) LimelightHelpers.getFiducialID(LLname);
-
-        //tagToRobot
-        Pose3d robotPoseInTagSpace = LimelightHelpers.getBotPose3d_TargetSpace(LLname);
-        tagToRobot = new Transform3d(
-            robotPoseInTagSpace.getTranslation(),
-            robotPoseInTagSpace.getRotation()
-        );
-
-        //tagTransforms HashMap
-        tagTransforms.clear();
-        LimelightResults results = LimelightHelpers.getLatestResults(LLname);
-        for (LimelightTarget_Fiducial target : results.targets_Fiducials) {
-            int id = (int) target.fiducialID;
-            robotPoseInTagSpace = target.getRobotPose_TargetSpace();
-            tagTransforms.put(id, new Transform3d(
-                robotPoseInTagSpace.getTranslation(),
-                robotPoseInTagSpace.getRotation()
-            ));
+        for (PhotonTrackedTarget t : result.getTargets()) {
+            Transform3d camToTag = t.getBestCameraToTarget();
+            Transform3d robotToTag = ROBOT_TO_CAMERA.plus(camToTag);
+            tagTransforms.put(t.getFiducialId(), robotToTag.inverse());
+            tagPhotonTrack.put(t.fiducialId, t);
         }
 
-        //Pose estimation with MegaTag2
-        Optional<PoseEstimate> estimatedRobotPose = estimateFieldPose();
-        
-        estimatedRobotPose.ifPresent(erp -> {
-            updateEstimationStdDevs(erp);
-            drivetrain.addVisionMeasurement(
-                erp.pose,
-                erp.timestampSeconds,
-                visionStdDevs
-            );
-            Logger.recordOutput("Estimated Pose", erp.pose.toString());
-        });
+        targetId = result.getBestTarget().getFiducialId();
+
+        // feed vision into drivetrain odometry
+        if (photonPoseEstimator != null) {
+            Optional<EstimatedRobotPose> fieldToRobot = estimateMultiTagPose();
+            fieldToRobot.ifPresent(erp -> {
+                drivetrain.addVisionMeasurement(
+                    erp.estimatedPose.toPose2d(),
+                    erp.timestampSeconds,
+                    visionStdDevs
+                );
+            });
+        }
     }
 
+    // ************************
+    // GETTER METHODS
+    // ************************
+
+    public boolean hasTarget(int id) {
+        return tagTransforms.containsKey(id);
+    }
 
     public boolean hasTargets() {
         return hasTarget;
-    }
-
-    //If best target is desired target, return true
-    public boolean hasTarget(int desiredId) {
-        return hasTarget && targetId == desiredId && tagToRobot != null;
-    }
-
-    //If limelight sees desired target, return true
-    public boolean seesTarget(int desiredId) {
-        return tagTransforms.containsKey(desiredId);
     }
 
     public int getTargetId() {
         return targetId;
     }
 
-    public Transform3d getBestTagtoRobot() {
-        return tagToRobot;
-    }
-
-    public double getX() {
-        return tagToRobot != null ? tagToRobot.getX() : 0.0;
-    }
-
-    public double getY() {
-        return tagToRobot != null ? tagToRobot.getY() : 0.0;
-    }
-
-    //both getZ() and getZ(int id) are temporary until I get something clarified
-    public double getZ() {
-        return tagToRobot != null ? tagToRobot.getZ() : 0.0;
-    }
-
-    public double getYawRad() {
-        //return tagToRobot != null ? tagToRobot.getRotation().getZ() : 0.0;
-        return LimelightHelpers.getTX(LLname) * Math.PI/180;
-    }
-
-    public double getX(int id) {
-        Transform3d transform = tagTransforms.get(id);
-        return transform != null ? transform.getX() : 0.0;
-    }
-
-    public double getY(int id) {
-        Transform3d transform = tagTransforms.get(id);
-        return transform != null ? transform.getX() : 0.0;
-    }
-
-    //both getZ() and getZ(int id) are temporary until I get something clarified
-    public double getZ(int id) {
-        Transform3d transform = tagTransforms.get(id);
-        return transform != null ? transform.getZ() : 0.0;
-    }
-
-    public double getYawRad(int id) {
-        Transform3d transform = tagTransforms.get(id);
-        return transform != null ? transform.getX() : 0.0;
+    public PhotonPipelineResult getResult() {
+        return result;
     }
 
     public Transform3d getTransformToTag(int id) {
         return tagTransforms.getOrDefault(id, null);
+    }
+
+    public double getX(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? tag.getX() : 0.0;
+    }
+
+    public double getY(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        return tag != null ? tag.getY() : 0.0;
+    }
+
+    public double getYawRad(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        if (tag == null) return 0.0;
+        return MathUtil.angleModulus(tag.getRotation().getZ() - Math.PI);
+    }
+
+    public double getTargetYaw(int id) {
+        PhotonTrackedTarget t = tagPhotonTrack.get(id);
+        if (t == null) return 0.0;
+        return t.getYaw();
+    }
+    public double getTargetYawFromTransform(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        if (tag == null) return 0.0;
+        return Math.toDegrees(Math.atan2(tag.getY(), tag.getX()));
+    }
+    public double getYawFromHub(int id) {
+        Transform3d tag = tagTransforms.get(id);
+        if (tag == null) return 0.0;
+        return Math.toDegrees(Math.atan2(tag.getY(), (tag.getX() + .610816)));
     }
 
     public double getDistance(int id) {
@@ -189,32 +162,34 @@ public class VisionSubsystem extends SubsystemBase {
         return tag != null ? Math.hypot(tag.getX(), tag.getY()) : 0.0;
     }
 
-    public Optional<PoseEstimate> estimateFieldPose() {
-        PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(LLname);
-
-        if (!LimelightHelpers.validPoseEstimate(pe)) {
-            return Optional.empty();
-        }
-
-        return Optional.of(pe);
+    public double getYawToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getYawToPose(drivetrain.getPose(), targetPose).getRadians();
     }
 
-    private void updateEstimationStdDevs(PoseEstimate pe) {
-        int numTags = pe.tagCount;
-        double avgDist = pe.avgTagDist;
+    public double getDistanceToPose(Pose2d targetPose) {
+        if (drivetrain.getPose() == null) return 0.0;
+        return PhotonUtils.getDistanceToPose(drivetrain.getPose(), targetPose);
+    }
+
+    // ************************
+    // POSE ESTIMATION HELPERS
+    // ************************
+
+    private void updateEstimationStdDevs(Optional<EstimatedRobotPose> estimatedPose, List<PhotonTrackedTarget> targets) {
+        if (targets.isEmpty()) return;
+
+        int numTags = targets.size();
+        double avgDist = 0.0;
+        for (PhotonTrackedTarget target : targets) {
+            avgDist += target.getBestCameraToTarget().getTranslation().getNorm();
+        }
+        avgDist /= numTags;
 
         if (numTags >= 2) {
-            visionStdDevs = VecBuilder.fill(
-                0.5 * avgDist,
-                0.5 * avgDist,
-                Math.toRadians(5)
-            );
+            visionStdDevs = VecBuilder.fill(0.5 * avgDist, 0.5 * avgDist, Math.toRadians(5));
         } else {
-            visionStdDevs = VecBuilder.fill(
-                1.0 * avgDist,
-                1.0 * avgDist,
-                Math.toRadians(10)            
-            );
+            visionStdDevs = VecBuilder.fill(1.0 * avgDist, 1.0 * avgDist, Math.toRadians(10));
         }
     }
 
@@ -222,10 +197,26 @@ public class VisionSubsystem extends SubsystemBase {
         return visionStdDevs;
     }
 
-    //***************
-    //SHOOTER HELPERS
-    //***************
-    
+    public Optional<EstimatedRobotPose> estimateMultiTagPose() {
+        if (photonPoseEstimator == null) return Optional.empty();
+
+        Optional<EstimatedRobotPose> visionEst = Optional.empty();
+
+        for (var unreadResult : camera.getAllUnreadResults()) {
+            visionEst = photonPoseEstimator.estimateCoprocMultiTagPose(unreadResult);
+            if (visionEst.isEmpty()) {
+                visionEst = photonPoseEstimator.estimateLowestAmbiguityPose(unreadResult);
+            }
+            updateEstimationStdDevs(visionEst, unreadResult.getTargets());
+        }
+
+        return visionEst;
+    }
+
+    // ************************
+    // SHOOTER HELPERS
+    // ************************
+
     double shooterHeight = 0.508;
     double phi = Math.toRadians(70);
 
@@ -238,26 +229,4 @@ public class VisionSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Shooter rpm regression", rpm);
         return rpm;
     }
-
-    //We can use this next year ig
-    public double rpmFromDistance(double distance) {
-        distance += 0.610816;
-        double height = 1.8288 - shooterHeight;
-
-        double v = Math.sqrt(
-            (9.81 * distance * distance) / 
-            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) - height))
-        );
-
-        double dragFactor = (1 + 0.0000001 * distance * distance) * 1.031;
-        v *= dragFactor;
-
-        double wheelRadius = 0.0508;
-        double slip = 0.94;
-        double wheelRPM = (v * 60.0) / (slip * Math.PI * wheelRadius);
-        return wheelRPM;
-    }
-
-
-
 }

@@ -69,7 +69,7 @@ public class PV_Orient extends Command {
 
       
         if (!rotController.atSetpoint()) {
-            rotVel = rotController.calculate(vision.getTargetYaw(targetId), rotSetpoint);
+            rotVel = rotController.calculate(vision.getYawRad(targetId), rotSetpoint);
         } else {
             rotVel = 0;
            

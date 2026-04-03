@@ -21,6 +21,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.Constants.VisionConstants;
 
 public class Shooter extends SubsystemBase {
 
@@ -33,7 +34,7 @@ public class Shooter extends SubsystemBase {
         private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
         private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
     
-        private final VisionSubsystem vision;
+        private final LLSubsystem vision;
     
     
         // ************************
@@ -58,7 +59,7 @@ public class Shooter extends SubsystemBase {
     
 
     // CONSTRUCTOR
-    public Shooter(VisionSubsystem vision) {
+    public Shooter(LLSubsystem vision) {
         this.vision = vision;
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
@@ -145,38 +146,33 @@ public class Shooter extends SubsystemBase {
         double rpm = vision.rpmFromDistanceRegression(distance);
         double rps = rpm / 60;
         shooterMotor1.setControl(velocityRequest.withVelocity(rps));
-        SmartDashboard.putNumber("Target RPM", rpm);
+        // SmartDashboard.putNumber("Target RPM", rpm);
         SmartDashboard.putNumber("Target RPS", rps);
         SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
-    
 
-    public void rpmControlDuty(int id) {
-        double rpm = vision.rpmFromDistanceRegression(vision.getDistance(id));
-        double percentOutput = rpm / 2500.0;
-        shooterMotor1.setControl(motorControl.withOutput(percentOutput));
-        
-    }
+
+
     
     public void spinKickers() {
         kicker1.set(1);
     }
+    public void spinKickersAgain(double speed) {
+        kicker1.set(speed);
+    }
 
-    public boolean atCorrectRPM(int id) {
-
+    public boolean atCorrectRPM() {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = vision.rpmFromDistanceRegression(vision.getDistance(id));
-        return Math.abs(currentRPM - targetRPM) < 500.0;
-        
+        double targetRPM = vision.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose2()));
+        return Math.abs(currentRPM - targetRPM) < 180.0;
     }
 
     public boolean atCorrectRPMFixed(double distance) {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60;
         double targetRPM = vision.rpmFromDistanceRegression(distance);
-        return Math.abs(currentRPM - targetRPM) < 1000.0;
+        return Math.abs(currentRPM - targetRPM) < 180.0;
     }
 
     /** Stops all motors */

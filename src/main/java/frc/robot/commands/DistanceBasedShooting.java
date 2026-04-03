@@ -4,44 +4,22 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.VisionSubsystem;
 
 public class DistanceBasedShooting extends Command {
 
     private final Shooter shooter;
-    private final VisionSubsystem vision;
-    private final int targetId;
-    private final int leftId;
-    private final int rightId;
-    private double currentDistanceMiddle;
-    private double currentDistanceLeft;
-    private double currentDistanceRight;
-    private Timer shootingTimer;
-    private double time;
+    private final LLSubsystem vision;
 
     
-    public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId, int leftId, int rightId) {
+    public DistanceBasedShooting(Shooter shooter, LLSubsystem vision) {
         this.shooter = shooter;
         this.vision = vision;
-        this.targetId = targetId;
-        this.leftId = leftId;
-        this.rightId = rightId;
         addRequirements(shooter);
     }
 
-    // Replace the single-tag constructor with:
-    public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId) {
-        this(shooter, vision, targetId, targetId, targetId);
-    }
-
-    // public DistanceBasedShooting(Shooter shooter, VisionSubsystem vision, int targetId) {
-    //     this.shooter = shooter;
-    //     this.vision = vision;
-    //     this.targetId = targetId;
-
-    //     addRequirements(shooter);
-    // }
 
 
     @Override
@@ -51,83 +29,20 @@ public class DistanceBasedShooting extends Command {
 
     @Override
     public void execute() {
-        SmartDashboard.putNumber("Distance to tag", vision.getDistance(targetId));
+        double distance = vision.getDistanceToTarget(VisionConstants.getHubPose2());
         SmartDashboard.putNumber("Shooter velocity", shooter.getVelocity());
+        SmartDashboard.putNumber("Distance to Hub", distance);
 
-        // if (vision.hasTarget(targetId) && !vision.hasTarget(leftId) && !vision.hasTarget(rightId)) {
-        //     shooter.rpmControl(vision.getDistance(targetId));
-        //     if (shooter.atCorrectRPM(targetId)) {
-        //         shooter.spinKickers();
-        //     }
-        // } else if (vision.hasTarget(leftId) && vision.hasTarget(targetId)) {
-        //     if (vision.getDistance(targetId) > vision.getDistance(leftId)) {
-        //         shooter.rpmControl(vision.getDistance(leftId));
-        //         if (shooter.atCorrectRPM(leftId)) {
-        //             shooter.spinKickers();
-        //         }
-
-        //     } else {
-        //         shooter.rpmControl(vision.getDistance(targetId));
-        //         if (shooter.atCorrectRPM(targetId)) {
-        //             shooter.spinKickers();
-        //         }
-        //     }
-
-        // } else if (vision.hasTarget(rightId) && vision.hasTarget(targetId)) {
-        //     if (vision.getDistance(targetId) > vision.getDistance(rightId)) {
-        //         shooter.rpmControl(vision.getDistance(rightId));
-        //         if (shooter.atCorrectRPM(rightId)) {
-        //             shooter.spinKickers();
-        //         }
-
-        //     } else {
-        //         shooter.rpmControl(vision.getDistance(targetId));
-        //         if (shooter.atCorrectRPM(targetId)) {
-        //             shooter.spinKickers();
-        //         }
-        //     }
-        // } else if (vision.hasTarget(leftId) && !vision.hasTarget(targetId)) {
-        //     shooter.rpmControl(vision.getDistance(leftId));
-        //     if (shooter.atCorrectRPM(leftId)) {
-        //         shooter.spinKickers();
-        //     }
-        // } else if (vision.hasTarget(rightId) && !vision.hasTarget(targetId)) {
-        //     shooter.rpmControl(vision.getDistance(rightId));
-        //     if (shooter.atCorrectRPM(rightId)) {
-        //         shooter.spinKickers();
-        //     }
-        // }
-
-
-
-        if (vision.hasTarget(targetId)) {
-            shooter.rpmControl(vision.getDistance(targetId));
-            if (shooter.atCorrectRPM(targetId)) {
-                shooter.spinKickers();
-            }
-        } else if (vision.hasTarget(leftId) && !vision.hasTarget(targetId)) {
-            shooter.rpmControl(vision.getDistance(leftId));
-            if (shooter.atCorrectRPM(leftId)) {
-                shooter.spinKickers();
-            }
-        } else if (vision.hasTarget(rightId) && !vision.hasTarget(targetId)) {
-            shooter.rpmControl(vision.getDistance(rightId));
-            if (shooter.atCorrectRPM(rightId)) {
+        if (distance > 0) {
+            shooter.rpmControl(distance);
+            if (shooter.atCorrectRPM()) {
                 shooter.spinKickers();
             }
         }
-
-
-
-        // if (vision.hasTarget(targetId)) {
-        //     shooter.rpmControl(vision.getDistance(targetId));
-        //     if (shooter.atCorrectRPM(targetId)) {
-        //         shooter.spinKickers();
-        //     }
-        // } else {
-        //     shooter.stop();
-        // }
     }
+
+
+
 
     @Override
     public void end(boolean interrupted) {

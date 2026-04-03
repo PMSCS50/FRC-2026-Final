@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -38,9 +39,12 @@ import frc.robot.subsystems.Intake;
 // import frc.robot.subsystems.L3Climb;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.LLSubsystem;
+import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import edu.wpi.first.cameraserver.CameraServer;
 import frc.robot.Constants;
+
 
 
 public class RobotContainer {
@@ -52,7 +56,7 @@ public class RobotContainer {
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
 
-    public static double intakeSpeed = 1;
+    public static double intakeSpeed = 0.5;
     public static double pivotSpeed = .05;
     public static double shooterSpeed = .01;
     // **************************************************************************************************************
@@ -63,10 +67,11 @@ public class RobotContainer {
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 2% deadband
             .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
     private final SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric()
             .withDriveRequestType(DriveRequestType.Velocity);
+    
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
@@ -76,14 +81,16 @@ public class RobotContainer {
     // ACTUAL IMPORTANT STUFF
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
  
-    private final VisionSubsystem vision = new VisionSubsystem(VisionConstants.llCameraName, drivetrain);
+    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
+    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight-meowlit");
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
 
-    private final Shooter shooter = new Shooter(vision);
+    private final Shooter shooter = new Shooter(LLVision);
     private final Intake intake = new Intake();
     private final Climb climb = new Climb();
+    private final Pivot pivot = new Pivot();
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -95,26 +102,30 @@ public class RobotContainer {
     public RobotContainer() {
 // Distance Based Shooting
     // Middle Tag
-        NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(4)); // 4 seconds
-        NamedCommands.registerCommand("6 sec Middle Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(6)); // 6 seconds
-        NamedCommands.registerCommand("8 sec Middle Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(8)); // 8 seconds
-    // Left Tag    
-        NamedCommands.registerCommand("4 sec Left Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(4)); // 4 seconds
-        NamedCommands.registerCommand("6 sec Left Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(6)); // 6 seconds
-        NamedCommands.registerCommand("8 sec Left Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(8)); // 8 seconds
-    // Right Tag
-        NamedCommands.registerCommand("4 sec Right Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(4)); // 4 seconds
-        NamedCommands.registerCommand("6 sec Right Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(6)); // 6 seconds
-        NamedCommands.registerCommand("8 sec Right Distance Based Shooting", 
-            new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(8)); // 8 seconds
+    //     NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(4)); // 4 seconds
+    //     NamedCommands.registerCommand("6 sec Middle Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(6)); // 6 seconds
+    //     NamedCommands.registerCommand("8 sec Middle Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(8)); // 8 seconds
+    // // Left Tag    
+    //     NamedCommands.registerCommand("4 sec Left Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(4)); // 4 seconds
+    //     NamedCommands.registerCommand("6 sec Left Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(6)); // 6 seconds
+    //     NamedCommands.registerCommand("8 sec Left Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(8)); // 8 seconds
+    // // Right Tag
+    //     NamedCommands.registerCommand("4 sec Right Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(4)); // 4 seconds
+    //     NamedCommands.registerCommand("6 sec Right Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(6)); // 6 seconds
+    //     NamedCommands.registerCommand("8 sec Right Distance Based Shooting", 
+    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(8)); // 8 seconds
+
+       //  NamedCommands.registerCommand("Fixed Shooting Left Shoot", new FixedPIDShooting(shooter, 1.5));
+
+
 
 // Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
@@ -140,12 +151,15 @@ public class RobotContainer {
     // Right
         NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
         NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
-        NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
+        // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
 // Pivoting
 
-        NamedCommands.registerCommand("Forward Pivoting", new Pivoting(intake, true).withTimeout(1));
-        NamedCommands.registerCommand("Pivoting Back", new Pivoting(intake, false).withTimeout(1));
+        NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true, .3).withTimeout(.5));
+        NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false, .3).withTimeout(.5));
+        NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true, .1).withTimeout(1.5));
+        NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false, .1).withTimeout(1.5));
+
 
 // Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
@@ -156,7 +170,12 @@ public class RobotContainer {
 
     
     private void configureBindings() {
+
+        SmartDashboard.putNumber("Shooting Speed", shooterSpeed);
+        SmartDashboard.putBoolean("Has Targets", vision.hasTargets());
+        
         if (vision.hasTargets()) {
+            SmartDashboard.putNumber("Vision Distance", vision.getDistance(VisionConstants.getMiddleTagId()));
             SmartDashboard.putNumber("Vision X", vision.getX(VisionConstants.getMiddleTagId()));
             SmartDashboard.putNumber("Vision Y", vision.getY(VisionConstants.getMiddleTagId()));
             SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(VisionConstants.getMiddleTagId()));
@@ -173,20 +192,7 @@ public class RobotContainer {
             })
         );
 
-        joystick.a().whileTrue(
-            drivetrain.applyRequest(() -> {
-                double forward = joystick.getLeftY() * MaxSpeed * speedLimiter * directionFlipper;
-                double translation = joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper;
-                double turn = vision.hasTarget(VisionConstants.getMiddleTagId()) ? -vision.getTargetYaw(VisionConstants.getMiddleTagId()) * .03 * MaxAngularRate :
-                    vision.hasTarget(VisionConstants.getLeftTagId()) && !vision.hasTarget(VisionConstants.getMiddleTagId()) ? -vision.getTargetYaw(VisionConstants.getLeftTagId()) * .03 * MaxAngularRate : 
-                    vision.hasTarget(VisionConstants.getRightTagId()) && !vision.hasTarget(VisionConstants.getMiddleTagId()) ? -vision.getTargetYaw(VisionConstants.getRightTagId()) * .03 * MaxAngularRate : 0;
 
-                return drive
-                    .withVelocityX(forward)
-                    .withVelocityY(translation)
-                    .withRotationalRate(turn);
-            })
-        );
 
 
 
@@ -195,31 +201,46 @@ public class RobotContainer {
     // Triggers and Bumpers
         subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
         subjoystick.leftTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
-
         subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
         subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        subjoystick.rightTrigger().onTrue(new Pivoting(intake, true));
-        subjoystick.rightBumper().onTrue(new Pivoting(intake, false));
+        // subjoystick.leftBumper().onTrue(new InstantCommand(() -> intakeSpeed -= 0.05));
+        // subjoystick.rightBumper().onTrue(new InstantCommand(() -> intakeSpeed += 0.05));
+        // subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(intakeSpeed), intake));
+        // subjoystick.leftTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+
+       
+
+        subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true, .3));
+        subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false, .3));
 
     // POV Controls    
-        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision, 
-            VisionConstants.getMiddleTagId(), VisionConstants.getLeftTagId(), VisionConstants.getRightTagId())); 
+        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision, 
+        //     VisionConstants.getMiddleTagId(), VisionConstants.getLeftTagId(), VisionConstants.getRightTagId())); 
 
         
-        subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
-        subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
+        // subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
+        // subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
+        subjoystick.povRight().onTrue(new InstantCommand(() -> shooterSpeed += 0.05));
+        subjoystick.povLeft().onTrue(new InstantCommand(() -> shooterSpeed -= 0.05));
+        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new FixedPIDShooting(shooter,1.23));
+        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter, 2.25));
+        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));
+        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter,() -> shooterSpeed));
+        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter, () -> shooterSpeed));
+        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, LLVision));
+
 
     // Letters
-        subjoystick.a().whileTrue(new RunCommand(() -> climb.pullClimbDuty(.2)));
-        subjoystick.a().onFalse(new RunCommand(() -> climb.stopClimb()));
-        subjoystick.b().whileTrue(new RunCommand(() -> climb.pullClimbDuty(-.2)));
-        subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb()));
-        // subjoystick.b().onTrue(new RunCommand(() -> intake.resetPivot(), intake));
-        // subjoystick.x().whileTrue(new RunCommand(() -> intake.spinPivotDuty(.3), intake));
-        // subjoystick.x().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
-        // subjoystick.y().whileTrue(new RunCommand(() -> intake.spinPivotDuty(-.3), intake));
-        // subjoystick.y().onFalse(new RunCommand(() -> intake.stopPivot(), intake));
+        subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
+
+        // subjoystick.b().whileTrue(new RunCommand(() -> climb.pullClimbDuty(-.2)));
+        // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb()));
+        subjoystick.b().onTrue(new RunCommand(() -> pivot.resetPivot(), pivot));
+        subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
+        subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
+        subjoystick.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
+        subjoystick.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
         
 
 
@@ -227,13 +248,26 @@ public class RobotContainer {
 // *******************************************************************************************************
 
     // Triggers and Bumpers
-        joystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        joystick.leftTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        joystick.leftTrigger().whileTrue(
+        Commands.parallel(
+            new RunCommand(() -> intake.spinIntakePID(1), intake),
+            new RunCommand(() -> shooter.spinKickersAgain(-.4), shooter)
+            )
+        );
+        joystick.leftTrigger().onFalse(
+         
+            Commands.parallel(
+                new RunCommand(() -> intake.stopIntake(), intake),
+                new RunCommand(() -> shooter.stopKicker(), shooter)
+        ));
         joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
         joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
         joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
         joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
+
+
+        
 
     // POV Controls
         // joystick.povUp()
@@ -251,9 +285,12 @@ public class RobotContainer {
         // joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
     // Letters
-        // joystick.a()
+        // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
+
+        joystick.a().whileTrue(new AlignToHub(drivetrain, LLVision));
         joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
-        joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
+        // joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
+        joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
         joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
  
@@ -290,7 +327,15 @@ public class RobotContainer {
         
     }
 
-
+    public void setShooterSpeed(double speed) {
+        if (speed < 0.01) {
+            speed = 0.01;
+        } else if (speed > 1) {
+            shooterSpeed = 1;
+        } else {
+            shooterSpeed = speed;
+        }
+    }
 
 
     // changing drivetrain speed
@@ -298,15 +343,16 @@ public class RobotContainer {
     public void setSpeed(double speed) {
         if (speed < 0.1) {
             speed = 0.1;
+            SmartDashboard.putString( "Swerve Speed", "CRAWL");
         }
         if(speed <= .25) {
-            SmartDashboard.putString( "Swerve Speed", "CRAWL");
             turningSpeed = .25;
+            SmartDashboard.putString("Swerve Speed", "LOW");
         } else {
             turningSpeed = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
-            if(speed == 0.2) SmartDashboard.putString("Swerve Speed", "LOW");
-            if(speed == 0.5) SmartDashboard.putString("Swerve Speed", "MID");
-            if(speed == 1.0) SmartDashboard.putString("Swerve Speed", "HIGH");
+            if (speed <= 0.3) SmartDashboard.putString("Swerve Speed", "LOW");
+            else if (speed <= 0.5) SmartDashboard.putString("Swerve Speed", "MID");
+            else SmartDashboard.putString("Swerve Speed", "HIGH");
         }
         speedLimiter = speed;
         
@@ -333,6 +379,9 @@ public class RobotContainer {
     }
     public Shooter getShooter() {
         return shooter;
+    }
+    public Pivot getPivot() {
+        return pivot;
     }
 
 

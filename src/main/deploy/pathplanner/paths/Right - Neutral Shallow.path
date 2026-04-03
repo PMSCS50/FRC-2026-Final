@@ -61,7 +61,7 @@
     "rotation": 90.0
   },
   "reversed": false,
-  "folder": "New Right",
+  "folder": "C1 Right",
   "idealStartingState": {
     "velocity": 1.0,
     "rotation": 0.0

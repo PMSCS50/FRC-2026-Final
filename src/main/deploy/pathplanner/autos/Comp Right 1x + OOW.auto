@@ -7,7 +7,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Forward Pivoting"
+            "name": "Forward Pivoting 30%"
           }
         },
         {
@@ -44,7 +44,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Pivoting Back"
+            "name": "Pivoting Back 30%"
           }
         },
         {
@@ -75,7 +75,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Forward Pivoting"
+            "name": "Forward Pivoting 30%"
           }
         },
         {

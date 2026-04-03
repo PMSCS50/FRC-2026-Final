@@ -58,7 +58,7 @@ public class Pathfinder {
                 List<Pose2d> poses = pathForDistance.getPathPoses();
                 double dist = drivetrain.getPose().getTranslation()
                     .getDistance(poses.get(0).getTranslation());
-                if (dist < minDist && abs(drivetrain.getPose().getX() - destPose.getX()) > abs(poses.get(0).getX() - destPose.getX())) {
+                if (dist < minDist && Math.abs(drivetrain.getPose().getX() - destPose.getX()) > Math.abs(poses.get(0).getX() - destPose.getX())) {
                     minDist = dist;
                     closestPath = path;
                     //closestPathName = name;

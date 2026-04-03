@@ -34,8 +34,9 @@ public class DistanceBasedShootingTimed extends Command {
         SmartDashboard.putNumber("Shooter velocity", shooter.getVelocity());
 
         if (vision.hasTarget(targetId)) {
-            shooter.rpmControl(vision.getDistance(targetId));
-            if (shooter.atCorrectRPM(targetId)) {
+            double dist = vision.getDistance(targetId);
+            shooter.rpmControl(dist);
+            if (shooter.atCorrectRPM()) {
                 shooter.spinKickers();
             }
         } else {

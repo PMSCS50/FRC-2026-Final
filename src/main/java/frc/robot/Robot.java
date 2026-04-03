@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
@@ -65,20 +66,22 @@ public class Robot extends LoggedRobot {
      * This example is sufficient to show that vision integration is possible, though exact implementation
      * of how to use vision should be tuned per-robot and to the team's specification.
      */
-    if (kUseLimelight) {
-      var driveState = m_robotContainer.drivetrain.getState();
-      double headingDeg = driveState.Pose.getRotation().getDegrees();
-      double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
+    // if (kUseLimelight) {
+    //   var driveState = m_robotContainer.drivetrain.getState();
+    //   double headingDeg = driveState.Pose.getRotation().getDegrees();
+    //   double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
-      LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
-      var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
-      if (llMeasurement != null && llMeasurement.tagCount > 0 && omegaRps < 2.0) {
-        m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
-      }
-    }
+    //   LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
+    //   var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+    //   if (llMeasurement != null && llMeasurement.tagCount > 0 && omegaRps < 2.0) {
+    //     m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
+    //   }
+    // }
+
     SmartDashboard.putNumber("shooter speed", RobotContainer.shooterSpeed);
-    SmartDashboard.putNumber("pivot speed", RobotContainer.pivotSpeed);
-
+    // SmartDashboard.putNumber("pivot speed", RobotContainer.pivotSpeed);
+    // SmartDashboard.putNumber("intake Speed", RobotContainer.intakeSpeed);
+    
 
 
 
@@ -88,11 +91,12 @@ public class Robot extends LoggedRobot {
 
 
     SmartDashboard.putNumber("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
-    SmartDashboard.putBoolean("climb 1 boolean", m_robotContainer.getClimb().getHookLimit());    
-    SmartDashboard.putBoolean("climb 2 boolean", m_robotContainer.getClimb().getBottomLimit());
-    SmartDashboard.putBoolean("climb 3 boolean", m_robotContainer.getClimb().getTopLimit());
-    SmartDashboard.putNumber("pivot amount", m_robotContainer.getIntake().getPivotEncoder().getPosition());
 
+    SmartDashboard.putNumber("pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    SmartDashboard.putNumber("drivetrain yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
+    SmartDashboard.putNumber("drivetrain x", m_robotContainer.drivetrain.getState().Pose.getX());
+    SmartDashboard.putNumber("drivetrain y", m_robotContainer.drivetrain.getState().Pose.getY());
+    SmartDashboard.putNumber("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
     Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
 
 

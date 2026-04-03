@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Pivot;
 
 public class Pivoting extends Command {
 
@@ -14,32 +15,36 @@ public class Pivoting extends Command {
 
     
 
-    private final Intake intake;
+    private final Pivot pivot;
     private final double targetSetpoint;
+    private final double speed;
 
-    public Pivoting(Intake intake, boolean forward) {
-        this.intake = intake;
+    public Pivoting(Pivot pivot, boolean forward, double speed) {
+        this.pivot = pivot;
+        this.speed = speed;
         this.targetSetpoint = forward ? SETPOINT_B : SETPOINT_A;
-        addRequirements(intake);
+        addRequirements(pivot);
     }
 
     @Override
     public void initialize() {
-        intake.goToPosition(targetSetpoint);
+        pivot.setOutputLimits(speed);
+
+        pivot.goToPosition(targetSetpoint);
     }
 
     @Override
     public void execute() {
-        SmartDashboard.putNumber("pivot location", intake.getPivotEncoder().getPosition());
+        SmartDashboard.putNumber("pivot location", pivot.getPivotEncoder().getPosition());
     }
 
     @Override
     public boolean isFinished() {
-        return intake.atPosition(targetSetpoint, TOLERANCE);
+        return pivot.atPosition(targetSetpoint, TOLERANCE);
     }
 
     @Override
     public void end(boolean interrupted) {
-        intake.goToPosition(targetSetpoint); // hold position
+        pivot.goToPosition(targetSetpoint); 
     }
 }
