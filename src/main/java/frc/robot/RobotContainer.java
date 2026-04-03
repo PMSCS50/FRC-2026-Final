@@ -125,6 +125,8 @@ public class RobotContainer {
 
        //  NamedCommands.registerCommand("Fixed Shooting Left Shoot", new FixedPIDShooting(shooter, 1.5));
 
+       NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, LLVision).withTimeout(4));
+
 
 
 // Intaking
@@ -155,10 +157,10 @@ public class RobotContainer {
 
 // Pivoting
 
-        NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true, .3).withTimeout(.5));
-        NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false, .3).withTimeout(.5));
-        NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true, .1).withTimeout(1.5));
-        NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false, .1).withTimeout(1.5));
+        NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
+        NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false ).withTimeout(.5));
+        NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
+        NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
 
 // Configuring
@@ -211,8 +213,8 @@ public class RobotContainer {
 
        
 
-        subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true, .3));
-        subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false, .3));
+        subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
+        subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
 
     // POV Controls    
         // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision, 
@@ -221,8 +223,7 @@ public class RobotContainer {
         
         // subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
         // subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
-        subjoystick.povRight().onTrue(new InstantCommand(() -> shooterSpeed += 0.05));
-        subjoystick.povLeft().onTrue(new InstantCommand(() -> shooterSpeed -= 0.05));
+        // subjoystick.povLeft().onTrue(new RunCommand(() -> LLVision.setPigeon()));
         subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new FixedPIDShooting(shooter,1.23));
         // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter, 2.25));
         // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));

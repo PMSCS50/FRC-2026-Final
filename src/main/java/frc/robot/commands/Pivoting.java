@@ -17,18 +17,15 @@ public class Pivoting extends Command {
 
     private final Pivot pivot;
     private final double targetSetpoint;
-    private final double speed;
 
-    public Pivoting(Pivot pivot, boolean forward, double speed) {
+    public Pivoting(Pivot pivot, boolean forward) {
         this.pivot = pivot;
-        this.speed = speed;
         this.targetSetpoint = forward ? SETPOINT_B : SETPOINT_A;
         addRequirements(pivot);
     }
 
     @Override
     public void initialize() {
-        pivot.setOutputLimits(speed);
 
         pivot.goToPosition(targetSetpoint);
     }

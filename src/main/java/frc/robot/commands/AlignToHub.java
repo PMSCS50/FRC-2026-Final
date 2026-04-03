@@ -52,7 +52,7 @@ public class AlignToHub extends Command {
         drivetrain.setControl(drive
             .withVelocityX(0)
             .withVelocityY(0)
-            .withRotationalRate(rotValue)
+            .withRotationalRate(-rotValue)
         );
     }
 

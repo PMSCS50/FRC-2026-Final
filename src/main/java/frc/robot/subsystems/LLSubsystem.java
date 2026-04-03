@@ -59,16 +59,23 @@ public class LLSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        LimelightHelpers.SetIMUMode(limelightName, 0);
+        LimelightHelpers.SetIMUMode(limelightName, 4);
         var driveState = drivetrain.getState();
         // double headingDeg = driveState.Pose.getRotation().getDegrees();
+        // double headingDeg = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) ==
+        //     DriverStation.Alliance.Red ? 
+        //     drivetrain.getPigeon2().getYaw().getValueAsDouble() + 180 : 
+        //     drivetrain.getPigeon2().getYaw().getValueAsDouble();
+        
         double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
+        // PoseEstimator m_poseEstimator = ;
 
 
 
 
         LimelightHelpers.SetRobotOrientation(limelightName, headingDeg, 0.0, 0.0, 0.0, 0.0, 0.0);
+        
         SmartDashboard.putNumber("Heading sent toLL", headingDeg);
         SmartDashboard.putNumber("Raw Pidgeon Yaw", drivetrain.getPigeon2().getYaw().getValueAsDouble());
         SmartDashboard.putNumber("LL Received Yaw", LimelightHelpers.getIMUData(limelightName).robotYaw);
@@ -93,8 +100,8 @@ public class LLSubsystem extends SubsystemBase {
         SmartDashboard.putString("llmeasurement", llMeasurement.toString());
 
         if (llMeasurement.tagCount > 0) {
-            latestEstimate = getPoseEstimate(llMeasurementRed, llMeasurementBlue);
-            // latestEstimate = llMeasurement;
+            // latestEstimate = getPoseEstimate(llMeasurementRed, llMeasurementBlue);
+            latestEstimate = llMeasurement;
             // latestEstimate = 
             drivetrain.addVisionMeasurement(
                 latestEstimate.pose,
@@ -169,6 +176,10 @@ public class LLSubsystem extends SubsystemBase {
     public boolean hasTarget(int desiredId) {
         return LimelightHelpers.getFiducialID(limelightName) == desiredId;
     }
+
+    // public void updateOdometry() {
+    //     m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+    // }
     
     // Positions: 0 - X (Left/Right) | 1 - Y (Up/Down) | 2 - Z (Forwards/Backwards)
     // Positions: 3 - Roll | 4 - Pitch | 5 - Yaw
@@ -223,6 +234,10 @@ public class LLSubsystem extends SubsystemBase {
 
     public PoseEstimate getPoseEstimate(PoseEstimate red, PoseEstimate blue) {
         return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? red : blue;
+    }
+
+    public void switchHeading() {
+
     }
 
 

@@ -53,7 +53,7 @@ public class Pivot extends SubsystemBase {
         pivotMotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(.04, 0, 0) // .05,0,0 works with .4, .4
-                .outputRange(outputMin, outputMax)
+                .outputRange(-.3, .3)
                 .positionWrappingEnabled(false);
 
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

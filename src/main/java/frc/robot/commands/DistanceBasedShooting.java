@@ -29,15 +29,14 @@ public class DistanceBasedShooting extends Command {
 
     @Override
     public void execute() {
-        double distance = vision.getDistanceToTarget(VisionConstants.getHubPose2());
+        double distance = vision.getDistanceToTarget(VisionConstants.getHubPose());
         SmartDashboard.putNumber("Shooter velocity", shooter.getVelocity());
-        SmartDashboard.putNumber("Distance to Hub", distance);
+        SmartDashboard.putNumber("Distance to Hub", distance); 
 
         if (distance > 0) {
             shooter.rpmControl(distance);
-            if (shooter.atCorrectRPM()) {
+
                 shooter.spinKickers();
-            }
         }
     }
 

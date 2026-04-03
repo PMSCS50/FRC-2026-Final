@@ -11,15 +11,22 @@
           }
         },
         {
-          "type": "wait",
+          "type": "parallel",
           "data": {
-            "waitTime": 2.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Shoot to Climb"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intaking"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Distance Based Shooting"
+                }
+              }
+            ]
           }
         }
       ]

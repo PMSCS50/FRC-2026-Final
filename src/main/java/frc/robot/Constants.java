@@ -160,7 +160,7 @@
           public static final double kD = 0;
 
           public static final double kPivotSetpointA = 0.0;  
-          public static final double kPivotSetpointB = 0.33; 
+          public static final double kPivotSetpointB = 16; 
           
           public static final double pivotUpPosition   = 0/* rotations */;
           public static final double pivotDownPosition = 0.5;
