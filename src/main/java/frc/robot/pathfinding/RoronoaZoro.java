@@ -8,6 +8,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import java.util.ArrayList;
 import java.util.List;
 
+import frc.robot.pathfinding.OrientationZone;
+import frc.robot.pathfinding.RotationZone;
+
 //Custom Path finder that extends AD*.
 //Should also incorporate rotation and alignment zones
 //HEAVY WORK IN PROGRESS.
