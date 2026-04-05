@@ -4,8 +4,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /**
- * A zone where the robot holds a fixed heading throughout.
- * A good example in REBUILT is always staying forward when going through the trench so our intake doesnt slam into the wall.
+ * A zone where the robot holds a fixed chassis heading throughout.
+ * Implemented via RotationTargets at zone lead-in and exit.
+ * Example: always face forward through the trench to protect the intake.
  */
 public class RotationZone extends PathZone {
 
@@ -20,8 +21,7 @@ public class RotationZone extends PathZone {
         this.rotation = rotation;
     }
 
-    @Override
-    public Rotation2d getRotationAt(Translation2d pointOnPath) {
+    public Rotation2d getRotation() {
         return rotation;
     }
 }
