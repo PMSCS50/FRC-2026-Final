@@ -25,7 +25,6 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
 import com.pathplanner.lib.commands.PathfindingCommand;
-import com.pathplanner.lib.pathfinding.Pathfinding;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
