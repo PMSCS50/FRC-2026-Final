@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.pathfinding;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
@@ -18,6 +18,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import frc.robot.pathfinding.OrientationZone;
+import frc.robot.pathfinding.RotationZone;
+import frc.robot.pathfinding.RoronoaZoro;
+
 //Uses PathPlanner's pathfinding features to generate paths to any position on the field.
 //We can use this to potentially revolutionize alignment in code.
 //Can be very powerful if it works
@@ -36,6 +40,20 @@ public class Pathfinder {
     //Creates a waypoint on the field. Can mark important locations.    
     public void addWaypoint(String name, Pose2d pose) {
         waypoints.put(name, pose);
+    }
+
+    //Creates a rotation zone with opposing corners min and max, and a rotation value. 
+    //When the robot is in the zone, it will try to rotate to the rotation value.
+    //However, once you make one, the robot will ALWAYS follow it
+    public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation) {
+        AutoBuilder.addPathZone(new RotationZone(name, min, max, rotation));
+    }
+
+    //Creates an orientation zone with opposing corners min and max, and a target pose. 
+    //When the robot is in the zone, it will try to rotate to the target pose.
+    //However, once you make one, the robot will ALWAYS follow it
+    public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose) {
+        AutoBuilder.addPathZone(new OrientationZone(name, min, max, targetPose));
     }
 
     //Self explanatory. Creates a path to a destination pose and follows it.
@@ -77,7 +95,7 @@ public class Pathfinder {
 
     //Team 4915 had this in their code so I copied it.
     //Given a bunch of poses, it travels to the nearest one.
-    public Command pathToNearest(List<Pose2d> candidates) {
+    public Command pathToNearestPose(List<Pose2d> candidates) {
         if (candidates.isEmpty()) return Commands.none();
         return Commands.defer(() -> {
             Pose2d nearest = candidates.stream()
@@ -93,7 +111,7 @@ public class Pathfinder {
     //Same as above but to the nearest waypoint.
     public Command pathToNearestWaypoint() {
         if (waypoints.isEmpty()) return Commands.none();
-        return pathToNearest(robotPose, waypoints.values().stream().toList());
+        return pathToNearestPose(robotPose, waypoints.values().stream().toList());
     }
 
     //Uses PathPlanner for alignment. Please dont use this.
@@ -115,6 +133,15 @@ public class Pathfinder {
     public Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
         Translation2d delta = target.getTranslation().minus(from.getTranslation());
         return new Rotation2d(delta.getX(), delta.getY());
+    }
+
+    public Pose2d getNearestWaypoint() {
+        return waypoints.values().stream().min(
+            Comparator.comparingDouble(
+                p -> p.getTranslation()
+                       .getDistance(robotPose.get().getTranslation())
+            ))
+            .orElseThrow();
     }
 
 }

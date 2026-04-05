@@ -23,7 +23,9 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
+import frc.robot.pathfinding.RoronoaZoro;
 
+import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
 public class Robot extends LoggedRobot {
@@ -45,7 +47,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-  
+    Pathfinding.setPathfinder(new RoronoaZoro());
     m_robotContainer = new RobotContainer();
   }
 
