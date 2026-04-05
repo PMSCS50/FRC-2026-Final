@@ -26,13 +26,13 @@ import frc.robot.pathfinding.RoronoaZoro;
 //We can use this to potentially revolutionize alignment in code.
 //Can be very powerful if it works
 
-public class Pathfinder {
+public class Pathmaster {
 
     private final PathConstraints constraints;
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private final Supplier<Pose2d> robotPose;
 
-    public Pathfinder(double vmax, double amax, double omegamax, double alphamax, Supplier<Pose2d> robotPose) {
+    public Pathmaster(double vmax, double amax, double omegamax, double alphamax, Supplier<Pose2d> robotPose) {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.robotPose = robotPose;
     }
@@ -88,7 +88,7 @@ public class Pathfinder {
                 Set.of()
             );
         } catch (Exception e) {
-            DriverStation.reportError("[Pathfinder] Path not found: " + pathName, true);
+            DriverStation.reportError("[Pathmaster] Path not found: " + pathName, true);
             return Commands.none();
         }
     }
