@@ -16,6 +16,10 @@ import frc.robot.pathfinding.RotationZone;
 //HEAVY WORK IN PROGRESS.
 public class RoronoaZoro extends LocalADStar {
 
+  public RoronoaZoro() {
+    super();
+  }
+  
   private final List<PathZone> rotationZones = new ArrayList<>();
 
   public void addZone(PathZone zone) {
