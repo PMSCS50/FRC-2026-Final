@@ -46,14 +46,14 @@ public class Pathfinder {
     //When the robot is in the zone, it will try to rotate to the rotation value.
     //However, once you make one, the robot will ALWAYS follow it
     public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation) {
-        AutoBuilder.addPathZone(new RotationZone(name, min, max, rotation));
+        RoronoaZoro.addZone(new RotationZone(name, min, max, rotation));
     }
 
     //Creates an orientation zone with opposing corners min and max, and a target pose. 
     //When the robot is in the zone, it will try to rotate to the target pose.
     //However, once you make one, the robot will ALWAYS follow it
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose) {
-        AutoBuilder.addPathZone(new OrientationZone(name, min, max, targetPose));
+        RoronoaZoro.addZone(new OrientationZone(name, min, max, targetPose));
     }
 
     //Self explanatory. Creates a path to a destination pose and follows it.
