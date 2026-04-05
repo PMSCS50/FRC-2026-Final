@@ -92,6 +92,8 @@ public class RobotContainer {
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
+    //Pathfinder pathfinder = new Pathfinder(MaxSpeed, 5, MaxAngularRate, 2*Math.PI);
+
     /* Path follower */
     private SendableChooser<Command> autoChooser;
 

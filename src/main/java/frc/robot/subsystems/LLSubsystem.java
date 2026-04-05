@@ -123,75 +123,17 @@ public class LLSubsystem extends SubsystemBase {
             latestEstimate = null;
         }
     }
-    // @Override
-    // public void periodic() {
-    //     NetworkTable table = NetworkTableInstance.getDefault().getTable(limelightName);
-    //     NetworkTableEntry ty = table.getEntry("ty");
-    //     double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-
-    //     double limelightMountAngleDegrees = 20; 
-    //     // distance from the center of the Limelight lens to the floor
-    //     double limelightLensHeightInches = 20.0; 
-    //     // distance from the target to the floor    
-    //     double goalHeightInches = 60.0; 
-    //     double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-    //     double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-    //     //calculate distance
-    //     double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
-
-
-    //     var driveState = drivetrain.getState();
-    //     double headingDeg = driveState.Pose.getRotation().getDegrees();
-    //     double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
-    //     LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0.0, 0.0, 0.0, 0.0, 0.0);
-    //     var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
-    //     if (llMeasurement != null && llMeasurement.tagCount > 0 && omegaRps < 2.0) {
-    //         drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
-    //     }
-
-    //     positions = LimelightHelpers.getBotPose_TargetSpace("");
-
-       
-    //     SmartDashboard.putNumber("distance from limelight to goal inches", distanceFromLimelightToGoalInches);
-    //     SmartDashboard.putNumber("X", getX());
-    //     SmartDashboard.putNumber("Y", getY());
-    //     SmartDashboard.putNumber("Z", getZ());
-    //     SmartDashboard.putNumber("Rotation", getYaw());
-
-    //     if (positions != null && positions.length >= 11) {
-    //         SmartDashboard.putNumber("X", getX());
-    //         SmartDashboard.putNumber("Y", getY());
-    //         SmartDashboard.putNumber("Z", getZ());
-    //         SmartDashboard.putNumber("Rotation", getYaw());
-    //     } else {
-    //         SmartDashboard.putString("Vision Status", "No target detected");
-    //     }
-
-
-        
-
-        
-    // }
 
     public boolean hasTarget(int desiredId) {
         return LimelightHelpers.getFiducialID(limelightName) == desiredId;
     }
 
-    // public void updateOdometry() {
-    //     m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
-    // }
-    
-    // Positions: 0 - X (Left/Right) | 1 - Y (Up/Down) | 2 - Z (Forwards/Backwards)
-    // Positions: 3 - Roll | 4 - Pitch | 5 - Yaw
-    // Positions: 6 - total latency (cl + tl) | 7 - tag count | 8 - tag span 
-    // Positions: 9 - average tag distance from camera | 10 - average tag area (% of image)
-
-        public double getX()        { return latestEstimate != null ? latestEstimate.pose.getX() : 0.0; }
-        public double getY()        { return latestEstimate != null ? latestEstimate.pose.getY() : 0.0; }
-        public double getYaw()      { return latestEstimate != null ? latestEstimate.pose.getRotation().getDegrees() : 0.0; }
-        public double getTagCount() { return latestEstimate != null ? latestEstimate.tagCount : 0; }
-        public double getAvgTagDist() { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
-        public boolean hasTargets() { return latestEstimate != null && latestEstimate.tagCount > 0; }
+    public double getX()        { return latestEstimate != null ? latestEstimate.pose.getX() : 0.0; }
+    public double getY()        { return latestEstimate != null ? latestEstimate.pose.getY() : 0.0; }
+    public double getYaw()      { return latestEstimate != null ? latestEstimate.pose.getRotation().getDegrees() : 0.0; }
+    public double getTagCount() { return latestEstimate != null ? latestEstimate.tagCount : 0; }
+    public double getAvgTagDist() { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
+    public boolean hasTargets() { return latestEstimate != null && latestEstimate.tagCount > 0; }
     
 
     public void setPipeline(int pipeline) {
