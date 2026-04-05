@@ -59,7 +59,5 @@ public abstract class PathZone {
         }
         return last;
     }
-    //Returns given rotation2d for RotationZone
-    //Return angle between current point and target point for OrientationZone
-    public abstract Rotation2d getRotationAt(Translation2d pointOnPath);
+
 }
