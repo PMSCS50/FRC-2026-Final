@@ -26,11 +26,11 @@ public class RoronoaZoro extends LocalADStar {
         super();
     }
 
-    public void addZone(PathZone zone, boolean active) {
+    public static void addZone(PathZone zone, boolean active) {
         allZones.put(zone, active);
     }
 
-    public void setZoneState(String zoneName, boolean newState) {
+    public static void setZoneState(String zoneName, boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
             if (entry.getKey().name.equals(zoneName)) {
                 entry.setValue(newState);
