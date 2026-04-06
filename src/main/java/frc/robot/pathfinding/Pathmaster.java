@@ -44,16 +44,28 @@ public class Pathmaster {
 
     //Creates a rotation zone with opposing corners min and max, and a rotation value. 
     //When the robot is in the zone, it will try to rotate to the rotation value.
-    //However, once you make one, the robot will ALWAYS follow it
-    public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation) {
-        RoronoaZoroAK.addZone(new RotationZone(name, min, max, rotation));
+    public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
+        RoronoaZoroAK.addZone(new RotationZone(name, min, max, rotation), active);
     }
 
     //Creates an orientation zone with opposing corners min and max, and a target pose. 
     //When the robot is in the zone, it will try to rotate to the target pose.
-    //However, once you make one, the robot will ALWAYS follow it
-    public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose) {
-        RoronoaZoroAK.addZone(new OrientationZone(name, min, max, targetPose));
+    public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
+        RoronoaZoroAK.addZone(new OrientationZone(name, min, max, targetPose), active);
+    }
+
+    public void activateZone(String name) {
+        RoronoaZoroAK.setZoneState(name, true);
+    }
+
+    public void activateZones(String... names) {
+        for (String name : names) {
+            RoronoaZoroAK.setZoneState(name, true);
+        }
+    }
+
+    public void deactivateZone(String name) {
+        RoronoaZoroAK.setZoneState(name, false);
     }
 
     //Self explanatory. Creates a path to a destination pose and follows it.
