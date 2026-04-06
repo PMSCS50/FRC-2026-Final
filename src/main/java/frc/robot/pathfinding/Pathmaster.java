@@ -137,6 +137,13 @@ public class Pathmaster {
         }, Set.of());
     }
 
+    public void cancelPathing(CommandSwerveDrivetrain drivetrain) {
+        Command currentPathCommand = drivetrain.getCurrentCommand();
+        if (currentPathCommand != null) {
+            currentPathCommand.cancel();
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------

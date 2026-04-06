@@ -41,7 +41,7 @@ import frc.robot.subsystems.vision.VisionIOReal;
 import frc.robot.subsystems.vision.VisionIOSim;
 import frc.robot.subsystems.vision.VisionSimSystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
-import frc.robot.Pathfinder;
+import frc.robot.pathfinding.Pathmaster;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ClimbConstants;
 import edu.wpi.first.cameraserver.CameraServer;
@@ -92,7 +92,7 @@ public class RobotContainer {
     private final VisionSimSystem vision;
     public final FuelPhysicsSim ballSim;
     
-     private final Pathfinder pathfinder = new Pathfinder(ClimbConstants.getClimbPose(),3,3,2 * Math.PI, 2 * Math.PI, drivetrain);
+    private final Pathmaster pathfinder = new Pathmaster(ClimbConstants.getClimbPose(),3,3,2 * Math.PI, 2 * Math.PI, drivetrain.getState().Pose);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -242,28 +242,9 @@ public class RobotContainer {
             () -> joystick.getLeftX() * MaxSpeed * speedLimiter * directionFlipper, 
             ballSim));
 
-        // Pathing to climb
-        joystick.rightTrigger().whileTrue(
-            Commands.repeatingSequence(
-                Commands.defer(
-                    () -> pathfinder.pathToClimb(),
-                    Set.of(drivetrain)
-                )
-            ).until(
-                () -> drivetrain.getPose().getTranslation()
-                    .getDistance(pathfinder.ClimbPose.getTranslation()) < 0.1 // meters
-            )
-        );
-
- 
-        //joystick.rightTrigger().onFalse(pathfinder.));    
-
-        // joystick.rightTrigger().onTrue(
-        //     Commands.defer(
-        //         () -> pathfinder.makePathTo(VisionConstants.getCenter()),
-        //         Set.of(drivetrain)
-        //     )
-        // );
+        // Pathing to climb. I hope it works
+        joystick.rightTrigger().onTrue(pathfinder.makePathTo(VisionConstants.getCenter()));
+        joystick.rightTrigger().onFalse(pathfinder.cancelPathing(drivetrain));
 
         // Intake
         joystick.a().whileTrue(new Intaking(intake, drivetrain));
