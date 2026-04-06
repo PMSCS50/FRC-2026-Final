@@ -65,11 +65,25 @@ public class Pathmaster {
         }
     }
 
+    public void activateOnly(String... names) {
+        RoronoaZoro.setAllZones(false);
+        for (String name : names) {
+            RoronoaZoro.setZoneState(name, true);
+        }
+    }
+
     public void deactivateZone(String name) {
         RoronoaZoro.setZoneState(name, false);
     }
 
     public void deactivateZones(String... names) {
+        for (String name : names) {
+            RoronoaZoro.setZoneState(name, false);
+        }
+    }
+
+    public void deactivateOnly(String... names) {
+        RoronoaZoro.setAllZones(true);
         for (String name : names) {
             RoronoaZoro.setZoneState(name, false);
         }

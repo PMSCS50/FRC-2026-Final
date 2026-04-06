@@ -40,9 +40,14 @@ public class RoronoaZoro extends LocalADStar {
         DriverStation.reportWarning("[RoronoaZoro] Zone '" + zoneName + "' not found", false);
     }
 
+    public static void setAllZones(boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
+            entry.setValue(newState);
+        }
+    }
+
     @Override
-    public PathPlannerPath getCurrentPath(
-            PathConstraints constraints, GoalEndState goalEndState) {
+    public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
 
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
         if (basePath == null) return null;
@@ -67,8 +72,7 @@ public class RoronoaZoro extends LocalADStar {
         double[] cumulativeDist = new double[anchors.size()];
         cumulativeDist[0] = 0.0;
         for (int i = 1; i < anchors.size(); i++) {
-            cumulativeDist[i] = cumulativeDist[i - 1]
-                + anchors.get(i).getDistance(anchors.get(i - 1));
+            cumulativeDist[i] = cumulativeDist[i - 1] + anchors.get(i).getDistance(anchors.get(i - 1));
         }
         double totalPathLength = cumulativeDist[anchors.size() - 1];
 
@@ -110,15 +114,10 @@ public class RoronoaZoro extends LocalADStar {
 
             } else if (zone instanceof RotationZone) {
                 // Fixed heading — just need lead-in and exit rotation targets
-                Translation2d entryPoint = interpolateAlongPath(
-                    anchors, cumulativeDist, entryFraction * totalPathLength);
-                Translation2d exitPoint = interpolateAlongPath(
-                    anchors, cumulativeDist, exitFraction * totalPathLength);
-
                 rotationTargets.add(new RotationTarget(
-                    leadInIndex, zone.getRotation(entryPoint)));
+                    leadInIndex, zone.getRotation()));
                 rotationTargets.add(new RotationTarget(
-                    exitIndex, zone.getRotation(exitPoint)));
+                    exitIndex, zone.getRotation()));
             }
 
             DriverStation.reportWarning(
