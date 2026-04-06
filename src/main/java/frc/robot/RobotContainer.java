@@ -310,8 +310,8 @@ public class RobotContainer {
             Pathmaster implementation
         */
 
-        joystick.rightTrigger().onTrue(pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(pathfinder.cancelPathing());
+        joystick.rightTrigger().onTrue(pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
+        joystick.rightTrigger().onFalse(pathmaster.cancelPathing());
         
         
     }
