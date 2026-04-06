@@ -5,8 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * A zone where the robot holds a fixed chassis heading throughout.
- * Implemented via RotationTargets at zone lead-in and exit.
- * Example: always face forward through the trench to protect the intake.
+ * Example: always face forward through the trench to not slam the intake into a wall.
  */
 public class RotationZone extends PathZone {
 

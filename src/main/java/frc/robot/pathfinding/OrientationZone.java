@@ -6,10 +6,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * A zone where the robot continuously faces toward a target field pose,
- * implemented via PathPlanner's PointTowardsZone.
- * PathPlanner handles all continuous facing math internally —
- * no manual rotation target sampling needed.
- * Example: always face the hub while passing through a shooting corridor.
+
+ * Example: always face the hub while on the alliance zone
  */
 public class OrientationZone extends PathZone {
 
