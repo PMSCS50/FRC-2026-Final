@@ -23,7 +23,7 @@ import frc.robot.pathfinding.RotationZone;
 import frc.robot.pathfinding.RoronoaZoro;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
-//Uses PathPlanner's pathfinding features to generate paths to any position on the field.
+//Uses PathPlanner's pathfinding features to generate path commands to any position on the field.
 //We can use this to potentially revolutionize alignment in code.
 //Can be very powerful if it works
 
