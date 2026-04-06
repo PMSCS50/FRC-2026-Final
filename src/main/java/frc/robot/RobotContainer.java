@@ -101,7 +101,7 @@ public class RobotContainer {
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
-    Pathmaster pathmaster = new Pathmaster(MaxSpeed, 5, MaxAngularRate, 2*Math.PI, () -> drivetrain.getState().Pose);
+    Pathmaster pathmaster = new Pathmaster(drivetrain, MaxSpeed, 5, MaxAngularRate, 2*Math.PI);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -311,7 +311,7 @@ public class RobotContainer {
         */
 
         joystick.rightTrigger().onTrue(pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(pathfinder.cancelPathing(drivetrain));
+        joystick.rightTrigger().onFalse(pathfinder.cancelPathing());
         
         
     }

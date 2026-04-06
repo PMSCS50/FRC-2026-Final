@@ -31,11 +31,13 @@ public class Pathmaster {
 
     private final PathConstraints constraints;
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
+    private final CommandSwerveDrivetrain drivetrain;
     private final Supplier<Pose2d> robotPose;
 
-    public Pathmaster(double vmax, double amax, double omegamax, double alphamax, Supplier<Pose2d> robotPose) {
+    public Pathmaster(CommandSwerveDrivetrain drivetrain, double vmax, double amax, double omegamax, double alphamax) {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
-        this.robotPose = robotPose;
+        this.drivetrain = drivetrain;
+        this.robotPose = () -> drivetrain.getState().Pose;
     }
 
     //Creates a waypoint on the field. Can mark important locations.    
@@ -95,7 +97,7 @@ public class Pathmaster {
         //apparently we cant just return command, we must use commands.defer() or it breaks somehow. I dont fucking know how
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(destination, constraints),
-            Set.of()
+            Set.of(drivetrain)
         );
     }
 
@@ -104,7 +106,7 @@ public class Pathmaster {
         if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name)) return Commands.none();
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(waypoints.get(name), constraints),
-            Set.of()
+            Set.of(drivetrain)
         );
     }
 
@@ -118,7 +120,7 @@ public class Pathmaster {
             PathPlannerPath precisePath = PathPlannerPath.fromPathFile(pathName);
             return Commands.defer(
                 () -> AutoBuilder.pathfindThenFollowPath(precisePath, constraints),
-                Set.of()
+                Set.of(drivetrain)
             );
         } catch (Exception e) {
             DriverStation.reportError("[Pathmaster] Path not found: " + pathName, true);
@@ -138,7 +140,7 @@ public class Pathmaster {
                 ))
                 .orElseThrow();
             return AutoBuilder.pathfindToPose(nearest, constraints);
-        }, Set.of());
+        }, Set.of(drivetrain));
     }
 
     //Same as above but to the nearest waypoint.
@@ -155,10 +157,10 @@ public class Pathmaster {
             Rotation2d facing = getRotationToPose(destination, faceTarget);
             Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
             return AutoBuilder.pathfindToPose(oriented, constraints);
-        }, Set.of());
+        }, Set.of(drivetrain));
     }
 
-    public void cancelPathing(CommandSwerveDrivetrain drivetrain) {
+    public void cancelPathing() {
         Command currentPathCommand = drivetrain.getCurrentCommand();
         if (currentPathCommand != null) {
             currentPathCommand.cancel();
