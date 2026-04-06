@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 import frc.robot.pathfinding.OrientationZone;
 import frc.robot.pathfinding.RotationZone;
 import frc.robot.pathfinding.RoronoaZoro;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 //Uses PathPlanner's pathfinding features to generate paths to any position on the field.
 //We can use this to potentially revolutionize alignment in code.
@@ -141,6 +142,13 @@ public class Pathmaster {
             Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
             return AutoBuilder.pathfindToPose(oriented, constraints);
         }, Set.of());
+    }
+
+    public void cancelPathing(CommandSwerveDrivetrain drivetrain) {
+        Command currentPathCommand = drivetrain.getCurrentCommand();
+        if (currentPathCommand != null) {
+            currentPathCommand.cancel();
+        }
     }
 
     // -----------------------------------------------------------------------

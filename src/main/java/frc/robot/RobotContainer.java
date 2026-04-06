@@ -44,6 +44,15 @@ import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import edu.wpi.first.cameraserver.CameraServer;
 import frc.robot.Constants;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.commands.AlignToHub;
+import frc.robot.commands.DistanceBasedShooting;
+import frc.robot.commands.FixedPIDShooting;
+import frc.robot.commands.PV_Align;
+import frc.robot.commands.PV_Orient;
+import frc.robot.commands.Pivoting;
+import frc.robot.commands.Intaking;
+import frc.robot.pathfinding.Pathmaster;
 
 
 
@@ -92,7 +101,7 @@ public class RobotContainer {
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
-    //Pathfinder pathfinder = new Pathfinder(MaxSpeed, 5, MaxAngularRate, 2*Math.PI);
+    Pathmaster pathmaster = new Pathmaster(MaxSpeed, 5, MaxAngularRate, 2*Math.PI, () -> drivetrain.getState().Pose);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -296,36 +305,13 @@ public class RobotContainer {
         joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
         joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
- 
 
-
- 
-        
-        // joystick.a().whileTrue(new AimToPose(drivetrain, vision, VisionConstants.getHubPose(), xInput, yInput));
-        
-
-        
-
-
-        
         /*
-        Here, we use Pathfinder to create a path to a specific Pose2d, even on teleop.
-        Then it will follow the path as long as the button is held
-        Releasing button will stop the path following and allow for manual control again.
-        We can basically create waypoints on the field and map them to certain buttons.
-        This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
-            we can just make a button for it and use Pathfinder to get there.
-
-        In the context of REBUILT, we could use this in teleop to align to climb perfectly
+            Pathmaster implementation
         */
-        // joystick.rightTrigger().whileTrue(pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
 
-        
-        // Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
-
-        // joystick.rightTrigger().onTrue(climbPath);
-
-        // joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
+        joystick.rightTrigger().onTrue(pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose()));
+        joystick.rightTrigger().onFalse(pathfinder.cancelPathing(drivetrain));
         
         
     }
