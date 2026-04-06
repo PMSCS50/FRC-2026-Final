@@ -1,29 +1,20 @@
 package frc.robot.pathfinding;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
-//Creates a zone on the field that pathfinder will use for rotation and alignment.
+//Creates a zone on the field that pathfinder will use for rotation or alignment.
 
 public abstract class PathZone {
     public final String name;
     public final Translation2d min;
     public final Translation2d max;
-    public final Rotation2d rotation;
 
     public PathZone(String name, Translation2d min, Translation2d max) {
         this.name = name;
         this.min = min;
         this.max = max;
-        this.rotation = rotation;
     }
 
-    public PathZone(String name, Translation2d min, Translation2d max) {
-        this.name = name;
-        this.min = min;
-        this.max = max;
-        this.rotation = rotation;
-    }
 
     public boolean containsPoint(Translation2d point) {
         return point.getX() >= min.getX() && point.getX() <= max.getX()
