@@ -71,9 +71,6 @@ public class RobotContainer {
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
-    //Go to Pathfinder.java for more information.
-    //THIS IS NOT FOR REBUILT. It is something potentially for next year and years to come.
-    //Go to line 
 
     // **************************************************************************************************************
 
@@ -92,7 +89,7 @@ public class RobotContainer {
     private final VisionSimSystem vision;
     public final FuelPhysicsSim ballSim;
     
-    private final Pathmaster pathfinder = new Pathmaster(ClimbConstants.getClimbPose(),3,3,2 * Math.PI, 2 * Math.PI, drivetrain.getState().Pose);
+    private final Pathmaster pathmaster = new Pathmaster(ClimbConstants.getClimbPose(),3,3,2 * Math.PI, 2 * Math.PI, drivetrain.getState().Pose);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -243,8 +240,8 @@ public class RobotContainer {
             ballSim));
 
         // Pathing to climb. I hope it works
-        joystick.rightTrigger().onTrue(pathfinder.makePathTo(VisionConstants.getCenter()));
-        joystick.rightTrigger().onFalse(pathfinder.cancelPathing(drivetrain));
+        joystick.rightTrigger().onTrue(pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
+        joystick.rightTrigger().onFalse(new InstantCommand(() -> pathmaster.cancelPathing()));
 
         // Intake
         joystick.a().whileTrue(new Intaking(intake, drivetrain));
@@ -279,6 +276,6 @@ public class RobotContainer {
     // Run autonomous from autoChooser
     public Command getAutonomousCommand() {
         return autoChooser.getSelected();
-        //return pathfinder.makePathTo(VisionConstants.getCenter()); // run for 5 seconds then stop
+        //return pathmaster.makePathTo(VisionConstants.getCenter()); // run for 5 seconds then stop
     }
 }
