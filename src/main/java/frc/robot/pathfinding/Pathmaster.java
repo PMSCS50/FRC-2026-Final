@@ -22,6 +22,8 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 /**
  * Uses PathPlanner's pathfinding features to generate path commands to any position on the field.
  * Uses custom pathfinding class RoronoaZoro for zone-aware rotation.
+ * SHOULD ONLY BE 1 INSTANCE OF THIS CLASS. 
+ * It is not designed to be instantiated multiple times and may have unexpected behavior if you do.
  */
 public class Pathmaster {
 
@@ -36,8 +38,10 @@ public class Pathmaster {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.drivetrain = drivetrain;
         this.robotPose = () -> drivetrain.getState().Pose;
-
         this.zoro = new RoronoaZoro();
+
+        Pathfinding.setPathfinder(this.zoro);
+        PathfindingCommand.warmupCommand().schedule();
     }
 
     /** Register a named field pose for use with gotoWaypoint(). */

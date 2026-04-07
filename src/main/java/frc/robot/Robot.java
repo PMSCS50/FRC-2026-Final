@@ -47,7 +47,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    Pathfinding.setPathfinder(new RoronoaZoro());
+    //Pathfinding.setPathfinder(new RoronoaZoro());
     m_robotContainer = new RobotContainer();
   }
 
@@ -57,7 +57,7 @@ public class Robot extends LoggedRobot {
       DataLogManager.start();
       DriverStation.startDataLog(DataLogManager.getLog());
 
-      PathfindingCommand.warmupCommand().schedule();
+      //PathfindingCommand.warmupCommand().schedule();
     }
   @Override
   public void robotPeriodic() {
