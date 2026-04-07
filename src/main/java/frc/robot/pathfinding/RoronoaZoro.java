@@ -26,21 +26,23 @@ public class RoronoaZoro extends LocalADStar {
         super();
     }
 
-    static void addZone(PathZone zone, boolean active) {
+    //Zone management. There are two types of zones: RotationZones and OrientationZones, both extending Pathzone.
+    void addZone(PathZone zone, boolean active) {
         allZones.put(zone, active);
     }
 
-    static void setZoneState(String zoneName, boolean newState) {
+    void setZoneState(String zoneName, boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
             if (entry.getKey().name.equals(zoneName)) {
                 entry.setValue(newState);
                 return;
             }
         }
-        DriverStation.reportWarning("[RoronoaZoro] Zone '" + zoneName + "' not found", false);
+        DriverStation.reportWarning(
+            "[RoronoaZoro] Zone '" + zoneName + "' not found", false);
     }
 
-    static void setAllZones(boolean newState) {
+    void setAllZones(boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
             entry.setValue(newState);
         }
@@ -61,7 +63,7 @@ public class RoronoaZoro extends LocalADStar {
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
 
-        List<RotationTarget> rotationTargets    = new ArrayList<>();
+        List<RotationTarget> rotationTargets     = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
 
         // Precompute cumulative distances along path waypoints
@@ -72,13 +74,13 @@ public class RoronoaZoro extends LocalADStar {
         double[] cumulativeDist = new double[anchors.size()];
         cumulativeDist[0] = 0.0;
         for (int i = 1; i < anchors.size(); i++) {
-            cumulativeDist[i] = cumulativeDist[i - 1] + anchors.get(i).getDistance(anchors.get(i - 1));
+            cumulativeDist[i] = cumulativeDist[i - 1]
+                + anchors.get(i).getDistance(anchors.get(i - 1));
         }
         double totalPathLength = cumulativeDist[anchors.size() - 1];
 
         for (PathZone zone : activeZones) {
 
-            // Sample the path to find where this zone starts and ends
             double entryFraction = -1;
             double exitFraction  = -1;
 
@@ -92,9 +94,8 @@ public class RoronoaZoro extends LocalADStar {
                 }
             }
 
-            if (entryFraction < 0) continue; // zone not on this path
+            if (entryFraction < 0) continue;
 
-            // Lead-in: start rotating x meters before zone entry. I put 0.3m
             double leadIn = 0.3;
             double leadInFraction = Math.max(0,
                 (entryFraction * totalPathLength - leadIn) / totalPathLength);
@@ -104,37 +105,35 @@ public class RoronoaZoro extends LocalADStar {
             double exitIndex = fractionToWaypointIndex(
                 exitFraction, totalPathLength, cumulativeDist);
 
-            if (zone instanceof OrientationZone) {
+            if (zone instanceof OrientationZone orientationZone) {
                 pointTowardsZones.add(new PointTowardsZone(
                     zone.name,
-                    zone.getTarget().getTranslation(),
+                    orientationZone.getTarget().getTranslation(),
                     leadInIndex,
                     exitIndex
                 ));
 
-            } else if (zone instanceof RotationZone) {
-                // Fixed heading — just need lead-in and exit rotation targets
+            } else if (zone instanceof RotationZone rotationZone) {
                 rotationTargets.add(new RotationTarget(
-                    leadInIndex, zone.getRotation()));
+                    leadInIndex, rotationZone.getRotation()));
                 rotationTargets.add(new RotationTarget(
-                    exitIndex, zone.getRotation()));
+                    exitIndex, rotationZone.getRotation()));
             }
 
             DriverStation.reportWarning(
                 "[RoronoaZoro] Zone '" + zone.name + "' active" +
                 " entry=" + String.format("%.2f", entryFraction) +
-                " exit="  + String.format("%.2f", exitFraction), false
-            );
+                " exit="  + String.format("%.2f", exitFraction), false);
         }
 
         return new PathPlannerPath(
             waypoints,
             rotationTargets,
             pointTowardsZones,
-            List.of(),   // no constraint zones
-            List.of(),   // no event markers
+            List.of(),
+            List.of(),
             constraints,
-            null,        // no ideal starting state for on-the-fly
+            null,
             goalEndState,
             false
         );
