@@ -15,26 +15,35 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Remember LocalADStarAK? This him now.
- * Same thing but allows us to create rotation and orientation zones on the field
- * When we pass through these zones, the pathfinder will automatically adjust the robot's heading and/or rotation
- * to match the zone's settings. This is super useful for alignment and orientation.
- * 
  * AdvantageKit-compatible wrapper around RoronoaZoro.
- * Mirrors the LocalADStarAK pattern exactly, but wraps RoronoaZoro
- * instead of LocalADStar so zones still works during replay.
  */
 public class RoronoaZoroAK implements Pathfinder {
 
     private final ZoroIO io = new ZoroIO();
 
-    public static void addZone(PathZone zone, boolean active) {
+    public RoronoaZoroAK() {
+        // RoronoaZoro instantiated inside ZoroIO
+    }
+
+    // -----------------------------------------------------------------------
+    // Zone delegation
+    // -----------------------------------------------------------------------
+
+    public void addZone(PathZone zone, boolean active) {
         io.zoro.addZone(zone, active);
     }
 
-    public static void setZoneState(String zoneName, boolean newState) {
+    public void setZoneState(String zoneName, boolean newState) {
         io.zoro.setZoneState(zoneName, newState);
     }
+
+    public void setAllZones(boolean newState) {
+        io.zoro.setAllZones(newState);
+    }
+
+    // -----------------------------------------------------------------------
+    // Pathfinder interface
+    // -----------------------------------------------------------------------
 
     @Override
     public boolean isNewPathAvailable() {
@@ -82,9 +91,12 @@ public class RoronoaZoroAK implements Pathfinder {
         }
     }
 
+    // -----------------------------------------------------------------------
+    // AK IO layer
+    // -----------------------------------------------------------------------
+
     private static class ZoroIO implements LoggableInputs {
 
-        // The actual pathfinder — zones are registered on this instance
         public final RoronoaZoro zoro = new RoronoaZoro();
 
         public boolean isNewPathAvailable = false;
@@ -94,7 +106,6 @@ public class RoronoaZoroAK implements Pathfinder {
         public void toLog(LogTable table) {
             table.put("IsNewPathAvailable", isNewPathAvailable);
 
-            // Log path points as flat double array [x0, y0, x1, y1, ...]
             double[] pointsLogged = new double[currentPathPoints.size() * 2];
             int idx = 0;
             for (PathPoint point : currentPathPoints) {
@@ -110,7 +121,6 @@ public class RoronoaZoroAK implements Pathfinder {
             isNewPathAvailable = table.get("IsNewPathAvailable", false);
 
             double[] pointsLogged = table.get("CurrentPathPoints", new double[0]);
-
             List<PathPoint> pathPoints = new ArrayList<>();
             for (int i = 0; i < pointsLogged.length; i += 2) {
                 pathPoints.add(new PathPoint(
