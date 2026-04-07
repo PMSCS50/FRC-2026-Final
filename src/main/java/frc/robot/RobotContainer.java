@@ -311,7 +311,7 @@ public class RobotContainer {
         */
 
         joystick.rightTrigger().onTrue(pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(pathmaster.cancelPathing());
+        joystick.rightTrigger().onFalse(new InstantCommand(() -> pathmaster.cancelPathing()));
         
         
     }
