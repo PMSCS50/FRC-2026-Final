@@ -45,9 +45,6 @@ public class Pathmaster {
         waypoints.put(name, pose);
     }
 
-    // -----------------------------------------------------------------------
-    // Zone Registry
-    // -----------------------------------------------------------------------
 
     /**
      * Creates a rotation zone. When the robot paths through it,
