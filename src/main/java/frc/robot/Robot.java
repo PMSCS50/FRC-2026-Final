@@ -63,7 +63,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    Pathfinding.setPathfinder(new RoronoaZoroAK());
+    //Pathfinding.setPathfinder(new RoronoaZoroAK());
     m_robotContainer = new RobotContainer();
     m_robotContainer.ballSim.enable();  
   }
@@ -73,7 +73,7 @@ public class Robot extends LoggedRobot {
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
     SmartDashboard.putData("Field", field);
-    PathfindingCommand.warmupCommand().schedule();
+    //PathfindingCommand.warmupCommand().schedule();
   }
 
   @Override

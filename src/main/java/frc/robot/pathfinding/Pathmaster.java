@@ -36,8 +36,10 @@ public class Pathmaster {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.drivetrain = drivetrain;
         this.robotPose = () -> drivetrain.getState().Pose;
-
         this.zoro = new RoronoaZoro();
+
+        Pathfinding.setPathfinder(this.zoro);
+        PathfindingCommand.warmupCommand().schedule();
     }
 
     /** Register a named field pose for use with gotoWaypoint(). */
