@@ -56,7 +56,7 @@ public class Pathmaster {
 
     /**
      * Creates an orientation zone. When the robot paths through it,
-     * it will continuously face the given target pose.
+     * it will orient toward given target pose.
      */
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active){
         zoro.addZone(new OrientationZone(name, min, max, targetPose), active);
