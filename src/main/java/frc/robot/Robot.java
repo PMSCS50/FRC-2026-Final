@@ -32,9 +32,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.pathfinding.Pathfinding;
-
 import frc.firecontrol.FuelPhysicsSim;
-import frc.robot.LocalADStarAK;
+import frc.robot.pathfinding.RoronoaZoroAK;
 import frc.robot.Constants.VisionConstants;
 
 
@@ -64,7 +63,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    Pathfinding.setPathfinder(new LocalADStarAK());
+    Pathfinding.setPathfinder(new RoronoaZoroAK());
     m_robotContainer = new RobotContainer();
     m_robotContainer.ballSim.enable();  
   }
