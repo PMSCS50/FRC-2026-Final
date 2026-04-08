@@ -23,10 +23,8 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
-import frc.robot.pathfinding.RoronoaZoro;
+import frc.robot.pathfinding.Pathmaster;
 
-import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.commands.PathfindingCommand;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
@@ -47,7 +45,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    //Pathfinding.setPathfinder(new RoronoaZoro());
+    Pathmaster.initializePathfinder();
     m_robotContainer = new RobotContainer();
   }
 
@@ -57,7 +55,7 @@ public class Robot extends LoggedRobot {
       DataLogManager.start();
       DriverStation.startDataLog(DataLogManager.getLog());
 
-      //PathfindingCommand.warmupCommand().schedule();
+      Pathmaster.warmupCommand();
     }
   @Override
   public void robotPeriodic() {
