@@ -22,14 +22,10 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 /**
  * Uses PathPlanner's pathfinding features to generate path commands to any position on the field.
  * Uses custom pathfinding class RoronoaZoro for zone-aware rotation.
- * Singleton — must call initializePathfinder(), setDrivetrain(),
- * setConstraints(), and scheduleWarmup() before using any other methods.
+ * must call initializePathfinder(), scheduleWarmup(), setDrivetrain(), and setConstraints() before using any other methods.
  */
 public class Pathmaster {
 
-    // -----------------------------------------------------------------------
-    // Singleton state
-    // -----------------------------------------------------------------------
 
     private static PathConstraints constraints;
     private static CommandSwerveDrivetrain drivetrain;
@@ -38,12 +34,9 @@ public class Pathmaster {
     private static final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean configured = false;
 
-    // Private constructor — no instantiation
-    private Pathmaster() {}
-
-    // -------
+    // --------
     // Configs
-    // -------
+    // --------
 
     //Call in Robot.java before RobotContainer is initialized.
     public static void initializePathfinder() {
@@ -52,7 +45,7 @@ public class Pathmaster {
     }
 
     //Call in Robot.java as the last line in robotInit().
-    public static void scheduleWarmup() {
+    public static void warmupCommand() {
         PathfindingCommand.warmupCommand().schedule();
     }
 
