@@ -1,3 +1,7 @@
+# REPORT OF ALL INSTANCES OF REMOVED ELEMENTS FROM THE MIGRATION TO SYSTEMCORE IN 2027
+# GOT THE GITHUB AI TO SCAN THE ENTIRE REPOSITORY FOR CHANGES LISTED IN WPILIB'S SYSTEMCORE CHANGELOG FOR 2027
+# https://docs.wpilib.org/en/2027/docs/yearly-overview/removed-features.html <- changelog is here
+
 # SystemCore Migration Audit Report
 **Date:** April 8, 2026  
 **Project:** FRC-2026-Final  
@@ -26,6 +30,9 @@ This report documents all usage of **removed features** that will not be availab
 **Status:** 3 files use SmartDashboard for telemetry  
 **Impact:** SystemCore does not use NT3; SmartDashboard requires NT3 protocol  
 **Replacement:** Use **Elastic** (driver dashboard) + **AdvantageScope** (debugging/visualization)
+
+## WE WILL REPLACE THE MAJORITY OF SMARTDASHBOARD WITH ADVANTAGESCOPE LOGGING
+
 
 #### Affected Files:
 
