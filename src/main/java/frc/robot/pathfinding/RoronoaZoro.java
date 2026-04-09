@@ -96,7 +96,7 @@ public class RoronoaZoro extends LocalADStar {
 
             if (entryFraction < 0) continue;
 
-            double leadIn = 0.3;
+            double leadIn = 0.3; // Starts rotating 0.3m before rotation target. Tune the num since i pulled it out of my ass
             double leadInFraction = Math.max(0,
                 (entryFraction * totalPathLength - leadIn) / totalPathLength);
 

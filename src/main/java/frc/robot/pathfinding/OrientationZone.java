@@ -13,11 +13,7 @@ public class OrientationZone extends PathZone {
 
     private final Pose2d target;
 
-    public OrientationZone(
-            String name,
-            Translation2d min,
-            Translation2d max,
-            Pose2d target) {
+    public OrientationZone(String name,Translation2d min,Translation2d max,Pose2d target) {
         super(name, min, max);
         this.target = target;
     }

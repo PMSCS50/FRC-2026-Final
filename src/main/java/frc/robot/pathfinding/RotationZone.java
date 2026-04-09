@@ -11,11 +11,7 @@ public class RotationZone extends PathZone {
 
     private final Rotation2d rotation;
 
-    public RotationZone(
-            String name,
-            Translation2d min,
-            Translation2d max,
-            Rotation2d rotation) {
+    public RotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation) {
         super(name, min, max);
         this.rotation = rotation;
     }

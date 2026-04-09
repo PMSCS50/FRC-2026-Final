@@ -50,9 +50,9 @@ public class Pathmaster {
     }
 
     //Call in RobotContainer.java
-    public static void setDrivetrain(CommandSwerveDrivetrain swerve) {
-        Pathmaster.drivetrain = swerve;
-        Pathmaster.robotPose  = swerve::getPose;
+    public static void setDrivetrain(CommandSwerveDrivetrain drivetrain) {
+        Pathmaster.drivetrain = drivetrain;
+        Pathmaster.robotPose  = () -> drivetrain.getState().Pose;
     }
 
     //Call in RobotContainer.java
