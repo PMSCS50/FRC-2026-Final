@@ -126,6 +126,10 @@ public class RoronoaZoro extends LocalADStar {
                 " exit="  + String.format("%.2f", exitFraction), false);
         }
 
+        double velocity = Math.hypot(drivetrain.getSpeeds().vxMetersPerSecond,
+            drivetrain.getSpeeds().vyMetersPerSecond);
+        Rotation2d rot = new Rotation2d(Math.toRadians(drivetrain.getPigeon2().getYaw().getValueAsDouble()));
+
         return new PathPlannerPath(
             waypoints,
             rotationTargets,
@@ -133,7 +137,7 @@ public class RoronoaZoro extends LocalADStar {
             List.of(),
             List.of(),
             constraints,
-            null,
+            new IdealStartingState(velocity, rot), //Use current starting state
             goalEndState,
             false
         );
