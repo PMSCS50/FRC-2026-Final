@@ -7,6 +7,8 @@
 **Project:** FRC-2026-Final  
 **Target:** SystemCore (RoboRIO Replacement for 2027)
 
+# LINK TO Team 6328's experience using the SystemCore: 
+# https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-systemcore-alpha-build-thread/503556/22?page=2
 ---
 
 ## Executive Summary
