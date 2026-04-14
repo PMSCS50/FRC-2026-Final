@@ -55,7 +55,7 @@ public class Robot extends LoggedRobot {
       DataLogManager.start();
       DriverStation.startDataLog(DataLogManager.getLog());
 
-      Pathmaster.warmupCommand();
+      Pathmaster.startWarmupCommand();
     }
   @Override
   public void robotPeriodic() {

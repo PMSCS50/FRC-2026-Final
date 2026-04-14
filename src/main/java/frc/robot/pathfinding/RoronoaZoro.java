@@ -27,11 +27,11 @@ public class RoronoaZoro extends LocalADStar {
     }
 
     //Zone management. There are two types of zones: RotationZones and OrientationZones, both extending Pathzone.
-    void addZone(PathZone zone, boolean active) {
+    public void addZone(PathZone zone, boolean active) {
         allZones.put(zone, active);
     }
 
-    void setZoneState(String zoneName, boolean newState) {
+    public void setZoneState(String zoneName, boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
             if (entry.getKey().name.equals(zoneName)) {
                 entry.setValue(newState);
@@ -42,7 +42,7 @@ public class RoronoaZoro extends LocalADStar {
             "[RoronoaZoro] Zone '" + zoneName + "' not found", false);
     }
 
-    void setAllZones(boolean newState) {
+    public void setAllZones(boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
             entry.setValue(newState);
         }
@@ -140,7 +140,7 @@ public class RoronoaZoro extends LocalADStar {
             List.of(),
             List.of(),
             constraints,
-            null,//new IdealStartingState(velocity, rot), //Use current velocity and rotation as 
+            null,  //new IdealStartingState(velocity, rot), //Use current velocity and rotation as 
             goalEndState,
             false
         );
@@ -150,10 +150,7 @@ public class RoronoaZoro extends LocalADStar {
     // Helpers
     // -----------------------------------------------------------------------
 
-    private Translation2d interpolateAlongPath(
-            List<Translation2d> anchors,
-            double[] cumulativeDist,
-            double distAlongPath) {
+    private Translation2d interpolateAlongPath(List<Translation2d> anchors, double[] cumulativeDist, double distAlongPath) {
 
         for (int i = 1; i < anchors.size(); i++) {
             if (cumulativeDist[i] >= distAlongPath) {
@@ -166,10 +163,7 @@ public class RoronoaZoro extends LocalADStar {
         return anchors.get(anchors.size() - 1);
     }
 
-    private double fractionToWaypointIndex(
-            double pathFraction,
-            double totalPathLength,
-            double[] cumulativeDist) {
+    private double fractionToWaypointIndex(double pathFraction, double totalPathLength, double[] cumulativeDist) {
 
         double targetDist = pathFraction * totalPathLength;
         for (int i = 1; i < cumulativeDist.length; i++) {

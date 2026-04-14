@@ -45,7 +45,7 @@ public class Pathmaster {
     }
 
     //Call in Robot.java as the last line in robotInit().
-    public static void warmupCommand() {
+    public static void startWarmupCommand() {
         PathfindingCommand.warmupCommand().schedule();
     }
 
@@ -64,8 +64,7 @@ public class Pathmaster {
     /** Guards all methods — reports error and returns false if not fully configured. */
     private static boolean checkConfigured(String methodName) {
         if (!configured) {
-            if (zoro == null || drivetrain == null ||
-                    robotPose == null || constraints == null) {
+            if (zoro == null || drivetrain == null || robotPose == null || constraints == null) {
                 DriverStation.reportError(
                     "[Pathmaster] Not fully configured. " +
                     "Call initializePathfinder(), setDrivetrain(), " +
@@ -78,7 +77,7 @@ public class Pathmaster {
         return true;
     }
 
-    /** Register a named field pose for use with gotoWaypoint(). */
+    /** Register a waypoint on the field. */
     public static void addWaypoint(String name, Pose2d pose) {
         waypoints.put(name, pose);
     }
@@ -178,9 +177,9 @@ public class Pathmaster {
         if (!checkConfigured("makePathToThen")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         try {
-            PathPlannerPath precisePath = PathPlannerPath.fromPathFile(pathName);
+            PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
             return Commands.defer(
-                () -> AutoBuilder.pathfindThenFollowPath(precisePath, constraints),
+                () -> AutoBuilder.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
             );
         } catch (Exception e) {
@@ -240,8 +239,7 @@ public class Pathmaster {
             if (current != null) {
                 current.cancel();
             }
-            drivetrain.drive(new ChassisSpeeds(0, 0, 0));
-        });
+        }).andThen(drivetrain.xBrakeCommand());
     }
 
     // -------
