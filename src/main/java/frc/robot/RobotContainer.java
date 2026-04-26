@@ -117,7 +117,7 @@ public class RobotContainer {
         
         // Initialize Pathmaster with drivetrain and constraints
         Pathmaster.setDrivetrain(drivetrain);
-        Pathmaster.setConstraints(3, 3, 2 * Math.PI, 2 * Math.PI);
+        Pathmaster.setConstraints(MaxSpeed, 3, MaxAngularRate, 2 * Math.PI);
         
         // CameraServer.startAutomaticCapture();        
         
