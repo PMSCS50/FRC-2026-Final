@@ -88,8 +88,6 @@ public class RobotContainer {
     private final Climb climb;
     private final VisionSimSystem vision;
     public final FuelPhysicsSim ballSim;
-    
-    private final Pathmaster pathmaster = new Pathmaster(ClimbConstants.getClimbPose(),3,3,2 * Math.PI, 2 * Math.PI, drivetrain.getState().Pose);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -116,6 +114,10 @@ public class RobotContainer {
         intake = new Intake();
         climb = new Climb();
         ballSim = new FuelPhysicsSim("Sim/Fuel");
+        
+        // Initialize Pathmaster with drivetrain and constraints
+        Pathmaster.setDrivetrain(drivetrain);
+        Pathmaster.setConstraints(3, 3, 2 * Math.PI, 2 * Math.PI);
         
         // CameraServer.startAutomaticCapture();        
         

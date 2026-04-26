@@ -33,7 +33,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import frc.firecontrol.FuelPhysicsSim;
-import frc.robot.pathfinding.RoronoaZoroAK;
+import frc.robot.pathfinding.Pathmaster;
 import frc.robot.Constants.VisionConstants;
 
 
@@ -63,7 +63,9 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    //Pathfinding.setPathfinder(new RoronoaZoroAK());
+    // Initialize Pathmaster before RobotContainer
+    Pathmaster.initializePathfinder();
+    
     m_robotContainer = new RobotContainer();
     m_robotContainer.ballSim.enable();  
   }
@@ -73,7 +75,7 @@ public class Robot extends LoggedRobot {
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
     SmartDashboard.putData("Field", field);
-    //PathfindingCommand.warmupCommand().schedule();
+    Pathmaster.startWarmupCommand();
   }
 
   @Override
