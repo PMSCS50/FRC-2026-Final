@@ -242,8 +242,8 @@ public class RobotContainer {
             ballSim));
 
         // Pathing to climb. I hope it works
-        joystick.rightTrigger().onTrue(pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(new InstantCommand(() -> pathmaster.cancelPathing()));
+        joystick.rightTrigger().onTrue(Pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
+        joystick.rightTrigger().onFalse(new InstantCommand(() -> Pathmaster.cancelPathing()));
 
         // Intake
         joystick.a().whileTrue(new Intaking(intake, drivetrain));
