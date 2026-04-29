@@ -3,94 +3,114 @@ package frc.robot.util;
 import edu.wpi.first.math.Num;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
 import edu.wpi.first.math.estimator.KalmanFilter;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /**
- * Generic state space state controller.
+ * Generic state space controller.
  * Given the system, handles the full LQR + Kalman + feedforward loop
+ * for any single-input mechanism.
  *
  * Usage:
- *   1. Instantiate with a given system and tuning parameters
- *   2. Call setSetPoint() to set desired state
- *   3. Call calculate() every loop with current measured state
+ *   1. Instantiate with a given LinearSystem and tuning parameters
+ *   2. Call setSetpoint() to set desired state
+ *   3. Call calculate() every loop with current measured outputs
  *   4. Apply the returned voltage to your motor
+ * 
+ * Im trying to add more comments to make our code more readable
  */
-public class SSController<States extends Num,Inputs extends Num,Outputs extends Num> {
+public class SSController<States extends Num, Inputs extends Num, Outputs extends Num> {
 
+    //The system. Will be passed in the constructor
     private final LinearSystem<States, Inputs, Outputs> plant;
 
+    //The LQR will compute the feedback gains for the system to move to the next state
     private final LinearQuadraticRegulator<States, Inputs, Outputs> controller;
 
+    //The Kalman Filter fuses sensor/encoder values and resultant state to get the true state
     private final KalmanFilter<States, Inputs, Outputs> observer;
 
+    //The entire state space control loop.
     private final LinearSystemLoop<States, Inputs, Outputs> stateSpaceLoop;
 
-    private Matrix<State, N1> setpoint = null;
+    private Matrix<States, N1> setpoint = null;
     private boolean atSetpoint = false;
-    private double tolerance;
+    private Matrix<States, N1> tolerance;
+
+    //Needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
+    private final Nat<States> statesNat;
+    private final Nat<Outputs> outputsNat;
+
+    //How long the looping period will be.
+    //For commands, this will be 20 ms, passed as 0.02
+    private final double loopPeriodSecs;
 
     /**
-     * Creates a state space state controller.
+     * Creates a generic state space controller.
      *
-     * @param qstate                State cost, or how much to penalize state error (rad/s).
-     *                              Lower = more aggressive correction.
-     * @param rVoltage              Control effort cost — how much to penalize voltage usage (V).
-     *                              Lower = allows more aggressive voltage output.
-     * @param modelStdDev           How much you trust the model vs measurement.
-     *                              Higher = trust measurement more.
-     * @param encoderStdDev         Encoder measurement noise standard deviation (rad/s).
-     *                              Higher = trust model more.
-     * @param tolerance             state tolerance for atSetpoint() check ec.
+     * @param statesNat      Runtime Nat for state count  e.g. N2.instance
+     * @param outputsNat     Runtime Nat for output count e.g. N1.instance
+     * @param plant          LinearSystem model from LinearSystemId factory
+     * @param qCost          State cost matrix (States x States diagonal)
+     *                       Higher diagonal values = more aggressive correction on that state
+     * @param rCost          Input cost matrix (Inputs x Inputs diagonal)
+     *                       Higher values = more conservative voltage usage
+     * @param modelStdDevs   Model uncertainty per state (States x 1)
+     *                       Higher = trust encoder more than model
+     * @param encoderStdDevs Measurement noise per output (Outputs x 1)
+     *                       Higher = trust model more than encoder
+     * @param tolerance      Per-state tolerance for atSetpoint() (States x 1)
+     * @param loopPeriodSecs Control loop period, always 0.02 for commands
      */
+
     public SSController(
+            Nat<States> statesNat,   //Just states value. Only used for Kalman Filter
+            Nat<Outputs> outputsNat, //Just outputs value. Only used for Kalman Filter
             LinearSystem<States, Inputs, Outputs> plant,
-            Matrix<States, States> qstate,
-            Matrix<States, States>  rVoltage,
-            double modelStdDev,
-            double encoderStdDev,
-            double tolerance
-        ) {
+            Matrix<States, States> qCost,
+            Matrix<Inputs, Inputs> rCost,
+            Matrix<States, N1> modelStdDevs,
+            Matrix<Outputs, N1> encoderStdDevs,
+            Matrix<States, N1> tolerance,
+            double loopPeriodSecs) {
 
-        this.tolerance = tolerance;
-
-        //System plant is given in constructor.
-        this.plant = plant;
+        this.statesNat     = statesNat;
+        this.outputsNat    = outputsNat;
+        this.plant         = plant;
+        this.tolerance     = tolerance;
+        this.loopPeriodSecs = loopPeriodSecs;
 
         // LQR computes optimal feedback gains
-        // Q penalizes state error, R penalizes control effort
         controller = new LinearQuadraticRegulator<>(
             plant,
-            qstate,   // state cost
-            rVoltage, // control effort cost
-            0.020     //every 20 ms
+            qCost,
+            rCost,
+            loopPeriodSecs
         );
 
-        // Kalman filter fuses model prediction with encoder measurement
+        //Kalman Filter corrects predicted values
         observer = new KalmanFilter<>(
-            nat.get(plant.getC.getNumCols()), // States.
-            nat.get(plant.getC.getNumRows()), // Outputs.
+            statesNat,
+            outputsNat,
             plant,
-            VecBuilder.fill(modelStdDev),    // model uncertainty
-            VecBuilder.fill(encoderStdDev),  // measurement uncertainty
-            0.020 //every 20 ms
+            modelStdDevs,
+            encoderStdDevs,
+            loopPeriodSecs
         );
 
-        // Combines controller + observer + feedforward into one loop
         stateSpaceLoop = new LinearSystemLoop<>(
             plant,
             controller,
             observer,
-            12.0,  // max voltage
+            12.0,
+            loopPeriodSecs
         );
 
-        stateSpaceLoop.reset(VecBuilder.fill(0.0));
+        stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
     }
 
     // -----------------------------------------------------------------------
@@ -98,47 +118,41 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
     // -----------------------------------------------------------------------
 
     /**
-     * Set the desired state.
-     * Call this whenever the setpoint changes.
-     *
-     * @param endState desired state
+     * Set the desired state vector.
+     * @param endState desired state as column vector
      */
-    public void setSetPoint(Matrix<States, N1> endState) {
+    public void setSetpoint(Matrix<States, N1> endState) {
         setpoint = endState;
         stateSpaceLoop.setNextR(endState);
     }
 
     /**
-     * Calculates the next required voltage value for the system.
-     * Call this every periodic loop and apply the returned voltage to your motor.
-     *
-     * @param currentState current state from encoder 
+     * Run one iteration of the control loop.
+     * Call every periodic loop and apply the returned voltage to your motor.
+     * @param currentOutputs what your sensors measure. This is NOT the full state vector, only what is measured
      * @return voltage to apply to the motor
      */
-    public double calculate(Matrix<States, N1> currentState) {
+    public double calculate(Matrix<Outputs, N1> currentOutputs) {
         if (setpoint == null) {
-            DriverStation.reportError("[SSController] setpoint is not defined.");
+            DriverStation.reportError("[SSController] setpoint not set.", false);
             return 0.0;
         }
 
-        // Update Kalman filter with current measurement
-        stateSpaceLoop.correct(currentState);
+        stateSpaceLoop.correct(currentOutputs);
 
-        // Predict next state using model
-        stateSpaceLoop.predict(0.020);
+        stateSpaceLoop.predict(loopPeriodSecs);
 
-        // Check if at setpoint
-        atSetpoint = currentState.isEqual(setPointState, tolerance);
+        Matrix<States, N1> error = stateSpaceLoop.getXHat().minus(setpoint);
+        atSetpoint = error.normF() < tolerance.normF();
 
-        // Return optimal voltage
-        return stateSpaceLoop.getU();
+        return stateSpaceLoop.getU(0);
     }
 
     /**
-     * Reset the controller and observer to a known state.
-     * Call this when the mechanism starts from rest or re-enables.
+     * Reset controller and observer to a known state.
+     * Call on disable or when mechanism is at a known position.
      *
-     * @param currentState current measured state
+     * @param currentState current measured state as column vector
      */
     public void reset(Matrix<States, N1> currentState) {
         stateSpaceLoop.reset(currentState);
@@ -147,20 +161,20 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
     }
 
     // -----------------------------------------------------------------------
-    // Accessors
+    // Setters and Getters
     // -----------------------------------------------------------------------
 
-    /** Returns true if the mechanism is within tolerance of the setpoint state. */
+    /** Returns true if the estimated state is within tolerance of the setpoint. */
     public boolean atSetpoint() {
         return atSetpoint;
     }
 
-    /** Returns the current setpoint state */
+    /** Returns the current setpoint state vector. */
     public Matrix<States, N1> getSetpoint() {
         return setpoint;
     }
 
-    /** Returns the Kalman filter's current state estimate */
+    /** Returns the Kalman filter's current state estimate. */
     public Matrix<States, N1> getEstimatedState() {
         return stateSpaceLoop.getXHat();
     }
@@ -170,31 +184,12 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
         return stateSpaceLoop.getU(0);
     }
 
-    /** Update the state tolerance for atSetpoint(). */
-    public void setTolerance(double tolerance) {
+    /**
+     * Update per-state tolerance for atSetpoint().
+     * @param tolerance States x 1 matrix of per-state tolerances
+     */
+    public void setTolerance(Matrix<States, N1> tolerance) {
         this.tolerance = tolerance;
     }
 
-    private Map<Integer, Nat<?>> nat = Map.of(
-        1,   Nat.N1(),
-        2,   Nat.N2(),
-        3,   Nat.N3(),
-        4,   Nat.N4(),
-        5,   Nat.N5(),
-        6,   Nat.N6(),
-        7,   Nat.N7(),
-        8,   Nat.N8(),
-        9,   Nat.N9(),
-        10, Nat.N10(),
-        11, Nat.N11(),
-        12, Nat.N12(),
-        13, Nat.N13(),
-        14, Nat.N14(),
-        15, Nat.N15(),
-        16, Nat.N16(),
-        17, Nat.N17(),
-        18, Nat.N18(),
-        19, Nat.N19(),
-        20, Nat.N20(),
-    );
 }
