@@ -13,12 +13,11 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /**
- * Generic state space state controller. ONLY HANDLES state
- * Given kV and kA from SysID, handles the full LQR + Kalman + feedforward loop
- * for any single-axis state-controlled mechanism (flywheel, shooter, intake, etc.)
+ * Generic state space state controller.
+ * Given the system, handles the full LQR + Kalman + feedforward loop
  *
  * Usage:
- *   1. Instantiate with kV, kA, and tuning parameters
+ *   1. Instantiate with a given system and tuning parameters
  *   2. Call setSetPoint() to set desired state
  *   3. Call calculate() every loop with current measured state
  *   4. Apply the returned voltage to your motor
@@ -33,8 +32,8 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
 
     private final LinearSystemLoop<States, Inputs, Outputs> stateSpaceLoop;
 
-    private double setpointState = 0.0;
-    private boolean atGoal = false;
+    private Matrix<State, N1> setpointState = null;
+    private boolean atSetpoint = false;
     private double tolerance;
 
     /**
@@ -48,40 +47,39 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
      *                              Higher = trust measurement more.
      * @param encoderStdDev         Encoder measurement noise standard deviation (rad/s).
      *                              Higher = trust model more.
-     * @param tolerance             state tolerance for atGoal() check ec.
-     * @param loopPeriodSecs        Control loop period (usually 0.020).
+     * @param tolerance             state tolerance for atSetpoint() check ec.
      */
     public SSController(
             LinearSystem<States, Inputs, Outputs> plant,
-            double qstate,
-            double rVoltage,
+            Matrix<State, State> qstate,
+            Matrix<State, State>  rVoltage,
             double modelStdDev,
             double encoderStdDev,
-            double tolerance,
-            double loopPeriodSecs) {
+            double tolerance
+        ) {
 
         this.tolerance = tolerance;
 
         //System plant is given in constructor.
         this.plant = plant;
 
-        // LQR — computes optimal feedback gains
+        // LQR computes optimal feedback gains
         // Q penalizes state error, R penalizes control effort
         controller = new LinearQuadraticRegulator<>(
             plant,
-            VecBuilder.fill(qstate),   // state cost
-            VecBuilder.fill(rVoltage),     // control effort cost
-            loopPeriodSecs
+            qstate,   // state cost
+            rVoltage, // control effort cost
+            0.020     //every 20 ms
         );
 
-        // Kalman filter — fuses model prediction with encoder measurement
+        // Kalman filter fuses model prediction with encoder measurement
         observer = new KalmanFilter<>(
-            States,
-            Outputs,
+            nat.get(plant.getC.getNumCols), // States.
+            nat.get(plant.getC.getNumRows), // Outputs.
             plant,
             VecBuilder.fill(modelStdDev),    // model uncertainty
             VecBuilder.fill(encoderStdDev),  // measurement uncertainty
-            loopPeriodSecs
+            0.020 //every 20 ms
         );
 
         // Combines controller + observer + feedforward into one loop
@@ -90,13 +88,10 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
             controller,
             observer,
             12.0,  // max voltage
-            loopPeriodSecs
         );
 
-        loop.reset(VecBuilder.fill(0.0));
+        stateSpaceLoop.reset(VecBuilder.fill(0.0));
     }
-
-
 
     // -----------------------------------------------------------------------
     // Control Loop
@@ -110,28 +105,33 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
      */
     public void setSetPoint(Matrix<States, N1> endState) {
         setpoint = endState;
-        stateSpaceLoop.setNextR(VecBuilder.fill(endState));
+        stateSpaceLoop.setNextR(endState);
     }
 
     /**
-     * Run one iteration of the control loop.
+     * Calculates the next required voltage value for the system.
      * Call this every periodic loop and apply the returned voltage to your motor.
      *
      * @param currentState current state from encoder 
      * @return voltage to apply to the motor
      */
     public double calculate(Matrix<States, N1> currentState) {
+        if (setpointState == null) {
+            DriverStation.reportError("[SSController] setpoint is not defined.");
+            return 0.0;
+        }
+
         // Update Kalman filter with current measurement
-        stateSpaceLoop.correct(VecBuilder.fill(currentState));
+        stateSpaceLoop.correct(currentState);
 
         // Predict next state using model
         stateSpaceLoop.predict(0.020);
 
         // Check if at setpoint
-        atGoal = Math.abs(currentState - setpointState) < tolerance;
+        atSetpoint = currentState.isEqual(setPointState, tolerance);
 
         // Return optimal voltage
-        return stateSpaceLoop.getU(0);
+        return stateSpaceLoop.getU();
     }
 
     /**
@@ -141,9 +141,9 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
      * @param currentState current measured state
      */
     public void reset(Matrix<States, N1> currentState) {
-        stateSpaceLoop.reset(VecBuilder.fill(currentState));
+        stateSpaceLoop.reset(currentState);
         setpointState = currentState;
-        atGoal = false;
+        atSetpoint = false;
     }
 
     // -----------------------------------------------------------------------
@@ -152,7 +152,7 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
 
     /** Returns true if the mechanism is within tolerance of the setpoint state. */
     public boolean atSetpoint() {
-        return atGoal;
+        return atSetpoint;
     }
 
     /** Returns the current setpoint state */
@@ -170,8 +170,31 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
         return stateSpaceLoop.getU(0);
     }
 
-    /** Update the state tolerance for atGoal(). */
+    /** Update the state tolerance for atSetpoint(). */
     public void setTolerance(double tolerance) {
         this.tolerance = tolerance;
     }
+
+    private Map<Integer, Nat<?>> nat = Map.of(
+        1,   Nat.N1(),
+        2,   Nat.N2(),
+        3,   Nat.N3(),
+        4,   Nat.N4(),
+        5,   Nat.N5(),
+        6,   Nat.N6(),
+        7,   Nat.N7(),
+        8,   Nat.N8(),
+        9,   Nat.N9(),
+        10, Nat.N10(),
+        11, Nat.N11(),
+        12, Nat.N12(),
+        13, Nat.N13(),
+        14, Nat.N14(),
+        15, Nat.N15(),
+        16, Nat.N16(),
+        17, Nat.N17(),
+        18, Nat.N18(),
+        19, Nat.N19(),
+        20, Nat.N20(),
+    );
 }
