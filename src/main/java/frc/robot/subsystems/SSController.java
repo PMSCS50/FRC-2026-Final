@@ -39,7 +39,7 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
     /**
      * Creates a state space state controller.
      *
-     * @param qstate             State cost, or how much to penalize state error (rad/s).
+     * @param qstate                State cost, or how much to penalize state error (rad/s).
      *                              Lower = more aggressive correction.
      * @param rVoltage              Control effort cost — how much to penalize voltage usage (V).
      *                              Lower = allows more aggressive voltage output.
