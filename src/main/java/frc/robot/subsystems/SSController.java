@@ -32,7 +32,7 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
 
     private final LinearSystemLoop<States, Inputs, Outputs> stateSpaceLoop;
 
-    private Matrix<State, N1> setpointState = null;
+    private Matrix<State, N1> setpoint = null;
     private boolean atSetpoint = false;
     private double tolerance;
 
@@ -51,8 +51,8 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
      */
     public SSController(
             LinearSystem<States, Inputs, Outputs> plant,
-            Matrix<State, State> qstate,
-            Matrix<State, State>  rVoltage,
+            Matrix<States, States> qstate,
+            Matrix<States, States>  rVoltage,
             double modelStdDev,
             double encoderStdDev,
             double tolerance
@@ -74,8 +74,8 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
 
         // Kalman filter fuses model prediction with encoder measurement
         observer = new KalmanFilter<>(
-            nat.get(plant.getC.getNumCols), // States.
-            nat.get(plant.getC.getNumRows), // Outputs.
+            nat.get(plant.getC.getNumCols()), // States.
+            nat.get(plant.getC.getNumRows()), // Outputs.
             plant,
             VecBuilder.fill(modelStdDev),    // model uncertainty
             VecBuilder.fill(encoderStdDev),  // measurement uncertainty
@@ -116,7 +116,7 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
      * @return voltage to apply to the motor
      */
     public double calculate(Matrix<States, N1> currentState) {
-        if (setpointState == null) {
+        if (setpoint == null) {
             DriverStation.reportError("[SSController] setpoint is not defined.");
             return 0.0;
         }
@@ -142,7 +142,7 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
      */
     public void reset(Matrix<States, N1> currentState) {
         stateSpaceLoop.reset(currentState);
-        setpointState = currentState;
+        setpoint = currentState;
         atSetpoint = false;
     }
 
@@ -157,7 +157,7 @@ public class SSController<States extends Num,Inputs extends Num,Outputs extends 
 
     /** Returns the current setpoint state */
     public Matrix<States, N1> getSetpoint() {
-        return setpointState;
+        return setpoint;
     }
 
     /** Returns the Kalman filter's current state estimate */
