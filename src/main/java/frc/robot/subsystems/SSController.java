@@ -49,6 +49,9 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
     //For commands, this will be 20 ms, passed as 0.02
     private final double loopPeriodSecs;
 
+    //Just instantiated here to avoid creating a new matrix every 20 ms.
+    private Matrix<States, N1> error;
+
     /**
      * Creates a generic state space controller.
      *
@@ -139,11 +142,10 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
         }
 
         stateSpaceLoop.correct(currentOutputs);
-
         stateSpaceLoop.predict(loopPeriodSecs);
 
-        Matrix<States, N1> error = stateSpaceLoop.getXHat().minus(setpoint);
-        atSetpoint = error.normF() < tolerance.normF();
+        error = stateSpaceLoop.getXHat().minus(setpoint);
+        atSetpoint = isAtSetpoint(error);
 
         return stateSpaceLoop.getU(0);
     }
@@ -164,7 +166,19 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
     // Setters and Getters
     // -----------------------------------------------------------------------
 
-    /** Returns true if the estimated state is within tolerance of the setpoint. */
+    /** Returns true if the estimated state is within tolerance of the setpoint. 
+     * Done by checking error (setpoint state - current state) against the given tolerance for each value.
+    */
+    private boolean isAtSetpoint(Matrix<States, N1> error) {
+        for (int i = 0; i < error.getNumRows(); i++) {
+            if (Math.abs(error.get(i, 0)) > tolerance.get(i, 0)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Getter for atSetpoint */
     public boolean atSetpoint() {
         return atSetpoint;
     }
@@ -175,7 +189,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
     }
 
     /** Returns the Kalman filter's current state estimate. */
-    public Matrix<States, N1> getEstimatedState() {
+    public Matrix<States, N1> getEstCurrentState() {
         return stateSpaceLoop.getXHat();
     }
 
