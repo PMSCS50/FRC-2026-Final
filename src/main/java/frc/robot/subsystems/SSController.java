@@ -41,7 +41,8 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
     private boolean atSetpoint = false;
     private Matrix<States, N1> tolerance;
 
-    //Needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
+    //Copy of states and inputs needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
+    //So now you have to instantiate states and outputs in the generics AND the constructor, even though they always are equal
     private final Nat<States> statesNat;
     private final Nat<Outputs> outputsNat;
 
@@ -56,17 +57,28 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * Creates a generic state space controller.
      *
      * @param statesNat      Runtime Nat for state count  e.g. N2.instance
+     * 
      * @param outputsNat     Runtime Nat for output count e.g. N1.instance
+     * 
      * @param plant          LinearSystem model from LinearSystemId factory
+     * 
      * @param qCost          State cost matrix (States x States diagonal)
      *                       Higher diagonal values = more aggressive correction on that state
+     * 
      * @param rCost          Input cost matrix (Inputs x Inputs diagonal)
      *                       Higher values = more conservative voltage usage
+     * 
      * @param modelStdDevs   Model uncertainty per state (States x 1)
      *                       Higher = trust encoder more than model
+     * 
      * @param encoderStdDevs Measurement noise per output (Outputs x 1)
      *                       Higher = trust model more than encoder
+     * 
+     * @param maxVoltage     Maximum voltage the controller can output. 
+     *                       Usually we will put this as 12, but in case of voltage pdp issus we can limit max voltage
+     * 
      * @param tolerance      Per-state tolerance for atSetpoint() (States x 1)
+     * 
      * @param loopPeriodSecs Control loop period, always 0.02 for commands
      */
 
@@ -78,6 +90,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             Matrix<Inputs, Inputs> rCost,
             Matrix<States, N1> modelStdDevs,
             Matrix<Outputs, N1> encoderStdDevs,
+            double maxVoltage,
             Matrix<States, N1> tolerance,
             double loopPeriodSecs) {
 
@@ -109,7 +122,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             plant,
             controller,
             observer,
-            12.0,
+            maxVoltage,
             loopPeriodSecs
         );
 
