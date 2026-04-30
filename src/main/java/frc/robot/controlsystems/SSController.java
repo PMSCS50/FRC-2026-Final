@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.controlsystems;
 
 import edu.wpi.first.math.Num;
 import edu.wpi.first.math.Matrix;
@@ -128,6 +128,48 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
 
         stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
     }
+
+    //Wraps all variables not relating to the system inside SSControllerConfigs
+    public SSController(
+            LinearSystem<States, Inputs, Outputs> plant,
+            SSControllerConfigs<States, Inputs, Outputs> configs) {
+
+        this.statesNat     = configs.getStatesNat();
+        this.outputsNat    = configs.getOutputsNat();
+        this.plant         = plant;
+        this.tolerance     = configs.getTolerance();
+        this.loopPeriodSecs = configs.getLoopPeriodSecs();
+
+        // LQR computes optimal feedback gains
+        controller = new LinearQuadraticRegulator<>(
+            plant,
+            configs.getQCost(),
+            configs.getRCost(),
+            loopPeriodSecs
+        );
+
+        //Kalman Filter corrects predicted values
+        observer = new KalmanFilter<>(
+            statesNat,
+            outputsNat,
+            plant,
+            configs.getModelStdDevs(),
+            configs.getEncoderStdDevs(),
+            loopPeriodSecs
+        );
+
+        stateSpaceLoop = new LinearSystemLoop<>(
+            plant,
+            controller,
+            observer,
+            configs.getMaxVoltage(),
+            loopPeriodSecs
+        );
+
+        stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
+    }
+
+    
 
     // -----------------------------------------------------------------------
     // Control Loop
