@@ -24,6 +24,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
  * Uses custom pathfinding class RoronoaZoro for zone-aware rotation.
  * must call initializePathfinder(), scheduleWarmup(), setDrivetrain(), and setConstraints() before using any other methods.
  */
+
 public class Pathmaster {
 
 
@@ -31,6 +32,7 @@ public class Pathmaster {
     private static CommandSwerveDrivetrain drivetrain;
     private static Supplier<Pose2d> robotPose;
     private static RoronoaZoro zoro;
+    private static ZoneManager zoneManager;
     private static final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean configured = false;
 
@@ -40,7 +42,8 @@ public class Pathmaster {
 
     //Call in Robot.java before RobotContainer is initialized.
     public static void initializePathfinder() {
-        Pathmaster.zoro = new RoronoaZoro();
+        Pathmaster.zoneManager = new ZoneManager();
+        Pathmaster.zoro = new RoronoaZoro(Pathmaster.zoneManager);
         Pathfinding.setPathfinder(Pathmaster.zoro);
     }
 
@@ -64,11 +67,11 @@ public class Pathmaster {
     /** Guards all methods — reports error and returns false if not fully configured. */
     private static boolean checkConfigured(String methodName) {
         if (!configured) {
-            if (zoro == null || drivetrain == null || robotPose == null || constraints == null) {
+            if (zoro == null || drivetrain == null || robotPose == null || constraints == null || zoneManager == null) {
                 DriverStation.reportError(
                     "[Pathmaster] Not fully configured. " +
                     "Call initializePathfinder(), setDrivetrain(), " +
-                    "setConstraints(), and scheduleWarmup() first. " +
+                    "setConstraints(), and startWarmupCommand() first. " +
                     "Method called: " + methodName, true);
                 return false;
             }
@@ -77,7 +80,7 @@ public class Pathmaster {
         return true;
     }
 
-    /** Register a waypoint on the field. */
+    /** Register a waypoint on the field. By calling gotoWaypoint() we can align here automatically. */
     public static void addWaypoint(String name, Pose2d pose) {
         waypoints.put(name, pose);
     }
@@ -92,7 +95,7 @@ public class Pathmaster {
      */
     public static void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
         if (!checkConfigured("addRotationZone")) return;
-        zoro.addZone(new RotationZone(name, min, max, rotation), active);
+        zoneManager.addZone(new RotationZone(name, min, max, rotation), active);
     }
 
     /**
@@ -101,45 +104,45 @@ public class Pathmaster {
      */
     public static void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
         if (!checkConfigured("addOrientationZone")) return;
-        zoro.addZone(new OrientationZone(name, min, max, targetPose), active);
+        zoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
     }
 
     //Activates a single zone
     public static void activateZone(String name) {
         if (!checkConfigured("activateZone")) return;
-        zoro.setZoneState(name, true);
+        zoneManager.setZoneState(name, true);
     }
 
     //Activates multiple zones
     public static void activateZones(String... names) {
         if (!checkConfigured("activateZones")) return;
-        for (String name : names) zoro.setZoneState(name, true);
+        for (String name : names) zoneManager.setZoneState(name, true);
     }
 
     /** Activates only the named zones, but deactivates everything else. */
     public static void activateOnly(String... names) {
         if (!checkConfigured("activateOnly")) return;
-        zoro.setAllZones(false);
-        for (String name : names) zoro.setZoneState(name, true);
+        zoneManager.setAllZones(false);
+        for (String name : names) zoneManager.setZoneState(name, true);
     }
 
     //Deactivates a single zone
     public static void deactivateZone(String name) {
         if (!checkConfigured("deactivateZone")) return;
-        zoro.setZoneState(name, false);
+        zoneManager.setZoneState(name, false);
     }
 
     //Deactivates multiple zones
     public static void deactivateZones(String... names) {
         if (!checkConfigured("deactivateZones")) return;
-        for (String name : names) zoro.setZoneState(name, false);
+        for (String name : names) zoneManager.setZoneState(name, false);
     }
 
     /** Deactivates only the named zones, but activates everything else. */
     public static void deactivateOnly(String... names) {
         if (!checkConfigured("deactivateOnly")) return;
-        zoro.setAllZones(true);
-        for (String name : names) zoro.setZoneState(name, false);
+        zoneManager.setAllZones(true);
+        for (String name : names) zoneManager.setZoneState(name, false);
     }
 
     // --------------------

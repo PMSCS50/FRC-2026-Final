@@ -4,12 +4,9 @@ import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.LocalADStar;
 
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -20,32 +17,11 @@ import java.util.stream.Collectors;
  */
 public class RoronoaZoro extends LocalADStar {
 
-    private final HashMap<PathZone, Boolean> allZones = new HashMap<>();
+    private final ZoneManager zoneManager;
 
-    public RoronoaZoro() {
+    public RoronoaZoro(ZoneManager zoneManager) {
         super();
-    }
-
-    //Zone management. There are two types of zones: RotationZones and OrientationZones, both extending Pathzone.
-    public void addZone(PathZone zone, boolean active) {
-        allZones.put(zone, active);
-    }
-
-    public void setZoneState(String zoneName, boolean newState) {
-        for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
-            if (entry.getKey().name.equals(zoneName)) {
-                entry.setValue(newState);
-                return;
-            }
-        }
-        DriverStation.reportWarning(
-            "[RoronoaZoro] Zone '" + zoneName + "' not found", false);
-    }
-
-    public void setAllZones(boolean newState) {
-        for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
-            entry.setValue(newState);
-        }
+        this.zoneManager = zoneManager;
     }
 
     @Override
@@ -57,11 +33,8 @@ public class RoronoaZoro extends LocalADStar {
         List<Waypoint> waypoints = basePath.getWaypoints();
         if (waypoints.size() < 2) return null;
 
-        // Filter to active zones only
-        List<PathZone> activeZones = allZones.entrySet().stream()
-            .filter(Map.Entry::getValue)
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
+        // Get active zones from ZoneManager
+        List<PathZone> activeZones = zoneManager.getActiveZones();
 
         List<RotationTarget> rotationTargets     = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
