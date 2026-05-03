@@ -86,7 +86,7 @@ public class LLSubsystem extends SubsystemBase {
                 drivetrain.addVisionMeasurement(
                     llMeasurement1.pose,
                     Utils.fpgaToCurrentTime(llMeasurement1.timestampSeconds),
-                    stdDevs
+                    //stdDevs
                 );
             }
         }
@@ -98,7 +98,7 @@ public class LLSubsystem extends SubsystemBase {
                 drivetrain.addVisionMeasurement(
                     llMeasurement2.pose,
                     Utils.fpgaToCurrentTime(llMeasurement2.timestampSeconds),
-                    stdDevs
+                    //stdDevs
                 );
             }
         }
