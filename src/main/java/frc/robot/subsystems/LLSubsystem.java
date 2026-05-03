@@ -67,7 +67,9 @@ public class LLSubsystem extends SubsystemBase {
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
         LimelightHelpers.SetRobotOrientation(llCamera1, headingDeg, 0, 0, 0, 0, 0);
-        LimelightHelpers.SetRobotOrientation(llCamera2, headingDeg, 0, 0, 0, 0, 0); //Robot pitch, not ll pitch.
+        //Robot yaw, not LL yaw. If we sent 180 to the rear camera,
+        //then it wouldve believed the robot was backward and oh boy that would have made odometry utterly shit.
+        LimelightHelpers.SetRobotOrientation(llCamera2, headingDeg, 0, 0, 0, 0, 0); 
 
         PoseEstimate llMeasurement1 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera1);
         PoseEstimate llMeasurement2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera2);
