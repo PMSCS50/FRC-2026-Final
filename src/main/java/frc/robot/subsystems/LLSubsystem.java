@@ -78,7 +78,6 @@ public class LLSubsystem extends SubsystemBase {
 
         boolean cam1Valid = isEstimateValid(llMeasurement1);
         boolean cam2Valid = isEstimateValid(llMeasurement2);
-        boolean overlap   = hasTagOverlap(llMeasurement1, llMeasurement2);
 
         // Send camera1 pose estimate
         if (cam1Valid) {
@@ -92,9 +91,8 @@ public class LLSubsystem extends SubsystemBase {
             }
         }
 
-        // send camera2 pose estimate only if there isnt tag overlap,
-        // avoiding confusing the KF with duplicate poses from the same tags
-        if (cam2Valid && !overlap) {
+        // send camera2 pose estimate ,
+        if (cam2Valid) {
             Matrix<N3, N1> stdDevs = calculateStdDevs(llMeasurement2);
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
@@ -109,25 +107,20 @@ public class LLSubsystem extends SubsystemBase {
         if (cam1Valid || cam2Valid) {
             estimatedRobotPose = drivetrain.getState().Pose;
 
-            Logger.recordOutput("Front Cam Pose - Odometry PE", Math.hypot(
+            Logger.recordOutput("Front Cam PE Odometry PE difference magnitude", Math.hypot(
                 llMeasurement1.pose.getX() - drivetrain.getState().Pose.getX(),
                 llMeasurement1.pose.getY() - drivetrain.getState().Pose.getY()
             ));
 
-            Logger.recordOutput("Front Cam PE - Odometry PE", Math.hypot(
+            Logger.recordOutput("Front Cam PE Odometry PE difference magnitude", Math.hypot(
                 llMeasurement2.pose.getX() - drivetrain.getState().Pose.getX(),
                 llMeasurement2.pose.getY() - drivetrain.getState().Pose.getY()
             ));
 
 
-            // Pick whichever raw reading has better metadata for logging
-            PoseEstimate bestRaw;
-            if (cam1Valid && cam2Valid) {
-                bestRaw = isBetterEstimate(llMeasurement1, llMeasurement2)
-                        ? llMeasurement1 : llMeasurement2;
-            } else {
-                bestRaw = cam1Valid ? llMeasurement1 : llMeasurement2;
-            }
+            double avgTimestamp = (llMeasurement1.timestampSeconds + llMeasurement2.timestampSeconds) / 2.0;
+            double avgLatency = (llMeasurement1.latency + llMeasurement2.latency) / 2.0;
+            double avgTagSpan = (llMeasurement1.tagSpan + llMeasurement2.tagSpan) / 2.0;
 
             // Total unique tags seen across both cameras (no double-counting overlaps)
             RawFiducial[] totalTagsUsed = totalTagsUsed(llMeasurement1, llMeasurement2);
@@ -135,10 +128,10 @@ public class LLSubsystem extends SubsystemBase {
 
             latestEstimate = new PoseEstimate(
                 estimatedRobotPose,       // KF-fused pose, not raw LL pose
-                bestRaw.timestampSeconds,
-                bestRaw.latency,
+                avgTimestamp,
+                avgLatency,
                 totalTags,
-                bestRaw.tagSpan,
+                avgTagSpan,
                 averageTagDistance(totalTagsUsed),
                 averageTagArea(totalTagsUsed),
                 totalTagsUsed,     
@@ -155,7 +148,6 @@ public class LLSubsystem extends SubsystemBase {
         Logger.recordOutput("Vision/Cam2 Tag Count",        llMeasurement2 != null ? llMeasurement2.tagCount : 0);
         Logger.recordOutput("Vision/Cam1 Valid",            cam1Valid);
         Logger.recordOutput("Vision/Cam2 Valid",            cam2Valid);
-        Logger.recordOutput("Vision/Tag Overlap Detected",  overlap);
 
         if (latestEstimate != null) {
             Logger.recordOutput("Vision/Field X",           latestEstimate.pose.getX());
@@ -209,18 +201,18 @@ public class LLSubsystem extends SubsystemBase {
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
 
-    // Tag Overlap and average ambiguity
+    // // Tag Overlap and average ambiguity
 
-    private boolean hasTagOverlap(PoseEstimate est1, PoseEstimate est2) {
-        if (est1 == null || est2 == null) return false;
-        if (est1.rawFiducials == null || est2.rawFiducials == null) return false;
-        for (RawFiducial f1 : est1.rawFiducials) {
-            for (RawFiducial f2 : est2.rawFiducials) {
-                if (f1.id == f2.id) return true;
-            }
-        }
-        return false;
-    }
+    // private boolean hasTagOverlap(PoseEstimate est1, PoseEstimate est2) {
+    //     if (est1 == null || est2 == null) return false;
+    //     if (est1.rawFiducials == null || est2.rawFiducials == null) return false;
+    //     for (RawFiducial f1 : est1.rawFiducials) {
+    //         for (RawFiducial f2 : est2.rawFiducials) {
+    //             if (f1.id == f2.id) return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
     private RawFiducial[] totalTagsUsed(PoseEstimate est1, PoseEstimate est2) {
         if (est1 == null && est2 == null) return new RawFiducial[0];
