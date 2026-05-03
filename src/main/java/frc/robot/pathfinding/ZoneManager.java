@@ -9,12 +9,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages rotation and orientation zones for the pathfinding system.
+ * Static class that manages rotation and orientation zones for the pathfinding system.
  * Provides thread-safe zone registration and state management.
  * 
  * Zones define regions on the field where the robot should:
- * - RotationZone: Hold a fixed heading
- * - OrientationZone: Face a specific target pose
+ * * RotationZone: Hold a fixed heading
+ * * OrientationZone: Orient to a specific target pose
  * 
  * This class maintains a concurrent map of zones and their active states,
  * accessible to the RoronoaZoro pathfinder.
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ZoneManager {
     
     /** Thread-safe storage of zones and their active states */
-    private final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();
     
     /**
      * Registers a zone in the zone manager.
@@ -30,7 +30,7 @@ public class ZoneManager {
      * @param zone The PathZone to add (RotationZone or OrientationZone)
      * @param active Whether the zone should be active by default
      */
-    public void addZone(PathZone zone, boolean active) {
+    public static void addZone(PathZone zone, boolean active) {
         zones.put(zone, active);
     }
     
@@ -40,7 +40,7 @@ public class ZoneManager {
      * @param zoneName The name of the zone to modify
      * @param newState The new active state (true = active, false = inactive)
      */
-    public void setZoneState(String zoneName, boolean newState) {
+    public static void setZoneState(String zoneName, boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
             if (entry.getKey().name.equals(zoneName)) {
                 entry.setValue(newState);
@@ -56,7 +56,7 @@ public class ZoneManager {
      * 
      * @param newState The new active state for all zones
      */
-    public void setAllZones(boolean newState) {
+    public static void setAllZones(boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
             entry.setValue(newState);
         }
@@ -68,7 +68,7 @@ public class ZoneManager {
      * 
      * @return List of active PathZone objects
      */
-    public List<PathZone> getActiveZones() {
+    public static List<PathZone> getActiveZones() {
         List<PathZone> activeZones = new ArrayList<>();
         for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
             if (entry.getValue()) {
@@ -83,7 +83,7 @@ public class ZoneManager {
      * 
      * @return List of all registered PathZone objects
      */
-    public List<PathZone> getAllZones() {
+    public static List<PathZone> getAllZones() {
         return new ArrayList<>(zones.keySet());
     }
     
@@ -93,7 +93,7 @@ public class ZoneManager {
      * @param zoneName The name of the zone to check
      * @return true if the zone is registered and active, false otherwise
      */
-    public boolean isZoneActive(String zoneName) {
+    public static boolean isZoneActive(String zoneName) {
         for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
             if (entry.getKey().name.equals(zoneName)) {
                 return entry.getValue();
@@ -105,7 +105,7 @@ public class ZoneManager {
     /**
      * Clears all registered zones. Useful for resetting state or testing.
      */
-    public void clearAllZones() {
+    public static void clearAllZones() {
         zones.clear();
     }
     
@@ -114,7 +114,7 @@ public class ZoneManager {
      * 
      * @return Number of zones currently registered
      */
-    public int getZoneCount() {
+    public static int getZoneCount() {
         return zones.size();
     }
 }

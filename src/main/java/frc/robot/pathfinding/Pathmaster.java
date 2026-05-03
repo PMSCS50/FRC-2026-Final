@@ -32,7 +32,6 @@ public class Pathmaster {
     private static CommandSwerveDrivetrain drivetrain;
     private static Supplier<Pose2d> robotPose;
     private static RoronoaZoro zoro;
-    private static ZoneManager zoneManager;
     private static final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean configured = false;
 
@@ -42,8 +41,7 @@ public class Pathmaster {
 
     //Call in Robot.java before RobotContainer is initialized.
     public static void initializePathfinder() {
-        Pathmaster.zoneManager = new ZoneManager();
-        Pathmaster.zoro = new RoronoaZoro(Pathmaster.zoneManager);
+        Pathmaster.zoro = new RoronoaZoro();
         Pathfinding.setPathfinder(Pathmaster.zoro);
     }
 
@@ -67,7 +65,7 @@ public class Pathmaster {
     /** Guards all methods — reports error and returns false if not fully configured. */
     private static boolean checkConfigured(String methodName) {
         if (!configured) {
-            if (zoro == null || drivetrain == null || robotPose == null || constraints == null || zoneManager == null) {
+            if (zoro == null || drivetrain == null || robotPose == null || constraints == null) {
                 DriverStation.reportError(
                     "[Pathmaster] Not fully configured. " +
                     "Call initializePathfinder(), setDrivetrain(), " +
@@ -95,7 +93,7 @@ public class Pathmaster {
      */
     public static void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
         if (!checkConfigured("addRotationZone")) return;
-        zoneManager.addZone(new RotationZone(name, min, max, rotation), active);
+        ZoneManager.addZone(new RotationZone(name, min, max, rotation), active);
     }
 
     /**
@@ -104,45 +102,45 @@ public class Pathmaster {
      */
     public static void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
         if (!checkConfigured("addOrientationZone")) return;
-        zoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
+        ZoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
     }
 
     //Activates a single zone
     public static void activateZone(String name) {
         if (!checkConfigured("activateZone")) return;
-        zoneManager.setZoneState(name, true);
+        ZoneManager.setZoneState(name, true);
     }
 
     //Activates multiple zones
     public static void activateZones(String... names) {
         if (!checkConfigured("activateZones")) return;
-        for (String name : names) zoneManager.setZoneState(name, true);
+        for (String name : names) ZoneManager.setZoneState(name, true);
     }
 
     /** Activates only the named zones, but deactivates everything else. */
     public static void activateOnly(String... names) {
         if (!checkConfigured("activateOnly")) return;
-        zoneManager.setAllZones(false);
-        for (String name : names) zoneManager.setZoneState(name, true);
+        ZoneManager.setAllZones(false);
+        for (String name : names) ZoneManager.setZoneState(name, true);
     }
 
     //Deactivates a single zone
     public static void deactivateZone(String name) {
         if (!checkConfigured("deactivateZone")) return;
-        zoneManager.setZoneState(name, false);
+        ZoneManager.setZoneState(name, false);
     }
 
     //Deactivates multiple zones
     public static void deactivateZones(String... names) {
         if (!checkConfigured("deactivateZones")) return;
-        for (String name : names) zoneManager.setZoneState(name, false);
+        for (String name : names) ZoneManager.setZoneState(name, false);
     }
 
     /** Deactivates only the named zones, but activates everything else. */
     public static void deactivateOnly(String... names) {
         if (!checkConfigured("deactivateOnly")) return;
-        zoneManager.setAllZones(true);
-        for (String name : names) zoneManager.setZoneState(name, false);
+        ZoneManager.setAllZones(true);
+        for (String name : names) ZoneManager.setZoneState(name, false);
     }
 
     // --------------------

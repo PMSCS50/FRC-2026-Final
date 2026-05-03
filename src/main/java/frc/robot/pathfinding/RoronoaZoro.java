@@ -17,16 +17,12 @@ import java.util.stream.Collectors;
  */
 public class RoronoaZoro extends LocalADStar {
 
-    private final ZoneManager zoneManager;
-
-    public RoronoaZoro(ZoneManager zoneManager) {
+    public RoronoaZoro() {
         super();
-        this.zoneManager = zoneManager;
     }
 
     @Override
     public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
         if (basePath == null) return null;
 
@@ -34,7 +30,7 @@ public class RoronoaZoro extends LocalADStar {
         if (waypoints.size() < 2) return null;
 
         // Get active zones from ZoneManager
-        List<PathZone> activeZones = zoneManager.getActiveZones();
+        List<PathZone> activeZones = ZoneManager.getActiveZones();
 
         List<RotationTarget> rotationTargets     = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();

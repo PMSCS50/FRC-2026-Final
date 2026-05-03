@@ -47,16 +47,23 @@ public class Robot extends LoggedRobot {
 
     Pathmaster.initializePathfinder();
     m_robotContainer = new RobotContainer();
+
+    DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
+
+    Pathmaster.startWarmupCommand();
   }
 
+  //robotInit() will be removed after SystemCore, so these methods were moved to the constructor
+  
+  // @Override
+  // public void robotInit() {
+  //     DataLogManager.start();
+  //     DriverStation.startDataLog(DataLogManager.getLog());
 
-  @Override
-  public void robotInit() {
-      DataLogManager.start();
-      DriverStation.startDataLog(DataLogManager.getLog());
+  //     Pathmaster.startWarmupCommand();
+  //   }
 
-      Pathmaster.startWarmupCommand();
-    }
   @Override
   public void robotPeriodic() {
 
