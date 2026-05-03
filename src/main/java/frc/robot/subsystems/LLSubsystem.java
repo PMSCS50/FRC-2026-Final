@@ -18,6 +18,8 @@ import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.Constants.VisionConstants;
 
+import java.util.Arrays;
+
 // 2-camera Limelight subsystem.
 // llCamera1: front-facing camera (0 deg yaw offset)
 // llCamera2: rear-facing camera  (180 deg yaw offset)
@@ -26,8 +28,8 @@ import frc.robot.Constants.VisionConstants;
 public class LLSubsystem extends SubsystemBase {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final String llCamera1; // front camera "peepee peeper"
-    private final String llCamera2; // rear camera "sentient ass tumor"
+    private final String llCamera1; // front camera: peepee peeper
+    private final String llCamera2; // rear camera: ass tumor
 
     private double omegaRps;
 
@@ -37,7 +39,7 @@ public class LLSubsystem extends SubsystemBase {
 
 
     //Vision Sexually Transmitted Diseases
-    private static final double BASE_XY_STD_DEV     = 0.5;
+    private static final double BASE_XY_STD_DEV      = 0.5;
     private static final double THETA_STD_DEV        = 9999.0;
     private static final double MAX_AMBIGUITY        = 0.9;
     private static final double MAX_LATENCY_SECONDS  = 0.25;
@@ -54,7 +56,6 @@ public class LLSubsystem extends SubsystemBase {
         LimelightHelpers.setPipelineIndex(llCamera1, 9);
         LimelightHelpers.setPipelineIndex(llCamera2, 9);
 
-        // Both cameras work under the corrupt world government
         LimelightHelpers.SetIMUMode(llCamera1, 4);
         LimelightHelpers.SetIMUMode(llCamera2, 4);
     }
@@ -120,19 +121,19 @@ public class LLSubsystem extends SubsystemBase {
             }
 
             // Total unique tags seen across both cameras (no double-counting overlaps)
-            int totalTags = (cam1Valid ? llMeasurement1.tagCount : 0)
-                          + (cam2Valid && !overlap ? llMeasurement2.tagCount : 0);
+            RawFiducial[] totalTagsUsed = totalTagsUsed(llMeasurement1, llMeasurement2);
+            int totalTags = totalTagsUsed.length;
 
-            latestEstimate = new LimelightHelpers.PoseEstimate(
+            latestEstimate = new PoseEstimate(
                 estimatedRobotPose,       // KF-fused pose, not raw LL pose
                 bestRaw.timestampSeconds,
                 bestRaw.latency,
                 totalTags,
                 bestRaw.tagSpan,
-                bestRaw.avgTagDist,
-                bestRaw.avgTagArea,
-                bestRaw.rawFiducials,     // fiducials from the better camera
-                true                      // always MegaTag2
+                averageTagDistance(totalTagsUsed),
+                averageTagArea(totalTagsUsed),
+                totalTagsUsed,     
+                true // always MegaTag2
             );
         }
 
@@ -211,6 +212,36 @@ public class LLSubsystem extends SubsystemBase {
         }
         return false;
     }
+
+    private RawFiducial[] totalTagsUsed(PoseEstimate est1, PoseEstimate est2) {
+        if (est1 == null && est2 == null) return new RawFiducial[0];
+        if (est1 != null && est2 == null) return est1.rawFiducials;
+        if (est1 == null && est2 != null) return est2.rawFiducials;
+        
+        RawFiducial[] combined = Arrays.copyOf(est1.rawFiducials, est1.rawFiducials.length + est2.rawFiducials.length);
+        System.arraycopy(est2.rawFiducials, 0, combined, est1.rawFiducials.length, est2.rawFiducials.length);
+
+        combined = Arrays.stream(combined)
+            .distinct()
+            .toArray(RawFiducial[]::new);
+
+            return combined;
+    }
+
+    private double averageTagDistance(RawFiducial[] fiducials) {
+        if (estimate == null || estimate.rawFiducials == null || estimate.rawFiducials.length == 0) return -1.0;
+        double sum = 0;
+        for (RawFiducial tag : fiducials) sum += tag.distToRobot;
+        return sum / estimate.rawFiducials.length;
+    }
+
+    private double averageTagArea(RawFiducial[] fiducials) {
+        if (estimate == null || estimate.rawFiducials == null || estimate.rawFiducials.length == 0) return -1.0;
+        double sum = 0;
+        for (RawFiducial tag : fiducials) sum += tag.ta;
+        return sum / estimate.rawFiducials.length;
+    }
+
 
     private boolean isBetterEstimate(PoseEstimate candidate, PoseEstimate current) {
         if (candidate.tagCount != current.tagCount) {

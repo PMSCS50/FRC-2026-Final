@@ -118,6 +118,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
+    //Seeds gyro to 0 if blue, 180 if red
+    m_robotContainer.drivetrain.getPigeon2().setYaw((DriverStation.getAlliance() == DriverStation.Alliance.Red) ? 180.0 : 0.0);
+
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     if (m_autonomousCommand != null) {
