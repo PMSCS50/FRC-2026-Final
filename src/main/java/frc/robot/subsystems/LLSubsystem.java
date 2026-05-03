@@ -53,11 +53,9 @@ public class LLSubsystem extends SubsystemBase {
         this.llCamera1  = llCamera1;
         this.llCamera2  = llCamera2;
 
-        LimelightHelpers.setPipelineIndex(llCamera1, 9);
-        LimelightHelpers.setPipelineIndex(llCamera2, 9);
-
-        LimelightHelpers.SetIMUMode(llCamera1, 4);
-        LimelightHelpers.SetIMUMode(llCamera2, 4);
+        setPipeline(9);
+        
+        setIMUMode(4);
     }
 
 
@@ -110,6 +108,17 @@ public class LLSubsystem extends SubsystemBase {
         // Wrap estimatedRobotPose inside a PoseEstimate for more metadata.
         if (cam1Valid || cam2Valid) {
             estimatedRobotPose = drivetrain.getState().Pose;
+
+            Logger.recordOutput("Front Cam Pose - Odometry PE", Math.hypot(
+                llMeasurement1.pose.getX() - drivetrain.getState().Pose.getX(),
+                llMeasurement1.pose.getY() - drivetrain.getState().Pose.getY()
+            ));
+
+            Logger.recordOutput("Front Cam PE - Odometry PE", Math.hypot(
+                llMeasurement2.pose.getX() - drivetrain.getState().Pose.getX(),
+                llMeasurement2.pose.getY() - drivetrain.getState().Pose.getY()
+            ));
+
 
             // Pick whichever raw reading has better metadata for logging
             PoseEstimate bestRaw;
@@ -221,11 +230,10 @@ public class LLSubsystem extends SubsystemBase {
         RawFiducial[] combined = Arrays.copyOf(est1.rawFiducials, est1.rawFiducials.length + est2.rawFiducials.length);
         System.arraycopy(est2.rawFiducials, 0, combined, est1.rawFiducials.length, est2.rawFiducials.length);
 
-        combined = Arrays.stream(combined)
-            .distinct()
-            .toArray(RawFiducial[]::new);
+        //Removes all duplicates from the array.
+        combined = Arrays.stream(combined).distinct().toArray(RawFiducial[]::new);
 
-            return combined;
+        return combined;
     }
 
     private double averageTagDistance(RawFiducial[] fiducials) {
@@ -265,7 +273,8 @@ public class LLSubsystem extends SubsystemBase {
     public double  getYaw()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
-    public boolean hasTargets()     { return latestEstimate != null; }
+    public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
+    public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera1); }
 
     public boolean hasTarget(int desiredId) {
         return hasFiducial(llCamera1, desiredId) || hasFiducial(llCamera2, desiredId);
@@ -278,6 +287,11 @@ public class LLSubsystem extends SubsystemBase {
     public void setPipeline(int pipeline) {
         LimelightHelpers.setPipelineIndex(llCamera1, pipeline);
         LimelightHelpers.setPipelineIndex(llCamera2, pipeline);
+    }
+
+    public void setIMUMode(int mode) {
+        LimelightHelpers.SetIMUMode(llCamera1, mode);
+        LimelightHelpers.SetIMUMode(llCamera2, mode);
     }
 
     // distance utilities
@@ -304,19 +318,7 @@ public class LLSubsystem extends SubsystemBase {
         double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
         if (tagDist > 0) return tagDist;
         return getDistanceToTarget(VisionConstants.getHubPose2());
-    }
-
-    // Alright Im going to move this to shooter bc why tf is this here.
-    // No offense to Kevin but this is a shooter method and not a vision method.
-
-    public double rpmFromDistanceRegression(double distance) {
-        double rps = 0.1322042143 * Math.pow(distance, 4)
-                   - 1.110063156  * Math.pow(distance, 3)
-                   + 3.621489461  * Math.pow(distance, 2)
-                   + 0.1849702218 * distance
-                   + 33.86388054;
-        return rps * 60.0;
-    }
+    }    
 
 }
 

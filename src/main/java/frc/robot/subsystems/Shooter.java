@@ -140,10 +140,18 @@ public class Shooter extends SubsystemBase {
         // SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
-   
+    //Why tf was this in vision???
+    public double rpmFromDistanceRegression(double distance) {
+        double rps = 0.1322042143 * Math.pow(distance, 4)
+                   - 1.110063156  * Math.pow(distance, 3)
+                   + 3.621489461  * Math.pow(distance, 2)
+                   + 0.1849702218 * distance
+                   + 33.86388054;
+        return rps * 60.0;
+    }
 
     public void rpmControl(double distance) {
-        double rpm = vision.rpmFromDistanceRegression(distance);
+        double rpm = this.rpmFromDistanceRegression(distance);
         double rps = rpm / 60;
         shooterMotor1.setControl(velocityRequest.withVelocity(rps));
         // SmartDashboard.putNumber("Target RPM", rpm);
