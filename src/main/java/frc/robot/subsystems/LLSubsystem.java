@@ -154,9 +154,15 @@ public class LLSubsystem extends SubsystemBase {
 
         //Tag HashMap thing Kevin did
         for (LimelightTarget_Fiducial fiducial : allTags) {
+            Pose3d pos = fiducial.getRobotPose_TargetSpace();
+            Transform3d tagToRobot = new Transform3d(
+                pose.getX(),
+                pose.getY(),
+                pose.getRotation()
+            );
             tagtransforms.put(
                 fiducial.id,
-                fiducial.getRobotPose_TargetSpace()
+                tagToRobot
             );
         }
 
@@ -305,17 +311,24 @@ public class LLSubsystem extends SubsystemBase {
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
-    public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera1); }
+    public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera2); }
 
     public double  getX(int id) {
-        //return hasTarget(id) ? 
+        return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
     }
+
     public double  getY(int id) {
-        return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; 
+        return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;    
     }
+
     public double  getYaw(int id) {
-        return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; 
+        return hasTarget(id) ? tagtransforms.get(id).getRotation().getZ() : 0.0;    
     }
+
+    public Transform3d getTransformToTag(int id) {
+        return hasTarget(id) ? tagtransforms.get(id) : Transform3d.kZero;    
+    }
+    
     
     public boolean hasTarget(int desiredId) {
         return hasFiducial(llCamera1, desiredId) || hasFiducial(llCamera2, desiredId);
