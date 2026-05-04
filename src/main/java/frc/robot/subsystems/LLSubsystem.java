@@ -168,22 +168,21 @@ public class LLSubsystem extends SubsystemBase {
 
         //AdvantageKit Logging 
 
-        Logger.recordOutput("Vision/Heading Sent to LL",    headingDeg);
-        Logger.recordOutput("Vision/Raw Pigeon Yaw",        drivetrain.getPigeon2().getYaw().getValueAsDouble());
-        Logger.recordOutput("Vision/Omega RPS",             omegaRps);
-        Logger.recordOutput("Vision/Cam1 Tag Count",        llMeasurement1 != null ? llMeasurement1.tagCount : 0);
-        Logger.recordOutput("Vision/Cam2 Tag Count",        llMeasurement2 != null ? llMeasurement2.tagCount : 0);
-        Logger.recordOutput("Vision/Cam1 Valid",            cam1Valid);
-        Logger.recordOutput("Vision/Cam2 Valid",            cam2Valid);
+        Logger.recordOutput("Vision: Heading Sent to LL",    headingDeg);
+        Logger.recordOutput("Vision: Raw Pigeon Yaw",        drivetrain.getPigeon2().getYaw().getValueAsDouble());
+        Logger.recordOutput("Vision: Omega RPS",             omegaRps);
+        Logger.recordOutput("Vision: Cam1 Tag Count",        llMeasurement1 != null ? llMeasurement1.tagCount : 0);
+        Logger.recordOutput("Vision: Cam2 Tag Count",        llMeasurement2 != null ? llMeasurement2.tagCount : 0);
+        Logger.recordOutput("Vision: Cam1 Valid",            cam1Valid);
+        Logger.recordOutput("Vision: Cam2 Valid",            cam2Valid);
 
-        if (latestEstimate != null) {
-            Logger.recordOutput("Vision/Field X",           latestEstimate.pose.getX());
-            Logger.recordOutput("Vision/Field Y",           latestEstimate.pose.getY());
-            Logger.recordOutput("Vision/Heading",           latestEstimate.pose.getRotation().getDegrees());
-            Logger.recordOutput("Vision/Tag Count",         latestEstimate.tagCount);
-            Logger.recordOutput("Vision/Avg Tag Distance",  latestEstimate.avgTagDist);
-            Logger.recordOutput("Vision/Distance to Hub",   getDistanceToTarget(VisionConstants.getHubPose()));
-            Logger.recordOutput("Vision/Distance to Hub 2", getDistanceToTarget(VisionConstants.getHubPose2()));
+        if (latestEstimate != null && hasTargets()) {
+            Logger.recordOutput("Vision: Field X",           latestEstimate.pose.getX());
+            Logger.recordOutput("Vision: Field Y",           latestEstimate.pose.getY());
+            Logger.recordOutput("Vision: Heading",           latestEstimate.pose.getRotation().getDegrees());
+            Logger.recordOutput("Vision: Tag Count",         latestEstimate.tagCount);
+            Logger.recordOutput("Vision: Avg Tag Distance",  latestEstimate.avgTagDist);
+            Logger.recordOutput("Vision: Visible Tags",      tagtransforms.keySet());
         }
     }
 
