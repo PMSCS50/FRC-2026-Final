@@ -10,11 +10,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Custom pathfinder extending AD* with support for:
- * RotationZone: robot holds a fixed heading through a field region
- * OrientationZone: robot continuously faces a target pose (via PointTowardsZone)
+ * Custom pathfinder extending AD* with support for many different Zones
+ * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
  * Zones can be toggled active/inactive at runtime.
+ * There are 4 types of zones:
+ * 1. RotationZone: When the robot enters, it starts rotating towards a specified angle
+ * 2. OrientationZone: When the robot enters, it starts orienting towards a specified target
+ * 3. ConstraintZone: When the robot enters, certain path constraints are applied
+ * 4. EventZone: When the robot enters, a specified command is triggered
  */
+
 public class RoronoaZoro extends LocalADStar {
 
     public RoronoaZoro() {
@@ -34,6 +39,8 @@ public class RoronoaZoro extends LocalADStar {
 
         List<RotationTarget> rotationTargets     = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
+        //List<ConstraintZone> constraintZones     = new ArrayList<>();
+        //List<EventMarker> eventMarkers           = new ArrayList<>();
 
         // Precompute cumulative distances along path waypoints
         List<Translation2d> anchors = waypoints.stream()
@@ -88,6 +95,15 @@ public class RoronoaZoro extends LocalADStar {
                 rotationTargets.add(new RotationTarget(
                     exitIndex, rotationZone.getRotation()));
             }
+            /*
+            else if (zone instanceof ConstraintZone constraintZone) {
+                constraintZones.add(new ConstraintsZone(
+                    entryIndex, exitIndex, constraintZone.getConstraints()));
+
+            } else if (zone instanceof EventZone eventZone) {
+                eventMarkers.add(new EventMarker(
+                    eventZone.getTriggerName(), entryIndex, exitIndex, eventZone.getCommand()));
+            */
 
             DriverStation.reportWarning(
                 "[RoronoaZoro] Zone '" + zone.name + "' active" +
@@ -97,8 +113,7 @@ public class RoronoaZoro extends LocalADStar {
 
         //Starting state
         
-        // double velocity = Math.hypot(drivetrain.getSpeeds().vxMetersPerSecond,
-        //     drivetrain.getSpeeds().vyMetersPerSecond);
+        // double velocity = Math.hypot(drivetrain.getSpeeds().vxMetersPerSecond, drivetrain.getSpeeds().vyMetersPerSecond);
 
         // Rotation2d rot = drivetrain.getPigeon2().getRotation2d();
 
@@ -106,12 +121,12 @@ public class RoronoaZoro extends LocalADStar {
             waypoints,
             rotationTargets,
             pointTowardsZones,
-            List.of(),
-            List.of(),
+            List.of(), //constraintZones,
+            List.of(), //eventMarkers,
             constraints,
             null,  //new IdealStartingState(velocity, rot), //Use current velocity and rotation as 
-            goalEndState,
-            false
+            goalEndState, //Prob 0 velocity
+            false //ALWAYS FALSE. this reverses paths based on alliance, but these paths are alliance-agnostic.
         );
     }
 

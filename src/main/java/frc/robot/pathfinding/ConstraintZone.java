@@ -6,13 +6,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * A zone where the robot changes its path constraints
- * Example: forcing the robot to slow down in a certain area, or to turn faster in another area
+ * Example (REBUILT): forcing the robot to slow down on the bump to avoid tipping over.
  */
 public class ConstraintZone extends PathZone {
 
     private final PathConstraints constraints;
 
-    public OrientationZone(String name,Translation2d min,Translation2d max, PathConstraints constraints) {
+    public ConstraintZone(String name,Translation2d min,Translation2d max, PathConstraints constraints) {
         super(name, min, max);
         this.constraints = constraints;
     }

@@ -6,15 +6,20 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * A zone where the robot activates a certain command
- * Example: activating the robot's intake when going to the neutral zone
+ * Example (REBUILT): activating the robot's intake when going to the neutral zone
  */
 public class EventZone extends PathZone {
 
     private final Command command;
 
-    public OrientationZone(String name,Translation2d min,Translation2d max, Command command) {
+    public EventZone(String name,Translation2d min,Translation2d max, String triggerName, Command command) {
         super(name, min, max);
+        this.triggerName = triggerName;
         this.command = command;
+    }
+
+    public String getTriggerName() {
+        return triggerName;
     }
 
     public Command getCommand() {

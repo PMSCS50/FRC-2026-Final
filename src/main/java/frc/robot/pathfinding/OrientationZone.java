@@ -7,7 +7,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 /**
  * A zone where the robot continuously faces toward a target field pose,
 
- * Example: always face the hub while on the alliance zone
+ * Example (REBUILT): always face the hub while on the alliance zone
  */
 public class OrientationZone extends PathZone {
 
