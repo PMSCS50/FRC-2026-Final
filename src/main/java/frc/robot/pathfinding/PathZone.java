@@ -1,4 +1,5 @@
 package frc.robot.pathfinding;
+import java.util.Objects;
 
 import edu.wpi.first.math.geometry.Translation2d;
 
@@ -13,6 +14,19 @@ public abstract class PathZone {
         this.name = name;
         this.min = min;
         this.max = max;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PathZone pathZone = (PathZone) o;
+        return Objects.equals(name, pathZone.name) && Objects.equals(min, pathZone.min) && Objects.equals(max, pathZone.max);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, min, max);
     }
 
 

@@ -43,7 +43,7 @@ public class ZoneManager {
     public static void setZoneState(String zoneName, boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
             if (entry.getKey().name.equals(zoneName)) {
-                entry.setValue(newState);
+                zones.put(entry.getKey(), newState);
                 return;
             }
         }
@@ -58,7 +58,7 @@ public class ZoneManager {
      */
     public static void setAllZones(boolean newState) {
         for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
-            entry.setValue(newState);
+            zones.put(entry.getKey(), newState);
         }
     }
     
