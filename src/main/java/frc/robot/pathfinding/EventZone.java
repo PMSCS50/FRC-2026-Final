@@ -12,14 +12,10 @@ public class EventZone extends PathZone {
 
     private final Command command;
 
-    public EventZone(String name,Translation2d min,Translation2d max, String triggerName, Command command) {
+    public EventZone(String name,Translation2d min,Translation2d max, Command command) {
         super(name, min, max);
-        this.triggerName = triggerName;
+        this.triggerName = name;
         this.command = command;
-    }
-
-    public String getTriggerName() {
-        return triggerName;
     }
 
     public Command getCommand() {

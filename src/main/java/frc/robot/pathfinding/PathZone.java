@@ -1,11 +1,12 @@
 package frc.robot.pathfinding;
-import java.util.Objects;
 
+import java.util.Objects;
 import edu.wpi.first.math.geometry.Translation2d;
 
 //Creates a zone on the field that pathfinder will use for rotation or alignment.
 
 public abstract class PathZone {
+    
     public final String name;
     public final Translation2d min;
     public final Translation2d max;

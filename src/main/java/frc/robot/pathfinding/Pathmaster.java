@@ -34,6 +34,7 @@ public class Pathmaster {
     private static RoronoaZoro zoro;
     private static final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean configured = false;
+    private static boolean warmup = false;
 
     // --------
     // Configs
@@ -48,6 +49,7 @@ public class Pathmaster {
     //Call in Robot.java as the last line in robotInit().
     public static void startWarmupCommand() {
         PathfindingCommand.warmupCommand().schedule();
+        warmup = true;
     }
 
     //Call in RobotContainer.java
@@ -65,7 +67,7 @@ public class Pathmaster {
     /** Guards all methods — reports error and returns false if not fully configured. */
     private static boolean checkConfigured(String methodName) {
         if (!configured) {
-            if (zoro == null || drivetrain == null || robotPose == null || constraints == null) {
+            if (zoro == null || drivetrain == null || robotPose == null || constraints == null || !warmup) {
                 DriverStation.reportError(
                     "[Pathmaster] Not fully configured. " +
                     "Call initializePathfinder(), setDrivetrain(), " +
