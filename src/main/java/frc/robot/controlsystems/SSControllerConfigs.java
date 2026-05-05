@@ -2,6 +2,7 @@ package frc.robot.controlsystems;
 
 import edu.wpi.first.math.Num;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.numbers.N1;
 
@@ -22,8 +23,8 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
     
     private final Nat<States> statesNat;
     private final Nat<Outputs> outputsNat;
-    private final Matrix<States, States> qCost;
-    private final Matrix<Inputs, Inputs> rCost;
+    private final Vector<States> qCost;
+    private final Vector<Inputs> rCost;
     private final Matrix<States, N1> modelStdDevs;
     private final Matrix<Outputs, N1> encoderStdDevs;
     private final double maxVoltage;
@@ -33,8 +34,8 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
     public SSControllerConfigs(
             Nat<States> statesNat,
             Nat<Outputs> outputsNat,
-            Matrix<States, States> qCost,
-            Matrix<Inputs, Inputs> rCost,
+            Vector<States> qCost,
+            Vector<Inputs> rCost,
             Matrix<States, N1> modelStdDevs,
             Matrix<Outputs, N1> encoderStdDevs,
             double maxVoltage,
@@ -60,11 +61,11 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
         return outputsNat;
     }
 
-    public Matrix<States, States> getQCost() {
+    public Vector<States> getQCost() {
         return qCost;
     }
 
-    public Matrix<Inputs, Inputs> getRCost() {
+    public Vector<Inputs> getRCost() {
         return rCost;
     }
 
