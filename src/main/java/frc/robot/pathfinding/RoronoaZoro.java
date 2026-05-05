@@ -4,6 +4,7 @@ import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.LocalADStar;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.ArrayList;
 import java.util.List;
