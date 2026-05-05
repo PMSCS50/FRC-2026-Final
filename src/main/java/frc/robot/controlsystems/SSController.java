@@ -2,6 +2,7 @@ package frc.robot.controlsystems;
 
 import edu.wpi.first.math.Num;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
 import edu.wpi.first.math.estimator.KalmanFilter;
@@ -62,10 +63,10 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * 
      * @param plant          LinearSystem model from LinearSystemId factory
      * 
-     * @param qCost          State cost matrix (States x States diagonal)
-     *                       Higher diagonal values = more aggressive correction on that state
+     * @param qCost          State cost vector (States x 1)
+     *                       Higher values = more aggressive correction on that state
      * 
-     * @param rCost          Input cost matrix (Inputs x Inputs diagonal)
+     * @param rCost          Input cost vector (Inputs x 1)
      *                       Higher values = more conservative voltage usage
      * 
      * @param modelStdDevs   Model uncertainty per state (States x 1)
@@ -86,8 +87,8 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             Nat<States> statesNat,   //Just states value. Only used for Kalman Filter
             Nat<Outputs> outputsNat, //Just outputs value. Only used for Kalman Filter
             LinearSystem<States, Inputs, Outputs> plant,
-            Matrix<States, States> qCost,
-            Matrix<Inputs, Inputs> rCost,
+            Vector<States> qCost,
+            Vector<Inputs> rCost,
             Matrix<States, N1> modelStdDevs,
             Matrix<Outputs, N1> encoderStdDevs,
             double maxVoltage,
