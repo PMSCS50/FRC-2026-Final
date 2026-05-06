@@ -18,7 +18,7 @@ public class EventZone extends PathZone {
         this.command = command;
     }
 
-    public Command getCommand() {
+    public Command getEvent() {
         return command;
     }
 

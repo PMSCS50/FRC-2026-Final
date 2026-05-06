@@ -38,105 +38,86 @@ public class RoronoaZoro extends LocalADStar {
 
     @Override
     public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
+        //Gets LocalAD* path to fill in zones
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
         if (basePath == null) return null;
 
         List<Waypoint> waypoints = basePath.getWaypoints();
         if (waypoints.size() < 2) return null;
 
-        // Get active zones from ZoneManager
+        List<PathPoint> points     = basePath.getAllPathPoints();
         List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-        List<RotationTarget> rotationTargets     = new ArrayList<>();
+        List<RotationTarget> rotationTargets   = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
-        //List<ConstraintZone> constraintZones     = new ArrayList<>();
-        //List<EventMarker> eventMarkers           = new ArrayList<>();
+        List<ConstraintZone> constraintZones   = new ArrayList<>();
+        List<EventMarker> eventMarkers      = new ArrayList<>();
 
-        // Precompute cumulative distances along path waypoints
-        List<Translation2d> anchors = waypoints.stream()
-            .map(Waypoint::anchor)
-            .collect(Collectors.toList());
-
-        double[] cumulativeDist = new double[anchors.size()];
-        cumulativeDist[0] = 0.0;
-        for (int i = 1; i < anchors.size(); i++) {
-            cumulativeDist[i] = cumulativeDist[i - 1]
-                + anchors.get(i).getDistance(anchors.get(i - 1));
+        // Precompute arc length for each PathPoint (for lead-in distance math)
+        double[] arcLength = new double[points.size()];
+        arcLength[0] = 0;
+        for (int i = 1; i < points.size(); i++) {
+            arcLength[i] = arcLength[i - 1]
+                + points.get(i).position().getDistance(points.get(i - 1).position());
         }
-        double totalPathLength = cumulativeDist[anchors.size() - 1];
 
         for (PathZone zone : activeZones) {
 
-            double entryFraction = -1;
-            double exitFraction  = -1;
+            int entryIndex = -1;
+            int exitIndex  = -1;
 
-            for (int s = 0; s <= 500; s++) {
-                double t = (double) s / 500;
-                Translation2d point = interpolateAlongPath(
-                    anchors, cumulativeDist, t * totalPathLength);
-                if (zone.containsPoint(point)) {
-                    if (entryFraction < 0) entryFraction = t;
-                    exitFraction = t;
+            for (int i = 0; i < points.size(); i++) {
+                if (zone.containsPoint(points.get(i).position())) {
+                    if (entryIndex < 0) entryIndex = i;
+                    exitIndex = i;
                 }
             }
 
-            if (entryFraction < 0) continue;
+            if (entryIndex < 0) continue;
 
-            double leadIn = 0.3; // Starts rotating 0.3m before rotation target. Tune the num since i pulled it out of my ass
-            double leadInFraction = Math.max(0,
-                (entryFraction * totalPathLength - leadIn) / totalPathLength);
+            double entryWaypointIndex = points.get(entryIndex).waypointRelativePos();
+            double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos();
 
-            double leadInIndex = fractionToWaypointIndex(
-                leadInFraction, totalPathLength, cumulativeDist);
-            double exitIndex = fractionToWaypointIndex(
-                exitFraction, totalPathLength, cumulativeDist);
-
-            if (zone instanceof OrientationZone orientationZone) {
-                pointTowardsZones.add(new PointTowardsZone(
-                    zone.name,
-                    orientationZone.getTarget().getTranslation(),
-                    leadInIndex,
-                    exitIndex
-                ));
-
-            } else if (zone instanceof RotationZone rotationZone) {
-                rotationTargets.add(new RotationTarget(
-                    leadInIndex, rotationZone.getRotation()));
-                rotationTargets.add(new RotationTarget(
-                    exitIndex, rotationZone.getRotation()));
+            // Lead in determines when the robot should start the action.
+            double leadIn = 0.15;
+            double leadInWaypointIndex = entryWaypointIndex;
+            for (int i = entryIndex; i >= 0; i--) {
+                if (arcLength[entryIndex] - arcLength[i] >= leadIn) {
+                    leadInWaypointIndex = points.get(i).waypointRelativePos();
+                    break;
+                }
             }
-            /*
-            else if (zone instanceof ConstraintZone constraintZone) {
-                constraintZones.add(new ConstraintsZone(
-                    entryIndex, exitIndex, constraintZone.getConstraints()));
 
-            } else if (zone instanceof EventZone eventZone) {
+            if (zone instanceof OrientationZone oz) {
+                pointTowardsZones.add(new PointTowardsZone(
+                    zone.name, oz.getTarget().getTranslation(), leadInWaypointIndex, exitWaypointIndex));
+            } else if (zone instanceof RotationZone rz) {
+                rotationTargets.add(new RotationTarget(leadInWaypointIndex, rz.getRotation()));
+                rotationTargets.add(new RotationTarget(exitWaypointIndex,   rz.getRotation()));
+            } else if (zone instanceof ConstraintZone cz) {
+                constraintZones.add(new ConstraintsZone(
+                    entryWaypointIndex, exitWaypointIndex, cz.getConstraints()));
+            } else if (zone instanceof EventZone ez) {
                 eventMarkers.add(new EventMarker(
-                    eventZone.name, entryIndex, exitIndex, eventZone.getCommand()));
-            */
+                    zone.name, entryWaypointIndex, exitWaypointIndex, ez.getEvent()));
+            }
 
             DriverStation.reportWarning(
                 "[RoronoaZoro] Zone '" + zone.name + "' active" +
-                " entry=" + String.format("%.2f", entryFraction) +
-                " exit="  + String.format("%.2f", exitFraction), false);
+                " entry=" + String.format("%.3f", entryWaypointIndex) +
+                " exit="  + String.format("%.3f", exitWaypointIndex), false);
         }
-
-        //Starting state
-        
-        //double velocity = Math.hypot(drivetrain.getSpeeds().vxMetersPerSecond, drivetrain.getSpeeds().vyMetersPerSecond);
-        //Rotation2d rot = drivetrain.getPigeon2().getRotation2d();
-        //IdealStartingState startingstate = new IdealStartingState(velocity, rot);
 
         return new PathPlannerPath(
             waypoints,
             rotationTargets,
             pointTowardsZones,
-            List.of(), //constraintZones,
-            List.of(), //eventMarkers,
+            constraintZones,
+            eventMarkers,
             constraints,
-            null,  //startingstate //Use current velocity and rotation as starting state
-            goalEndState, //Prob 0 velocity
-            false //ALWAYS FALSE. Never set as true
+            null,
+            goalEndState,
+            false
         );
     }
 
