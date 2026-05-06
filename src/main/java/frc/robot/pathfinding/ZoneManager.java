@@ -101,6 +101,17 @@ public class ZoneManager {
         }
         return false;
     }
+
+    /**
+     * Deletes the given zone. Highly unlikely we will use this
+     */
+    public static boolean deleteZone(String zoneName) {
+        for (PathZone zone : zones.keySet()) {
+            if (zone.name.equals(zoneName)) {
+                return zones.remove(zone);
+            }
+        }
+    }
     
     /**
      * Clears all registered zones. Useful for resetting state or testing.
