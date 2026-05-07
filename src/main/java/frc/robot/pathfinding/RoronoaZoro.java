@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 /**
  * Custom pathfinder extending AD* with support for many different Zones
@@ -34,6 +34,13 @@ public class RoronoaZoro extends LocalADStar {
 
     public RoronoaZoro() {
         super();
+    }
+
+    private Supplier<IdealStartingState> startingState;
+
+    //Links Pathmaster method to RoronoaZoro.
+    public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
+        this.startingState = supplier;
     }
 
     @Override
@@ -115,42 +122,13 @@ public class RoronoaZoro extends LocalADStar {
             constraintZones,
             eventMarkers,
             constraints,
-            null,
+            (startingState != null) ? startingState.get() : null,
             goalEndState,
             false
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
 
-    private Translation2d interpolateAlongPath(List<Translation2d> anchors, double[] cumulativeDist, double distAlongPath) {
-
-        for (int i = 1; i < anchors.size(); i++) {
-            if (cumulativeDist[i] >= distAlongPath) {
-                double segmentLength = cumulativeDist[i] - cumulativeDist[i - 1];
-                if (segmentLength < 1e-6) return anchors.get(i);
-                double t = (distAlongPath - cumulativeDist[i - 1]) / segmentLength;
-                return anchors.get(i - 1).interpolate(anchors.get(i), t);
-            }
-        }
-        return anchors.get(anchors.size() - 1);
-    }
-
-    private double fractionToWaypointIndex(double pathFraction, double totalPathLength, double[] cumulativeDist) {
-
-        double targetDist = pathFraction * totalPathLength;
-        for (int i = 1; i < cumulativeDist.length; i++) {
-            if (cumulativeDist[i] >= targetDist) {
-                double segmentLength = cumulativeDist[i] - cumulativeDist[i - 1];
-                if (segmentLength < 1e-6) return i;
-                double t = (targetDist - cumulativeDist[i - 1]) / segmentLength;
-                return (i - 1) + t;
-            }
-        }
-        return cumulativeDist.length - 1;
-    }
 }
 
 

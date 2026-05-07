@@ -52,6 +52,8 @@ public class Pathmaster {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
+
+        linkStartingState();
     }
 
     //Call in Robot.java before RobotContainer is initialized.
@@ -66,12 +68,17 @@ public class Pathmaster {
         warmup = true;
     }
 
-    public static IdealStartingState getIdealStartingState() {
+    public IdealStartingState getIdealStartingState() {
         ChassisSpeeds speeds = robotSpeeds.get();
         double vx = speeds.vxMetersPerSecond;
         double vy = speeds.vyMetersPerSecond;
         Rotation2d rot = robotPose.get().getRotation();
         return new IdealStartingState(Math.hypot(vx, vy), rot);
+    }
+
+    //Called in constructor to set RoronoaZoro IdealStartingStateSupplier
+    private void linkStartingState() {
+        zoro.setStartingStateSupplier(this::getIdealStartingState);
     }
 
 
