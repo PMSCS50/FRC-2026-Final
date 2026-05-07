@@ -86,7 +86,7 @@ public class RoronoaZoro extends LocalADStar {
             double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos();
 
             // Lead in determines when the robot should start the action.
-            double leadIn = 0.15;
+            double leadIn = 0.0;
             double leadInWaypointIndex = entryWaypointIndex;
             for (int i = entryIndex; i >= 0; i--) {
                 if (arcLength[entryIndex] - arcLength[i] >= leadIn) {
