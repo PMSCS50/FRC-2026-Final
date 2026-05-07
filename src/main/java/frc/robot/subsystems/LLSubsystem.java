@@ -227,18 +227,6 @@ public class LLSubsystem extends SubsystemBase {
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
 
-    // // Tag Overlap and average ambiguity
-
-    // private boolean hasTagOverlap(PoseEstimate est1, PoseEstimate est2) {
-    //     if (est1 == null || est2 == null) return false;
-    //     if (est1.rawFiducials == null || est2.rawFiducials == null) return false;
-    //     for (RawFiducial f1 : est1.rawFiducials) {
-    //         for (RawFiducial f2 : est2.rawFiducials) {
-    //             if (f1.id == f2.id) return true;
-    //         }
-    //     }
-    //     return false;
-    // }
 
     //Used to count tags for POSE ESTIMATION
     private RawFiducial[] totalTagsUsed(PoseEstimate est1, PoseEstimate est2) {
@@ -256,8 +244,7 @@ public class LLSubsystem extends SubsystemBase {
     }
 
     //Used to count tags for TAG DATA
-    private LimelightTarget_Fiducial[] totalTagsUsed(LimelightTarget_Fiducial[] t1, 
-                                                    LimelightTarget_Fiducial[] t2) {
+    private LimelightTarget_Fiducial[] totalTagsUsed(LimelightTarget_Fiducial[] t1, LimelightTarget_Fiducial[] t2) {
 
         if (t1 == null && t2 == null) return new LimelightTarget_Fiducial[0];
         if (t1 != null && t2 == null) return t1;
@@ -286,14 +273,6 @@ public class LLSubsystem extends SubsystemBase {
         return sum / estimate.rawFiducials.length;
     }
 
-
-    private boolean isBetterEstimate(PoseEstimate candidate, PoseEstimate current) {
-        if (candidate.tagCount != current.tagCount) {
-            return candidate.tagCount > current.tagCount;
-        }
-        return avgAmbiguity(candidate) < avgAmbiguity(current);
-    }
-
     private double avgAmbiguity(PoseEstimate estimate) {
         if (estimate.rawFiducials == null || estimate.rawFiducials.length == 0) return 1.0;
         double sum = 0;
@@ -312,15 +291,15 @@ public class LLSubsystem extends SubsystemBase {
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
     public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera2); }
 
-    public double  getX(int id) {
+    public double getX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
     }
 
-    public double  getY(int id) {
+    public double getY(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;    
     }
 
-    public double  getYaw(int id) {
+    public double getYaw(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getRotation().getZ() : 0.0;    
     }
 
@@ -351,8 +330,12 @@ public class LLSubsystem extends SubsystemBase {
 
     public double getDistanceToTarget(Pose2d targetPose) {
         if (!hasTargets()) return -1.0;
-        return drivetrain.getState().Pose.getTranslation()
-            .getDistance(targetPose.getTranslation());
+        return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
+    }
+
+    public double getYawToTarget(Pose2d targetPose) {
+        if (!hasTargets()) return -1.0;
+        return estimatedRobotPose.minus(targetPose).getRotation().getZ();
     }
 
     /**
@@ -366,11 +349,6 @@ public class LLSubsystem extends SubsystemBase {
         }
         return -1.0;
     }
-
-    public double getBestDistanceToHub() {
-        double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
-        if (tagDist > 0) return tagDist;
-        return getDistanceToTarget(VisionConstants.getHubPose2());
-    }    
+   
 
 }
