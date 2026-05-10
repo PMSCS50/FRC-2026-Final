@@ -70,9 +70,6 @@ public class LLSubsystem extends SubsystemBase {
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
         LimelightHelpers.SetRobotOrientation(llCamera1, headingDeg, 0, 0, 0, 0, 0);
-        //Robot yaw, not LL yaw. If we sent 180 to the rear camera,
-        //then it wouldve believed the robot was backward and oh boy 
-        //that would have made odometry utterly shit.
         LimelightHelpers.SetRobotOrientation(llCamera2, headingDeg, 0, 0, 0, 0, 0); 
 
         PoseEstimate llMeasurement1 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera1);
@@ -91,7 +88,7 @@ public class LLSubsystem extends SubsystemBase {
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
                     llMeasurement1.pose,
-                    Utils.fpgaToCurrentTime(llMeasurement1.timestampSeconds),
+                    Utils.fpgaToCurrentTime(llMeasurement1.timestampSeconds)//,
                     //stdDevs
                 );
             }
@@ -103,7 +100,7 @@ public class LLSubsystem extends SubsystemBase {
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
                     llMeasurement2.pose,
-                    Utils.fpgaToCurrentTime(llMeasurement2.timestampSeconds),
+                    Utils.fpgaToCurrentTime(llMeasurement2.timestampSeconds)//,
                     //stdDevs
                 );
             }
@@ -132,8 +129,9 @@ public class LLSubsystem extends SubsystemBase {
             RawFiducial[] totalTagsUsed = totalTagsUsed(llMeasurement1, llMeasurement2);
             int totalTags = totalTagsUsed.length;
 
+            //Fused metadata from both pose estimates.
             latestEstimate = new PoseEstimate(
-                estimatedRobotPose,       // KF-fused pose, not raw LL pose
+                estimatedRobotPose,
                 avgTimestamp,
                 avgLatency,
                 totalTags,
@@ -148,7 +146,7 @@ public class LLSubsystem extends SubsystemBase {
         //Reset tagtransforms every periodic
         tagtransforms.clear();
 
-        LimelightTarget_Fiducial[] allTags = totalTagsUsed(
+        LimelightTarget_Fiducial[] allTags = allVisibleTags(
             LimelightHelpers.targets_Fiducials(llCamera1),
             LimelightHelpers.targets_Fiducials(llCamera2)
         );
@@ -245,19 +243,19 @@ public class LLSubsystem extends SubsystemBase {
     }
 
     //Used to count tags for TAG DATA
-    private LimelightTarget_Fiducial[] totalTagsUsed(LimelightTarget_Fiducial[] t1, LimelightTarget_Fiducial[] t2) {
+    private LimelightTarget_Fiducial[] allVisibleTags(LimelightTarget_Fiducial[] t1, LimelightTarget_Fiducial[] t2) {
 
         if (t1 == null && t2 == null) return new LimelightTarget_Fiducial[0];
         if (t1 != null && t2 == null) return t1;
-        if (t1 == null && t2 != null) return t1;
-        
-        RawFiducial[] combined = Arrays.copyOf(t1, t1 + t2.length);
-        System.arraycopy(t2, 0, combined, t1.length, t2.length);
+        if (t1 == null && t2 != null) return t2;
 
         //Removes all duplicates from the array.
-        combined = Arrays.stream(combined).distinct().toArray(LimelightTarget_Fiducial[]::new);
+        LimelightTarget_Fiducial[] allTags = Stream.of(t1, t2)
+                                                    .flatMap(Arrays::stream)
+                                                    .distinct()
+                                                    .toArray(LimelightTarget_Fiducial[]::new);
 
-        return combined;
+        return allTags;
     }
 
     private double averageTagDistance(RawFiducial[] fiducials) {

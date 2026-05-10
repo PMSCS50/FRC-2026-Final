@@ -60,13 +60,13 @@ public class RoronoaZoro extends LocalADStar {
         List<ConstraintZone> constraintZones   = new ArrayList<>();
         List<EventMarker> eventMarkers      = new ArrayList<>();
 
-        // Precompute arc length for each PathPoint (for lead-in distance math)
-        double[] arcLength = new double[points.size()];
-        arcLength[0] = 0;
-        for (int i = 1; i < points.size(); i++) {
-            arcLength[i] = arcLength[i - 1]
-                + points.get(i).position().getDistance(points.get(i - 1).position());
-        }
+        // // Precompute arc length for each PathPoint (for lead-in distance math)
+        // double[] arcLength = new double[points.size()];
+        // arcLength[0] = 0;
+        // for (int i = 1; i < points.size(); i++) {
+        //     arcLength[i] = arcLength[i - 1]
+        //         + points.get(i).position().getDistance(points.get(i - 1).position());
+        // }
 
         for (PathZone zone : activeZones) {
 
@@ -85,15 +85,15 @@ public class RoronoaZoro extends LocalADStar {
             double entryWaypointIndex = points.get(entryIndex).waypointRelativePos();
             double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos();
 
-            // Lead in determines when the robot should start the action.
-            double leadIn = 0.0;
-            double leadInWaypointIndex = entryWaypointIndex;
-            for (int i = entryIndex; i >= 0; i--) {
-                if (arcLength[entryIndex] - arcLength[i] >= leadIn) {
-                    leadInWaypointIndex = points.get(i).waypointRelativePos();
-                    break;
-                }
-            }
+            // // Lead in determines when the robot should start the action.
+            // double leadIn = 0.0;
+            // double leadInWaypointIndex = entryWaypointIndex;
+            // for (int i = entryIndex; i >= 0; i--) {
+            //     if (arcLength[entryIndex] - arcLength[i] >= leadIn) {
+            //         leadInWaypointIndex = points.get(i).waypointRelativePos();
+            //         break;
+            //     }
+            // }
 
             if (zone instanceof OrientationZone oz) {
                 pointTowardsZones.add(new PointTowardsZone(
