@@ -101,8 +101,7 @@ public class RobotContainer {
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
-    Pathmaster.setDrivetrain(drivetrain);
-    Pathmaster.setConstraints(MaxSpeed, 3, MaxAngularRate, 2*Math.PI);
+    Pathmaster monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, 3, MaxAngularRate, 2*Math.PI);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -308,11 +307,11 @@ public class RobotContainer {
 
 
         /*
-            Pathmaster implementation
+        Pathmaster implementation
         */
 
-        joystick.rightTrigger().onTrue(Pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(new InstantCommand(() -> Pathmaster.cancelPathing()));
+        joystick.rightTrigger().onTrue(monkeyDLuffy.makePathTo(Constants.ClimbConstants.getClimbPose()));
+        joystick.rightTrigger().onFalse(monkeyDLuffy.cancelPathing());
         
         
     }
