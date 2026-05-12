@@ -20,9 +20,9 @@ import java.util.function.Supplier;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 /**
- * Uses PathPlanner's pathfinding features to generate path commands to any position on the field.
+ * Command factory that uses PathPlanner's pathfinding features to pathfind to a position on the field.
  * Uses custom pathfinding class RoronoaZoro for zone-aware rotation.
- * must call initializePathfinder(), scheduleWarmup(), setDrivetrain(), and setConstraints() before using any other methods.
+ * must call initializePathfinder() and scheduleWarmup() before using any other methods.
  */
 
 public class Pathmaster {
@@ -36,6 +36,16 @@ public class Pathmaster {
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean configured = false;
     private static boolean warmup = false;
+
+    //Used to prevent cancelPathing() from canceling other ddrivetrain commands.
+    private List<String> commandNames = List.of(
+        "makePathTo",
+        "makePathToThen",
+        "goToWaypoint",
+        "pathToNearestPose",
+        "pathToNearestWaypoint",
+        "faceTargetPose"
+    );
 
     // --------
     // Configs
@@ -169,7 +179,7 @@ public class Pathmaster {
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(destination, constraints),
             Set.of(drivetrain)
-        );
+        ).withName("makePathTo");
     }
 
     /** Pathfind to a registered waypoint. */
@@ -180,7 +190,7 @@ public class Pathmaster {
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(waypoints.get(name), constraints),
             Set.of(drivetrain)
-        );
+        ).withName("goToWaypoint");
     }
 
     /**
@@ -197,7 +207,7 @@ public class Pathmaster {
             return Commands.defer(
                 () -> AutoBuilder.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
-            );
+            ).withName("makePathToThen");
         } catch (Exception e) {
             DriverStation.reportError(
                 "[Pathmaster] Path not found: " + pathName, true);
@@ -207,7 +217,7 @@ public class Pathmaster {
 
     /**
      * Pathfinds to the nearest pose from a list of candidates.
-     * Useful for "align to nearest scoring position" bindings.
+     * Copied from Spartronics.
      */
     public Command pathToNearestPose(List<Pose2d> candidates) {
         if (!checkConfigured("pathToNearestPose")) return Commands.none();
@@ -220,19 +230,19 @@ public class Pathmaster {
                 ))
                 .orElseThrow();
             return AutoBuilder.pathfindToPose(nearest, constraints);
-        }, Set.of(drivetrain));
+        }, Set.of(drivetrain)).withName("pathToNearestPose");
     }
 
     /** Pathfinds to the nearest registered waypoint. */
     public Command pathToNearestWaypoint() {
         if (!checkConfigured("pathToNearestWaypoint")) return Commands.none();
         if (waypoints.isEmpty()) return Commands.none();
-        return pathToNearestPose(waypoints.values().stream().toList());
+        return pathToNearestPose(waypoints.values().stream().toList()).withName("pathToNearestWaypoint");
     }
 
     /**
      * Pathfinds to a destination while arriving faced toward a separate target.
-     * Note: heading is approximate — for exact heading use makePathToThen.
+     * I dont think we should ever use this method over vision.
      */
     public Command faceTargetPose(Pose2d destination, Pose2d faceTarget) {
         if (!checkConfigured("faceTargetPose")) return Commands.none();
@@ -241,7 +251,7 @@ public class Pathmaster {
             Rotation2d facing = getRotationToPose(destination, faceTarget);
             Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
             return AutoBuilder.pathfindToPose(oriented, constraints);
-        }, Set.of(drivetrain));
+        }, Set.of(drivetrain)).withName("faceTargetPose");
     }
 
     /**
@@ -252,10 +262,10 @@ public class Pathmaster {
         if (!checkConfigured("cancelPathing")) return Commands.none();
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
-            if (current != null) {
+            if (current != null && commandNames.contains(current.getName())) {
                 current.cancel();
             }
-        }).andThen(drivetrain.xBrakeCommand());
+        });
     }
 
     // -------
@@ -263,13 +273,13 @@ public class Pathmaster {
     // -------
 
     /** Returns the rotation needed at 'from' to face toward 'target'. */
-    public Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
+    private Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
         Translation2d delta = target.getTranslation().minus(from.getTranslation());
         return new Rotation2d(delta.getX(), delta.getY());
     }
 
     /** Returns the nearest registered waypoint pose to the robot's current position. */
-    public Pose2d getNearestWaypoint() {
+    private Pose2d getNearestWaypoint() {
         if (!checkConfigured("getNearestWaypoint")) return new Pose2d();
         return waypoints.values().stream()
             .min(Comparator.comparingDouble(
