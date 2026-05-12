@@ -66,7 +66,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private SwerveSetpoint m_previousSetpoint;
     
     /** Swerve request to apply after the robot finished going through a path in Pathmaster. */
-    private final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.Idle idle = new SwerveRequest.Idle();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -301,28 +301,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    @Override
-    public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> visionStdDevs) {
-
-        double xStd = visionStdDevs.get(0, 0);
-        double yStd = visionStdDevs.get(1, 0);
-        double yawStd = visionStdDevs.get(2, 0);
-
-        // Reject ambiguous measurements
-        if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
-        return;
-        }
-
-        // Soft clamp
-        xStd = Math.max(xStd, 0.05);
-        yStd = Math.max(yStd, 0.05);
-        yawStd = Math.max(yawStd, 0.02);
-
-        Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
-
-        super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
-    }
-
     //get robot pose
     public Pose2d getPose() {
         return getState().Pose;
@@ -332,8 +310,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return getState().Speeds;
     }
 
-    public Command xBrakeCommand() {
-        return applyRequest(() -> xBrake);
+    public Command idle() {
+        return applyRequest(() -> idle);
     }
 
 
