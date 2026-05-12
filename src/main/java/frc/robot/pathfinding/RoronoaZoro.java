@@ -49,16 +49,18 @@ public class RoronoaZoro extends LocalADStar {
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
         if (basePath == null) return null;
 
+        //Path waypoints
         List<Waypoint> waypoints = basePath.getWaypoints();
         if (waypoints.size() < 2) return null;
 
-        List<PathPoint> points     = basePath.getAllPathPoints();
+        //Loop through all pathpoints. If it enters or exits a zone, get waypoint relative pose
+        List<PathPoint> points = basePath.getAllPathPoints();
         List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-        List<RotationTarget> rotationTargets   = new ArrayList<>();
+        List<RotationTarget> rotationTargets = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
-        List<ConstraintZone> constraintZones   = new ArrayList<>();
-        List<EventMarker> eventMarkers      = new ArrayList<>();
+        List<ConstraintZone> constraintZones = new ArrayList<>();
+        List<EventMarker> eventMarkers = new ArrayList<>();
 
         // // Precompute arc length for each PathPoint (for lead-in distance math)
         // double[] arcLength = new double[points.size()];
@@ -85,7 +87,7 @@ public class RoronoaZoro extends LocalADStar {
             double entryWaypointIndex = points.get(entryIndex).waypointRelativePos();
             double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos();
 
-            // // Lead in determines when the robot should start the action.
+            // No need for lead-in anymore
             // double leadIn = 0.0;
             // double leadInWaypointIndex = entryWaypointIndex;
             // for (int i = entryIndex; i >= 0; i--) {
@@ -96,35 +98,54 @@ public class RoronoaZoro extends LocalADStar {
             // }
 
             if (zone instanceof OrientationZone oz) {
+                //Turns OZ into a PointTowardsZone
                 pointTowardsZones.add(new PointTowardsZone(
-                    zone.name, oz.getTarget().getTranslation(), leadInWaypointIndex, exitWaypointIndex));
+                    zone.name, 
+                    oz.getTarget().getTranslation(), 
+                    leadInWaypointIndex, 
+                    exitWaypointIndex));
+            
             } else if (zone instanceof RotationZone rz) {
-                rotationTargets.add(new RotationTarget(leadInWaypointIndex, rz.getRotation()));
-                rotationTargets.add(new RotationTarget(exitWaypointIndex,   rz.getRotation()));
+                //Turns RZ into 2 rotation targets to force fixed heading throughout
+                rotationTargets.add(new RotationTarget(
+                    leadInWaypointIndex, 
+                    rz.getRotation()));
+
+                rotationTargets.add(new RotationTarget(
+                    exitWaypointIndex,   rz.getRotation()));
+
             } else if (zone instanceof ConstraintZone cz) {
+                //Turns CZ into a ConstraintsZone
                 constraintZones.add(new ConstraintsZone(
-                    entryWaypointIndex, exitWaypointIndex, cz.getConstraints()));
+                    entryWaypointIndex,
+                    exitWaypointIndex,
+                    cz.getConstraints()));
+
             } else if (zone instanceof EventZone ez) {
+                //Turns EZ into an EventMarker
                 eventMarkers.add(new EventMarker(
-                    zone.name, entryWaypointIndex, exitWaypointIndex, ez.getEvent()));
+                    zone.name, 
+                    entryWaypointIndex, 
+                    exitWaypointIndex, 
+                    ez.getEvent()));
             }
 
-            DriverStation.reportWarning(
-                "[RoronoaZoro] Zone '" + zone.name + "' active" +
-                " entry=" + String.format("%.3f", entryWaypointIndex) +
-                " exit="  + String.format("%.3f", exitWaypointIndex), false);
+            // DriverStation.reportWarning(
+            //     "[RoronoaZoro] Zone '" + zone.name + "' active" +
+            //     " entry=" + String.format("%.3f", entryWaypointIndex) +
+            //     " exit="  + String.format("%.3f", exitWaypointIndex), false);
         }
 
         return new PathPlannerPath(
             waypoints,
-            rotationTargets,
-            pointTowardsZones,
-            constraintZones,
-            eventMarkers,
-            constraints,
-            (startingState != null) ? startingState.get() : null,
-            goalEndState,
-            false
+            rotationTargets,                                        //rotation zones
+            pointTowardsZones,                                      //orientation zones
+            constraintZones,                                        //constraint zones
+            eventMarkers,                                           //event zones
+            constraints,                                            //path constraints
+            (startingState != null) ? startingState.get() : null,   //current velocity + heading
+            goalEndState,                                           //goal end state
+            false                                                   //never flip for red alliance
         );
     }
 
