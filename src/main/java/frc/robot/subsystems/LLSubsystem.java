@@ -147,8 +147,8 @@ public class LLSubsystem extends SubsystemBase {
         tagtransforms.clear();
 
         LimelightTarget_Fiducial[] allTags = allVisibleTags(
-            LimelightHelpers.targets_Fiducials(llCamera1),
-            LimelightHelpers.targets_Fiducials(llCamera2)
+            LimelightHelpers.getLatestResults(llCamera1).targets_Fiducials,
+            LimelightHelpers.getLatestResults(llCamera2).targets_Fiducials
         );
 
         //Tag HashMap thing Kevin did
