@@ -88,6 +88,7 @@ public class RobotContainer {
     private final Climb climb;
     private final VisionSimSystem vision;
     public final FuelPhysicsSim ballSim;
+    public final Pathmaster pathmaster;
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -116,10 +117,9 @@ public class RobotContainer {
         ballSim = new FuelPhysicsSim("Sim/Fuel");
         
         // Initialize Pathmaster with drivetrain and constraints
-        Pathmaster.setDrivetrain(drivetrain);
-        Pathmaster.setConstraints(MaxSpeed, 3, MaxAngularRate, 2 * Math.PI);
+        pathmaster = new Pathmaster(drivetrain, 3, 3, 2 * Math.PI, 2 * Math.PI);
         
-        // CameraServer.startAutomaticCapture();        
+        // CameraServer.startAutomaticCapture();
         
         // NamedCommands.registerCommand("alignToTag", new PV_Align(drivetrain, vision, vision.getBestTarget()));
         // NamedCommands.registerCommand("climbAscend", new ClimbPull(climb));

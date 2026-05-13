@@ -7,175 +7,122 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 /**
- * Custom pathfinder extending AD* with support for:
- * RotationZone: robot holds a fixed heading through a field region
- * OrientationZone: robot continuously faces a target pose (via PointTowardsZone)
+ * Custom pathfinder extending AD* with support for many different Zones
+ * 
+ * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
+ * 
  * Zones can be toggled active/inactive at runtime.
  * 
- * In sim branch, this is unusable die to AdvantageKit crashing.
- * That is why we wrap it in RoronoaZoroAK which can be used w/out crashing.
+ * There are 4 types of zones:
+ * 1. RotationZone: When the robot enters, it starts rotating towards a specified angle
+ * 2. OrientationZone: When the robot enters, it starts orienting towards a specified target
+ * 3. ConstraintZone: When the robot enters, certain path constraints are applied
+ * 4. EventZone: When the robot enters, a specified command is triggered
+ * 
+ * Although one can already populate path files with these in Pathplanner,
+ * it was not possible for pathfinding, which is why I created this extension.
+ * 
+ * Furthermore, the class takes your current velocity and rotation as its ideal starting state.
+ * 
  */
-public class RoronoaZoro extends LocalADStar {
 
-    private final HashMap<PathZone, Boolean> allZones = new HashMap<>();
+public class RoronoaZoro extends LocalADStar {
 
     public RoronoaZoro() {
         super();
     }
 
-    public void addZone(PathZone zone, boolean active) {
-        allZones.put(zone, active);
-    }
+    private Supplier<IdealStartingState> startingState;
 
-    public void setZoneState(String zoneName, boolean newState) {
-        for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
-            if (entry.getKey().name.equals(zoneName)) {
-                entry.setValue(newState);
-                return;
-            }
-        }
-        DriverStation.reportWarning(
-            "[RoronoaZoro] Zone '" + zoneName + "' not found", false);
-    }
-
-    public void setAllZones(boolean newState) {
-        for (Map.Entry<PathZone, Boolean> entry : allZones.entrySet()) {
-            entry.setValue(newState);
-        }
+    //Links Pathmaster method to RoronoaZoro.
+    public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
+        this.startingState = supplier;
     }
 
     @Override
-    public PathPlannerPath getCurrentPath(
-            PathConstraints constraints, GoalEndState goalEndState) {
-
+    public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
+        //Gets LocalAD* path to fill in zones
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
         if (basePath == null) return null;
 
+        //Path waypoints
         List<Waypoint> waypoints = basePath.getWaypoints();
         if (waypoints.size() < 2) return null;
 
-        // Filter to active zones only
-        List<PathZone> activeZones = allZones.entrySet().stream()
-            .filter(Map.Entry::getValue)
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
+        //Loop through all pathpoints. If it enters or exits a zone, get waypoint relative pose
+        List<PathPoint> points = basePath.getAllPathPoints();
+        List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-        List<RotationTarget> rotationTargets     = new ArrayList<>();
+        List<RotationTarget> rotationTargets = new ArrayList<>();
         List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
-
-        // Precompute cumulative distances along path waypoints
-        List<Translation2d> anchors = waypoints.stream()
-            .map(Waypoint::anchor)
-            .collect(Collectors.toList());
-
-        double[] cumulativeDist = new double[anchors.size()];
-        cumulativeDist[0] = 0.0;
-        for (int i = 1; i < anchors.size(); i++) {
-            cumulativeDist[i] = cumulativeDist[i - 1]
-                + anchors.get(i).getDistance(anchors.get(i - 1));
-        }
-        double totalPathLength = cumulativeDist[anchors.size() - 1];
+        List<ConstraintsZone> constraintZones = new ArrayList<>();
+        List<EventMarker> eventMarkers = new ArrayList<>();
 
         for (PathZone zone : activeZones) {
 
-            double entryFraction = -1;
-            double exitFraction  = -1;
+            int entryIndex = -1;
+            int exitIndex  = -1;
 
-            for (int s = 0; s <= 500; s++) {
-                double t = (double) s / 500;
-                Translation2d point = interpolateAlongPath(
-                    anchors, cumulativeDist, t * totalPathLength);
-                if (zone.containsPoint(point)) {
-                    if (entryFraction < 0) entryFraction = t;
-                    exitFraction = t;
+            for (int i = 0; i < points.size(); i++) {
+                if (zone.containsPoint(points.get(i).position())) {
+                    if (entryIndex < 0) entryIndex = i;
+                    exitIndex = i;
                 }
             }
 
-            if (entryFraction < 0) continue;
+            if (entryIndex < 0) continue;
 
-            double leadIn = 0.3;
-            double leadInFraction = Math.max(0,
-                (entryFraction * totalPathLength - leadIn) / totalPathLength);
+            double entryWaypointIndex = points.get(entryIndex).waypointRelativePos();
+            double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos();
 
-            double leadInIndex = fractionToWaypointIndex(
-                leadInFraction, totalPathLength, cumulativeDist);
-            double exitIndex = fractionToWaypointIndex(
-                exitFraction, totalPathLength, cumulativeDist);
-
-            if (zone instanceof OrientationZone orientationZone) {
+            if (zone instanceof OrientationZone oz) {
+                //Turns OZ into a PointTowardsZone
                 pointTowardsZones.add(new PointTowardsZone(
-                    zone.name,
-                    orientationZone.getTarget().getTranslation(),
-                    leadInIndex,
-                    exitIndex
-                ));
+                    zone.name, 
+                    oz.getTarget().getTranslation(), 
+                    entryWaypointIndex, 
+                    exitWaypointIndex));
+            
+            } else if (zone instanceof RotationZone rz) {
+                //Turns RZ into 2 rotation targets to force fixed heading throughout
+                rotationTargets.add(new RotationTarget(
+                    entryWaypointIndex, 
+                    rz.getRotation()));
 
-            } else if (zone instanceof RotationZone rotationZone) {
                 rotationTargets.add(new RotationTarget(
-                    leadInIndex, rotationZone.getRotation()));
-                rotationTargets.add(new RotationTarget(
-                    exitIndex, rotationZone.getRotation()));
+                    exitWaypointIndex,   rz.getRotation()));
+
+            } else if (zone instanceof ConstraintZone cz) {
+                //Turns CZ into a ConstraintsZone
+                constraintZones.add(new ConstraintsZone(
+                    entryWaypointIndex,
+                    exitWaypointIndex,
+                    cz.getConstraints()));
+
+            } else if (zone instanceof EventZone ez) {
+                //Turns EZ into an EventMarker
+                eventMarkers.add(new EventMarker(
+                    zone.name, 
+                    entryWaypointIndex, 
+                    exitWaypointIndex, 
+                    ez.getEvent()));
             }
-
-            DriverStation.reportWarning(
-                "[RoronoaZoro] Zone '" + zone.name + "' active" +
-                " entry=" + String.format("%.2f", entryFraction) +
-                " exit="  + String.format("%.2f", exitFraction), false);
         }
 
         return new PathPlannerPath(
             waypoints,
-            rotationTargets,
-            pointTowardsZones,
-            List.of(),
-            List.of(),
-            constraints,
-            null,
-            goalEndState,
-            false
+            rotationTargets,                                        //rotation zones
+            pointTowardsZones,                                      //orientation zones
+            constraintZones,                                        //constraint zones
+            eventMarkers,                                           //event zones
+            constraints,                                            //path constraints
+            (startingState != null) ? startingState.get() : null,   //current velocity + heading
+            goalEndState,                                           //goal end state
+            false                                                   //never flip for red alliance
         );
-    }
-
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
-
-    private Translation2d interpolateAlongPath(
-            List<Translation2d> anchors,
-            double[] cumulativeDist,
-            double distAlongPath) {
-
-        for (int i = 1; i < anchors.size(); i++) {
-            if (cumulativeDist[i] >= distAlongPath) {
-                double segmentLength = cumulativeDist[i] - cumulativeDist[i - 1];
-                if (segmentLength < 1e-6) return anchors.get(i);
-                double t = (distAlongPath - cumulativeDist[i - 1]) / segmentLength;
-                return anchors.get(i - 1).interpolate(anchors.get(i), t);
-            }
-        }
-        return anchors.get(anchors.size() - 1);
-    }
-
-    private double fractionToWaypointIndex(
-            double pathFraction,
-            double totalPathLength,
-            double[] cumulativeDist) {
-
-        double targetDist = pathFraction * totalPathLength;
-        for (int i = 1; i < cumulativeDist.length; i++) {
-            if (cumulativeDist[i] >= targetDist) {
-                double segmentLength = cumulativeDist[i] - cumulativeDist[i - 1];
-                if (segmentLength < 1e-6) return i;
-                double t = (targetDist - cumulativeDist[i - 1]) / segmentLength;
-                return (i - 1) + t;
-            }
-        }
-        return cumulativeDist.length - 1;
     }
 }

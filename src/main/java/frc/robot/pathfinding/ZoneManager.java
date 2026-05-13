@@ -1,0 +1,131 @@
+package frc.robot.pathfinding;
+
+import frc.robot.pathfinding.PathZone;
+import edu.wpi.first.wpilibj.DriverStation;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Static class that manages rotation and orientation zones for the pathfinding system.
+ * Provides thread-safe zone registration and state management.
+ * 
+ * Zones define regions on the field where the robot should:
+ * 
+ * * RotationZone: Hold a fixed heading
+ * * OrientationZone: Orient to a specific target pose
+ * * ConstraintZone: Adjust path constraints
+ * * EventZones: Activate a specific command
+ * 
+ * This class maintains a concurrent map of zones and their active states,
+ * accessible to the RoronoaZoro pathfinder.
+ */
+public class ZoneManager {
+    
+    /** Thread-safe storage of zones and their active states */
+    private static final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();
+    
+    /**
+     * Registers a zone in the zone manager.
+     * 
+     * @param zone The PathZone to add (RotationZone or OrientationZone)
+     * @param active Whether the zone should be active by default
+     */
+    public static void addZone(PathZone zone, boolean active) {
+        zones.put(zone, active);
+    }
+    
+    /**
+     * Sets the active state of a named zone.
+     * 
+     * @param zoneName The name of the zone to modify
+     * @param newState The new active state (true = active, false = inactive)
+     */
+    public static void setZoneState(String zoneName, boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                zones.put(entry.getKey(), newState);
+                return;
+            }
+        }
+        DriverStation.reportWarning(
+            "[ZoneManager] Zone '" + zoneName + "' not found", false);
+    }
+    
+    /**
+     * Sets all zones to the same active state.
+     * 
+     * @param newState The new active state for all zones
+     */
+    public static void setAllZones(boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            zones.put(entry.getKey(), newState);
+        }
+    }
+    
+    /**
+     * Gets a list of currently active zones.
+     * Returns a snapshot copy to prevent concurrent modification issues.
+     * 
+     * @return List of active PathZone objects
+     */
+    public static List<PathZone> getActiveZones() {
+        List<PathZone> activeZones = new ArrayList<>();
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getValue()) {
+                activeZones.add(entry.getKey());
+            }
+        }
+        return activeZones;
+    }
+    
+    /**
+     * Gets all registered zones regardless of active state.
+     * 
+     * @return List of all registered PathZone objects
+     */
+    public static List<PathZone> getAllZones() {
+        return new ArrayList<>(zones.keySet());
+    }
+    
+    /**
+     * Checks if a zone is currently active.
+     * 
+     * @param zoneName The name of the zone to check
+     * @return true if the zone is registered and active, false otherwise
+     */
+    public static boolean isZoneActive(String zoneName) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                return entry.getValue();
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Clears all zones from the manager.
+     * Useful for testing or resetting between matches.
+     */
+    public static void clearAllZones() {
+        zones.clear();
+    }
+
+    /**
+     * Removes a specific zone from the manager.
+     * 
+     * @param zoneName The name of the zone to remove
+     * @return true if the zone was found and removed, false otherwise
+     */
+    public static boolean removeZone(String zoneName) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                zones.remove(entry.getKey());
+                return true;
+            }
+        }
+        return false;
+    }
+}

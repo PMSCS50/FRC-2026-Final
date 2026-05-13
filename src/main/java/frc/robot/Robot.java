@@ -63,7 +63,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    // Initialize Pathmaster before RobotContainer
+    // Initialize Pathmaster pathfinder before RobotContainer
     Pathmaster.initializePathfinder();
     
     m_robotContainer = new RobotContainer();

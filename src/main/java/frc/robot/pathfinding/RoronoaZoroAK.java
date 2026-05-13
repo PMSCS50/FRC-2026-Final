@@ -13,9 +13,11 @@ import org.littletonrobotics.junction.inputs.LoggableInputs;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * AdvantageKit-compatible wrapper around RoronoaZoro.
+ * Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
  */
 public class RoronoaZoroAK implements Pathfinder {
 
@@ -26,19 +28,14 @@ public class RoronoaZoroAK implements Pathfinder {
     }
 
     // -----------------------------------------------------------------------
-    // Zone delegation
+    // Delegation to RoronoaZoro
     // -----------------------------------------------------------------------
 
-    public void addZone(PathZone zone, boolean active) {
-        io.zoro.addZone(zone, active);
-    }
-
-    public void setZoneState(String zoneName, boolean newState) {
-        io.zoro.setZoneState(zoneName, newState);
-    }
-
-    public void setAllZones(boolean newState) {
-        io.zoro.setAllZones(newState);
+    /**
+     * Links the Pathmaster's IdealStartingState supplier to RoronoaZoro
+     */
+    public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
+        io.zoro.setStartingStateSupplier(supplier);
     }
 
     // -----------------------------------------------------------------------
