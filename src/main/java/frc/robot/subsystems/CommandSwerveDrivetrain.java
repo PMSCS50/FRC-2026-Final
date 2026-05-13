@@ -222,7 +222,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
             m_setpointGenerator = new SwerveSetpointGenerator(
                 config,
-                RotationsPerSecond.of(0.75) // max module rotation velocity
+                RotationsPerSecond.of(0.75).in(RadiansPerSecond); // max rotational velocity in rad/s
             );
 
             m_previousSetpoint = new SwerveSetpoint(
@@ -235,7 +235,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 () -> getState().Pose,   // Supplier of current robot pose
                 this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
-                // Consumer of ChassisSpeeds and feedforwards to drive the robot
+
                 (speeds, feedforwards) -> {
 
                     // Generate next setpoint. Thanks Cheesy Poofs. 
@@ -249,8 +249,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     setControl(
                         m_pathApplyRobotSpeeds
                             .withSpeeds(m_previousSetpoint.robotRelativeSpeeds())
-                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                            .withWheelForceFeedforwardsX(m_previousSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(m_previousSetpoint.feedforwards().robotRelativeForcesYNewtons())
                     );
                 },
                 new PPHolonomicDriveController(
