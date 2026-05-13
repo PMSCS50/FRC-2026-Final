@@ -55,14 +55,11 @@ public class RoronoaZoroAK implements Pathfinder {
     public PathPlannerPath getCurrentPath(
             PathConstraints constraints, GoalEndState goalEndState) {
         if (!Logger.hasReplaySource()) {
-            io.updateCurrentPathPoints(constraints, goalEndState);
+            io.updateCurrentPath(constraints, goalEndState);
         }
         Logger.processInputs("RoronoaZoroAK", io);
 
-        if (io.currentPathPoints.isEmpty()) return null;
-
-        return PathPlannerPath.fromPathPoints(
-            io.currentPathPoints, constraints, goalEndState);
+        return io.currentPath;
     }
 
     @Override
@@ -97,12 +94,14 @@ public class RoronoaZoroAK implements Pathfinder {
         public final RoronoaZoro zoro = new RoronoaZoro();
 
         public boolean isNewPathAvailable = false;
+        public PathPlannerPath currentPath = null;
         public List<PathPoint> currentPathPoints = Collections.emptyList();
 
         @Override
         public void toLog(LogTable table) {
             table.put("IsNewPathAvailable", isNewPathAvailable);
 
+            // Log path points for replay
             double[] pointsLogged = new double[currentPathPoints.size() * 2];
             int idx = 0;
             for (PathPoint point : currentPathPoints) {
@@ -117,6 +116,7 @@ public class RoronoaZoroAK implements Pathfinder {
         public void fromLog(LogTable table) {
             isNewPathAvailable = table.get("IsNewPathAvailable", false);
 
+            // Reconstruct path points from logged data during replay
             double[] pointsLogged = table.get("CurrentPathPoints", new double[0]);
             List<PathPoint> pathPoints = new ArrayList<>();
             for (int i = 0; i < pointsLogged.length; i += 2) {
@@ -132,11 +132,14 @@ public class RoronoaZoroAK implements Pathfinder {
             isNewPathAvailable = zoro.isNewPathAvailable();
         }
 
-        public void updateCurrentPathPoints(
+        public void updateCurrentPath(
                 PathConstraints constraints, GoalEndState goalEndState) {
-            PathPlannerPath currentPath = zoro.getCurrentPath(constraints, goalEndState);
-            if (currentPath != null) {
-                currentPathPoints = currentPath.getAllPathPoints();
+            PathPlannerPath path = zoro.getCurrentPath(constraints, goalEndState);
+            this.currentPath = path;
+            
+            // Also cache path points for logging
+            if (path != null) {
+                currentPathPoints = path.getAllPathPoints();
             } else {
                 currentPathPoints = Collections.emptyList();
             }
