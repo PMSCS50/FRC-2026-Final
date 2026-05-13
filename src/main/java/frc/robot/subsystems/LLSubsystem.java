@@ -205,13 +205,13 @@ public class LLSubsystem extends SubsystemBase {
 
     // Vision Sexually Transmitted Diseases 
 
-    //This one was made by Claude bc aint no way Im creating a system for stdDevs myself
+    //This one was made by Big C bc aint no way I'm creating a system for stdDevs myself
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return VecBuilder.fill(9999.0, 9999.0, 9999.0);
 
         double xyStdDev = BASE_XY_STD_DEV;
 
-        xyStdDev /= estimate.tagCount;
+        xyStdDev /= (0.35*estimate.tagCount + 0.65*estimate.averageTagArea);
         xyStdDev *= Math.pow(estimate.avgTagDist, 2);
 
         if (estimate.rawFiducials != null) {
@@ -232,13 +232,11 @@ public class LLSubsystem extends SubsystemBase {
         if (est1 == null && est2 == null) return new RawFiducial[0];
         if (est1 != null && est2 == null) return est1.rawFiducials;
         if (est1 == null && est2 != null) return est2.rawFiducials;
-        
-        RawFiducial[] combined = Arrays.copyOf(est1.rawFiducials, est1.rawFiducials.length + est2.rawFiducials.length);
-        System.arraycopy(est2.rawFiducials, 0, combined, est1.rawFiducials.length, est2.rawFiducials.length);
 
-        //Removes all duplicates from the array.
-        combined = Arrays.stream(combined).distinct().toArray(RawFiducial[]::new);
-
+        RawFiducial[] combined = Stream.of(est1.rawFiducials, est2.rawFiducials)
+                                       .flatMap(Arrays::stream)
+                                       .distinct()
+                                       .toArray(LimelightTarget_Fiducial[]::new);
         return combined;
     }
 
@@ -251,9 +249,9 @@ public class LLSubsystem extends SubsystemBase {
 
         //Removes all duplicates from the array.
         LimelightTarget_Fiducial[] allTags = Stream.of(t1, t2)
-                                                    .flatMap(Arrays::stream)
-                                                    .distinct()
-                                                    .toArray(LimelightTarget_Fiducial[]::new);
+                                                   .flatMap(Arrays::stream)
+                                                   .distinct()
+                                                   .toArray(LimelightTarget_Fiducial[]::new);
 
         return allTags;
     }
@@ -290,15 +288,15 @@ public class LLSubsystem extends SubsystemBase {
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
     public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera2); }
 
-    public double getX(int id) {
+    public double getTagX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
     }
 
-    public double getY(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;    
+    public double getTagY(int id) {
+        return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0;    
     }
 
-    public double getYaw(int id) {
+    public double getTagYaw(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getRotation().getZ() : 0.0;    
     }
 
@@ -339,7 +337,6 @@ public class LLSubsystem extends SubsystemBase {
 
     /**
      * Returns direct tag distance from rawFiducials of the best camera reading.
-     * latestEstimate.rawFiducials always belongs to the camera with better metadata.
      */
     public double getDistanceToTag(int tagId) {
         if (latestEstimate == null || latestEstimate.rawFiducials == null) return -1.0;
