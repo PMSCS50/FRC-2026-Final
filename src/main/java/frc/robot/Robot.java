@@ -89,25 +89,25 @@ public class Robot extends LoggedRobot {
     //   }
     // }
 
-    SmartDashboard.putNumber("shooter speed", RobotContainer.shooterSpeed);
-    // SmartDashboard.putNumber("pivot speed", RobotContainer.pivotSpeed);
-    // SmartDashboard.putNumber("intake Speed", RobotContainer.intakeSpeed);
+    Logger.recordOutput("shooter speed", RobotContainer.shooterSpeed);
+    // Logger.recordOutput("pivot speed", RobotContainer.pivotSpeed);
+    // Logger.recordOutput("intake Speed", RobotContainer.intakeSpeed);
     
 
 
 
 
-    SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
+    Logger.recordOutput("shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
     
 
 
-    SmartDashboard.putNumber("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
+    Logger.recordOutput("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
 
-    SmartDashboard.putNumber("pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
-    SmartDashboard.putNumber("drivetrain yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
-    SmartDashboard.putNumber("drivetrain x", m_robotContainer.drivetrain.getState().Pose.getX());
-    SmartDashboard.putNumber("drivetrain y", m_robotContainer.drivetrain.getState().Pose.getY());
-    SmartDashboard.putNumber("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
+    Logger.recordOutput("pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    Logger.recordOutput("drivetrain yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
+    Logger.recordOutput("drivetrain x", m_robotContainer.drivetrain.getState().Pose.getX());
+    Logger.recordOutput("drivetrain y", m_robotContainer.drivetrain.getState().Pose.getY());
+    Logger.recordOutput("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
     Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
 
 
