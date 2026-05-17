@@ -10,41 +10,43 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+
 
 /**
- * Generic state space controller.
- * Given the system, handles the full LQR + Kalman + feedforward loop
- * for any single-input mechanism.
- *
- * Usage:
- *   1. Instantiate with a given LinearSystem and tuning parameters
- *   2. Call setSetpoint() to set desired state
- *   3. Call calculate() every loop with current measured outputs
- *   4. Apply the returned voltage to your motor
- * 
- * Im trying to add more comments to make our code more readable
+ * Specific SSController that adds trapezoidal profiling to the setpoint.
+ * However, this is solely a position-velocity profiled controller.
+ * There are two fixed states: position and velocity. This is only for mechanisms where those are the two states we care about.
+ * Should not be used as a replacement for SSController
  */
-public class SSController<States extends Num, Inputs extends Num, Outputs extends Num> {
+public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
 
     //The system. Will be passed in the constructor
-    private final LinearSystem<States, Inputs, Outputs> plant;
+    private final LinearSystem<N2, Inputs, Outputs> plant;
 
     //The LQR will compute the feedback gains for the system to move to the next state
-    private final LinearQuadraticRegulator<States, Inputs, Outputs> controller;
+    private final LinearQuadraticRegulator<N2, Inputs, Outputs> controller;
 
     //The Kalman Filter fuses sensor/encoder values and resultant state to get the true state
-    private final KalmanFilter<States, Inputs, Outputs> observer;
+    private final KalmanFilter<N2, Inputs, Outputs> observer;
 
     //The entire state space control loop.
-    private final LinearSystemLoop<States, Inputs, Outputs> stateSpaceLoop;
+    private final LinearSystemLoop<N2, Inputs, Outputs> stateSpaceLoop;
 
-    private Matrix<States, N1> setpoint = null;
+    private final TrapezoidProfile profile;
+    
+    private final TrapezoidProfile.Constraints constraints;
+
+    private final TrapezoidProfile.State trapezoidState;
+
+
+    private Matrix<N2, N1> setpoint;
     private boolean atSetpoint = false;
-    private Matrix<States, N1> tolerance;
+    private Matrix<N2, N1> tolerance;
 
     //Copy of states and inputs needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
     //So now you have to instantiate states and outputs in the generics AND the constructor, even though they always are equal
-    private final Nat<States> statesNat;
+    private final Nat<N2> statesNat;
     private final Nat<Outputs> outputsNat;
 
     //How long the looping period will be.
@@ -52,7 +54,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
     private final double dtSeconds;
 
     //Just instantiated here to avoid creating a new matrix every 20 ms.
-    private Matrix<States, N1> error;
+    private Matrix<N2, N1> error;
 
     /**
      * Creates a generic state space controller.
@@ -63,13 +65,13 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * 
      * @param plant          LinearSystem model from LinearSystemId factory
      * 
-     * @param qCost          State cost vector (States x 1)
+     * @param qCost          State cost vector (N2 x 1)
      *                       Higher values = more aggressive correction on that state
      * 
      * @param rCost          Input cost vector (Inputs x 1)
      *                       Higher values = more conservative voltage usage
      * 
-     * @param modelStdDevs   Model uncertainty per state (States x 1)
+     * @param modelStdDevs   Model uncertainty per state (N2 x 1)
      *                       Higher = trust encoder more than model
      * 
      * @param encoderStdDevs Measurement noise per output (Outputs x 1)
@@ -78,28 +80,34 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * @param maxVoltage     Maximum voltage the controller can output. 
      *                       Usually we will put this as 12, but in case of voltage pdp issus we can limit max voltage
      * 
-     * @param tolerance      Per-state tolerance for atSetpoint() (States x 1)
+     * @param tolerance      Per-state tolerance for atSetpoint() (N2 x 1)
      * 
      * @param dtSeconds Control loop period, always 0.02 for commands
+     * 
+     * @param constraints     Constraints for trapezoidal profile (max velocity and acceleration)
      */
 
     public SSController(
-            Nat<States> statesNat,   //Just states value. Only used for Kalman Filter
+            Nat<N2> statesNat,   //Just states value. Only used for Kalman Filter
             Nat<Outputs> outputsNat, //Just outputs value. Only used for Kalman Filter
-            LinearSystem<States, Inputs, Outputs> plant,
-            Vector<States> qCost,
+            LinearSystem<N2, Inputs, Outputs> plant,
+            Vector<N2> qCost,
             Vector<Inputs> rCost,
-            Matrix<States, N1> modelStdDevs,
+            Matrix<N2, N1> modelStdDevs,
             Matrix<Outputs, N1> encoderStdDevs,
             double maxVoltage,
-            Matrix<States, N1> tolerance,
-            double dtSeconds) {
+            Matrix<N2, N1> tolerance,
+            double dtSeconds,
+            TrapezoidProfile.Constraints constraints) {
 
         this.statesNat     = statesNat;
         this.outputsNat    = outputsNat;
         this.plant         = plant;
         this.tolerance     = tolerance;
         this.dtSeconds = dtSeconds;
+        this.constraints = constraints;
+        this.profile = new TrapezoidProfile(constraints);
+        this.trapezoidState = new TrapezoidProfile.State();
 
         // LQR computes optimal feedback gains
         controller = new LinearQuadraticRegulator<>(
@@ -132,14 +140,18 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
 
     //Wraps all variables not relating to the system inside SSControllerConfigs
     public SSController(
-            LinearSystem<States, Inputs, Outputs> plant,
-            SSControllerConfigs<States, Inputs, Outputs> configs) {
+            LinearSystem<N2, Inputs, Outputs> plant,
+            SSControllerConfigs<N2, Inputs, Outputs> configs,
+            TrapezoidProfile.Constraints constraints) {
 
-        this.statesNat     = configs.getStatesNat();
+        this.statesNat     = configs.getN2Nat();
         this.outputsNat    = configs.getOutputsNat();
         this.plant         = plant;
         this.tolerance     = configs.getTolerance();
         this.dtSeconds = configs.getdtSeconds();
+        this.constraints = constraints;
+        this.profile = new TrapezoidProfile(constraints);
+        this.trapezoidState = new TrapezoidProfile.State();
 
         // LQR computes optimal feedback gains
         controller = new LinearQuadraticRegulator<>(
@@ -180,9 +192,9 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * Set the desired state vector.
      * @param endState desired state as column vector
      */
-    public void setSetpoint(Matrix<States, N1> endState) {
-        setpoint = endState;
-        stateSpaceLoop.setNextR(endState);
+    public void setSetpoint(double position, double velocity) {
+        setpoint = VecBuilder.fill(position, velocity);
+        stateSpaceLoop.setNextR(setpoint);
     }
 
     /**
@@ -192,10 +204,9 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * @return voltage to apply to the motor
      */
     public double calculate(Matrix<Outputs, N1> currentOutputs) {
-        if (setpoint == null) {
-            DriverStation.reportError("[SSController] setpoint not set.", false);
-            return 0.0;
-        }
+
+        trapezoidState = profile.calculate(dtSeconds, trapezoidState, setpoint);
+        stateSpaceloop.setNextR(trapezoidState.position, trapezoidState.velocity);
 
         stateSpaceLoop.correct(currentOutputs);
         stateSpaceLoop.predict(dtSeconds);
@@ -212,9 +223,10 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      *
      * @param currentState current measured state as column vector
      */
-    public void reset(Matrix<States, N1> currentState) {
+    public void reset(Matrix<N2, N1> currentState) {
         stateSpaceLoop.reset(currentState);
         setpoint = currentState;
+        trapezoidState = new TrapezoidProfile.State(currentState.get(0, 0), currentState.get(1, 0));
         atSetpoint = false;
     }
 
@@ -222,10 +234,18 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
     // Setters and Getters
     // -----------------------------------------------------------------------
 
-    /** Returns true if the estimated state is within tolerance of the setpoint. 
-     * Done by checking error (setpoint state - current state) against the given tolerance for each value.
-    */
-    private boolean isAtSetpoint(Matrix<States, N1> error) {
+    /** Getter for atSetpoint */
+    public boolean isAtSetpoint() {
+        if (!profile.isFinished(dtSeconds)) {
+            return false;
+        }
+        
+        error = setpoint.minus(stateSpaceLoop.getXHat());
+        
+        return isAtSetpointInternal(error);
+    }
+
+    private boolean isAtSetpointInternal(Matrix<N2, N1> error) {
         for (int i = 0; i < error.getNumRows(); i++) {
             if (Math.abs(error.get(i, 0)) > tolerance.get(i, 0)) {
                 return false;
@@ -234,18 +254,13 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
         return true;
     }
 
-    /** Getter for atSetpoint */
-    public boolean atSetpoint() {
-        return atSetpoint;
-    }
-
     /** Returns the current setpoint state vector. */
-    public Matrix<States, N1> getSetpoint() {
+    public Matrix<N2, N1> getSetpoint() {
         return setpoint;
     }
 
     /** Returns the Kalman filter's current state estimate. */
-    public Matrix<States, N1> getEstCurrentState() {
+    public Matrix<N2, N1> getEstCurrentState() {
         return stateSpaceLoop.getXHat();
     }
 
@@ -256,9 +271,9 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
 
     /**
      * Update per-state tolerance for atSetpoint().
-     * @param tolerance States x 1 matrix of per-state tolerances
+     * @param tolerance N2 x 1 matrix of per-state tolerances
      */
-    public void setTolerance(Matrix<States, N1> tolerance) {
+    public void setTolerance(Matrix<N2, N1> tolerance) {
         this.tolerance = tolerance;
     }
 

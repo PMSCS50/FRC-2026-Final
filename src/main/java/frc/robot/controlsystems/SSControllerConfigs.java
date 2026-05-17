@@ -29,7 +29,7 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
     private final Matrix<Outputs, N1> encoderStdDevs;
     private final double maxVoltage;
     private final Matrix<States, N1> tolerance;
-    private final double loopPeriodSecs;
+    private final double dtSeconds;
 
     public SSControllerConfigs(
             Nat<States> statesNat,
@@ -40,7 +40,7 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
             Matrix<Outputs, N1> encoderStdDevs,
             double maxVoltage,
             Matrix<States, N1> tolerance,
-            double loopPeriodSecs) {
+            double dtSeconds) {
 
         this.statesNat = statesNat;
         this.outputsNat = outputsNat;
@@ -50,7 +50,7 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
         this.encoderStdDevs = encoderStdDevs;
         this.maxVoltage = maxVoltage;
         this.tolerance = tolerance;
-        this.loopPeriodSecs = loopPeriodSecs
+        this.dtSeconds = dtSeconds
     }
 
     public Nat<States> getStatesNat() {
@@ -77,7 +77,7 @@ public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs
         return tolerance;
     }
 
-    public double getLoopPeriodSecs() {
-        return loopPeriodSecs;
+    public double getdtSeconds() {
+        return dtSeconds;
     }
 }
