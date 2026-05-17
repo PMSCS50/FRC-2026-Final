@@ -30,31 +30,31 @@ public class Shooter extends SubsystemBase {
     // ************************
 
     public static TalonFX shooterMotor1;
-        private final TalonFX shooterMotor2;
-        private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
-        private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
-    
-        private final LLSubsystem vision;
-    
-    
-        // ************************
-        // MOTOR CONTROLS
-        // ************************
-    
-        // DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
-        private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
-    
-        // VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
-        private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
-    
-        // ************************
-        // SHOOTER PHYSICS CONSTANTS
-        // ************************
-    
-        private double velocity = 0.0;
-        private final double shooterAngle = 70.0;                  // degrees
-        private final double phi = Math.toRadians(shooterAngle);   // radians
-        private final double shooterHeight = 0.508;                // meters from ground
+    private final TalonFX shooterMotor2;
+    private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
+    private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
+
+    private final LLSubsystem vision;
+
+
+    // ************************
+    // MOTOR CONTROLS
+    // ************************
+
+    // DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
+    private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
+
+    // VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
+    private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
+
+    // ************************
+    // SHOOTER PHYSICS CONSTANTS
+    // ************************
+
+    private double velocity = 0.0;
+    private final double shooterAngle = 70.0;                  // degrees
+    private final double phi = Math.toRadians(shooterAngle);   // radians
+    private final double shooterHeight = 0.508;                // meters from ground
     
     
 
