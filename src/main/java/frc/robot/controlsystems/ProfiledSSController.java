@@ -11,6 +11,8 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.controller.LinearPlantInversionFeedforward;
+
 
 
 /**
@@ -55,6 +57,13 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
 
     //Just instantiated here to avoid creating a new matrix every 20 ms.
     private Matrix<N2, N1> error;
+
+    // Sensor Fusion Fields
+    private boolean useDualSensors = false;
+    private double secondarySensorWeight = 0.0;  // 0.0 = trust primary only, 1.0 = equal weight
+    private double lastPrimaryMeasurement = 0.0;
+    private double lastSecondaryMeasurement = 0.0;
+    private Matrix<N2, N1> kalmanFilterCovariance = null;
 
     /**
      * Creates a generic state space controller.
@@ -208,13 +217,39 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
         trapezoidState = profile.calculate(dtSeconds, trapezoidState, setpoint);
         stateSpaceloop.setNextR(trapezoidState.position, trapezoidState.velocity);
 
-        stateSpaceLoop.correct(currentOutputs);
+        // Fuse dual sensors if enabled
+        Matrix<Outputs, N1> fusedOutputs = currentOutputs;
+        if (useDualSensors && Outputs.getNumRows() >= 1) {
+            fusedOutputs = fuseSensorReadings(currentOutputs);
+        }
+
+        stateSpaceLoop.correct(fusedOutputs);
         stateSpaceLoop.predict(dtSeconds);
+
+        // Update Kalman filter covariance estimate
+        kalmanFilterCovariance = stateSpaceLoop.getObserver().getP();
 
         error = stateSpaceLoop.getXHat().minus(setpoint);
         atSetpoint = isAtSetpoint(error);
 
         return stateSpaceLoop.getU(0);
+    }
+
+    /**
+     * Fuses primary sensor (encoder) with secondary sensor (pose estimation for distance).
+     * Uses weighted average based on sensor confidence.
+     * @param primarySensorOutput encoder/motor measurement
+     * @return fused sensor reading
+     */
+    private Matrix<Outputs, N1> fuseSensorReadings(Matrix<Outputs, N1> primarySensorOutput) {
+        lastPrimaryMeasurement = primarySensorOutput.get(0, 0);
+        
+        // Create fused output: weighted combination of primary and secondary
+        // Weight is based on secondarySensorWeight (0.0 to 1.0)
+        double fusedValue = (lastPrimaryMeasurement * (1.0 - secondarySensorWeight)) + 
+                            (lastSecondaryMeasurement * secondarySensorWeight);
+        
+        return VecBuilder.fill(fusedValue);
     }
 
     /**
@@ -275,6 +310,86 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
      */
     public void setTolerance(Matrix<N2, N1> tolerance) {
         this.tolerance = tolerance;
+    }
+
+    // -----------------------------------------------------------------------
+    // Sensor Fusion Methods
+    // -----------------------------------------------------------------------
+
+    /**
+     * Enable dual sensor fusion for position estimation.
+     * Fuses primary sensor (encoder) with secondary sensor (e.g., pose estimation distance).
+     * @param weight weighting for secondary sensor (0.0 = primary only, 1.0 = equal weight)
+     */
+    public void enableDualSensorFusion(double weight) {
+        this.useDualSensors = true;
+        this.secondarySensorWeight = Math.max(0.0, Math.min(1.0, weight));
+    }
+
+    /** Disable dual sensor fusion - uses only primary sensor. */
+    public void disableDualSensorFusion() {
+        this.useDualSensors = false;
+    }
+
+    /**
+     * Update the secondary sensor measurement (e.g., pose estimation distance to target).
+     * Call this before calculate() with the latest measurement.
+     * @param secondarySensorReading the distance/position from pose estimation
+     */
+    public void setSecondarySensorReading(double secondarySensorReading) {
+        this.lastSecondaryMeasurement = secondarySensorReading;
+    }
+
+    /**
+     * Get the estimated confidence/certainty of the Kalman filter's state estimate.
+     * Higher values = more uncertain. Based on the trace of the error covariance matrix.
+     * @return uncertainty metric (sum of diagonal covariance elements)
+     */
+    public double getEstimateUncertainty() {
+        if (kalmanFilterCovariance == null) {
+            return Double.POSITIVE_INFINITY;  // No estimate yet
+        }
+        
+        // Uncertainty is the sum of diagonal elements (trace) of covariance matrix
+        // Higher = less confident in the estimate
+        double uncertainty = 0.0;
+        for (int i = 0; i < kalmanFilterCovariance.getNumRows(); i++) {
+            uncertainty += kalmanFilterCovariance.get(i, i);
+        }
+        return uncertainty;
+    }
+
+    /**
+     * Get the confidence level as a percentage (inverse of uncertainty).
+     * Higher = more confident in state estimate.
+     * @return confidence as a value between 0.0 and 1.0 (will typically be 0.95+)
+     */
+    public double getEstimateConfidence() {
+        double uncertainty = getEstimateUncertainty();
+        if (uncertainty == 0.0) return 1.0;
+        
+        // Simple inverse confidence metric (tune this based on your system's behavior)
+        return Math.min(1.0, 1.0 / (1.0 + uncertainty));
+    }
+
+    /**
+     * Check if the Kalman filter estimate is currently reliable.
+     * Useful to decide whether to trust the estimate or fall back to raw sensor.
+     * @param confidenceThreshold minimum acceptable confidence (0.0 to 1.0)
+     * @return true if confidence > threshold
+     */
+    public boolean isEstimateReliable(double confidenceThreshold) {
+        return getEstimateConfidence() > confidenceThreshold;
+    }
+
+    /** Get the last primary sensor measurement that was fused. */
+    public double getLastPrimarySensorReading() {
+        return lastPrimaryMeasurement;
+    }
+
+    /** Get the last secondary sensor measurement that was fused. */
+    public double getLastSecondarySensorReading() {
+        return lastSecondaryMeasurement;
     }
 
 }
