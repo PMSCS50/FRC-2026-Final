@@ -153,7 +153,7 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
             SSControllerConfigs<N2, Inputs, Outputs> configs,
             TrapezoidProfile.Constraints constraints) {
 
-        this.statesNat     = configs.getN2Nat();
+        this.statesNat     = configs.getStatesNat();
         this.outputsNat    = configs.getOutputsNat();
         this.plant         = plant;
         this.tolerance     = configs.getTolerance();
