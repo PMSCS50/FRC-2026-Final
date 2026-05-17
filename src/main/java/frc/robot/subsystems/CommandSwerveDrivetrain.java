@@ -66,7 +66,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private SwerveSetpoint m_previousSetpoint;
     
     /** Swerve request to apply after the robot finished going through a path in Pathmaster. */
-    private final SwerveRequest.Idle idle = new SwerveRequest.Idle();
+    private final SwerveRequest.Idle m_idle = new SwerveRequest.Idle();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -311,7 +311,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public Command idle() {
-        return applyRequest(() -> idle);
+        return applyRequest(() -> m_idle);
     }
 
 
