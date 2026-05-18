@@ -56,10 +56,26 @@ public class Pathmaster {
             double vmax, 
             double amax, 
             double omegamax, 
-            double alphamax ) {
+            double alphamax) {
 
         this.drivetrain = drivetrain;
-        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
+        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, 12);
+        this.robotPose = () -> drivetrain.getState().Pose;
+        this.robotSpeeds = () -> drivetrain.getState().Speeds;
+
+        linkStartingState();
+    }
+
+    public Pathmaster(
+            CommandSwerveDrivetrain drivetrain,
+            double vmax, 
+            double amax, 
+            double omegamax, 
+            double alphamax,
+            double maxVoltage) {
+
+        this.drivetrain = drivetrain;
+        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, maxVoltage);
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
