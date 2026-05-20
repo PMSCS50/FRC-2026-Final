@@ -40,11 +40,11 @@ public class Pathmaster {
     //Used to prevent cancelPathing() from canceling other ddrivetrain commands.
     private List<String> commandNames = List.of(
         "makePathTo",
-        "makePathToThen",
+        "pathfindToPath",
         "goToWaypoint",
         "pathToNearestPose",
         "pathToNearestWaypoint",
-        "faceTargetPose"
+        "pathfindFaceTargetPose"
     );
 
     // --------
@@ -215,15 +215,15 @@ public class Pathmaster {
      * A predetermined .path file has much less error, around <1cm.
      * This pathfinds to the start of the .path, then follows it precisely to the end.
      */
-    public Command makePathToThen(String pathName) {
-        if (!checkConfigured("makePathToThen")) return Commands.none();
+    public Command pathfindToPath(String pathName) {
+        if (!checkConfigured("pathfindToPath")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         try {
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
             return Commands.defer(
                 () -> AutoBuilder.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
-            ).withName("makePathToThen");
+            ).withName("pathfindToPath");
         } catch (Exception e) {
             DriverStation.reportError(
                 "[Pathmaster] Path not found: " + pathName, true);
@@ -260,14 +260,14 @@ public class Pathmaster {
      * Pathfinds to a destination while arriving faced toward a separate target.
      * I dont think we should ever use this method over vision.
      */
-    public Command faceTargetPose(Pose2d destination, Pose2d faceTarget) {
-        if (!checkConfigured("faceTargetPose")) return Commands.none();
+    public Command pathfindFaceTargetPose(Pose2d destination, Pose2d faceTarget) {
+        if (!checkConfigured("pathfindFaceTargetPose")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         return Commands.defer(() -> {
             Rotation2d facing = getRotationToPose(destination, faceTarget);
             Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
             return AutoBuilder.pathfindToPose(oriented, constraints);
-        }, Set.of(drivetrain)).withName("faceTargetPose");
+        }, Set.of(drivetrain)).withName("pathfindFaceTargetPose");
     }
 
     /**
@@ -278,8 +278,11 @@ public class Pathmaster {
         if (!checkConfigured("cancelPathing")) return Commands.none();
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
-            if (current != null && commandNames.contains(current.getName())) {
-                current.cancel();
+            if (current != null) {
+                //Put inside just to 100% prevent null errors
+                if (commandNames.contains(current.getName())) {
+                    current.cancel();
+                }
             }
         });
     }
