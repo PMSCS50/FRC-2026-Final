@@ -88,7 +88,7 @@ public class Pathmaster {
         Pathfinding.setPathfinder(Pathmaster.zoro);
     }
 
-    //Call in Robot.java as the last line in robotInit().
+    //Call in Robot.java as the last line in Robot contructor
     public static void startWarmupCommand() {
         PathfindingCommand.warmupCommand().schedule();
         warmup = true;

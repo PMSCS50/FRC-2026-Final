@@ -38,6 +38,15 @@ public class RoronoaZoro extends LocalADStar {
 
     private Supplier<IdealStartingState> startingState;
 
+    //Im defining these here to avoid constantly creating new objects
+    private PathPlannerPath lastBasePath;
+    private PathPlannerPath currentPath;
+
+    private final List<RotationTarget> rotationTargets = new ArrayList<>();
+    private final List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
+    private final List<ConstraintsZone> constraintZones = new ArrayList<>();
+    private final List<EventMarker> eventMarkers = new ArrayList<>();
+
     //Links Pathmaster method to RoronoaZoro.
     public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
         this.startingState = supplier;
@@ -47,28 +56,32 @@ public class RoronoaZoro extends LocalADStar {
     public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
         //Gets LocalAD* path to fill in zones
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
-        if (basePath == null) return null;
+
+        if (basePath == null) {
+            lastBasePath = null;
+            currentPath = null;
+            return null;
+        }
+
+        if (basePath == lastBasePath && currentPath != null) {
+            return currentPath;
+        }
+
+        lastBasePath = basePath;
+
+        //reset these guys
+        rotationTargets.clear();
+        pointTowardsZones.clear();
+        constraintZones.clear();
+        eventMarkers.clear();
 
         //Path waypoints
         List<Waypoint> waypoints = basePath.getWaypoints();
         if (waypoints.size() < 2) return null;
 
-        //Loop through all pathpoints. If it enters or exits a zone, get waypoint relative pose
+        //Loop through all pathpoints. If it enters or exits a zone, get waypoint relative position
         List<PathPoint> points = basePath.getAllPathPoints();
         List<PathZone> activeZones = ZoneManager.getActiveZones();
-
-        List<RotationTarget> rotationTargets = new ArrayList<>();
-        List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
-        List<ConstraintZone> constraintZones = new ArrayList<>();
-        List<EventMarker> eventMarkers = new ArrayList<>();
-
-        // // Precompute arc length for each PathPoint (for lead-in distance math)
-        // double[] arcLength = new double[points.size()];
-        // arcLength[0] = 0;
-        // for (int i = 1; i < points.size(); i++) {
-        //     arcLength[i] = arcLength[i - 1]
-        //         + points.get(i).position().getDistance(points.get(i - 1).position());
-        // }
 
         for (PathZone zone : activeZones) {
 
@@ -87,28 +100,18 @@ public class RoronoaZoro extends LocalADStar {
             double entryWaypointIndex = points.get(entryIndex).waypointRelativePos();
             double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos();
 
-            // No need for lead-in anymore
-            // double leadIn = 0.0;
-            // double leadInWaypointIndex = entryWaypointIndex;
-            // for (int i = entryIndex; i >= 0; i--) {
-            //     if (arcLength[entryIndex] - arcLength[i] >= leadIn) {
-            //         leadInWaypointIndex = points.get(i).waypointRelativePos();
-            //         break;
-            //     }
-            // }
-
             if (zone instanceof OrientationZone oz) {
                 //Turns OZ into a PointTowardsZone
                 pointTowardsZones.add(new PointTowardsZone(
                     zone.name, 
                     oz.getTarget().getTranslation(), 
-                    leadInWaypointIndex, 
+                    entryWaypointIndex, 
                     exitWaypointIndex));
             
             } else if (zone instanceof RotationZone rz) {
                 //Turns RZ into 2 rotation targets to force fixed heading throughout
                 rotationTargets.add(new RotationTarget(
-                    leadInWaypointIndex, 
+                    entryWaypointIndex, 
                     rz.getRotation()));
 
                 rotationTargets.add(new RotationTarget(
@@ -130,23 +133,22 @@ public class RoronoaZoro extends LocalADStar {
                     ez.getEvent()));
             }
 
-            // DriverStation.reportWarning(
-            //     "[RoronoaZoro] Zone '" + zone.name + "' active" +
-            //     " entry=" + String.format("%.3f", entryWaypointIndex) +
-            //     " exit="  + String.format("%.3f", exitWaypointIndex), false);
         }
 
-        return new PathPlannerPath(
-            waypoints,
-            rotationTargets,                                        //rotation zones
-            pointTowardsZones,                                      //orientation zones
-            constraintZones,                                        //constraint zones
-            eventMarkers,                                           //event zones
-            constraints,                                            //path constraints
-            (startingState != null) ? startingState.get() : null,   //current velocity + heading
+        //Fill up currentPath with everything
+        currentPath = new PathPlannerPath(
+            waypoints,                                              //waypoints
+            new ArrayList<>(rotationTargets),                       //rotation zones    (copy)
+            new ArrayList<>(pointTowardsZones),                     //orientation zones (copy)
+            new ArrayList<>(constraintZones),                       //constraint zones  (copy)
+            new ArrayList<>(eventMarkers),                          //event zones       (copy)
+            constraints,                                            //global path constraints
+            (startingState != null) ? startingState.get() : null,   //starting velocity + heading
             goalEndState,                                           //goal end state
-            false                                                   //never flip for red alliance
+            false                                                   //Dont flip for red alliance
         );
+
+        return currentPath;
     }
 
 
