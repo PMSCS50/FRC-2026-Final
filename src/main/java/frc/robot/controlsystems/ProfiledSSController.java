@@ -1,160 +1,401 @@
-package frc.robot.pathfinding;
+package frc.robot.controlsystems;
 
-import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.LocalADStar;
-
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.Num;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.controller.LinearQuadraticRegulator;
+import edu.wpi.first.math.estimator.KalmanFilter;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.math.controller.LinearPlantInversionFeedforward;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
+
 
 /**
- * Custom pathfinder extending AD* with support for many different Zones
- * 
- * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
- * 
- * Zones can be toggled active/inactive at runtime.
- * 
- * There are 4 types of zones:
- * 1. RotationZone: When the robot enters, it starts rotating towards a specified angle
- * 2. OrientationZone: When the robot enters, it starts orienting towards a specified target
- * 3. ConstraintZone: When the robot enters, certain path constraints are applied
- * 4. EventZone: When the robot enters, a specified command is triggered
- * 
- * Although one can already populate path files with these in Pathplanner,
- * it was not possible for pathfinding, which is why I created this extension.
- * 
- * Furthermore, the class takes your current valocity and rotation as its ideal starting state.
- * 
+ * Specific SSController that adds trapezoidal profiling to the setpoint.
+ * However, this is solely a position-velocity profiled controller.
+ * There are two fixed states: position and velocity. This is only for mechanisms where those are the two states we care about.
+ * Should not be used as a replacement for SSController
  */
+public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
 
-public class RoronoaZoro extends LocalADStar {
+    //The system. Will be passed in the constructor
+    private final LinearSystem<N2, Inputs, Outputs> plant;
 
-    public RoronoaZoro() {
-        super();
-    }
+    //The LQR will compute the feedback gains for the system to move to the next state
+    private final LinearQuadraticRegulator<N2, Inputs, Outputs> controller;
 
-    private Supplier<IdealStartingState> startingState;
+    //The Kalman Filter fuses sensor/encoder values and resultant state to get the true state
+    private final KalmanFilter<N2, Inputs, Outputs> observer;
 
-    //Im defining these here to avoid constantly creating new objects
-    private PathPlannerPath lastBasePath;
-    private PathPlannerPath currentPath;
+    //The entire state space control loop.
+    private final LinearSystemLoop<N2, Inputs, Outputs> stateSpaceLoop;
 
-    private final List<RotationTarget> rotationTargets = new ArrayList<>();
-    private final List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
-    private final List<ConstraintsZone> constraintZones = new ArrayList<>();
-    private final List<EventMarker> eventMarkers = new ArrayList<>();
+    private final TrapezoidProfile profile;
+    
+    private final TrapezoidProfile.Constraints constraints;
 
-    //Links Pathmaster method to RoronoaZoro.
-    public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
-        this.startingState = supplier;
-    }
+    private final TrapezoidProfile.State trapezoidState;
 
-    @Override
-    public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-        //Gets LocalAD* path to fill in zones
-        PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
 
-        if (basePath == null) {
-            lastBasePath = null;
-            currentPath = null;
-            return null;
-        }
+    private Matrix<N2, N1> setpoint;
+    private boolean atSetpoint = false;
+    private Matrix<N2, N1> tolerance;
 
-        if (basePath == lastBasePath && currentPath != null) {
-            return currentPath;
-        }
+    //Copy of states and inputs needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
+    //So now you have to instantiate states and outputs in the generics AND the constructor, even though they always are equal
+    private final Nat<N2> statesNat;
+    private final Nat<Outputs> outputsNat;
 
-        lastBasePath = basePath;
+    //How long the looping period will be.
+    //For commands, this will be 20 ms, passed as 0.02
+    private final double dtSeconds;
 
-        //reset these guys
-        rotationTargets.clear();
-        pointTowardsZones.clear();
-        constraintZones.clear();
-        eventMarkers.clear();
+    //Just instantiated here to avoid creating a new matrix every 20 ms.
+    private Matrix<N2, N1> error;
 
-        //Path waypoints
-        List<Waypoint> waypoints = basePath.getWaypoints();
-        if (waypoints.size() < 2) return null;
+    // Sensor Fusion Fields
+    private boolean useDualSensors = false;
+    private double secondarySensorWeight = 0.0;  // 0.0 = trust primary only, 1.0 = equal weight
+    private double lastPrimaryMeasurement = 0.0;
+    private double lastSecondaryMeasurement = 0.0;
+    private Matrix<N2, N1> kalmanFilterCovariance = null;
 
-        //Loop through all pathpoints. If it enters or exits a zone, get waypoint relative position
-        List<PathPoint> points = basePath.getAllPathPoints();
-        List<PathZone> activeZones = ZoneManager.getActiveZones();
+    /**
+     * Creates a generic state space controller.
+     *
+     * @param statesNat      Runtime Nat for state count  e.g. N2.instance
+     * 
+     * @param outputsNat     Runtime Nat for output count e.g. N1.instance
+     * 
+     * @param plant          LinearSystem model from LinearSystemId factory
+     * 
+     * @param qCost          State cost vector (N2 x 1)
+     *                       Higher values = more aggressive correction on that state
+     * 
+     * @param rCost          Input cost vector (Inputs x 1)
+     *                       Higher values = more conservative voltage usage
+     * 
+     * @param modelStdDevs   Model uncertainty per state (N2 x 1)
+     *                       Higher = trust encoder more than model
+     * 
+     * @param encoderStdDevs Measurement noise per output (Outputs x 1)
+     *                       Higher = trust model more than encoder
+     * 
+     * @param maxVoltage     Maximum voltage the controller can output. 
+     *                       Usually we will put this as 12, but in case of voltage pdp issus we can limit max voltage
+     * 
+     * @param tolerance      Per-state tolerance for atSetpoint() (N2 x 1)
+     * 
+     * @param dtSeconds Control loop period, always 0.02 for commands
+     * 
+     * @param constraints     Constraints for trapezoidal profile (max velocity and acceleration)
+     */
 
-        for (PathZone zone : activeZones) {
+    public ProfiledSSController (
+            Nat<N2> statesNat,   //Just states value. Only used for Kalman Filter
+            Nat<Outputs> outputsNat, //Just outputs value. Only used for Kalman Filter
+            LinearSystem<N2, Inputs, Outputs> plant,
+            Vector<N2> qCost,
+            Vector<Inputs> rCost,
+            Matrix<N2, N1> modelStdDevs,
+            Matrix<Outputs, N1> encoderStdDevs,
+            double maxVoltage,
+            Matrix<N2, N1> tolerance,
+            double dtSeconds,
+            TrapezoidProfile.Constraints constraints) {
 
-            int entryIndex = -1;
-            int exitIndex  = -1;
+        this.statesNat     = statesNat;
+        this.outputsNat    = outputsNat;
+        this.plant         = plant;
+        this.tolerance     = tolerance;
+        this.dtSeconds = dtSeconds;
+        this.constraints = constraints;
+        this.profile = new TrapezoidProfile(constraints);
+        this.trapezoidState = new TrapezoidProfile.State();
 
-            for (int i = 0; i < points.size(); i++) {
-                if (zone.containsPoint(points.get(i).position)) {
-                    if (entryIndex < 0) entryIndex = i;
-                    exitIndex = i;
-                }
-            }
-
-            if (entryIndex < 0) continue;
-
-            double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
-            double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
-
-            if (zone instanceof OrientationZone oz) {
-                //Turns OZ into a PointTowardsZone
-                pointTowardsZones.add(new PointTowardsZone(
-                    zone.name, 
-                    oz.getTarget().getTranslation(), 
-                    entryWaypointIndex, 
-                    exitWaypointIndex));
-            
-            } else if (zone instanceof RotationZone rz) {
-                //Turns RZ into 2 rotation targets to force fixed heading throughout
-                rotationTargets.add(new RotationTarget(
-                    entryWaypointIndex, 
-                    rz.getRotation()));
-
-                rotationTargets.add(new RotationTarget(
-                    exitWaypointIndex,   rz.getRotation()));
-
-            } else if (zone instanceof ConstraintZone cz) {
-                //Turns CZ into a ConstraintsZone
-                constraintZones.add(new ConstraintsZone(
-                    entryWaypointIndex,
-                    exitWaypointIndex,
-                    cz.getConstraints()));
-
-            } else if (zone instanceof EventZone ez) {
-                //Turns EZ into an EventMarker
-                eventMarkers.add(new EventMarker(
-                    zone.name, 
-                    entryWaypointIndex, 
-                    exitWaypointIndex, 
-                    ez.getEvent()));
-            }
-
-        }
-
-        //Fill up currentPath with everything
-        currentPath = new PathPlannerPath(
-            waypoints,                                              //waypoints
-            new ArrayList<>(rotationTargets),                       //rotation zones    (copy)
-            new ArrayList<>(pointTowardsZones),                     //orientation zones (copy)
-            new ArrayList<>(constraintZones),                       //constraint zones  (copy)
-            new ArrayList<>(eventMarkers),                          //event zones       (copy)
-            constraints,                                            //global path constraints
-            (startingState != null) ? startingState.get() : null,   //starting velocity + heading
-            goalEndState,                                           //goal end state
-            false                                                   //Dont flip for red alliance
+        // LQR computes optimal feedback gains
+        controller = new LinearQuadraticRegulator<>(
+            plant,
+            qCost,
+            rCost,
+            dtSeconds
         );
 
-        return currentPath;
+        //Kalman Filter corrects predicted values
+        observer = new KalmanFilter<>(
+            statesNat,
+            outputsNat,
+            plant,
+            modelStdDevs,
+            encoderStdDevs,
+            dtSeconds
+        );
+
+        stateSpaceLoop = new LinearSystemLoop<>(
+            plant,
+            controller,
+            observer,
+            maxVoltage,
+            dtSeconds
+        );
+
+        stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
     }
 
+    //Wraps all variables not relating to the system inside SSControllerConfigs
+    public ProfiledSSController(
+            LinearSystem<N2, Inputs, Outputs> plant,
+            SSControllerConfigs<N2, Inputs, Outputs> configs,
+            TrapezoidProfile.Constraints constraints) {
+
+        this.statesNat     = configs.getStatesNat();
+        this.outputsNat    = configs.getOutputsNat();
+        this.plant         = plant;
+        this.tolerance     = configs.getTolerance();
+        this.dtSeconds = configs.getdtSeconds();
+        this.constraints = constraints;
+        this.profile = new TrapezoidProfile(constraints);
+        this.trapezoidState = new TrapezoidProfile.State();
+
+        // LQR computes optimal feedback gains
+        controller = new LinearQuadraticRegulator<>(
+            plant,
+            configs.getQCost(),
+            configs.getRCost(),
+            dtSeconds
+        );
+
+        //Kalman Filter corrects predicted values
+        observer = new KalmanFilter<>(
+            statesNat,
+            outputsNat,
+            plant,
+            configs.getModelStdDevs(),
+            configs.getEncoderStdDevs(),
+            dtSeconds
+        );
+
+        stateSpaceLoop = new LinearSystemLoop<>(
+            plant,
+            controller,
+            observer,
+            configs.getMaxVoltage(),
+            dtSeconds
+        );
+
+        stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
+    }
+
+    
+
+    // -----------------------------------------------------------------------
+    // Control Loop
+    // -----------------------------------------------------------------------
+
+    /**
+     * Set the desired state vector.
+     * @param endState desired state as column vector
+     */
+    public void setSetpoint(double position, double velocity) {
+        setpoint = VecBuilder.fill(position, velocity);
+        stateSpaceLoop.setNextR(setpoint);
+    }
+
+    /**
+     * Run one iteration of the control loop.
+     * Call every periodic loop and apply the returned voltage to your motor.
+     * @param currentOutputs what your sensors measure. This is NOT the full state vector, only what is measured
+     * @return voltage to apply to the motor
+     */
+    public double calculate(Matrix<Outputs, N1> currentOutputs) {
+
+        trapezoidState = profile.calculate(dtSeconds, trapezoidState, setpoint);
+        stateSpaceLoop.setNextR(trapezoidState.position, trapezoidState.velocity);
+
+        // Fuse dual sensors if enabled
+        Matrix<Outputs, N1> fusedOutputs = currentOutputs;
+        if (useDualSensors && Outputs.getNumRows() >= 1) {
+            fusedOutputs = fuseSensorReadings(currentOutputs);
+        }
+
+        stateSpaceLoop.correct(fusedOutputs);
+        stateSpaceLoop.predict(dtSeconds);
+
+        // Update Kalman filter covariance estimate
+        kalmanFilterCovariance = stateSpaceLoop.getObserver().getP();
+
+        error = stateSpaceLoop.getXHat().minus(setpoint);
+        atSetpoint = isAtSetpoint(error);
+
+        return stateSpaceLoop.getU(0);
+    }
+
+    /**
+     * Fuses primary sensor (encoder) with secondary sensor (pose estimation for distance).
+     * Uses weighted average based on sensor confidence.
+     * @param primarySensorOutput encoder/motor measurement
+     * @return fused sensor reading
+     */
+    private Matrix<Outputs, N1> fuseSensorReadings(Matrix<Outputs, N1> primarySensorOutput) {
+        lastPrimaryMeasurement = primarySensorOutput.get(0, 0);
+        
+        // Create fused output: weighted combination of primary and secondary
+        // Weight is based on secondarySensorWeight (0.0 to 1.0)
+        double fusedValue = (lastPrimaryMeasurement * (1.0 - secondarySensorWeight)) + 
+                            (lastSecondaryMeasurement * secondarySensorWeight);
+        
+        return VecBuilder.fill(fusedValue);
+    }
+
+    /**
+     * Reset controller and observer to a known state.
+     * Call on disable or when mechanism is at a known position.
+     *
+     * @param currentState current measured state as column vector
+     */
+    public void reset(Matrix<N2, N1> currentState) {
+        stateSpaceLoop.reset(currentState);
+        setpoint = currentState;
+        trapezoidState = new TrapezoidProfile.State(currentState.get(0, 0), currentState.get(1, 0));
+        atSetpoint = false;
+    }
+
+    // -----------------------------------------------------------------------
+    // Setters and Getters
+    // -----------------------------------------------------------------------
+
+    /** Getter for atSetpoint */
+    public boolean isAtSetpoint() {
+        if (!profile.isFinished(dtSeconds)) {
+            return false;
+        }
+        
+        error = setpoint.minus(stateSpaceLoop.getXHat());
+        
+        return isAtSetpointInternal(error);
+    }
+
+    private boolean isAtSetpointInternal(Matrix<N2, N1> error) {
+        for (int i = 0; i < error.getNumRows(); i++) {
+            if (Math.abs(error.get(i, 0)) > tolerance.get(i, 0)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Returns the current setpoint state vector. */
+    public Matrix<N2, N1> getSetpoint() {
+        return setpoint;
+    }
+
+    /** Returns the Kalman filter's current state estimate. */
+    public Matrix<N2, N1> getEstCurrentState() {
+        return stateSpaceLoop.getXHat();
+    }
+
+    /** Returns the most recently computed voltage output. */
+    public double getVoltage() {
+        return stateSpaceLoop.getU(0);
+    }
+
+    /**
+     * Update per-state tolerance for atSetpoint().
+     * @param tolerance N2 x 1 matrix of per-state tolerances
+     */
+    public void setTolerance(Matrix<N2, N1> tolerance) {
+        this.tolerance = tolerance;
+    }
+
+    // -----------------------------------------------------------------------
+    // Sensor Fusion Methods
+    // -----------------------------------------------------------------------
+
+    /**
+     * Enable dual sensor fusion for position estimation.
+     * Fuses primary sensor (encoder) with secondary sensor (e.g., pose estimation distance).
+     * @param weight weighting for secondary sensor (0.0 = primary only, 1.0 = equal weight)
+     */
+    public void enableDualSensorFusion(double weight) {
+        this.useDualSensors = true;
+        this.secondarySensorWeight = Math.max(0.0, Math.min(1.0, weight));
+    }
+
+    /** Disable dual sensor fusion - uses only primary sensor. */
+    public void disableDualSensorFusion() {
+        this.useDualSensors = false;
+    }
+
+    /**
+     * Update the secondary sensor measurement (e.g., pose estimation distance to target).
+     * Call this before calculate() with the latest measurement.
+     * @param secondarySensorReading the distance/position from pose estimation
+     */
+    public void setSecondarySensorReading(double secondarySensorReading) {
+        this.lastSecondaryMeasurement = secondarySensorReading;
+    }
+
+    /**
+     * Get the estimated confidence/certainty of the Kalman filter's state estimate.
+     * Higher values = more uncertain. Based on the trace of the error covariance matrix.
+     * @return uncertainty metric (sum of diagonal covariance elements)
+     */
+    public double getEstimateUncertainty() {
+        if (kalmanFilterCovariance == null) {
+            return Double.POSITIVE_INFINITY;  // No estimate yet
+        }
+        
+        // Uncertainty is the sum of diagonal elements (trace) of covariance matrix
+        // Higher = less confident in the estimate
+        double uncertainty = 0.0;
+        for (int i = 0; i < kalmanFilterCovariance.getNumRows(); i++) {
+            uncertainty += kalmanFilterCovariance.get(i, i);
+        }
+        return uncertainty;
+    }
+
+    /**
+     * Get the confidence level as a percentage (inverse of uncertainty).
+     * Higher = more confident in state estimate.
+     * @return confidence as a value between 0.0 and 1.0 (will typically be 0.95+)
+     */
+    public double getEstimateConfidence() {
+        double uncertainty = getEstimateUncertainty();
+        if (uncertainty == 0.0) return 1.0;
+        
+        // Simple inverse confidence metric (tune this based on your system's behavior)
+        return Math.min(1.0, 1.0 / (1.0 + uncertainty));
+    }
+
+    /**
+     * Check if the Kalman filter estimate is currently reliable.
+     * Useful to decide whether to trust the estimate or fall back to raw sensor.
+     * @param confidenceThreshold minimum acceptable confidence (0.0 to 1.0)
+     * @return true if confidence > threshold
+     */
+    public boolean isEstimateReliable(double confidenceThreshold) {
+        return getEstimateConfidence() > confidenceThreshold;
+    }
+
+    /** Get the last primary sensor measurement that was fused. */
+    public double getLastPrimarySensorReading() {
+        return lastPrimaryMeasurement;
+    }
+
+    /** Get the last secondary sensor measurement that was fused. */
+    public double getLastSecondarySensorReading() {
+        return lastSecondaryMeasurement;
+    }
 
 }
-
-
 
 
 /*

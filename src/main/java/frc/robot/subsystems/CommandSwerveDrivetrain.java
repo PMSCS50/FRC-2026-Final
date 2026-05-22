@@ -16,6 +16,10 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -50,11 +54,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    /** Swerve request to apply during robot-centric path following */
+    /** Swerve request to apply during robot-centric path following 
+     *  This also takes in our robot's physical constrants to create optimal path speeds.
+    */
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
+    /**Setpoint generator to optimize traversal through paths, made by FRC team 254.*/
+    private SwerveSetpointGenerator m_setpointGenerator;
+
+    /**A setpoint value */
+    private SwerveSetpoint m_previousSetpoint;
     
     /** Swerve request to apply after the robot finished going through a path in Pathmaster. */
-    private final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.Idle m_idle = new SwerveRequest.Idle();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -207,16 +219,40 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private void configureAutoBuilder() {
         try {
             var config = RobotConfig.fromGUISettings();
+
+            m_setpointGenerator = new SwerveSetpointGenerator(
+                config,
+                RotationsPerSecond.of(0.75).in(RadiansPerSecond) // max rotational velocity in rad/s
+            );
+
+            m_previousSetpoint = new SwerveSetpoint(
+                getState().Speeds,
+                getState().ModuleStates,
+                DriveFeedforwards.zeros(config.numModules)
+            );
+
             AutoBuilder.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
                 this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
-                // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                (speeds, feedforwards) -> setControl(
-                    m_pathApplyRobotSpeeds.withSpeeds(speeds)
-                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                ),
+
+                (speeds, feedforwards) -> {
+
+                    // Generate next setpoint. Thanks Cheesy Poofs. 
+                    m_previousSetpoint = m_setpointGenerator.generateSetpoint(
+                        m_previousSetpoint,
+                        speeds,
+                        0.02
+                    );
+
+                    // Apply generated module states
+                    setControl(
+                        m_pathApplyRobotSpeeds
+                            .withSpeeds(m_previousSetpoint.robotRelativeSpeeds())
+                            .withWheelForceFeedforwardsX(m_previousSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(m_previousSetpoint.feedforwards().robotRelativeForcesYNewtons())
+                    );
+                },
                 new PPHolonomicDriveController(
                     // PID constants for translation
                     new PIDConstants(8, 0, 0),
@@ -265,28 +301,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    @Override
-    public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> visionStdDevs) {
-
-        double xStd = visionStdDevs.get(0, 0);
-        double yStd = visionStdDevs.get(1, 0);
-        double yawStd = visionStdDevs.get(2, 0);
-
-        // Reject ambiguous measurements
-        if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
-        return;
-        }
-
-        // Soft clamp
-        xStd = Math.max(xStd, 0.05);
-        yStd = Math.max(yStd, 0.05);
-        yawStd = Math.max(yawStd, 0.02);
-
-        Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
-
-        super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
-    }
-
     //get robot pose
     public Pose2d getPose() {
         return getState().Pose;
@@ -296,8 +310,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return getState().Speeds;
     }
 
-    public Command xBrakeCommand() {
-        return applyRequest(() -> xBrake);
+    public Command idle() {
+        return applyRequest(() -> m_idle);
     }
 
 

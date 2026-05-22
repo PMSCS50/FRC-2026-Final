@@ -5,6 +5,8 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -17,9 +19,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
+import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 import frc.robot.Constants.VisionConstants;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.stream.Stream;
 
 // 2-camera Limelight subsystem.
 // llCamera1: front-facing camera (0 deg yaw offset)
@@ -32,7 +37,7 @@ public class LLSubsystem extends SubsystemBase {
     private final String llCamera1; // front camera: peepee peeper
     private final String llCamera2; // rear camera: ass tumor
 
-    private final HashMap<Integer, Transform3d> tagtransforms = new HashMap<>();
+    private final HashMap<Double, Transform2d> tagtransforms = new HashMap<>();
 
     private double omegaRps;
 
@@ -69,9 +74,6 @@ public class LLSubsystem extends SubsystemBase {
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
         LimelightHelpers.SetRobotOrientation(llCamera1, headingDeg, 0, 0, 0, 0, 0);
-        //Robot yaw, not LL yaw. If we sent 180 to the rear camera,
-        //then it wouldve believed the robot was backward and oh boy 
-        //that would have made odometry utterly shit.
         LimelightHelpers.SetRobotOrientation(llCamera2, headingDeg, 0, 0, 0, 0, 0); 
 
         PoseEstimate llMeasurement1 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera1);
@@ -90,7 +92,7 @@ public class LLSubsystem extends SubsystemBase {
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
                     llMeasurement1.pose,
-                    Utils.fpgaToCurrentTime(llMeasurement1.timestampSeconds),
+                    Utils.fpgaToCurrentTime(llMeasurement1.timestampSeconds)//,
                     //stdDevs
                 );
             }
@@ -102,7 +104,7 @@ public class LLSubsystem extends SubsystemBase {
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
                     llMeasurement2.pose,
-                    Utils.fpgaToCurrentTime(llMeasurement2.timestampSeconds),
+                    Utils.fpgaToCurrentTime(llMeasurement2.timestampSeconds)//,
                     //stdDevs
                 );
             }
@@ -131,8 +133,9 @@ public class LLSubsystem extends SubsystemBase {
             RawFiducial[] totalTagsUsed = totalTagsUsed(llMeasurement1, llMeasurement2);
             int totalTags = totalTagsUsed.length;
 
+            //Fused metadata from both pose estimates.
             latestEstimate = new PoseEstimate(
-                estimatedRobotPose,       // KF-fused pose, not raw LL pose
+                estimatedRobotPose,
                 avgTimestamp,
                 avgLatency,
                 totalTags,
@@ -147,21 +150,21 @@ public class LLSubsystem extends SubsystemBase {
         //Reset tagtransforms every periodic
         tagtransforms.clear();
 
-        LimelightTarget_Fiducial[] allTags = totalTagsUsed(
-            LimelightHelpers.targets_Fiducials(llCamera1),
-            LimelightHelpers.targets_Fiducials(llCamera2)
+        LimelightTarget_Fiducial[] allTags = allVisibleTags(
+            LimelightHelpers.getLatestResults(llCamera1).targets_Fiducials,
+            LimelightHelpers.getLatestResults(llCamera2).targets_Fiducials
         );
 
         //Tag HashMap thing Kevin did
         for (LimelightTarget_Fiducial fiducial : allTags) {
-            Pose3d pos = fiducial.getRobotPose_TargetSpace();
-            Transform3d tagToRobot = new Transform3d(
+            Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
+            Transform2d tagToRobot = new Transform2d(
                 pose.getX(),
                 pose.getY(),
                 pose.getRotation()
             );
             tagtransforms.put(
-                fiducial.id,
+                fiducial.fiducialID,
                 tagToRobot
             );
         }
@@ -182,7 +185,7 @@ public class LLSubsystem extends SubsystemBase {
             Logger.recordOutput("Vision: Heading",           latestEstimate.pose.getRotation().getDegrees());
             Logger.recordOutput("Vision: Tag Count",         latestEstimate.tagCount);
             Logger.recordOutput("Vision: Avg Tag Distance",  latestEstimate.avgTagDist);
-            Logger.recordOutput("Vision: Visible Tags",      tagtransforms.keySet());
+            Logger.recordOutput("Vision: Visible Tags",      tagtransforms.keySet().stream().mapToDouble(Double::doubleValue).toArray());
         }
     }
 
@@ -206,13 +209,13 @@ public class LLSubsystem extends SubsystemBase {
 
     // Vision Sexually Transmitted Diseases 
 
-    //This one was made by Claude bc aint no way Im creating a system for stdDevs myself
+    //This one was made by Big C bc aint no way I'm creating a system for stdDevs myself
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return VecBuilder.fill(9999.0, 9999.0, 9999.0);
 
         double xyStdDev = BASE_XY_STD_DEV;
 
-        xyStdDev /= estimate.tagCount;
+        xyStdDev /= (0.35*estimate.tagCount + 0.65*estimate.avgTagDist);
         xyStdDev *= Math.pow(estimate.avgTagDist, 2);
 
         if (estimate.rawFiducials != null) {
@@ -227,71 +230,48 @@ public class LLSubsystem extends SubsystemBase {
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
 
-    // // Tag Overlap and average ambiguity
-
-    // private boolean hasTagOverlap(PoseEstimate est1, PoseEstimate est2) {
-    //     if (est1 == null || est2 == null) return false;
-    //     if (est1.rawFiducials == null || est2.rawFiducials == null) return false;
-    //     for (RawFiducial f1 : est1.rawFiducials) {
-    //         for (RawFiducial f2 : est2.rawFiducials) {
-    //             if (f1.id == f2.id) return true;
-    //         }
-    //     }
-    //     return false;
-    // }
 
     //Used to count tags for POSE ESTIMATION
     private RawFiducial[] totalTagsUsed(PoseEstimate est1, PoseEstimate est2) {
         if (est1 == null && est2 == null) return new RawFiducial[0];
         if (est1 != null && est2 == null) return est1.rawFiducials;
         if (est1 == null && est2 != null) return est2.rawFiducials;
-        
-        RawFiducial[] combined = Arrays.copyOf(est1.rawFiducials, est1.rawFiducials.length + est2.rawFiducials.length);
-        System.arraycopy(est2.rawFiducials, 0, combined, est1.rawFiducials.length, est2.rawFiducials.length);
 
-        //Removes all duplicates from the array.
-        combined = Arrays.stream(combined).distinct().toArray(RawFiducial[]::new);
-
+        RawFiducial[] combined = Stream.of(est1.rawFiducials, est2.rawFiducials)
+                                       .flatMap(Arrays::stream)
+                                       .distinct()
+                                       .toArray(RawFiducial[]::new);
         return combined;
     }
 
     //Used to count tags for TAG DATA
-    private LimelightTarget_Fiducial[] totalTagsUsed(LimelightTarget_Fiducial[] t1, 
-                                                    LimelightTarget_Fiducial[] t2) {
+    private LimelightTarget_Fiducial[] allVisibleTags(LimelightTarget_Fiducial[] t1, LimelightTarget_Fiducial[] t2) {
 
         if (t1 == null && t2 == null) return new LimelightTarget_Fiducial[0];
         if (t1 != null && t2 == null) return t1;
-        if (t1 == null && t2 != null) return t1;
-        
-        RawFiducial[] combined = Arrays.copyOf(t1, t1 + t2.length);
-        System.arraycopy(t2, 0, combined, t1.length, t2.length);
+        if (t1 == null && t2 != null) return t2;
 
         //Removes all duplicates from the array.
-        combined = Arrays.stream(combined).distinct().toArray(LimelightTarget_Fiducial[]::new);
+        LimelightTarget_Fiducial[] allTags = Stream.of(t1, t2)
+                                                   .flatMap(Arrays::stream)
+                                                   .distinct()
+                                                   .toArray(LimelightTarget_Fiducial[]::new);
 
-        return combined;
+        return allTags;
     }
 
     private double averageTagDistance(RawFiducial[] fiducials) {
-        if (estimate == null || estimate.rawFiducials == null || estimate.rawFiducials.length == 0) return -1.0;
+        if (fiducials == null || fiducials.length == 0) return -1.0;
         double sum = 0;
         for (RawFiducial tag : fiducials) sum += tag.distToRobot;
-        return sum / estimate.rawFiducials.length;
+        return sum / fiducials.length;
     }
 
     private double averageTagArea(RawFiducial[] fiducials) {
-        if (estimate == null || estimate.rawFiducials == null || estimate.rawFiducials.length == 0) return -1.0;
+        if (fiducials == null || fiducials.length == 0) return -1.0;
         double sum = 0;
         for (RawFiducial tag : fiducials) sum += tag.ta;
-        return sum / estimate.rawFiducials.length;
-    }
-
-
-    private boolean isBetterEstimate(PoseEstimate candidate, PoseEstimate current) {
-        if (candidate.tagCount != current.tagCount) {
-            return candidate.tagCount > current.tagCount;
-        }
-        return avgAmbiguity(candidate) < avgAmbiguity(current);
+        return sum / fiducials.length;
     }
 
     private double avgAmbiguity(PoseEstimate estimate) {
@@ -312,20 +292,20 @@ public class LLSubsystem extends SubsystemBase {
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
     public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera2); }
 
-    public double  getX(int id) {
+    public double getTagX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
     }
 
-    public double  getY(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;    
+    public double getTagY(int id) {
+        return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0;    
     }
 
-    public double  getYaw(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getRotation().getZ() : 0.0;    
+    public double getTagYaw(int id) {
+        return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0;    
     }
 
-    public Transform3d getTransformToTag(int id) {
-        return hasTarget(id) ? tagtransforms.get(id) : Transform3d.kZero;    
+    public Transform2d getTransformToTag(int id) {
+        return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero;    
     }
     
     
@@ -351,13 +331,16 @@ public class LLSubsystem extends SubsystemBase {
 
     public double getDistanceToTarget(Pose2d targetPose) {
         if (!hasTargets()) return -1.0;
-        return drivetrain.getState().Pose.getTranslation()
-            .getDistance(targetPose.getTranslation());
+        return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
+    }
+
+    public double getYawToTarget(Pose2d targetPose) {
+        if (!hasTargets()) return -1.0;
+        return estimatedRobotPose.minus(targetPose).getRotation().getRadians();
     }
 
     /**
      * Returns direct tag distance from rawFiducials of the best camera reading.
-     * latestEstimate.rawFiducials always belongs to the camera with better metadata.
      */
     public double getDistanceToTag(int tagId) {
         if (latestEstimate == null || latestEstimate.rawFiducials == null) return -1.0;
@@ -366,11 +349,6 @@ public class LLSubsystem extends SubsystemBase {
         }
         return -1.0;
     }
-
-    public double getBestDistanceToHub() {
-        double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
-        if (tagDist > 0) return tagDist;
-        return getDistanceToTarget(VisionConstants.getHubPose2());
-    }    
+   
 
 }

@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 public class EventZone extends PathZone {
 
     private final Command command;
+    private final String triggerName;
 
     public EventZone(String name,Translation2d min,Translation2d max, Command command) {
         super(name, min, max);
@@ -18,7 +19,7 @@ public class EventZone extends PathZone {
         this.command = command;
     }
 
-    public Command getCommand() {
+    public Command getEvent() {
         return command;
     }
 

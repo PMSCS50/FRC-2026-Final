@@ -65,6 +65,10 @@ public class RobotContainer {
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
 
+    //High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
+    private double pathMaxLinearAcceleration = 13.67; // m/s^2
+    private double pathMaxAngularAcceleration = 12.06; // rad/s^2
+
     public static double intakeSpeed = 0.5;
     public static double pivotSpeed = .05;
     public static double shooterSpeed = .01;
@@ -91,7 +95,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
  
     private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
-    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight-meowlit");
+    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
@@ -101,8 +105,7 @@ public class RobotContainer {
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
-    Pathmaster.setDrivetrain(drivetrain);
-    Pathmaster.setConstraints(MaxSpeed, 3, MaxAngularRate, 2*Math.PI);
+    Pathmaster monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -308,11 +311,11 @@ public class RobotContainer {
 
 
         /*
-            Pathmaster implementation
+        Pathmaster implementation
         */
 
-        joystick.rightTrigger().onTrue(Pathmaster.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(new InstantCommand(() -> Pathmaster.cancelPathing()));
+        joystick.rightTrigger().onTrue(monkeyDLuffy.makePathTo(Constants.ClimbConstants.getClimbPose()));
+        joystick.rightTrigger().onFalse(monkeyDLuffy.cancelPathing());
         
         
     }

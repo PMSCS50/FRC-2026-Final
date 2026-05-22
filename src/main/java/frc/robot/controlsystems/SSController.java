@@ -1,6 +1,8 @@
 package frc.robot.controlsystems;
 
 import edu.wpi.first.math.Num;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.Nat;
@@ -49,10 +51,17 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
 
     //How long the looping period will be.
     //For commands, this will be 20 ms, passed as 0.02
-    private final double loopPeriodSecs;
+    private final double dtSeconds;
 
     //Just instantiated here to avoid creating a new matrix every 20 ms.
     private Matrix<States, N1> error;
+
+    // Sensor Fusion Fields
+    private boolean useDualSensors = false;
+    private double secondarySensorWeight = 0.0;  // 0.0 = trust primary only, 1.0 = equal weight
+    private double lastPrimaryMeasurement = 0.0;
+    private double lastSecondaryMeasurement = 0.0;
+    private Matrix<States, States> kalmanFilterCovariance = null;
 
     /**
      * Creates a generic state space controller.
@@ -80,7 +89,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      * 
      * @param tolerance      Per-state tolerance for atSetpoint() (States x 1)
      * 
-     * @param loopPeriodSecs Control loop period, always 0.02 for commands
+     * @param dtSeconds Control loop period, always 0.02 for commands
      */
 
     public SSController(
@@ -93,20 +102,20 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             Matrix<Outputs, N1> encoderStdDevs,
             double maxVoltage,
             Matrix<States, N1> tolerance,
-            double loopPeriodSecs) {
+            double dtSeconds) {
 
         this.statesNat     = statesNat;
         this.outputsNat    = outputsNat;
         this.plant         = plant;
         this.tolerance     = tolerance;
-        this.loopPeriodSecs = loopPeriodSecs;
+        this.dtSeconds = dtSeconds;
 
         // LQR computes optimal feedback gains
         controller = new LinearQuadraticRegulator<>(
             plant,
             qCost,
             rCost,
-            loopPeriodSecs
+            dtSeconds
         );
 
         //Kalman Filter corrects predicted values
@@ -116,7 +125,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             plant,
             modelStdDevs,
             encoderStdDevs,
-            loopPeriodSecs
+            dtSeconds
         );
 
         stateSpaceLoop = new LinearSystemLoop<>(
@@ -124,7 +133,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             controller,
             observer,
             maxVoltage,
-            loopPeriodSecs
+            dtSeconds
         );
 
         stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
@@ -139,14 +148,14 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
         this.outputsNat    = configs.getOutputsNat();
         this.plant         = plant;
         this.tolerance     = configs.getTolerance();
-        this.loopPeriodSecs = configs.getLoopPeriodSecs();
+        this.dtSeconds = configs.getdtSeconds();
 
         // LQR computes optimal feedback gains
         controller = new LinearQuadraticRegulator<>(
             plant,
             configs.getQCost(),
             configs.getRCost(),
-            loopPeriodSecs
+            dtSeconds
         );
 
         //Kalman Filter corrects predicted values
@@ -156,7 +165,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             plant,
             configs.getModelStdDevs(),
             configs.getEncoderStdDevs(),
-            loopPeriodSecs
+            dtSeconds
         );
 
         stateSpaceLoop = new LinearSystemLoop<>(
@@ -164,7 +173,7 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             controller,
             observer,
             configs.getMaxVoltage(),
-            loopPeriodSecs
+            dtSeconds
         );
 
         stateSpaceLoop.reset(new Matrix<>(statesNat, Nat.N1()));
@@ -197,13 +206,37 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
             return 0.0;
         }
 
-        stateSpaceLoop.correct(currentOutputs);
-        stateSpaceLoop.predict(loopPeriodSecs);
+        // Fuse dual sensors if enabled
+        Matrix<Outputs, N1> fusedOutputs = currentOutputs;
+        if (useDualSensors && currentOutputs.getNumRows() >= 1) {
+            fusedOutputs = fuseSensorReadings(currentOutputs);
+        }
+
+        stateSpaceLoop.correct(fusedOutputs);
+        stateSpaceLoop.predict(dtSeconds);
+
+        // Update Kalman filter covariance estimate
+        kalmanFilterCovariance = stateSpaceLoop.getObserver().getP();
 
         error = stateSpaceLoop.getXHat().minus(setpoint);
         atSetpoint = isAtSetpoint(error);
 
         return stateSpaceLoop.getU(0);
+    }
+
+    /**
+     * Fuses primary sensor with secondary sensor using weighted average.
+     * @param primarySensorOutput primary sensor measurement
+     * @return fused sensor reading
+     */
+    private Matrix<Outputs, N1> fuseSensorReadings(Matrix<Outputs, N1> primarySensorOutput) {
+        lastPrimaryMeasurement = primarySensorOutput.get(0, 0);
+        
+        // Create fused output: weighted combination of primary and secondary
+        double fusedValue = (lastPrimaryMeasurement * (1.0 - secondarySensorWeight)) + 
+                            (lastSecondaryMeasurement * secondarySensorWeight);
+        
+        return MatBuilder.fill(outputsNat, Nat.N1(), fusedValue);
     }
 
     /**
@@ -260,6 +293,86 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      */
     public void setTolerance(Matrix<States, N1> tolerance) {
         this.tolerance = tolerance;
+    }
+
+    // -----------------------------------------------------------------------
+    // Sensor Fusion Methods
+    // -----------------------------------------------------------------------
+
+    /**
+     * Enable dual sensor fusion for state estimation.
+     * Fuses primary sensor with secondary sensor (e.g., pose estimation).
+     * @param weight weighting for secondary sensor (0.0 = primary only, 1.0 = equal weight)
+     */
+    public void enableDualSensorFusion(double weight) {
+        this.useDualSensors = true;
+        this.secondarySensorWeight = Math.max(0.0, Math.min(1.0, weight));
+    }
+
+    /** Disable dual sensor fusion - uses only primary sensor. */
+    public void disableDualSensorFusion() {
+        this.useDualSensors = false;
+    }
+
+    /**
+     * Update the secondary sensor measurement.
+     * Call this before calculate() with the latest measurement.
+     * @param secondarySensorReading the secondary measurement (e.g., pose estimation)
+     */
+    public void setSecondarySensorReading(double secondarySensorReading) {
+        this.lastSecondaryMeasurement = secondarySensorReading;
+    }
+
+    /**
+     * Get the estimated uncertainty of the Kalman filter's state estimate.
+     * Higher values = more uncertain. Based on the trace of the error covariance matrix.
+     * @return uncertainty metric (sum of diagonal covariance elements)
+     */
+    public double getEstimateUncertainty() {
+        if (kalmanFilterCovariance == null) {
+            return 9999.0;  // No estimate yet
+        }
+        
+        // Uncertainty is the sum of diagonal elements (trace) of covariance matrix
+        double uncertainty = 0.0;
+
+        for (int i = 0; i < kalmanFilterCovariance.getNumRows(); i++) {
+            uncertainty += kalmanFilterCovariance.get(i, i);
+        }
+        return uncertainty;
+    }
+
+    /**
+     * Get the confidence level as a percentage (inverse of uncertainty).
+     * Higher = more confident in state estimate.
+     * @return confidence as a value between 0.0 and 1.0 (typically 0.95+)
+     */
+    public double getEstimateConfidence() {
+        double uncertainty = getEstimateUncertainty();
+        if (uncertainty == 0.0) return 1.0;
+        
+        // Simple inverse confidence metric
+        return Math.min(1.0, 1.0 / (1.0 + uncertainty));
+    }
+
+    /**
+     * Check if the Kalman filter estimate is currently reliable.
+     * Useful to decide whether to trust the estimate or fall back to raw sensor.
+     * @param confidenceThreshold minimum acceptable confidence (0.0 to 1.0)
+     * @return true if confidence > threshold
+     */
+    public boolean isEstimateReliable(double confidenceThreshold) {
+        return getEstimateConfidence() > confidenceThreshold;
+    }
+
+    /** Get the last primary sensor measurement that was fused. */
+    public double getLastPrimarySensorReading() {
+        return lastPrimaryMeasurement;
+    }
+
+    /** Get the last secondary sensor measurement that was fused. */
+    public double getLastSecondarySensorReading() {
+        return lastSecondaryMeasurement;
     }
 
 }
