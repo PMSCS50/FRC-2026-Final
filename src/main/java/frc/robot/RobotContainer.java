@@ -21,6 +21,7 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -105,7 +106,7 @@ public class RobotContainer {
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
-    Pathmaster monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
+    public final Pathmaster monkeyDLuffy;
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
@@ -113,10 +114,11 @@ public class RobotContainer {
     double turningSpeed = 0; // for speed scaling
     // **************************************************************************************************************
 
-
     public RobotContainer() {
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
+        monkeyDLuffy.addRotationZone("penis", new Translation2d(0,0), new Translation2d(8.25, 8.5), new Rotation2d(0), true);
+
 // Distance Based Shooting
-    // Middle Tag
     //     NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
     //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(4)); // 4 seconds
     //     NamedCommands.registerCommand("6 sec Middle Distance Based Shooting", 

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 /**
@@ -34,7 +36,7 @@ public class Pathmaster {
     private Supplier<ChassisSpeeds> robotSpeeds;
     private static RoronoaZoro zoro;
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
-    private static boolean configured = false;
+    private static boolean pathing = false;
     private static boolean warmup = false;
 
     //Used to prevent cancelPathing() from canceling other ddrivetrain commands.
@@ -192,6 +194,7 @@ public class Pathmaster {
     public Command makePathTo(Pose2d destination) {
         if (!checkConfigured("makePathTo")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
+        pathing = true;
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(destination, constraints),
             Set.of(drivetrain)
@@ -329,6 +332,10 @@ public class Pathmaster {
                        .getDistance(robotPose.get().getTranslation())
             ))
             .orElseThrow();
+    }
+
+    public boolean isPathing() {
+        return pathing;
     }
 }
 

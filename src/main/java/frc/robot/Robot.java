@@ -110,6 +110,8 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
     Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
 
+    Logger.recordOutput("Pathmaster/pathing", m_robotContainer.monkeyDLuffy.isPathing());
+
 
 
   }
@@ -126,7 +128,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     //Seeds gyro to 0 if blue, 180 if red
-    m_robotContainer.drivetrain.getPigeon2().setYaw((DriverStation.getAlliance() == DriverStation.Alliance.Red) ? 180.0 : 0.0);
+    m_robotContainer.drivetrain.getPigeon2().setYaw((DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red)) ? 180.0 : 0.0);
 
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
