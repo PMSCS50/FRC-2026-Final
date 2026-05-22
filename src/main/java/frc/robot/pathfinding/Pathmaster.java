@@ -287,6 +287,29 @@ public class Pathmaster {
         });
     }
 
+    //---------
+    //Telemetry
+    //---------
+
+    private Pose2d currentTarget = new Pose2d();
+
+    // Call this from your drive subsystem's periodic(), or Robot.java robotPeriodic()
+    public void logTelemetry() {
+        Pose2d pose = robotPose.get();
+        ChassisSpeeds speeds = robotSpeeds.get();
+
+        double vx = speeds.vxMetersPerSecond;
+        double vy = speeds.vyMetersPerSecond;
+        double actualVel = Math.hypot(vx, vy);
+
+        PPLogger.setCurrentPose(pose);
+        
+        //dont have commanded velocities here. Will move to drivetrain after I get David to fix this method and PPLogger.
+        PPLogger.setVelocities(actualVel, actualVel, speeds.omegaRadiansPerSecond, speeds.omegaRadiansPerSecond);
+
+        PPLogger.setTargetPose(currentTarget);
+    }
+
     // -------
     // Helpers
     // -------
