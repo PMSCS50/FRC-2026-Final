@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
@@ -46,6 +47,7 @@ import frc.robot.subsystems.vision.*;
 import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.VisionGeneral;
 import edu.wpi.first.cameraserver.CameraServer;
 import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
@@ -97,14 +99,15 @@ public class RobotContainer {
     // **************************************************************************************************************
     // ACTUAL IMPORTANT STUFF
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
- 
-    private final VisionSimSystem vision;
-    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
+    
+    private final VisionGeneral vision;
+    //private final VisionSimSystem vision;
+    //private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
 
-    private final Shooter shooter = new Shooter(LLVision);
+    private final Shooter shooter;
     private final Intake intake = new Intake();
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
@@ -121,9 +124,10 @@ public class RobotContainer {
         if (Constants.currentMode == Constants.Mode.SIM) {
             vision = new VisionSimSystem(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
-            vision = new VisionSimSystem(drivetrain, new VisionIOReal("realPenis"));
+            vision = new LLSubsystem(drivetrain, "limelight", "pppr");
         }
         
+        shooter = new Shooter(vision);
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         monkeyDLuffy.addOrientationZone("penis", new Translation2d(0,0), new Translation2d(8.25, 8.5), VisionConstants.getHubPose(), true);
 
@@ -151,7 +155,7 @@ public class RobotContainer {
 
        //  NamedCommands.registerCommand("Fixed Shooting Left Shoot", new FixedPIDShooting(shooter, 1.5));
 
-       NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, LLVision).withTimeout(4));
+       NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
 
 
 
@@ -255,7 +259,7 @@ public class RobotContainer {
         // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));
         // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter,() -> shooterSpeed));
         // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter, () -> shooterSpeed));
-        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, LLVision));
+        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision));
 
 
     // Letters
@@ -313,8 +317,11 @@ public class RobotContainer {
 
     // Letters
         // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
-
-        joystick.a().whileTrue(new AlignToHub(drivetrain, LLVision));
+        
+        if (vision instanceof LLSubsystem) {
+            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystem) vision));
+        }
+        
         //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
         // joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));

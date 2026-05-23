@@ -6,15 +6,16 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.VisionGeneral;
 import frc.robot.subsystems.VisionSubsystem;
 
 public class DistanceBasedShooting extends Command {
 
     private final Shooter shooter;
-    private final LLSubsystem vision;
+    private final VisionGeneral vision;
 
     
-    public DistanceBasedShooting(Shooter shooter, LLSubsystem vision) {
+    public DistanceBasedShooting(Shooter shooter, VisionGeneral vision) {
         this.shooter = shooter;
         this.vision = vision;
         addRequirements(shooter);

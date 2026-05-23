@@ -34,7 +34,7 @@ public class Shooter extends SubsystemBase {
     private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
     private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
 
-    private final LLSubsystem vision;
+    private final VisionGeneral vision;
 
 
     // ************************
@@ -59,7 +59,7 @@ public class Shooter extends SubsystemBase {
     
 
     // CONSTRUCTOR
-    public Shooter(LLSubsystem vision) {
+    public Shooter(VisionGeneral vision) {
         this.vision = vision;
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
