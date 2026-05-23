@@ -10,8 +10,9 @@
   import edu.wpi.first.math.trajectory.TrapezoidProfile;
   import edu.wpi.first.math.util.Units;
   import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 
-  import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
   import edu.wpi.first.apriltag.AprilTagFieldLayout;
   import edu.wpi.first.apriltag.AprilTagFields;
@@ -34,6 +35,18 @@
    * constants are needed, to reduce verbosity.
    */
   public final class Constants {
+    public static final Mode simMode = Mode.SIM;
+    public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+    public static enum Mode {
+      /** Running on a real robot. */
+      REAL,
+
+      /** Running a physics simulator. */
+      SIM,
+
+      /** Replaying from a log file. */
+      REPLAY
+    }
         public static class VisionConstants{
 
 
@@ -200,9 +213,13 @@
           public static final double climbSpeed = .1;
           public static final double climbMax = 15.0;
           private static final Pose2d RedClimb = new Pose2d(14.94, 3.71, Rotation2d.fromDegrees(0));
-          private static final Pose2d BlueClimb = new Pose2d(1.6, 3.71, Rotation2d.fromDegrees(180));
+          private static final Pose2d BlueClimb = new Pose2d(1.6, 3.71, Rotation2d.fromDegrees(0));
           public static Pose2d getClimbPose() {
             return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
+          }
+
+          public static Pose2d getClimbPose(DriverStation.Alliance alliance) {
+            return alliance == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
           }
           
         }

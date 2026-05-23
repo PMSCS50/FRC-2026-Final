@@ -1,0 +1,318 @@
+package frc.robot.subsystems.vision;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.littletonrobotics.junction.Logger;
+
+import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+
+/**
+ * Vision subsystem for AdvantageKit — Limelight 4 edition.
+ *
+ * All hardware/sim interaction is delegated to a VisionIO implementation:
+ *   - VisionIOReal  → real robot  (LimelightHelpers over NetworkTables)
+ *   - VisionIOSim   → simulation  (PhotonVision VisionSystemSim, same input schema)
+ *
+ * This class only reads from the logged VisionIOInputsAutoLogged snapshot —
+ * fully replay-safe. All getters mirror VisionSubsystem (non-AK) exactly.
+ */
+public class VisionSimSystem extends SubsystemBase {
+
+    private final VisionIO io;
+    private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
+    private final CommandSwerveDrivetrain drivetrain;
+    private final AprilTagFieldLayout aprilTagLayout;
+
+    private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(
+        Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+    );
+
+    public VisionSimSystem(CommandSwerveDrivetrain drivetrain, VisionIO io) {
+        this.io           = io;
+        this.drivetrain   = drivetrain;
+        this.aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
+    }
+
+    @Override
+    public void periodic() {
+
+        // --- 1. Seed MegaTag2 / sim pose -------------------------------------
+        double currentYawDeg = drivetrain.getState().Pose.getRotation().getDegrees();
+
+        if (RobotBase.isReal() && io instanceof VisionIOReal realIO) {
+            // Must happen BEFORE updateInputs() so MegaTag2 uses fresh heading
+            realIO.setRobotYaw(currentYawDeg);
+        }
+
+        if (!RobotBase.isReal() && io instanceof VisionIOSim simIO) {
+            simIO.updateSimPose(drivetrain.getState().Pose);
+        }
+
+        // --- 2. Pull all sensor data into logged snapshot --------------------
+        io.updateInputs(inputs);
+
+        // --- 3. Log outputs --------------------------------------------------
+        List<Pose2d> visibleTagPoses = new ArrayList<>();
+        if (aprilTagLayout != null) {
+            for (int id : inputs.visibleTagIds) {
+                aprilTagLayout
+                    .getTagPose(id)
+                    .ifPresent(pose -> visibleTagPoses.add(pose.toPose2d()));
+            }
+        }
+
+        Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
+        Logger.recordOutput("Vision/VisibleTags", visibleTagPoses.toArray(new Pose2d[0]));
+        Logger.recordOutput("Vision/PathfindToPose", VisionConstants.getCenter());
+        Logger.recordOutput("Vision/AimPose", VisionConstants.getAimPose());
+        Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
+        Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
+        Logger.recordOutput("Vision/TargetId", inputs.targetId);
+
+        if (aprilTagLayout != null && inputs.hasTarget) {
+            aprilTagLayout
+                .getTagPose(inputs.targetId)
+                .ifPresent(pose -> Logger.recordOutput("Vision/BestTargetPose", pose));
+        }
+
+        // processInputs always last
+        Logger.processInputs("Vision", inputs);
+
+        // --- 4. Rebuild std-dev matrix ---------------------------------------
+        if (inputs.visionStdDevs != null && inputs.visionStdDevs.length >= 3) {
+            visionStdDevs = VecBuilder.fill(
+                inputs.visionStdDevs[0],
+                inputs.visionStdDevs[1],
+                inputs.visionStdDevs[2]
+            );
+        } else {
+            visionStdDevs = VecBuilder.fill(
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            );
+        }
+
+        // --- 5. Feed pose estimate into drivetrain ---------------------------
+        if (inputs.hasEstimatedPose) {
+            drivetrain.addVisionMeasurement(
+                inputs.estimatedPose,
+                inputs.estimatedPoseTimestamp,
+                visionStdDevs
+            );
+        }
+    }
+
+    // =========================================================================
+    // PUBLIC GETTERS — all read from logged inputs (replay-safe)
+    // Mirrors VisionSubsystem exactly
+    // =========================================================================
+
+    /** True if the best visible target matches desiredId. */
+    public boolean hasTarget(int desiredId) {
+        return inputs.hasTarget && inputs.targetId == desiredId && inputs.hasTagTransform;
+    }
+
+    /** True if any AprilTag is visible. */
+    public boolean hasTargets() {
+        return inputs.hasTarget;
+    }
+
+    /**
+     * True if the given tag ID is anywhere in the visible tag list —
+     * even if it's not the primary target. Mirrors seesTarget(int) in VisionSubsystem.
+     */
+    public boolean seesTarget(int desiredId) {
+        for (int id : inputs.visibleTagIds) {
+            if (id == desiredId) return true;
+        }
+        return false;
+    }
+
+    /** Best visible tag ID, or -1 if none. */
+    public int getTargetId() {
+        return inputs.targetId;
+    }
+
+    // --- Primary (best) tag getters ------------------------------------------
+
+    /** Forward/back distance robot → primary tag face (meters). */
+    public double getX() {
+        return inputs.hasTagTransform ? inputs.tagToRobotX : 0.0;
+    }
+
+    /** Left/right distance robot → primary tag face (meters). */
+    public double getY() {
+        return inputs.hasTagTransform ? inputs.tagToRobotY : 0.0;
+    }
+
+    /** Vertical distance robot → primary tag (meters). */
+    public double getZ() {
+        return inputs.hasTagTransform ? inputs.tagToRobotZ : 0.0;
+    }
+
+    /** Robot yaw relative to primary tag (radians). */
+    public double getYawRad() {
+        return inputs.hasTagTransform ? inputs.tagToRobotRotZ : 0.0;
+    }
+
+    /** Straight-line XY distance to primary tag (meters). */
+    public double getDistance() {
+        return inputs.hasTagTransform
+            ? Math.hypot(inputs.tagToRobotX, inputs.tagToRobotY)
+            : 0.0;
+    }
+
+    // --- Per-tag getters (by ID) — mirror getX(id), getY(id), etc. ----------
+
+    /** Forward/back distance to a specific tag by ID (meters), or 0 if not visible. */
+    public double getX(int id) {
+        int idx = indexOfTag(id);
+        return idx >= 0 ? inputs.allTagToRobotX[idx] : 0.0;
+    }
+
+    /** Left/right distance to a specific tag by ID (meters), or 0 if not visible. */
+    public double getY(int id) {
+        int idx = indexOfTag(id);
+        return idx >= 0 ? inputs.allTagToRobotY[idx] : 0.0;
+    }
+
+    /** Vertical distance to a specific tag by ID (meters), or 0 if not visible. */
+    public double getZ(int id) {
+        int idx = indexOfTag(id);
+        return idx >= 0 ? inputs.allTagToRobotZ[idx] : 0.0;
+    }
+
+    /** Robot yaw relative to a specific tag (radians), or 0 if not visible. */
+    public double getYawRad(int id) {
+        int idx = indexOfTag(id);
+        return idx >= 0 ? inputs.allTagToRobotRotZ[idx] : 0.0;
+    }
+
+    /** Straight-line XY distance to a specific tag (meters), or 0 if not visible. */
+    public double getDistance(int id) {
+        int idx = indexOfTag(id);
+        if (idx < 0) return 0.0;
+        return Math.hypot(inputs.allTagToRobotX[idx], inputs.allTagToRobotY[idx]);
+    }
+
+    // =========================================================================
+    // HUB AIMING
+    // =========================================================================
+
+    /**
+     * Odometry-based hub yaw error (degrees).
+     * Requires drivetrain pose to be accurate. Use as primary when available.
+     * PID setpoint: 0.
+     */
+    public double getYawFromHub() {
+        Pose2d hubPose   = VisionConstants.getHubPose();
+        Pose2d robotPose = drivetrain.getState().Pose;
+        Transform2d hubToRobot = new Transform2d(hubPose, robotPose);
+        return hubToRobot.getRotation().getDegrees();
+    }
+
+    /**
+     * Tag-based hub yaw error (degrees) — no drivetrain odometry required.
+     *
+     * Chains hub → tag (from field layout) → robot (from tagToRobot transform)
+     * and reads the resulting rotation. Because the tagToRobot yaw updates live
+     * as the robot rotates, this is already an error signal — feed directly into
+     * PID with setpoint 0.
+     *
+     * Works with any visible tag, even ones not facing the hub.
+     *
+     * @param targetId  The AprilTag ID currently visible to use as the spatial origin.
+     * @return Hub yaw error in degrees, or 0.0 if the tag is not visible.
+     */
+    public double getYawFromHub(int targetId) {
+        if (!seesTarget(targetId)) return 0.0;
+        if (aprilTagLayout == null) return 0.0;
+
+        Optional<Pose3d> atagPose =
+            aprilTagLayout.getTagPose(targetId);
+        if (atagPose.isEmpty()) return 0.0;
+
+        Pose2d hubPose = VisionConstants.getHubPose();
+        Pose2d tagPose = atagPose.get().toPose2d();
+
+        // hub → tag (field layout geometry)
+        Transform2d hubToTag = new Transform2d(hubPose, tagPose);
+
+        // tag → robot (live from vision — changes as robot rotates)
+        int idx = indexOfTag(targetId);
+        Transform2d tagToRobot = new Transform2d(
+            new Translation2d(
+                inputs.allTagToRobotX[idx],
+                inputs.allTagToRobotY[idx]
+            ),
+            new Rotation2d(inputs.allTagToRobotRotZ[idx])
+        );
+
+        // hub → robot = hub → tag → robot
+        Transform2d hubToRobot = hubToTag.plus(tagToRobot);
+        return hubToRobot.getRotation().getDegrees();
+    }
+
+    // =========================================================================
+    // SHOOTER HELPERS
+    // =========================================================================
+
+    private final double shooterHeight = 0.508;
+    private final double phi           = Math.toRadians(70);
+
+    /** Distance from robot to hub using logged tag-space geometry (meters). */
+    public double getDistanceToHub() {
+        return inputs.distanceToHub;
+    }
+
+    public double getShooterVelocity(double distance) {
+        double y = 1.8288 - shooterHeight;
+        return Math.sqrt(
+            (9.807 * distance * distance) /
+            (2 * Math.cos(phi) * Math.cos(phi) * (distance * Math.tan(phi) + shooterHeight - y))
+        );
+    }
+
+    public double rpmFromDistance(double distance) {
+        double v           = getShooterVelocity(distance);
+        double wheelRadius = 0.0508;
+        double c           = 2.1;
+        return c * (v * 60.0) / (2.0 * Math.PI * wheelRadius) / 100;
+    }
+
+    /** Current vision measurement std-devs as a Matrix for addVisionMeasurement(). */
+    public Matrix<N3, N1> getEstimationStdDevs() {
+        return visionStdDevs;
+    }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
+
+    /**
+     * Returns the index of a tag ID in the visibleTagIds parallel arrays,
+     * or -1 if not found.
+     */
+    private int indexOfTag(int id) {
+        for (int i = 0; i < inputs.visibleTagIds.length; i++) {
+            if (inputs.visibleTagIds[i] == id) return i;
+        }
+        return -1;
+    }
+}

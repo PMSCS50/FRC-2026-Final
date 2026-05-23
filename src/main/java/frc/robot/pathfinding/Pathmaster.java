@@ -7,6 +7,8 @@ import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -17,13 +19,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import org.littletonrobotics.junction.Logger;
-
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Command factory that uses PathPlanner's pathfinding features to pathfind to a position on the field.
- * Uses custom pathfinding class RoronoaZoro for zone-aware rotation.
+ * Uses custom pathfinding class RoronoaZoroAK for zone-aware rotation.
  * must call initializePathfinder() and scheduleWarmup() before using any other methods.
  */
 
@@ -34,7 +35,7 @@ public class Pathmaster {
     private CommandSwerveDrivetrain drivetrain;
     private Supplier<Pose2d> robotPose;
     private Supplier<ChassisSpeeds> robotSpeeds;
-    private static RoronoaZoro zoro;
+    private static RoronoaZoroAK zoro;
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean pathing = false;
     private static boolean warmup = false;
@@ -86,7 +87,7 @@ public class Pathmaster {
 
     //Call in Robot.java before RobotContainer is initialized.
     public static void initializePathfinder() {
-        Pathmaster.zoro = new RoronoaZoro();
+        Pathmaster.zoro = new RoronoaZoroAK();
         Pathfinding.setPathfinder(Pathmaster.zoro);
     }
 
@@ -104,7 +105,7 @@ public class Pathmaster {
         return new IdealStartingState(Math.hypot(vx, vy), rot);
     }
 
-    //Called in constructor to set RoronoaZoro IdealStartingStateSupplier
+    //Called in constructor to set RoronoaZoroAK IdealStartingStateSupplier
     private void linkStartingState() {
         zoro.setStartingStateSupplier(this::getIdealStartingState);
     }
@@ -112,7 +113,7 @@ public class Pathmaster {
 
     /** Guards all methods — reports error and returns false if not fully configured. */
    private boolean checkConfigured(String methodName) {
-        if (!warmup || !AutoBuilder.isPathfindingConfigured()) {
+        if (!(warmup &&AutoBuilder.isPathfindingConfigured())) {
             DriverStation.reportWarning(
                 "[Pathmaster] Not configured when calling " + methodName +
                 ". Call initializePathfinder() and startWarmupCommand() first.", false);
@@ -135,8 +136,18 @@ public class Pathmaster {
      * it will rotate to and hold the given heading.
      */
     public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
-        if (!checkConfigured("addRotationZone")) return;
         ZoneManager.addZone(new RotationZone(name, min, max, rotation), active);
+        
+        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("Rotation Zone " + name, Pose2d.struct).publish();
+    
+        rectPublisher.set(new Pose2d[] {
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        });
     }
 
     /**
@@ -144,8 +155,55 @@ public class Pathmaster {
      * it will continuously face the given target pose.
      */
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
-        if (!checkConfigured("addOrientationZone")) return;
+        //if (!checkConfigured("addOrientationZone")) return;
         ZoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
+
+        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("Orientation Zone " + name, Pose2d.struct).publish();
+    
+        rectPublisher.set(new Pose2d[] {
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        });
+    }
+
+    /**
+     * Creates an orientation zone. When the robot paths through it,
+     * it will continuously face the given target pose.
+     */
+    public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {
+        //if (!checkConfigured("addConstraintZone")) return;
+        ZoneManager.addZone(new ConstraintZone(name, min, max, constraints), active);
+
+        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("Constraint Zone " + name, Pose2d.struct).publish();
+    
+        rectPublisher.set(new Pose2d[] {
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        });
+    }
+
+    public void addEventZone(String name, Translation2d min, Translation2d max, Command command, boolean active) {
+        //if (!checkConfigured("addEventZone")) return;
+        ZoneManager.addZone(new EventZone(name, min, max, command), active);
+
+        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("Event Zone " + name, Pose2d.struct).publish();
+    
+        rectPublisher.set(new Pose2d[] {
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        });
     }
 
     //Activates a single zone
@@ -192,13 +250,15 @@ public class Pathmaster {
 
     /** Pathfind to any field pose with obstacle avoidance. */
     public Command makePathTo(Pose2d destination) {
-        if (!checkConfigured("makePathTo")) return Commands.none();
+        //if (!checkConfigured("makePathTo")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         pathing = true;
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(destination, constraints),
             Set.of(drivetrain)
-        ).withName("makePathTo");
+        )
+        //.finallyDo(() -> pathing = false)
+        .withName("makePathTo");
     }
 
     /** Pathfind to a registered waypoint. */
@@ -297,21 +357,21 @@ public class Pathmaster {
     private Pose2d currentTarget = new Pose2d();
 
     // Call this from your drive subsystem's periodic(), or Robot.java robotPeriodic()
-    public void logTelemetry() {
-        Pose2d pose = robotPose.get();
-        ChassisSpeeds speeds = robotSpeeds.get();
+    // public void logTelemetry() {
+    //     Pose2d pose = robotPose.get();
+    //     ChassisSpeeds speeds = robotSpeeds.get();
 
-        double vx = speeds.vxMetersPerSecond;
-        double vy = speeds.vyMetersPerSecond;
-        double actualVel = Math.hypot(vx, vy);
+    //     double vx = speeds.vxMetersPerSecond;
+    //     double vy = speeds.vyMetersPerSecond;
+    //     double actualVel = Math.hypot(vx, vy);
 
-        PPLogger.setCurrentPose(pose);
+    //     PPLogger.setCurrentPose(pose);
         
-        //dont have commanded velocities here. Will move to drivetrain after I get David to fix this method and PPLogger.
-        PPLogger.setVelocities(actualVel, actualVel, speeds.omegaRadiansPerSecond, speeds.omegaRadiansPerSecond);
+    //     //dont have commanded velocities here. Will move to drivetrain after I get David to fix this method and PPLogger.
+    //     PPLogger.setVelocities(actualVel, actualVel, speeds.omegaRadiansPerSecond, speeds.omegaRadiansPerSecond);
 
-        PPLogger.setTargetPose(currentTarget);
-    }
+    //     PPLogger.setTargetPose(currentTarget);
+    // }
 
     // -------
     // Helpers
@@ -336,6 +396,18 @@ public class Pathmaster {
 
     public boolean isPathing() {
         return pathing;
+    }
+
+    public boolean warmedUp() {
+        return warmup;
+    }
+    
+    public boolean AutoBuilderPathFindingConfigured() {
+        return AutoBuilder.isPathfindingConfigured();
+    }
+
+    public boolean AutoBuilderConfigured() {
+        return AutoBuilder.isConfigured();
     }
 }
 

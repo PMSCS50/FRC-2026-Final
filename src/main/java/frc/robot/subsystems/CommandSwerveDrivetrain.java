@@ -222,7 +222,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
             m_setpointGenerator = new SwerveSetpointGenerator(
                 config,
-                RotationsPerSecond.of(0.75).in(RadiansPerSecond) // max rotational velocity in rad/s
+                RotationsPerSecond.of(3).in(RadiansPerSecond) // max rotational velocity in rad/s
             );
 
             m_previousSetpoint = new SwerveSetpoint(

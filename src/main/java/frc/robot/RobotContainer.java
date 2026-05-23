@@ -15,6 +15,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathConstraints;
+
 import edu.wpi.first.math.filter.Debouncer;
 import frc.robot.Constants.VisionConstants;
 //import frc.robot.commands.ChaseTagCommand;
@@ -24,6 +26,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -39,7 +42,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 // import frc.robot.subsystems.L3Climb;
 import frc.robot.subsystems.Climb;
-import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.vision.*;
 import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
@@ -62,13 +65,13 @@ public class RobotContainer {
     // **************************************************************************************************************
     // DRIVETRAIN CONSTANTS
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
 
     //High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
     private double pathMaxLinearAcceleration = 13.67; // m/s^2
-    private double pathMaxAngularAcceleration = 12.06; // rad/s^2
+    private double pathMaxAngularAcceleration = 12; // rad/s^2
 
     public static double intakeSpeed = 0.5;
     public static double pivotSpeed = .05;
@@ -95,7 +98,7 @@ public class RobotContainer {
     // ACTUAL IMPORTANT STUFF
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
  
-    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
+    private final VisionSimSystem vision;
     private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
 
     private final CommandXboxController joystick = new CommandXboxController(0);
@@ -115,8 +118,14 @@ public class RobotContainer {
     // **************************************************************************************************************
 
     public RobotContainer() {
+        if (Constants.currentMode == Constants.Mode.SIM) {
+            vision = new VisionSimSystem(drivetrain, new VisionIOSim("imaginaryPenis"));
+        } else {
+            vision = new VisionSimSystem(drivetrain, new VisionIOReal("realPenis"));
+        }
+        
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
-        monkeyDLuffy.addRotationZone("penis", new Translation2d(0,0), new Translation2d(8.25, 8.5), new Rotation2d(0), true);
+        monkeyDLuffy.addOrientationZone("penis", new Translation2d(0,0), new Translation2d(8.25, 8.5), VisionConstants.getHubPose(), true);
 
 // Distance Based Shooting
     //     NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
@@ -153,23 +162,23 @@ public class RobotContainer {
 
 // Orientation
     // Middle
-        NamedCommands.registerCommand("0.5 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
-        NamedCommands.registerCommand("1 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
-    // Left
-        NamedCommands.registerCommand("0.5 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
-        NamedCommands.registerCommand("1 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
-    // RIght
-        NamedCommands.registerCommand("0.5 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
-        NamedCommands.registerCommand("1 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
+//         NamedCommands.registerCommand("0.5 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
+//         NamedCommands.registerCommand("1 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
+//     // Left
+//         NamedCommands.registerCommand("0.5 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
+//         NamedCommands.registerCommand("1 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
+//     // RIght
+//         NamedCommands.registerCommand("0.5 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
+//         NamedCommands.registerCommand("1 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
 
-// Alignment
-    // Middle
+// // Alignment
+//     // Middle
 
-    // Left
+//     // Left
 
-    // Right
-        NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
-        NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
+//     // Right
+//         NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
+//         NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
 // Pivoting
@@ -278,8 +287,8 @@ public class RobotContainer {
                 new RunCommand(() -> intake.stopIntake(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
         ));
-        joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        //joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        //joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
         joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
         joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
@@ -306,18 +315,22 @@ public class RobotContainer {
         // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
 
         joystick.a().whileTrue(new AlignToHub(drivetrain, LLVision));
-        joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
         // joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-        joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
+        //joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
 
         /*
         Pathmaster implementation
         */
 
-        joystick.rightTrigger().onTrue(monkeyDLuffy.makePathTo(Constants.ClimbConstants.getClimbPose()));
-        joystick.rightTrigger().onFalse(monkeyDLuffy.cancelPathing());
+        /*
+         * 
+         */
+
+        joystick.b().whileTrue(monkeyDLuffy.makePathTo(Constants.ClimbConstants.getClimbPose(Alliance.Blue)));
+        joystick.y().onTrue(monkeyDLuffy.cancelPathing());
         
         
     }
