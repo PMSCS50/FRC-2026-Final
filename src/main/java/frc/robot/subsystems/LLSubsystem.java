@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 // llCamera2: rear-facing camera  (180 deg yaw offset)
 // Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
 
-public class LLSubsystem extends SubsystemBase {
+public class LLSubsystem extends VisionGeneral {
 
     private final CommandSwerveDrivetrain drivetrain;
     private final String llCamera1; // front camera: peepee peeper
@@ -287,6 +287,7 @@ public class LLSubsystem extends SubsystemBase {
     public double  getX()           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
     public double  getY()           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
     public double  getYaw()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
+    public double  getYawRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
@@ -348,6 +349,23 @@ public class LLSubsystem extends SubsystemBase {
             if (fiducial.id == tagId) return fiducial.distToRobot;
         }
         return -1.0;
+    }
+
+    // FOr the closest (primary) tag, mainly to make it usable for VisionGeneral
+    public double getDistance() {
+        if (latestEstimate == null || latestEstimate.rawFiducials == null || latestEstimate.rawFiducials.length == 0) return -1.0;
+        
+        RawFiducial closest = null;
+        double minDist = Double.MAX_VALUE;
+
+        for (RawFiducial fiducial : latestEstimate.rawFiducials) {
+            if (fiducial.distToRobot < minDist) {
+                minDist = fiducial.distToRobot;
+                closest = fiducial;
+            }
+        }
+
+        return closest != null ? closest.distToRobot : -1.0;
     }
    
 

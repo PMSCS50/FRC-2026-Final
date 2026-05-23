@@ -122,7 +122,7 @@ public class RobotContainer {
 
     public RobotContainer() {
         if (Constants.currentMode == Constants.Mode.SIM) {
-            vision = new VisionSimSystem(drivetrain, new VisionIOSim("imaginaryPenis"));
+            vision = new PVSimulator(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
             vision = new LLSubsystem(drivetrain, "limelight", "pppr");
         }
@@ -206,12 +206,13 @@ public class RobotContainer {
         SmartDashboard.putNumber("Shooting Speed", shooterSpeed);
         SmartDashboard.putBoolean("Has Targets", vision.hasTargets());
         
-        if (vision.hasTargets()) {
-            SmartDashboard.putNumber("Vision Distance", vision.getDistance(VisionConstants.getMiddleTagId()));
-            SmartDashboard.putNumber("Vision X", vision.getX(VisionConstants.getMiddleTagId()));
-            SmartDashboard.putNumber("Vision Y", vision.getY(VisionConstants.getMiddleTagId()));
-            SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(VisionConstants.getMiddleTagId()));
-        }
+        // if (vision.hasTargets() && Constants.currentMode == Constants.Mode.SIM) {
+        //     SmartDashboard.putNumber("Vision Distance", vision.getDistance(VisionConstants.getMiddleTagId()));
+        //     SmartDashboard.putNumber("Vision X", vision.getX(VisionConstants.getMiddleTagId()));
+        //     SmartDashboard.putNumber("Vision Y", vision.getY(VisionConstants.getMiddleTagId()));
+        //     SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(VisionConstants.getMiddleTagId()));
+        // }
+
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
                 double forward =  joystick.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;

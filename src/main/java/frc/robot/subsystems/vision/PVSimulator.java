@@ -22,6 +22,7 @@ import org.littletonrobotics.junction.Logger;
 
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.VisionGeneral;
 
 /**
  * Vision subsystem for AdvantageKit — Limelight 4 edition.
@@ -33,7 +34,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
  * This class only reads from the logged VisionIOInputsAutoLogged snapshot —
  * fully replay-safe. All getters mirror VisionSubsystem (non-AK) exactly.
  */
-public class VisionSimSystem extends SubsystemBase {
+public class PVSimulator extends VisionGeneral {
 
     private final VisionIO io;
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
@@ -44,7 +45,7 @@ public class VisionSimSystem extends SubsystemBase {
         Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
     );
 
-    public VisionSimSystem(CommandSwerveDrivetrain drivetrain, VisionIO io) {
+    public PVSimulator(CommandSwerveDrivetrain drivetrain, VisionIO io) {
         this.io           = io;
         this.drivetrain   = drivetrain;
         this.aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
@@ -314,5 +315,12 @@ public class VisionSimSystem extends SubsystemBase {
             if (inputs.visibleTagIds[i] == id) return i;
         }
         return -1;
+    }
+
+    public double getDistanceToTarget(Pose2d targetPose) {
+        if (!inputs.hasEstimatedPose) return 0.0;
+        Translation2d robotTranslation = inputs.estimatedPose.getTranslation();
+        Translation2d targetTranslation = targetPose.getTranslation();
+        return robotTranslation.getDistance(targetTranslation);
     }
 }

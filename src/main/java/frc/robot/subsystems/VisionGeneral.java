@@ -10,26 +10,26 @@ public abstract class VisionGeneral extends SubsystemBase {
     public abstract boolean hasTargets();
 
     /**
-     * @param i 
+     * 
      * @return The distance
      */
-    public abstract int getDistance(int i);
+    public abstract double getDistance();
 
     /**
      * @param i 
      * @return The x value
      */
-    public abstract int getX(int i);
+    public abstract double getX();
     /**
      * @param i 
      * @return The y value
      */
-    public abstract int getY(int i);
+    public abstract double getY();
     /**
     * @param i 
     * @return The yaw angle of the target, in radians
     */
-    public abstract int getYawRad(int i);
+    public abstract double getYawRad();
 
     public abstract double getDistanceToTarget(Pose2d hubPose);
 }

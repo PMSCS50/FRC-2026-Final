@@ -28,7 +28,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import org.photonvision.PhotonUtils;
 import frc.robot.Constants.VisionConstants;
 
-public class VisionSubsystem extends SubsystemBase {
+public class PVReal extends SubsystemBase {
 
     private final PhotonCamera camera;
     private final CommandSwerveDrivetrain drivetrain;
@@ -61,7 +61,7 @@ public class VisionSubsystem extends SubsystemBase {
 
 
 
-    public VisionSubsystem(String cameraName, CommandSwerveDrivetrain drivetrain) {
+    public PVReal(String cameraName, CommandSwerveDrivetrain drivetrain) {
         
         this.camera = new PhotonCamera(cameraName);
         this.drivetrain = drivetrain;
