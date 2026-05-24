@@ -132,7 +132,7 @@ public class PPLogger {
   public static void logActivePath(List<Pose2d> path) {
     Pose2d[] posesArray = path.toArray(new Pose2d[0]);
 
-    Logger.recordOutput("Path/activePath", posesArray);
+    Logger.recordOutput("Pathmaster/activePath", posesArray);
     field.getObject("activePath").setPoses(lastPathPoses);
 
     updatePathProgress();
