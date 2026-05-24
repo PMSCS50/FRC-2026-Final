@@ -1,26 +1,26 @@
   // Copyright (c) FIRST and other WPILib contributors.
   // Open Source Software; you can modify and/or share it under the terms of
-  // the WPILib BSD license file in the root directory of this project.
+// the WPILib BSD license file in the root directory of this project.
 
-  package frc.robot;
+package frc.robot;
 
-  import edu.wpi.first.math.geometry.Translation2d;
-  import edu.wpi.first.math.geometry.Translation3d;
-  import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-  import edu.wpi.first.math.trajectory.TrapezoidProfile;
-  import edu.wpi.first.math.util.Units;
-  import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
-  import edu.wpi.first.apriltag.AprilTagFieldLayout;
-  import edu.wpi.first.apriltag.AprilTagFields;
-  import edu.wpi.first.math.geometry.Pose2d;
-  import edu.wpi.first.math.geometry.Pose3d;
-  import edu.wpi.first.math.geometry.Rotation2d;
-  import edu.wpi.first.math.geometry.Rotation3d;
-  import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 
   /**
    * The Constants class provides a convenient place for teams to hold robot-wide
@@ -111,6 +111,10 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
           public static Pose2d getHubPose() {
             return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
+          }
+
+          public static Pose2d getHubPose(DriverStation.Alliance alliance) {
+            return alliance == DriverStation.Alliance.Red ? RedHub : BlueHub;
           }
 
           public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);

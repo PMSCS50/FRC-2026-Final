@@ -89,29 +89,20 @@ public class Robot extends LoggedRobot {
     //   }
     // }
 
-    Logger.recordOutput("shooter speed", RobotContainer.shooterSpeed);
-    // Logger.recordOutput("pivot speed", RobotContainer.pivotSpeed);
-    // Logger.recordOutput("intake Speed", RobotContainer.intakeSpeed);
-    
+    Logger.recordOutput("Mechanism/Shooter/shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
+    Logger.recordOutput("Mechanism/Shooter/shooter speed", RobotContainer.shooterSpeed);
+    Logger.recordOutput("Mechanism/Pivot/pivot speed", RobotContainer.pivotSpeed);
+    Logger.recordOutput("Mechanism/Pivot/pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    Logger.recordOutput("Mechanism/Intake/intake Speed", RobotContainer.intakeSpeed);
+    Logger.recordOutput("Mechanism/Intake/intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
 
-
-
-
-    Logger.recordOutput("shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
-    
-
-
-    Logger.recordOutput("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
-
-    Logger.recordOutput("pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
-    Logger.recordOutput("drivetrain yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
-    Logger.recordOutput("drivetrain x", m_robotContainer.drivetrain.getState().Pose.getX());
-    Logger.recordOutput("drivetrain y", m_robotContainer.drivetrain.getState().Pose.getY());
-    Logger.recordOutput("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
-    Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
+    Logger.recordOutput("Vision/drivetrain/yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
+    Logger.recordOutput("Vision/drivetrain/x", m_robotContainer.drivetrain.getState().Pose.getX());
+    Logger.recordOutput("Vision/drivetrain/y", m_robotContainer.drivetrain.getState().Pose.getY());
+    Logger.recordOutput("Vision/drivetrain/distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
+    Logger.recordOutput("Vision/drivetrain/pose", m_robotContainer.drivetrain.getState().Pose);
 
     Logger.recordOutput("Pathmaster/pathing", m_robotContainer.monkeyDLuffy.isPathing());
-
     Logger.recordOutput("Pathmaster/warmup", m_robotContainer.monkeyDLuffy.warmedUp());
     Logger.recordOutput("Pathmaster/AutoBuilderConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderConfigured());
     Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderPathFindingConfigured());

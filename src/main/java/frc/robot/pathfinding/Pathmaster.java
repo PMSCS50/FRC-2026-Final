@@ -4,6 +4,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
+import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -66,6 +67,7 @@ public class Pathmaster {
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
+        createLoggingCallbacks();
         linkStartingState();
     }
 
@@ -82,6 +84,7 @@ public class Pathmaster {
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
+        createLoggingCallbacks();
         linkStartingState();
     }
 
@@ -108,6 +111,22 @@ public class Pathmaster {
     //Called in constructor to set RoronoaZoroAK IdealStartingStateSupplier
     private void linkStartingState() {
         zoro.setStartingStateSupplier(this::getIdealStartingState);
+    }
+
+    private void createLoggingCallbacks() {
+         PathPlannerLogging.setLogCurrentPoseCallback((pose) -> {
+            PPLogger.logCurrentPose(pose);
+        });
+
+        // Logging callback for target robot pose
+        PathPlannerLogging.setLogTargetPoseCallback((pose) -> {
+            PPLogger.logTargetPose(pose);
+        });
+
+        // Logging callback for the active path, this is sent as a list of poses
+        PathPlannerLogging.setLogActivePathCallback((poses) -> {
+            PPLogger.logActivePath(poses);
+        });
     }
 
 
@@ -263,7 +282,7 @@ public class Pathmaster {
 
     /** Pathfind to a registered waypoint. */
     public Command gotoWaypoint(String name) {
-        if (!checkConfigured("gotoWaypoint")) return Commands.none();
+        // if (!checkConfigured("gotoWaypoint")) return Commands.none();
         if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name))
             return Commands.none();
         return Commands.defer(
@@ -279,7 +298,7 @@ public class Pathmaster {
      * This pathfinds to the start of the .path, then follows it precisely to the end.
      */
     public Command pathfindToPath(String pathName) {
-        if (!checkConfigured("pathfindToPath")) return Commands.none();
+        // if (!checkConfigured("pathfindToPath")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         try {
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
@@ -299,7 +318,7 @@ public class Pathmaster {
      * Copied from Spartronics.
      */
     public Command pathToNearestPose(List<Pose2d> candidates) {
-        if (!checkConfigured("pathToNearestPose")) return Commands.none();
+        // if (!checkConfigured("pathToNearestPose")) return Commands.none();
         if (candidates.isEmpty()) return Commands.none();
         return Commands.defer(() -> {
             Pose2d nearest = candidates.stream()
@@ -314,7 +333,7 @@ public class Pathmaster {
 
     /** Pathfinds to the nearest registered waypoint. */
     public Command pathToNearestWaypoint() {
-        if (!checkConfigured("pathToNearestWaypoint")) return Commands.none();
+        //if (!checkConfigured("pathToNearestWaypoint")) return Commands.none();
         if (waypoints.isEmpty()) return Commands.none();
         return pathToNearestPose(waypoints.values().stream().toList()).withName("pathToNearestWaypoint");
     }
@@ -324,8 +343,8 @@ public class Pathmaster {
      * I dont think we should ever use this method over vision.
      */
     public Command pathfindFaceTargetPose(Pose2d destination, Pose2d faceTarget) {
-        if (!checkConfigured("pathfindFaceTargetPose")) return Commands.none();
-        if (!AutoBuilder.isConfigured()) return Commands.none();
+        // if (!checkConfigured("pathfindFaceTargetPose")) return Commands.none();
+        //if (!AutoBuilder.isConfigured()) return Commands.none();
         return Commands.defer(() -> {
             Rotation2d facing = getRotationToPose(destination, faceTarget);
             Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
@@ -338,7 +357,7 @@ public class Pathmaster {
      * and immediately stops the drivetrain.
      */
     public Command cancelPathing() {
-        if (!checkConfigured("cancelPathing")) return Commands.none();
+        // if (!checkConfigured("cancelPathing")) return Commands.none();
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
             if (current != null) {

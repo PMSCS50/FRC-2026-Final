@@ -116,9 +116,9 @@ public class Shooter extends SubsystemBase {
     public void periodic()   
     {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
-        Logger.recordOutput("Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
-        Logger.recordOutput("Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Mechanism/Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Mechanism/Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
+        Logger.recordOutput("Mechanism/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
         
 
     }

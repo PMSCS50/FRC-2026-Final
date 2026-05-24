@@ -5,6 +5,8 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import edu.wpi.first.math.util.Units;
+
 
 import java.util.function.DoubleSupplier;
 
@@ -128,8 +130,11 @@ public class RobotContainer {
         }
         
         shooter = new Shooter(vision);
+        
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
-        monkeyDLuffy.addOrientationZone("penis", new Translation2d(0,0), new Translation2d(8.25, 8.5), VisionConstants.getHubPose(), true);
+        monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
+
 
 // Distance Based Shooting
     //     NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
@@ -337,7 +342,7 @@ public class RobotContainer {
          * 
          */
 
-        joystick.b().whileTrue(monkeyDLuffy.makePathTo(Constants.ClimbConstants.getClimbPose(Alliance.Blue)));
+        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.getAimPose(), Constants.VisionConstants.getHubPose(Alliance.Blue)));
         joystick.y().onTrue(monkeyDLuffy.cancelPathing());
         
         

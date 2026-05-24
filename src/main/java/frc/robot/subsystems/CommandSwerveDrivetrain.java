@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
+import frc.robot.pathfinding.PPLogger;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -243,6 +244,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         m_previousSetpoint,
                         speeds,
                         0.02
+                    );
+
+                    PPLogger.logVelocities(
+                        Math.hypot(getState().Speeds.vxMetersPerSecond, getState().Speeds.vyMetersPerSecond),
+                        Math.hypot(m_previousSetpoint.robotRelativeSpeeds().vxMetersPerSecond, m_previousSetpoint.robotRelativeSpeeds().vyMetersPerSecond),
+                        getState().Speeds.omegaRadiansPerSecond,
+                        m_previousSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond
                     );
 
                     // Apply generated module states
