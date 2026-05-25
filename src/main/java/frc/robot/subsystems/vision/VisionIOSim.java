@@ -1,8 +1,10 @@
 package frc.robot.subsystems.vision;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -14,10 +16,12 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-
+import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 
 /**
@@ -131,13 +135,21 @@ public class VisionIOSim implements VisionIO {
             }
 
             inputs.visibleTagIds     = ids;
+  
+            if (VisionConstants.aprilTagLayoutAndymark != null) {
+                List<Pose2d> tagPoses = new ArrayList<>();
+                for (int id : inputs.visibleTagIds) {
+                    VisionConstants.aprilTagLayoutAndymark
+                        .getTagPose(id)
+                        .ifPresent(pose -> tagPoses.add(pose.toPose2d()));
+                }
+                inputs.visibleTagPoses = tagPoses.toArray(new Pose2d[0]);
+            }
+
             inputs.allTagToRobotX    = txArr;
             inputs.allTagToRobotY    = tyArr;
             inputs.allTagToRobotZ    = tzArr;
             inputs.allTagToRobotRotZ = trArr;
-
-            // Hub distance from primary tag
-            inputs.distanceToHub = Math.hypot(inputs.tagToRobotX, inputs.tagToRobotY);
 
         } else {
             inputs.hasTarget       = false;
@@ -179,6 +191,7 @@ public class VisionIOSim implements VisionIO {
             EstimatedRobotPose est = latestEst.get();
             inputs.hasEstimatedPose       = true;
             inputs.estimatedPose          = est.estimatedPose.toPose2d();
+            inputs.distanceToHub          = inputs.estimatedPose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
             inputs.estimatedPoseTimestamp = est.timestampSeconds;
 
             int    numTags = latestTargets.size();

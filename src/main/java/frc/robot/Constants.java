@@ -11,6 +11,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -73,10 +74,6 @@ import edu.wpi.first.math.geometry.Transform3d;
             return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? -1 : -1;
           }
 
-
-          
-          
-          
           public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
           public static double distanceToTag = 1;
           public static AprilTagFieldLayout aprilTagLayoutWelded = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -129,18 +126,8 @@ import edu.wpi.first.math.geometry.Transform3d;
               );
           }
 
-          public static LoggedNetworkNumber aimX = new LoggedNetworkNumber("Vision/Aimpose/X", 2);
-          public static LoggedNetworkNumber aimY = new LoggedNetworkNumber("Vision/Aimpose/Y", 2);
-          public static LoggedNetworkNumber aimRot = new LoggedNetworkNumber("Vision/Aimpose/Rot", 0.0);
-
-          public static Pose2d getAimPose() {
-              return new Pose2d(
-                  aimX.get(),
-                  aimY.get(),
-                  Rotation2d.fromDegrees(aimRot.get())
-              );
-          }
-
+          // Aimpose for testing set-point pathing to shooting
+          public static Pose2d aimPose = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? new Pose2d(14.513, 6.043, Rotation2d.fromDegrees(0)) : new Pose2d(2, 2, Rotation2d.fromDegrees(0));
           // Basic filtering thresholds
           public static double maxAmbiguity = 0.3;
           public static double maxZError = 0.75;

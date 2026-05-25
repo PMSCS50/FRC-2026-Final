@@ -37,6 +37,7 @@ public interface VisionIO {
 
         /** IDs of every currently visible AprilTag. */
         public int[] visibleTagIds = new int[0];
+        public Pose2d[] visibleTagPoses = new Pose2d[0];
 
         /**
          * Per-tag tagToRobot transforms, decomposed into flat parallel arrays

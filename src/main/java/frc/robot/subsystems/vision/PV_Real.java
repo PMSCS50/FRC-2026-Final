@@ -24,11 +24,12 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
+
 import org.photonvision.PhotonUtils;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
-public class PVReal extends SubsystemBase {
+public class PV_Real extends SubsystemBase {
 
     private final PhotonCamera camera;
     private final CommandSwerveDrivetrain drivetrain;
@@ -61,7 +62,7 @@ public class PVReal extends SubsystemBase {
 
 
 
-    public PVReal(String cameraName, CommandSwerveDrivetrain drivetrain) {
+    public PV_Real(String cameraName, CommandSwerveDrivetrain drivetrain) {
         
         this.camera = new PhotonCamera(cameraName);
         this.drivetrain = drivetrain;

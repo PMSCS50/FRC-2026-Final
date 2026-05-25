@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.vision.VisionGeneral;
 
 public class Shooter extends SubsystemBase {
 
@@ -116,9 +117,9 @@ public class Shooter extends SubsystemBase {
     public void periodic()   
     {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
-        Logger.recordOutput("Mechanism/Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Mechanism/Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
-        Logger.recordOutput("Mechanism/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Subsystems/Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Subsystems/Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
+        Logger.recordOutput("Subsystems/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
         
 
     }

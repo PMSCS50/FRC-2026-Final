@@ -7,63 +7,43 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.util.Units;
 
-
-import java.util.function.DoubleSupplier;
-
-import org.photonvision.PhotonCamera;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.path.PathConstraints;
 
-import edu.wpi.first.math.filter.Debouncer;
 import frc.robot.Constants.VisionConstants;
 //import frc.robot.commands.ChaseTagCommand;
-import frc.robot.commands.*;
-import edu.wpi.first.math.geometry.Pose2d;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.units.measure.LinearVelocity;
+
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
+
 import frc.robot.subsystems.Intake;
-// import frc.robot.subsystems.L3Climb;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.vision.*;
-import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.VisionGeneral;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import edu.wpi.first.cameraserver.CameraServer;
-import frc.robot.Constants;
-import frc.robot.Constants.VisionConstants;
+
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
-import frc.robot.commands.PV_Align;
-import frc.robot.commands.PV_Orient;
 import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
 import frc.robot.pathfinding.Pathmaster;
-
-
-
 public class RobotContainer {
 
     // **************************************************************************************************************
@@ -120,11 +100,10 @@ public class RobotContainer {
     private SendableChooser<Command> autoChooser;
 
     double turningSpeed = 0; // for speed scaling
-    // **************************************************************************************************************
 
     public RobotContainer() {
         if (Constants.currentMode == Constants.Mode.SIM) {
-            vision = new PVSimulator(drivetrain, new VisionIOSim("imaginaryPenis"));
+            vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
             vision = new LLSubsystem(drivetrain, "limelight", "pppr");
         }
@@ -134,71 +113,24 @@ public class RobotContainer {
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
         monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
+        monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
 
+        NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
 
-// Distance Based Shooting
-    //     NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(4)); // 4 seconds
-    //     NamedCommands.registerCommand("6 sec Middle Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(6)); // 6 seconds
-    //     NamedCommands.registerCommand("8 sec Middle Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(8)); // 8 seconds
-    // // Left Tag    
-    //     NamedCommands.registerCommand("4 sec Left Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(4)); // 4 seconds
-    //     NamedCommands.registerCommand("6 sec Left Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(6)); // 6 seconds
-    //     NamedCommands.registerCommand("8 sec Left Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(8)); // 8 seconds
-    // // Right Tag
-    //     NamedCommands.registerCommand("4 sec Right Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(4)); // 4 seconds
-    //     NamedCommands.registerCommand("6 sec Right Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(6)); // 6 seconds
-    //     NamedCommands.registerCommand("8 sec Right Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(8)); // 8 seconds
-
-       //  NamedCommands.registerCommand("Fixed Shooting Left Shoot", new FixedPIDShooting(shooter, 1.5));
-
-       NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
-
-
-
-// Intaking
+        // Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
         NamedCommands.registerCommand("4 sec Intaking", new Intaking(intake).withTimeout(4));
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
 
-// Orientation
-    // Middle
-//         NamedCommands.registerCommand("0.5 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
-//         NamedCommands.registerCommand("1 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
-//     // Left
-//         NamedCommands.registerCommand("0.5 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
-//         NamedCommands.registerCommand("1 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
-//     // RIght
-//         NamedCommands.registerCommand("0.5 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
-//         NamedCommands.registerCommand("1 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
-
-// // Alignment
-//     // Middle
-
-//     // Left
-
-//     // Right
-//         NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
-//         NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
-        // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
-
-// Pivoting
-
+        // Pivoting
         NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
         NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false ).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
 
-// Configuring
+        // Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
         CameraServer.startAutomaticCapture();
@@ -210,13 +142,6 @@ public class RobotContainer {
 
         SmartDashboard.putNumber("Shooting Speed", shooterSpeed);
         SmartDashboard.putBoolean("Has Targets", vision.hasTargets());
-        
-        // if (vision.hasTargets() && Constants.currentMode == Constants.Mode.SIM) {
-        //     SmartDashboard.putNumber("Vision Distance", vision.getDistance(VisionConstants.getMiddleTagId()));
-        //     SmartDashboard.putNumber("Vision X", vision.getX(VisionConstants.getMiddleTagId()));
-        //     SmartDashboard.putNumber("Vision Y", vision.getY(VisionConstants.getMiddleTagId()));
-        //     SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(VisionConstants.getMiddleTagId()));
-        // }
 
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
@@ -342,7 +267,7 @@ public class RobotContainer {
          * 
          */
 
-        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.getAimPose(), Constants.VisionConstants.getHubPose(Alliance.Blue)));
+        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.aimPose, Constants.VisionConstants.getHubPose()));
         joystick.y().onTrue(monkeyDLuffy.cancelPathing());
         
         

@@ -1,6 +1,6 @@
 package frc.robot.pathfinding;
 
-import com.pathplanner.lib.path.PathPlannerPath;
+//import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -178,7 +178,7 @@ public class PPLogger {
    *
    * <p>Published to:
    *   - AKit: "PathMaster/pathProgress"
-   *   - NT4:  "/PathMaster/pathProgress"  ← wire this to an Elastic Number Bar (0–1)
+   *   - NT4:  "/PathMaster/pathProgress" - wire this to an Elastic Number Bar (0–1)
    */
   private static void updatePathProgress() {
     if (lastPathPoses.isEmpty()) {

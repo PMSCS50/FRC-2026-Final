@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -6,6 +6,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 import frc.robot.Constants.VisionConstants;
 
@@ -31,13 +33,13 @@ import java.util.stream.Stream;
 // llCamera2: rear-facing camera  (180 deg yaw offset)
 // Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
 
-public class LLSubsystem extends VisionGeneral {
+public class LLSubsystem extends VisionGeneral implements VisionIO {
 
     private final CommandSwerveDrivetrain drivetrain;
     private final String llCamera1; // front camera: peepee peeper
     private final String llCamera2; // rear camera: ass tumor
 
-    private final HashMap<Double, Transform2d> tagtransforms = new HashMap<>();
+    private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
 
     private double omegaRps;
 
@@ -46,7 +48,7 @@ public class LLSubsystem extends VisionGeneral {
     private PoseEstimate latestEstimate;
 
 
-    //Vision Sexually Transmitted Diseases
+    //Vision standard deviations
     private static final double BASE_XY_STD_DEV      = 0.5;
     private static final double THETA_STD_DEV        = 9999.0;
     private static final double MAX_AMBIGUITY        = 0.9;
@@ -55,6 +57,7 @@ public class LLSubsystem extends VisionGeneral {
     private static final double FIELD_MAX_X          = 16.5;
     private static final double FIELD_MAX_Y          = 8.5;
 
+    private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
     public LLSubsystem(CommandSwerveDrivetrain drivetrain, String llCamera1, String llCamera2) {
         this.drivetrain = drivetrain;
@@ -69,6 +72,9 @@ public class LLSubsystem extends VisionGeneral {
     @Override
     public void periodic() {
         var driveState = drivetrain.getState();
+
+        updateInputs(inputs);
+        Logger.processInputs("LoggedVision", inputs);
 
         double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
@@ -164,7 +170,7 @@ public class LLSubsystem extends VisionGeneral {
                 pose.getRotation()
             );
             tagtransforms.put(
-                fiducial.fiducialID,
+                (int) fiducial.fiducialID,
                 tagToRobot
             );
         }
@@ -178,15 +184,6 @@ public class LLSubsystem extends VisionGeneral {
         Logger.recordOutput("Vision/Cam2 Tag Count",        llMeasurement2 != null ? llMeasurement2.tagCount : 0);
         Logger.recordOutput("Vision/Cam1 Valid",            cam1Valid);
         Logger.recordOutput("Vision/Cam2 Valid",            cam2Valid);
-
-        if (latestEstimate != null && hasTargets()) {
-            Logger.recordOutput("Vision/Field X",           latestEstimate.pose.getX());
-            Logger.recordOutput("Vision/Field Y",           latestEstimate.pose.getY());
-            Logger.recordOutput("Vision/Heading",           latestEstimate.pose.getRotation().getDegrees());
-            Logger.recordOutput("Vision/Tag Count",         latestEstimate.tagCount);
-            Logger.recordOutput("Vision/Avg Tag Distance",  latestEstimate.avgTagDist);
-            Logger.recordOutput("Vision/Visible Tags",      tagtransforms.keySet().stream().mapToDouble(Double::doubleValue).toArray());
-        }
     }
 
     //Validation
@@ -351,7 +348,7 @@ public class LLSubsystem extends VisionGeneral {
         return -1.0;
     }
 
-    // FOr the closest (primary) tag, mainly to make it usable for VisionGeneral
+    // For the closest (primary) tag, mainly to make it usable for VisionGeneral
     public double getDistance() {
         if (latestEstimate == null || latestEstimate.rawFiducials == null || latestEstimate.rawFiducials.length == 0) return -1.0;
         
@@ -368,5 +365,43 @@ public class LLSubsystem extends VisionGeneral {
         return closest != null ? closest.distToRobot : -1.0;
     }
    
+    @Override
+    public void updateInputs(VisionIOInputs inputs) {
+        inputs.hasTarget       = hasTargets();
+        inputs.targetId        = hasTargets() ? (int) LimelightHelpers.getFiducialID(llCamera1) : -1; // best-effort primary target ID
+        inputs.hasTagTransform = inputs.hasTarget;
+
+        inputs.tagToRobotX    = inputs.hasTagTransform ? getTagX(inputs.targetId) : 0.0;
+        inputs.tagToRobotY    = inputs.hasTagTransform ? getTagY(inputs.targetId) : 0.0;
+        inputs.tagToRobotZ    = 0.0; // Limelight's fiducial pose does not provide Z translation, so we set it to 0 for the primary tag as well.
+        inputs.tagToRobotRotZ = inputs.hasTagTransform ? getTagYaw(inputs.targetId) : 0.0;
+
+        inputs.visibleTagIds     = tagtransforms.keySet().stream().mapToInt(Integer::intValue).toArray();
+        inputs.visibleTagPoses   = Arrays.stream(inputs.visibleTagIds)
+                                  .filter(tagtransforms::containsKey)
+                                  .mapToObj(id -> new Pose2d(getTagX(id), getTagY(id), new Rotation2d(getTagYaw(id))))
+                                  .toArray(Pose2d[]::new);
+        Logger.recordOutput("Vision/VisibleTagPoses", inputs.visibleTagPoses);
+
+        inputs.allTagToRobotX    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagX).toArray();
+        inputs.allTagToRobotY    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagY).toArray();
+        inputs.allTagToRobotZ    = new double[inputs.visibleTagIds.length]; // Limelight's fiducial pose does not provide Z translation, so we set it to 0 for all tags.    
+        inputs.allTagToRobotRotZ = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagYaw).toArray();
+
+        inputs.hasEstimatedPose = estimatedRobotPose != null;
+
+        inputs.estimatedPose = estimatedRobotPose != null ? estimatedRobotPose : new Pose2d();
+
+        inputs.estimatedPoseTimestamp = latestEstimate != null ? latestEstimate.timestampSeconds : 0.0;
+
+        inputs.numTagsUsed = latestEstimate != null ? latestEstimate.tagCount : 0;
+
+        inputs.avgTagDistMeters = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
+
+        Matrix<N3, N1> stdDevMatrix = calculateStdDevs(latestEstimate);
+        inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
+
+        inputs.distanceToHub   = getDistanceToTarget(VisionConstants.getHubPose());
+    }
 
 }

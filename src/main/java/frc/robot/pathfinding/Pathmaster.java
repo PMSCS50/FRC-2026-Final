@@ -13,15 +13,13 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import org.littletonrobotics.junction.Logger;
 
 /**
  * Command factory that uses PathPlanner's pathfinding features to pathfind to a position on the field.
@@ -373,7 +371,7 @@ public class Pathmaster {
     //Telemetry
     //---------
 
-    private Pose2d currentTarget = new Pose2d();
+    // private Pose2d currentTarget = new Pose2d();
 
     // Call this from your drive subsystem's periodic(), or Robot.java robotPeriodic()
     // public void logTelemetry() {

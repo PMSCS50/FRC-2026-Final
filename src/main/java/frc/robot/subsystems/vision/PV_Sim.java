@@ -21,8 +21,7 @@ import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.VisionGeneral;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 /**
  * Vision subsystem for AdvantageKit — Limelight 4 edition.
@@ -34,7 +33,7 @@ import frc.robot.subsystems.VisionGeneral;
  * This class only reads from the logged VisionIOInputsAutoLogged snapshot —
  * fully replay-safe. All getters mirror VisionSubsystem (non-AK) exactly.
  */
-public class PVSimulator extends VisionGeneral {
+public class PV_Sim extends VisionGeneral {
 
     private final VisionIO io;
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
@@ -45,7 +44,7 @@ public class PVSimulator extends VisionGeneral {
         Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
     );
 
-    public PVSimulator(CommandSwerveDrivetrain drivetrain, VisionIO io) {
+    public PV_Sim(CommandSwerveDrivetrain drivetrain, VisionIO io) {
         this.io           = io;
         this.drivetrain   = drivetrain;
         this.aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
@@ -79,10 +78,10 @@ public class PVSimulator extends VisionGeneral {
             }
         }
 
-        Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
-        Logger.recordOutput("Vision/VisibleTags", visibleTagPoses.toArray(new Pose2d[0]));
-        Logger.recordOutput("Vision/PathfindToPose", VisionConstants.getCenter());
-        Logger.recordOutput("Vision/AimPose", VisionConstants.getAimPose());
+        //Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
+        //Logger.recordOutput("Vision/VisibleTagPoses", visibleTagPoses.toArray(new Pose2d[0]));
+        //Logger.recordOutput("Vision/PathfindToPose", VisionConstants.getCenter());
+        Logger.recordOutput("Vision/AimPose", VisionConstants.aimPose);
         Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
         Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
         Logger.recordOutput("Vision/TargetId", inputs.targetId);
@@ -94,7 +93,7 @@ public class PVSimulator extends VisionGeneral {
         }
 
         // processInputs always last
-        Logger.processInputs("Vision", inputs);
+        Logger.processInputs("LoggedVision", inputs);
 
         // --- 4. Rebuild std-dev matrix ---------------------------------------
         if (inputs.visionStdDevs != null && inputs.visionStdDevs.length >= 3) {

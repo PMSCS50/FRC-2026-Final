@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.drivetrain;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -37,13 +37,14 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.pathfinding.PPLogger;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
  * Subsystem so it can easily be used in command-based projects.
  */
-public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem, DriveIO {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
@@ -54,6 +55,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+
+    private final DriveIOInputsAutoLogged m_inputs = new DriveIOInputsAutoLogged();
 
     /** Swerve request to apply during robot-centric path following 
      *  This also takes in our robot's physical constrants to create optimal path speeds.
@@ -322,43 +325,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return applyRequest(() -> m_idle);
     }
 
-
     @Override
     public void periodic() {
-        for (int i = 0; i < getModules().length; i++) {
-            var module = getModule(i);
-            
-            // Drive motor signals
-           double driveStatorCurrent = module.getDriveMotor().getStatorCurrent().getValueAsDouble();
-           double driveSupplyCurrent = module.getDriveMotor().getSupplyCurrent().getValueAsDouble();
-           double driveVoltage      = module.getDriveMotor().getMotorVoltage().getValueAsDouble();
-            // Steer motor signals
-           double steerStatorCurrent = module.getSteerMotor().getStatorCurrent().getValueAsDouble();
-           double steerSupplyCurrent = module.getSteerMotor().getSupplyCurrent().getValueAsDouble();
-           double steerVoltage       = module.getSteerMotor().getMotorVoltage().getValueAsDouble();
-           // Logger.recordOutput(getModule(i), module.getDriveMotor().getStatorCurrent().getValueasDouble()); 
+        updateInputs(m_inputs);
+        Logger.processInputs("LoggedDrivetrain", m_inputs);  // also needed for AdvantageKit to log it
+
+        if (Utils.isSimulation()) {
+            if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+                DriverStation.getAlliance().ifPresent(allianceColor -> {
+                    setOperatorPerspectiveForward(
+                        allianceColor == Alliance.Red
+                            ? kRedAlliancePerspectiveRotation
+                            : kBlueAlliancePerspectiveRotation
+                    );
+                    m_hasAppliedOperatorPerspective = true;
+                });
+            }
         }
-
-        
-            
-
-        /*
-         * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-        //  */
-        // if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-        //     DriverStation.getAlliance().ifPresent(allianceColor -> {
-        //         setOperatorPerspectiveForward(
-        //             allianceColor == Alliance.Red
-        //                 ? kRedAlliancePerspectiveRotation
-        //                 : kBlueAlliancePerspectiveRotation
-        //         );
-        //         m_hasAppliedOperatorPerspective = true;
-        //     });
-        // }
     }
 
     private void startSimThread() {
@@ -375,6 +358,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
+
     private void configureSignalLogging() {
         for (int i = 0; i < getModules().length; i++) {
             var module = getModule(i);
@@ -388,5 +372,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             module.getSteerMotor().getMotorVoltage().setUpdateFrequency(50);
         }
         SignalLogger.start(); // starts .hoot logging
+    }
+
+    @Override
+    public void updateInputs(DriveIOInputs inputs) {
+        var state = getState();
+
+        inputs.moduleStates = state.ModuleStates;
+
+        inputs.timestamp = Utils.getCurrentTimeSeconds();
+
+        inputs.robotChassisSpeeds = state.Speeds;
+        inputs.robotHeading = state.Pose.getRotation().getRadians();
+        inputs.robotPose = state.Pose;
+        
+        // For this example, we'll just set this to false. Implementing field-oriented control is left as an exercise to the user.
+        inputs.isFieldOriented = false;
+        inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
     }
 }

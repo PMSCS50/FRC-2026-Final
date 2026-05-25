@@ -9,20 +9,12 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import com.ctre.phoenix6.Utils;
-import com.pathplanner.lib.pathfinding.Pathfinding;
-
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.Climb;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Shooter;
+
 import frc.robot.pathfinding.Pathmaster;
 
 
@@ -34,6 +26,7 @@ public class Robot extends LoggedRobot {
   private final boolean kUseLimelight = false;
 
   public Robot() {
+    //setUseTiming(isReal());
     Logger.recordMetadata("ProjectName", "MyProject");
 
     if (isReal()) {
@@ -89,18 +82,12 @@ public class Robot extends LoggedRobot {
     //   }
     // }
 
-    Logger.recordOutput("Subsystem/Shooter/shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
-    Logger.recordOutput("Subsystem/Shooter/shooter speed", RobotContainer.shooterSpeed);
-    Logger.recordOutput("Subsystem/Pivot/pivot speed", RobotContainer.pivotSpeed);
-    Logger.recordOutput("Subsystem/Pivot/pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
-    Logger.recordOutput("Subsystem/Intake/intake Speed", RobotContainer.intakeSpeed);
-    Logger.recordOutput("Subsystem/Intake/intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
-    
-    Logger.recordOutput("Vision/drivetrain/yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
-    Logger.recordOutput("Vision/drivetrain/x", m_robotContainer.drivetrain.getState().Pose.getX());
-    Logger.recordOutput("Vision/drivetrain/y", m_robotContainer.drivetrain.getState().Pose.getY());
-    Logger.recordOutput("Vision/drivetrain/distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
-    Logger.recordOutput("Vision/drivetrain/pose", m_robotContainer.drivetrain.getState().Pose);
+    Logger.recordOutput("Subsystems/Shooter/shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
+    Logger.recordOutput("Subsystems/Shooter/shooter speed", RobotContainer.shooterSpeed);
+    Logger.recordOutput("Subsystems/Pivot/pivot speed", RobotContainer.pivotSpeed);
+    Logger.recordOutput("Subsystems/Pivot/pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    Logger.recordOutput("Subsystems/Intake/intake Speed", RobotContainer.intakeSpeed);
+    Logger.recordOutput("Subsystems/Intake/intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
 
     Logger.recordOutput("Pathmaster/pathing", m_robotContainer.monkeyDLuffy.isPathing());
     Logger.recordOutput("Pathmaster/warmup", m_robotContainer.monkeyDLuffy.warmedUp());
