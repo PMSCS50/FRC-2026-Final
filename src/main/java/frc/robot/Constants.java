@@ -86,14 +86,14 @@ import edu.wpi.first.math.geometry.Transform3d;
           );
 
           // Hub Positions
-          private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-          static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+          private static final Pose2d RedHub = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
+          static final Pose2d BlueHub = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
 
-          private static final Pose2d RedHubRedSide = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-          private static final Pose2d RedHubBlueSide = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+          private static final Pose2d RedHubRedSide = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
+          private static final Pose2d RedHubBlueSide = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
           
-          private static final Pose2d BlueHubRedSide = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-          private static final Pose2d BlueHubBlueSide = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+          private static final Pose2d BlueHubRedSide = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
+          private static final Pose2d BlueHubBlueSide = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
 
           public static Pose2d getBlueHubPose() {
             return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? BlueHubRedSide : BlueHubBlueSide;
@@ -127,7 +127,7 @@ import edu.wpi.first.math.geometry.Transform3d;
           }
 
           // Aimpose for testing set-point pathing to shooting
-          public static Pose2d aimPose = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? new Pose2d(14.513, 6.043, Rotation2d.fromDegrees(0)) : new Pose2d(2, 2, Rotation2d.fromDegrees(0));
+          public static Pose2d aimPose = AllianceRelativePose(new Pose2d(2, 2, Rotation2d.fromDegrees(0)));
           // Basic filtering thresholds
           public static double maxAmbiguity = 0.3;
           public static double maxZError = 0.75;
@@ -214,7 +214,21 @@ import edu.wpi.first.math.geometry.Transform3d;
           }
           
         }
+
+        public static Pose2d AllianceRelativePose(Pose2d pose) {
+          if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) {
+              return new Pose2d(
+                  FIELD_MAX_X - pose.getX(),
+                  FIELD_MAX_Y - pose.getY(),
+                  pose.getRotation().plus(Rotation2d.fromDegrees(180))
+              );
+          } else {
+              return pose;
+          }
+        }
         
+        public static final double FIELD_MAX_X = 16.513048;
+        public static final double FIELD_MAX_Y = 8.042656;
 
         public static final double X_REEF_ALIGNMENT_P = 2;
         public static final double Y_REEF_ALIGNMENT_P = 3;
