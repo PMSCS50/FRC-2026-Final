@@ -86,28 +86,28 @@ import edu.wpi.first.math.geometry.Transform3d;
           );
 
           // Hub Positions
-          private static final Pose2d RedHub = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
+          // private static final Pose2d RedHub = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
           static final Pose2d BlueHub = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
 
-          private static final Pose2d RedHubRedSide = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
-          private static final Pose2d RedHubBlueSide = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
+          // private static final Pose2d RedHubRedSide = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
+          // private static final Pose2d RedHubBlueSide = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
           
-          private static final Pose2d BlueHubRedSide = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
-          private static final Pose2d BlueHubBlueSide = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
+          // private static final Pose2d BlueHubRedSide = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
+          // private static final Pose2d BlueHubBlueSide = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
 
-          public static Pose2d getBlueHubPose() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? BlueHubRedSide : BlueHubBlueSide;
-          }
-           public static Pose2d getRedHubPose() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHubRedSide : RedHubBlueSide;
-          }
-           public static Pose2d getHubPose2() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? getRedHubPose() : getBlueHubPose();
-          }
+          // public static Pose2d getBlueHubPose() {
+          //   return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? BlueHubRedSide : BlueHubBlueSide;
+          // }
+          //  public static Pose2d getRedHubPose() {
+          //   return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHubRedSide : RedHubBlueSide;
+          // }
+          //  public static Pose2d getHubPose2() {
+          //   return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? getRedHubPose() : getBlueHubPose();
+          // }
 
 
           public static Pose2d getHubPose() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHub : BlueHub;
+            return AllianceRelativePose(BlueHub);
           }
 
           public static Pose2d getHubPose(DriverStation.Alliance alliance) {
@@ -206,7 +206,7 @@ import edu.wpi.first.math.geometry.Transform3d;
           private static final Pose2d RedClimb = new Pose2d(14.94, 3.71, Rotation2d.fromDegrees(0));
           private static final Pose2d BlueClimb = new Pose2d(1.6, 3.71, Rotation2d.fromDegrees(0));
           public static Pose2d getClimbPose() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
+            return AllianceRelativePose(BlueClimb);
           }
 
           public static Pose2d getClimbPose(DriverStation.Alliance alliance) {
@@ -215,7 +215,7 @@ import edu.wpi.first.math.geometry.Transform3d;
           
         }
 
-        public static Pose2d AllianceRelativePose(Pose2d pose) {
+        private static Pose2d AllianceRelativePose(Pose2d pose) {
           if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) {
               return new Pose2d(
                   FIELD_MAX_X - pose.getX(),
