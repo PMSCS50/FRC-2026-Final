@@ -61,21 +61,21 @@ import edu.wpi.first.math.geometry.Transform3d;
           public static final int redRightTagId = 2;
 
           public static int getMiddleTagId () {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redMiddleTagId : blueMiddleTagId;
+            return AllianceRelativeFiducials(blueMiddleTagId, redMiddleTagId)
           }
           public static int getLeftTagId () {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redLeftTagId : blueLeftTagId;
+            return AllianceRelativeFiducials(blueLeftTagId, redLeftTagId)
           }
           public static int getRightTagId () {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? redRightTagId : blueRightTagId;
+            return AllianceRelativeFiducials(blueRightTagId, redRightTagId)
           }
 
           public static int getDirectionFlipper() {
             return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? -1 : -1;
           }
 
-          public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
-          public static double distanceToTag = 1;
+          // public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
+          // public static double distanceToTag = 1;
           public static AprilTagFieldLayout aprilTagLayoutWelded = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
           public static AprilTagFieldLayout aprilTagLayoutAndymark = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
@@ -129,26 +129,26 @@ import edu.wpi.first.math.geometry.Transform3d;
           // Aimpose for testing set-point pathing to shooting
           public static Pose2d aimPose = AllianceRelativePose(new Pose2d(2, 2, Rotation2d.fromDegrees(0)));
           // Basic filtering thresholds
-          public static double maxAmbiguity = 0.3;
-          public static double maxZError = 0.75;
+          // public static double maxAmbiguity = 0.3;
+          // public static double maxZError = 0.75;
 
-          // Standard deviation baselines, for 1 meter distance and 1 tag
-          // (Adjusted automatically based on distance and # of tags)
-          public static double linearStdDevBaseline = 0.02; // Meters
-          public static double angularStdDevBaseline = 0.06; // Radians
+          // // Standard deviation baselines, for 1 meter distance and 1 tag
+          // // (Adjusted automatically based on distance and # of tags)
+          // public static double linearStdDevBaseline = 0.02; // Meters
+          // public static double angularStdDevBaseline = 0.06; // Radians
 
-          // Standard deviation multipliers for each camera
-          // (Adjust to trust some cameras more than others)
-          public static double[] cameraStdDevFactors =
-            new double[] {
-              1.0, // Camera 0
-              1.0 // Camera 1
-            };
+          // // Standard deviation multipliers for each camera
+          // // (Adjust to trust some cameras more than others)
+          // public static double[] cameraStdDevFactors =
+          //   new double[] {
+          //     1.0, // Camera 0
+          //     1.0 // Camera 1
+          //   };
 
-          // Multipliers to apply for MegaTag 2 observations
-          public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
-          public static double angularStdDevMegatag2Factor =
-          Double.POSITIVE_INFINITY; // No rotation data available
+          // // Multipliers to apply for MegaTag 2 observations
+          // public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
+          // public static double angularStdDevMegatag2Factor =
+          // Double.POSITIVE_INFINITY; // No rotation data available
 
         }
         // values of 20
@@ -159,9 +159,9 @@ import edu.wpi.first.math.geometry.Transform3d;
           public static final double pivotPower = 0.1;
           public static final double intakePower = 0.4;
 
-          public static final double kP = 0;
-          public static final double kI = 0;
-          public static final double kD = 0;
+          // public static final double kP = 0;
+          // public static final double kI = 0;
+          // public static final double kD = 0;
 
           public static final double kPivotSetpointA = 0.0;  
           public static final double kPivotSetpointB = 16; 
@@ -203,7 +203,7 @@ import edu.wpi.first.math.geometry.Transform3d;
           public static final int climbMotorCanId = 41;
           public static final double climbSpeed = .1;
           public static final double climbMax = 15.0;
-          private static final Pose2d RedClimb = new Pose2d(14.94, 3.71, Rotation2d.fromDegrees(0));
+          // private static final Pose2d RedClimb = new Pose2d(14.94, 3.71, Rotation2d.fromDegrees(0));
           private static final Pose2d BlueClimb = new Pose2d(1.6, 3.71, Rotation2d.fromDegrees(0));
           public static Pose2d getClimbPose() {
             return AllianceRelativePose(BlueClimb);
@@ -224,6 +224,14 @@ import edu.wpi.first.math.geometry.Transform3d;
               );
           } else {
               return pose;
+          }
+        }
+
+        private static Pose2d AllianceRelativeFiducials(int blueTagId, int redTagId) {
+          if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) {
+              return redTagId
+          } else {
+              return blueTagId;
           }
         }
         
