@@ -46,6 +46,7 @@ public class Pathmaster {
         "goToWaypoint",
         "pathToNearestPose",
         "pathToNearestWaypoint",
+        "pathFindToNearestPath",
         "pathfindFaceTargetPose"
     );
 
@@ -336,6 +337,30 @@ public class Pathmaster {
         return pathToNearestPose(waypoints.values().stream().toList()).withName("pathToNearestWaypoint");
     }
 
+    /** Pathfinds to the .path file with the nearest starting point, then follows that path all the way through*/ 
+    public Command pathfindToNearestPath(String... pathNames) {
+        if (!AutoBuilder.isConfigured()) return Commands.none();
+
+        return Commands.defer(() -> {
+            Optional<PathPlannerPath> nearestPath = Arrays.stream(pathNames)
+                .map(name -> {
+                    try {
+                        return PathPlannerPath.fromPathFile(name);
+                    } catch (Exception e) {
+                        return null; // skip nonexistent/bad paths
+                    }
+                })
+                .filter(Objects::nonNull)
+                .min(Comparator.comparingDouble(
+                    p -> p.getPoint(0)
+                        .position
+                        .getDistance(robotPose.get().getTranslation())
+                ));
+
+            return nearestPath.map(path -> AutoBuilder.pathfindThenFollowPath(path, constraints))
+        }, Set.of(drivetrain)).withName("pathFindToNearestPath");
+    }
+
     /**
      * Pathfinds to a destination while arriving faced toward a separate target.
      * I dont think we should ever use this method over vision.
@@ -366,29 +391,6 @@ public class Pathmaster {
             }
         });
     }
-
-    //---------
-    //Telemetry
-    //---------
-
-    // private Pose2d currentTarget = new Pose2d();
-
-    // Call this from your drive subsystem's periodic(), or Robot.java robotPeriodic()
-    // public void logTelemetry() {
-    //     Pose2d pose = robotPose.get();
-    //     ChassisSpeeds speeds = robotSpeeds.get();
-
-    //     double vx = speeds.vxMetersPerSecond;
-    //     double vy = speeds.vyMetersPerSecond;
-    //     double actualVel = Math.hypot(vx, vy);
-
-    //     PPLogger.setCurrentPose(pose);
-        
-    //     //dont have commanded velocities here. Will move to drivetrain after I get David to fix this method and PPLogger.
-    //     PPLogger.setVelocities(actualVel, actualVel, speeds.omegaRadiansPerSecond, speeds.omegaRadiansPerSecond);
-
-    //     PPLogger.setTargetPose(currentTarget);
-    // }
 
     // -------
     // Helpers
