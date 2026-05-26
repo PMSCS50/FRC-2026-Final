@@ -11,23 +11,8 @@ import org.littletonrobotics.junction.Logger;
 import java.util.List;
 
 /**
- * PPLogger - PathMaster telemetry bridge for AdvantageKit + Elastic Dashboard.
- *
- * <p>Replaces PPLibTelemetry with:
- *   - AdvantageKit Logger.recordOutput() for all pose/velocity data (gives you log replay for free)
- *   - Field2d published to SmartDashboard for Elastic's Field widget
- *   - Separate NT4 topics for each velocity value so Elastic line graphs can plot them individually
- *   - Path progress (0.0 → 1.0) computed from nearest waypoint index
- *
- * <p>Usage: Call the static setters from your drive subsystem / path following command,
- * just like you would with PPLibTelemetry.
- *
- * <p>In Elastic, add:
- *   - Field2d widget → key "Field"
- *   - Line Graph → keys "/PathMaster/vel/actual" + "/PathMaster/vel/commanded"
- *   - Line Graph → keys "/PathMaster/vel/actualAngular" + "/PathMaster/vel/commandedAngular"
- *   - Line Graph → key "/PathMaster/pathInaccuracy"
- *   - Number Bar  → key "/PathMaster/pathProgress" (min 0, max 1)
+ * PPLogger - Pathmaster Telemetry to AdvantageKit
+ * Provides helper methods to be called in PathPlannerLogging
  */
 public class PPLogger {
 
@@ -60,10 +45,6 @@ public class PPLogger {
           .getDoubleTopic("/PathMaster/pathInaccuracy")
           .publish();
 
-  private static final DoublePublisher pathProgressPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathMaster/pathProgress")
-          .publish();
 
   // ── Internal state for derived metrics ────────────────────────────────────
   private static Pose2d lastCurrentPose  = new Pose2d();
@@ -120,7 +101,7 @@ public class PPLogger {
     Logger.recordOutput("Pathmaster/currentPose", pose);
     field.setRobotPose(pose);
 
-    updateDerivedMetrics();
+    updatePathInnacuracy();
   }
 
   /**
@@ -149,7 +130,7 @@ public class PPLogger {
     Logger.recordOutput("Pathmaster/targetPose", targetPose);
     field.getObject("targetPose").setPoses(targetPose);
 
-    updateDerivedMetrics();
+    updatePathInnacuracy();
   }
 
   // ── Derived metrics ───────────────────────────────────────────────────────
@@ -158,53 +139,13 @@ public class PPLogger {
    * Recomputes path inaccuracy (distance between current and target pose).
    * Called automatically whenever current or target pose is updated.
    */
-  private static void updateDerivedMetrics() {
+  private static void updatePathInnacuracy() {
     double inaccuracy = lastCurrentPose
         .getTranslation()
         .getDistance(lastTargetPose.getTranslation());
 
     Logger.recordOutput("Pathmaster/pathInaccuracy", inaccuracy);
     inaccuracyPub.set(inaccuracy);
-
-    updatePathProgress();
   }
 
-  /**
-   * Computes path progress as a value from 0.0 (start) to 1.0 (end).
-   *
-   * <p>Strategy: find the index of the path waypoint closest to the robot's
-   * current position. That index divided by the total waypoint count gives a
-   * clean, monotonically-increasing progress value that works for any path shape.
-   *
-   * <p>Published to:
-   *   - AKit: "PathMaster/pathProgress"
-   *   - NT4:  "/PathMaster/pathProgress" - wire this to an Elastic Number Bar (0–1)
-   */
-  private static void updatePathProgress() {
-    if (lastPathPoses.isEmpty()) {
-      Logger.recordOutput("Pathmaster/pathProgress", 0.0);
-      pathProgressPub.set(0.0);
-      return;
-    }
-
-    int closestIndex = 0;
-    double closestDist = Double.MAX_VALUE;
-
-    for (int i = 0; i < lastPathPoses.size(); i++) {
-      double dist = lastCurrentPose
-          .getTranslation()
-          .getDistance(lastPathPoses.get(i).getTranslation());
-
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestIndex = i;
-      }
-    }
-
-    // Normalize to [0, 1]. Use size-1 so the last waypoint == 1.0 exactly.
-    double progress = (double) closestIndex / Math.max(1, lastPathPoses.size() - 1);
-
-    Logger.recordOutput("Pathmaster/pathProgress", progress);
-    pathProgressPub.set(progress);
-  }
 }
