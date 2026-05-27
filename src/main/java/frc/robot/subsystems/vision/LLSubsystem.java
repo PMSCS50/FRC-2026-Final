@@ -120,12 +120,12 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
         if (cam1Valid || cam2Valid) {
             estimatedRobotPose = drivetrain.getState().Pose;
 
-            Logger.recordOutput("Front Cam PE Odometry PE difference magnitude", Math.hypot(
+            Logger.recordOutput("Vision/Front Cam PE Odometry PE difference magnitude", Math.hypot(
                 llMeasurement1.pose.getX() - drivetrain.getState().Pose.getX(),
                 llMeasurement1.pose.getY() - drivetrain.getState().Pose.getY()
             ));
 
-            Logger.recordOutput("Front Cam PE Odometry PE difference magnitude", Math.hypot(
+            Logger.recordOutput("Vision/Back Cam PE Odometry PE difference magnitude", Math.hypot(
                 llMeasurement2.pose.getX() - drivetrain.getState().Pose.getX(),
                 llMeasurement2.pose.getY() - drivetrain.getState().Pose.getY()
             ));
@@ -381,6 +381,7 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
                                   .filter(tagtransforms::containsKey)
                                   .mapToObj(id -> new Pose2d(getTagX(id), getTagY(id), new Rotation2d(getTagYaw(id))))
                                   .toArray(Pose2d[]::new);
+                                  
         Logger.recordOutput("Vision/VisibleTagPoses", inputs.visibleTagPoses);
 
         inputs.allTagToRobotX    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagX).toArray();
