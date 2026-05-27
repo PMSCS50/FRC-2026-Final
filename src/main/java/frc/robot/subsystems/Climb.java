@@ -43,8 +43,6 @@ public class Climb extends SubsystemBase {
         
 
        climbMotor.configure(climbMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-
     }
 
     @Override
@@ -62,12 +60,6 @@ public class Climb extends SubsystemBase {
         climbMotor.stopMotor();
 
     } 
-
-
-
-
-
-
 
    public void pull(){
         if (limitSwitchHook.get()) {

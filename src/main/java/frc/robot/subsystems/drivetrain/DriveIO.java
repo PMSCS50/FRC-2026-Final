@@ -21,8 +21,12 @@ public interface DriveIO {
         public ChassisSpeeds robotChassisSpeeds = new ChassisSpeeds(); // [m/s], robot-relative
         public Pose2d robotPose = new Pose2d(); // [m], field-relative
 
+        public double totalCurrent = 0.0;
+        public double totalVoltage = 0.0;
+
         public boolean isFieldOriented = false;
         public double distanceToHub = 0.0; // [m]
+
     }
 
     public default void updateInputs(DriveIOInputs inputs) {}

@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -81,6 +82,30 @@ public class Robot extends LoggedRobot {
     //     m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
     //   }
     // }
+
+    Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBrownoutVoltage());
+    Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
+    Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
+    Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
+    Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
+    Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
+    Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
+    Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
+
+    for (int i = 0; i < 4; i++) {
+      SwerveModule<?, ?, ?> module = m_robotContainer.drivetrain.getModule(i);
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getMotorVoltage().getValueAsDouble());
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/SupplyCurrent", module.getSupplyCurrent().getValueAsDouble());
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/StatorCurrent", module.getStatorCurrent().getValueAsDouble());
+    }
+
+    double totalDrivetrainCurrent = 0.0;
+    for (int i = 0; i < 4; i++) {
+        totalDrivetrainCurrent += moduleInputs[i].driveSupplyCurrentAmps;
+        totalDrivetrainCurrent += moduleInputs[i].turnSupplyCurrentAmps;
+    }
+
+    Logger.recordOutput("Drive/TotalCurrent");
 
     Logger.recordOutput("Subsystems/Shooter/shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
     Logger.recordOutput("Subsystems/Shooter/shooter speed", RobotContainer.shooterSpeed);
