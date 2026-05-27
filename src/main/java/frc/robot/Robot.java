@@ -10,11 +10,13 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,14 +24,17 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Shooter;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
+  private Pigeon2 mGyro = new Pigeon2(0);
 
   private final RobotContainer m_robotContainer;
-
-  private final boolean kUseLimelight = false;
+  
+  int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+  int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "MyProject");
@@ -52,6 +57,13 @@ public class Robot extends LoggedRobot {
   public void robotInit() {
       DataLogManager.start();
       DriverStation.startDataLog(DataLogManager.getLog());
+      boolean red = (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) ? true : false;
+      if (red) {
+        LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, redTags);
+      }
+      else {
+        LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, blueTags);
+      }
     }
   @Override
   public void robotPeriodic() {
@@ -107,13 +119,20 @@ public class Robot extends LoggedRobot {
   public void disabledInit() {}
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    double robotYaw = mGyro.getYaw().getValueAsDouble();    
+    LimelightHelpers.SetRobotOrientation(VisionConstants.limelightName, robotYaw, 0, 0, 0, 0, 0);
+    LimelightHelpers.SetIMUMode(VisionConstants.limelightName,1);
+  }
 
   @Override
   public void disabledExit() {}
 
   @Override
   public void autonomousInit() {
+
+    m_robotContainer.drivetrain.getPigeon2().setYaw(DriverStation.getAlliance().get() == Alliance.Red ? 180 : 0);
+    LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     if (m_autonomousCommand != null) {
@@ -129,6 +148,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
+    LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
+
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }

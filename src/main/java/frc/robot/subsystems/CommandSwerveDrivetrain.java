@@ -1,3 +1,6 @@
+
+
+
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
@@ -31,7 +34,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.Constants.VisionConstants;
+import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -261,27 +265,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    @Override
-    public void addVisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> visionStdDevs) {
-
-        double xStd = visionStdDevs.get(0, 0);
-        double yStd = visionStdDevs.get(1, 0);
-        double yawStd = visionStdDevs.get(2, 0);
-
-        // Reject ambiguous measurements
-        if (xStd > 4.0 || yStd > 4.0 || yawStd > 1.5) {
-        return;
-        }
-
-        // Soft clamp
-        xStd = Math.max(xStd, 0.05);
-        yStd = Math.max(yStd, 0.05);
-        yawStd = Math.max(yawStd, 0.02);
-
-        Matrix<N3, N1> tunedStdDevs = VecBuilder.fill(xStd, yStd, yawStd);
-
-        super.addVisionMeasurement(pose, timestampSeconds, tunedStdDevs);
-    }
 
     //get robot pose
     public Pose2d getPose() {
@@ -310,25 +293,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
 
         
-            
 
-        /*
-         * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-        //  */
-        // if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-        //     DriverStation.getAlliance().ifPresent(allianceColor -> {
-        //         setOperatorPerspectiveForward(
-        //             allianceColor == Alliance.Red
-        //                 ? kRedAlliancePerspectiveRotation
-        //                 : kBlueAlliancePerspectiveRotation
-        //         );
-        //         m_hasAppliedOperatorPerspective = true;
-        //     });
-        // }
+
+
     }
 
     private void startSimThread() {

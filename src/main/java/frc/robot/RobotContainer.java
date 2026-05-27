@@ -10,6 +10,7 @@ import java.util.function.DoubleSupplier;
 
 import org.photonvision.PhotonCamera;
 
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -82,8 +83,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
  
     private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
-    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight-meowlit");
-
+    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, VisionConstants.limelightName);
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
 
@@ -100,50 +100,11 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-// Distance Based Shooting
-    // Middle Tag
-    //     NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(4)); // 4 seconds
-    //     NamedCommands.registerCommand("6 sec Middle Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(6)); // 6 seconds
-    //     NamedCommands.registerCommand("8 sec Middle Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getMiddleTagId()).withTimeout(8)); // 8 seconds
-    // // Left Tag    
-    //     NamedCommands.registerCommand("4 sec Left Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(4)); // 4 seconds
-    //     NamedCommands.registerCommand("6 sec Left Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(6)); // 6 seconds
-    //     NamedCommands.registerCommand("8 sec Left Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getLeftTagId()).withTimeout(8)); // 8 seconds
-    // // Right Tag
-    //     NamedCommands.registerCommand("4 sec Right Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(4)); // 4 seconds
-    //     NamedCommands.registerCommand("6 sec Right Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(6)); // 6 seconds
-    //     NamedCommands.registerCommand("8 sec Right Distance Based Shooting", 
-    //         new DistanceBasedShooting(shooter, vision, VisionConstants.getRightTagId()).withTimeout(8)); // 8 seconds
-
-       //  NamedCommands.registerCommand("Fixed Shooting Left Shoot", new FixedPIDShooting(shooter, 1.5));
-
        NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, LLVision).withTimeout(4));
-
-
-
 // Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
         NamedCommands.registerCommand("4 sec Intaking", new Intaking(intake).withTimeout(4));
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
-
-// Orientation
-    // Middle
-        NamedCommands.registerCommand("0.5 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
-        NamedCommands.registerCommand("1 sec Middle Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getMiddleTagId(), 0).withTimeout(1));
-    // Left
-        NamedCommands.registerCommand("0.5 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
-        NamedCommands.registerCommand("1 sec Left Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getLeftTagId(), 0).withTimeout(1));
-    // RIght
-        NamedCommands.registerCommand("0.5 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
-        NamedCommands.registerCommand("1 sec Right Orientation", new PV_Orient(drivetrain, vision, VisionConstants.getRightTagId(), 0).withTimeout(1));
 
 // Alignment
     // Middle
@@ -161,6 +122,10 @@ public class RobotContainer {
         NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false ).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
+
+        NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
+
+        
 
 
 // Configuring
@@ -206,10 +171,6 @@ public class RobotContainer {
         subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
         subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        // subjoystick.leftBumper().onTrue(new InstantCommand(() -> intakeSpeed -= 0.05));
-        // subjoystick.rightBumper().onTrue(new InstantCommand(() -> intakeSpeed += 0.05));
-        // subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(intakeSpeed), intake));
-        // subjoystick.leftTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
        
 
@@ -217,26 +178,12 @@ public class RobotContainer {
         subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
 
     // POV Controls    
-        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision, 
-        //     VisionConstants.getMiddleTagId(), VisionConstants.getLeftTagId(), VisionConstants.getRightTagId())); 
+        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
 
-        
-        // subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
-        // subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
-        // subjoystick.povLeft().onTrue(new RunCommand(() -> LLVision.setPigeon()));
-        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new FixedPIDShooting(shooter,1.23));
-        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter, 2.25));
-        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));
-        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter,() -> shooterSpeed));
-        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter, () -> shooterSpeed));
-        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, LLVision));
 
 
     // Letters
         subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
-
-        // subjoystick.b().whileTrue(new RunCommand(() -> climb.pullClimbDuty(-.2)));
-        // subjoystick.b().onFalse(new RunCommand(() -> climb.stopClimb()));
         subjoystick.b().onTrue(new RunCommand(() -> pivot.resetPivot(), pivot));
         subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
         subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
@@ -252,7 +199,7 @@ public class RobotContainer {
         joystick.leftTrigger().whileTrue(
         Commands.parallel(
             new RunCommand(() -> intake.spinIntakePID(1), intake),
-            new RunCommand(() -> shooter.spinKickersAgain(-.4), shooter)
+            new RunCommand(() -> shooter.spinKickersAgain(-.6), shooter)
             )
         );
         joystick.leftTrigger().onFalse(

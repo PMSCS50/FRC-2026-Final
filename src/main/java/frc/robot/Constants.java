@@ -35,7 +35,7 @@
    */
   public final class Constants {
         public static class VisionConstants{
-
+          public static final String limelightName = "limelight-meowlit";
 
           public static final int blueMiddleTagId = 26;
           public static final int redMiddleTagId = 10;
@@ -78,22 +78,6 @@
           // Hub Positions
           private static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
           static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-
-          private static final Pose2d RedHubRedSide = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-          private static final Pose2d RedHubBlueSide = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-          
-          private static final Pose2d BlueHubRedSide = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-          private static final Pose2d BlueHubBlueSide = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-
-          public static Pose2d getBlueHubPose() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? BlueHubRedSide : BlueHubBlueSide;
-          }
-           public static Pose2d getRedHubPose() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RedHubRedSide : RedHubBlueSide;
-          }
-           public static Pose2d getHubPose2() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? getRedHubPose() : getBlueHubPose();
-          }
 
 
           public static Pose2d getHubPose() {

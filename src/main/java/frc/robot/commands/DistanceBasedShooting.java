@@ -35,8 +35,9 @@ public class DistanceBasedShooting extends Command {
 
         if (distance > 0) {
             shooter.rpmControl(distance);
-
+            if (shooter.atCorrectRPM()) {
                 shooter.spinKickers();
+            }
         }
     }
 

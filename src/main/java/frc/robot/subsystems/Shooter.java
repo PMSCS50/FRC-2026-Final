@@ -164,10 +164,10 @@ public class Shooter extends SubsystemBase {
     public boolean atCorrectRPM() {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = vision.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose2())); 
+        double targetRPM = vision.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose())); 
         SmartDashboard.putNumber("current rpm meow", currentRPM);
         SmartDashboard.putNumber("target rpm meow", targetRPM);
-        return Math.abs(currentRPM - targetRPM) < 800.0;
+        return Math.abs(currentRPM - targetRPM) < 1000.0;
 
     }
 

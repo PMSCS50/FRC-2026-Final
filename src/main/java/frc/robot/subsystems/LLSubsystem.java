@@ -5,12 +5,16 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.PoseEstimator;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -19,6 +23,8 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.swerve.SwerveModule;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -43,135 +49,88 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 public class LLSubsystem extends SubsystemBase {
     private final CommandSwerveDrivetrain drivetrain;
     private final String limelightName;
-    private boolean kUseLimelight = false;
     private double omegaRps;
     private LimelightHelpers.PoseEstimate latestEstimate;
-
+    
     public int value = 1;
+    private final SwerveDrivePoseEstimator m_poseEstimator = null;
+
+    SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+        new Translation2d(.298, .324),
+        new Translation2d(.298, -.324),
+        new Translation2d(-.298, .324),
+        new Translation2d(-.298, -.324)
+    );
+
+    // SwerveModulePosition[] m_modulePositions = new SwerveModulePosition[] {
+    //     m_frontLeft.getPosition(),
+    //     m_frontRight.getPosition,
+    //     m_backLeft.getPosition(),
+    //     m_backRight.getPosition
+    // }
+
 
     private double[] positions;
     public LLSubsystem(CommandSwerveDrivetrain drivetrain, String limelightName) {
+        
         this.drivetrain = drivetrain;
         this.limelightName = limelightName;
+        // this.m_poseEstimator = new PoseEstimator(m_kinematics, 
+        //                             mGryo.getRotation2d(), 
+        //                             m_modulePositions, 
+        //                             new Pose2d());
 
         LimelightHelpers.setPipelineIndex(limelightName, 9);
     }
 
     @Override
     public void periodic() {
-        LimelightHelpers.SetIMUMode(limelightName, 4);
-        var driveState = drivetrain.getState();
-        // double headingDeg = driveState.Pose.getRotation().getDegrees();
-        // double headingDeg = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) ==
-        //     DriverStation.Alliance.Red ? 
-        //     drivetrain.getPigeon2().getYaw().getValueAsDouble() + 180 : 
-        //     drivetrain.getPigeon2().getYaw().getValueAsDouble();
         
-        double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
-        omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
-        // PoseEstimator m_poseEstimator = ;
 
-
-
-
-        LimelightHelpers.SetRobotOrientation(limelightName, headingDeg, 0.0, 0.0, 0.0, 0.0, 0.0);
-        
-        SmartDashboard.putNumber("Heading sent toLL", headingDeg);
+        // SmartDashboard.putNumber("Heading sent toLL", headingDeg);
         SmartDashboard.putNumber("Raw Pidgeon Yaw", drivetrain.getPigeon2().getYaw().getValueAsDouble());
         SmartDashboard.putNumber("LL Received Yaw", LimelightHelpers.getIMUData(limelightName).robotYaw);
         SmartDashboard.putNumber("LL IMU mode", LimelightHelpers.getLimelightNTDouble(limelightName, "imumode"));
-        SmartDashboard.putNumber("Omega rps", omegaRps);
         
-
-        // LimelightHelpers.SetRobotOrientation("limelight", m_poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-        // LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
-
         
-        PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
+        double robotYaw = drivetrain.getPigeon2().getYaw().getValueAsDouble(); //make sure u configured the pigeon2 to be inverted in phoemix tuner x
+        var driveState = drivetrain.getState();
+        double driveStateYaw = driveState.Pose.getRotation().getDegrees();
 
-        PoseEstimate llMeasurementRed = LimelightHelpers.getBotPoseEstimate_wpiRed_MegaTag2(limelightName);
-        PoseEstimate llMeasurementBlue = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
+        LimelightHelpers.SetRobotOrientation(VisionConstants.limelightName, driveStateYaw, 0, 0, 0, 0, 0);
+        PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(VisionConstants.limelightName);
 
-        PoseEstimate llMeasurementMT1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
-
-        
-        SmartDashboard.putNumber("tag count", llMeasurement.tagCount);
-
-        SmartDashboard.putString("llmeasurement", llMeasurement.toString());
-
-        if (llMeasurement.tagCount > 0) {
-            // latestEstimate = getPoseEstimate(llMeasurementRed, llMeasurementBlue);
+        if (LimelightHelpers.validPoseEstimate(llMeasurement)) {
             latestEstimate = llMeasurement;
-            // latestEstimate = 
+            //I think that if you use a fixed yaw std of more than 1.5 then it will completely reject the mearuement in drivetrain.
             drivetrain.addVisionMeasurement(
-                latestEstimate.pose,
-                Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds)
+                llMeasurement.pose,
+                Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds) 
+                // VecBuilder.fill(.05, .05, 3)
             );
-
-            SmartDashboard.putNumber("Field X", llMeasurement.pose.getX());
-            SmartDashboard.putNumber("Field Y", llMeasurement.pose.getY());
+            
             SmartDashboard.putNumber("Heading", llMeasurement.pose.getRotation().getDegrees());
             SmartDashboard.putNumber("Tag Count", llMeasurement.tagCount);
             SmartDashboard.putNumber("Avg Tag Distance", llMeasurement.avgTagDist);
-            SmartDashboard.putString("Vision Status", "Seeing " + llMeasurement.tagCount + " tag(s)");
-
             SmartDashboard.putNumber("Distance to Hub", getDistanceToTarget(VisionConstants.getHubPose()));
-            SmartDashboard.putNumber("Distance to hub 2", getDistanceToTarget(VisionConstants.getHubPose2()));
+
             
         } else {
             SmartDashboard.putString("Vision Status", "No targets");
             latestEstimate = null;
         }
+
+        Optional<Pose2d> pose = drivetrain.samplePoseAt(Utils.getCurrentTimeSeconds());
+
+        if (pose != null) {
+
+        }
     }
-    // @Override
-    // public void periodic() {
-    //     NetworkTable table = NetworkTableInstance.getDefault().getTable(limelightName);
-    //     NetworkTableEntry ty = table.getEntry("ty");
-    //     double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-
-    //     double limelightMountAngleDegrees = 20; 
-    //     // distance from the center of the Limelight lens to the floor
-    //     double limelightLensHeightInches = 20.0; 
-    //     // distance from the target to the floor    
-    //     double goalHeightInches = 60.0; 
-    //     double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-    //     double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-    //     //calculate distance
-    //     double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
 
 
-    //     var driveState = drivetrain.getState();
-    //     double headingDeg = driveState.Pose.getRotation().getDegrees();
-    //     double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
-    //     LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0.0, 0.0, 0.0, 0.0, 0.0);
-    //     var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
-    //     if (llMeasurement != null && llMeasurement.tagCount > 0 && omegaRps < 2.0) {
-    //         drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
-    //     }
-
-    //     positions = LimelightHelpers.getBotPose_TargetSpace("");
-
-       
-    //     SmartDashboard.putNumber("distance from limelight to goal inches", distanceFromLimelightToGoalInches);
-    //     SmartDashboard.putNumber("X", getX());
-    //     SmartDashboard.putNumber("Y", getY());
-    //     SmartDashboard.putNumber("Z", getZ());
-    //     SmartDashboard.putNumber("Rotation", getYaw());
-
-    //     if (positions != null && positions.length >= 11) {
-    //         SmartDashboard.putNumber("X", getX());
-    //         SmartDashboard.putNumber("Y", getY());
-    //         SmartDashboard.putNumber("Z", getZ());
-    //         SmartDashboard.putNumber("Rotation", getYaw());
-    //     } else {
-    //         SmartDashboard.putString("Vision Status", "No target detected");
-    //     }
 
 
-        
 
-        
-    // }
 
     public boolean hasTarget(int desiredId) {
         return LimelightHelpers.getFiducialID(limelightName) == desiredId;
@@ -236,22 +195,24 @@ public class LLSubsystem extends SubsystemBase {
         return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? red : blue;
     }
 
-    public void switchHeading() {
-
-    }
-
-
-
-
 
 
     
-
-
-
-    
-
-    
-
-
 }
+
+
+
+
+
+
+
+
+    
+
+
+
+    
+
+    
+
+
