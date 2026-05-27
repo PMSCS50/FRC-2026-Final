@@ -167,7 +167,7 @@ public class Shooter extends SubsystemBase {
         double targetRPM = vision.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose())); 
         SmartDashboard.putNumber("current rpm meow", currentRPM);
         SmartDashboard.putNumber("target rpm meow", targetRPM);
-        return Math.abs(currentRPM - targetRPM) < 1000.0;
+        return Math.abs(currentRPM - targetRPM) < 300.0;
 
     }
 

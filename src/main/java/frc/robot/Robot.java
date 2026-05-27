@@ -29,7 +29,11 @@ import frc.robot.subsystems.Shooter;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
+
+
   private Pigeon2 mGyro = new Pigeon2(0);
+
+
 
   private final RobotContainer m_robotContainer;
   
@@ -55,6 +59,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotInit() {
+        m_robotContainer.drivetrain.getPigeon2().setYaw(DriverStation.getAlliance().get() == Alliance.Red ? 180 : 0);
+
       DataLogManager.start();
       DriverStation.startDataLog(DataLogManager.getLog());
       boolean red = (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) ? true : false;
@@ -70,41 +76,13 @@ public class Robot extends LoggedRobot {
 
     CommandScheduler.getInstance().run();
 
-    /*
-     * This example of adding Limelight is very simple and may not be sufficient for on-field use.
-     * Users typically need to provide a standard deviation that scales with the distance to target
-     * and changes with number of tags available.
-     *
-     * This example is sufficient to show that vision integration is possible, though exact implementation
-     * of how to use vision should be tuned per-robot and to the team's specification.
-     */
-    // if (kUseLimelight) {
-    //   var driveState = m_robotContainer.drivetrain.getState();
-    //   double headingDeg = driveState.Pose.getRotation().getDegrees();
-    //   double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
-
-    //   LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
-    //   var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
-    //   if (llMeasurement != null && llMeasurement.tagCount > 0 && omegaRps < 2.0) {
-    //     m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
-    //   }
-    // }
-
-    SmartDashboard.putNumber("shooter speed", RobotContainer.shooterSpeed);
-    // SmartDashboard.putNumber("pivot speed", RobotContainer.pivotSpeed);
-    // SmartDashboard.putNumber("intake Speed", RobotContainer.intakeSpeed);
-    
-
-
-
-
-    SmartDashboard.putNumber("shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
+    SmartDashboard.putNumber("SHOOTER RPS", m_robotContainer.getShooter().getVelocity());
     
 
 
     SmartDashboard.putNumber("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
 
-    SmartDashboard.putNumber("pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    SmartDashboard.putNumber("PIVOT AMOUNT", m_robotContainer.getPivot().getPivotEncoder().getPosition());
     SmartDashboard.putNumber("drivetrain yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
     SmartDashboard.putNumber("drivetrain x", m_robotContainer.drivetrain.getState().Pose.getX());
     SmartDashboard.putNumber("drivetrain y", m_robotContainer.drivetrain.getState().Pose.getY());
@@ -130,9 +108,10 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-
     m_robotContainer.drivetrain.getPigeon2().setYaw(DriverStation.getAlliance().get() == Alliance.Red ? 180 : 0);
     LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
+
+
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     if (m_autonomousCommand != null) {

@@ -57,7 +57,7 @@
           }
 
           public static int getDirectionFlipper() {
-            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? -1 : -1;
+            return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? 1 : -1;
           }
 
 

@@ -158,7 +158,6 @@ public class LLSubsystem extends SubsystemBase {
     }
 
     public double getDistanceToTarget(Pose2d targetPose) {
-        if (!hasTargets()) return -1.0;
         return drivetrain.getState().Pose.getTranslation()
             .getDistance(targetPose.getTranslation());
     }
@@ -178,7 +177,7 @@ public class LLSubsystem extends SubsystemBase {
     public double getBestDistanceToHub() {
         double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
         if (tagDist > 0) return tagDist;
-        return getDistanceToTarget(VisionConstants.getHubPose2());
+        return getDistanceToTarget(VisionConstants.getHubPose());
     }
 
     public double rpmFromDistanceRegression(double distance) {
@@ -186,7 +185,7 @@ public class LLSubsystem extends SubsystemBase {
         - 1.110063156 * Math.pow(distance, 3) 
         + 3.621489461 * Math.pow(distance, 2)
         + .1849702218 * distance
-        + 33.86388054;
+        + 33.86388054 + 1;
         double rpm = rps * 60;
         return rpm;
     }
@@ -199,20 +198,4 @@ public class LLSubsystem extends SubsystemBase {
 
     
 }
-
-
-
-
-
-
-
-
-    
-
-
-
-    
-
-    
-
 

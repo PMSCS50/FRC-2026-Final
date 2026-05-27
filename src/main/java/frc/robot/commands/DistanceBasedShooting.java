@@ -24,9 +24,10 @@ public class DistanceBasedShooting extends Command {
 
     @Override
     public void initialize() {
-        
     }
 
+
+    
     @Override
     public void execute() {
         double distance = vision.getDistanceToTarget(VisionConstants.getHubPose());

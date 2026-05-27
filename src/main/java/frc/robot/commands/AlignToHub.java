@@ -42,8 +42,8 @@ public class AlignToHub extends Command {
 
         double robotX = drivetrain.getState().Pose.getX();
         double robotY = drivetrain.getState().Pose.getY();
-        double hubX = VisionConstants.getHubPose2().getX();
-        double hubY = VisionConstants.getHubPose2().getY();
+        double hubX = VisionConstants.getHubPose().getX();
+        double hubY = VisionConstants.getHubPose().getY();
 
         double angleToHub = Math.toDegrees(Math.atan2(hubY - robotY, hubX - robotX));
         double currentHeading = drivetrain.getState().Pose.getRotation().getDegrees();
@@ -52,7 +52,7 @@ public class AlignToHub extends Command {
         drivetrain.setControl(drive
             .withVelocityX(0)
             .withVelocityY(0)
-            .withRotationalRate(-rotValue)
+            .withRotationalRate(rotValue)
         );
     }
 
