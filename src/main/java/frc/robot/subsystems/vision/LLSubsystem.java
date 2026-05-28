@@ -118,16 +118,16 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
 
         // Wrap estimatedRobotPose inside a PoseEstimate for more metadata.
         if (cam1Valid || cam2Valid) {
-            estimatedRobotPose = drivetrain.getState().Pose;
+            estimatedRobotPose = driveState.Pose;
 
             Logger.recordOutput("Vision/Front PE difference magnitude", Math.hypot(
-                llMeasurement1.pose.getX() - drivetrain.getState().Pose.getX(),
-                llMeasurement1.pose.getY() - drivetrain.getState().Pose.getY()
+                llMeasurement1.pose.getX() - driveState.Pose.getX(),
+                llMeasurement1.pose.getY() - driveState.Pose.getY()
             ));
 
             Logger.recordOutput("Vision/Back PE difference magnitude", Math.hypot(
-                llMeasurement2.pose.getX() - drivetrain.getState().Pose.getX(),
-                llMeasurement2.pose.getY() - drivetrain.getState().Pose.getY()
+                llMeasurement2.pose.getX() - driveState.Pose.getX(),
+                llMeasurement2.pose.getY() - driveState.Pose.getY()
             ));
 
 
