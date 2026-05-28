@@ -338,28 +338,28 @@ public class Pathmaster {
     }
 
     /** Pathfinds to the .path file with the nearest starting point, then follows that path all the way through*/ 
-    public Command pathfindToNearestPath(String... pathNames) {
-        if (!AutoBuilder.isConfigured()) return Commands.none();
+    // public Command pathfindToNearestPath(String... pathNames) {
+    //     if (!AutoBuilder.isConfigured()) return Commands.none();
 
-        return Commands.defer(() -> {
-            Optional<PathPlannerPath> nearestPath = Arrays.stream(pathNames)
-                .map(name -> {
-                    try {
-                        return PathPlannerPath.fromPathFile(name);
-                    } catch (Exception e) {
-                        return null; // skip nonexistent/bad paths
-                    }
-                })
-                .filter(Objects::nonNull)
-                .min(Comparator.comparingDouble(
-                    p -> p.getPoint(0)
-                        .position
-                        .getDistance(robotPose.get().getTranslation())
-                ));
+    //     return Commands.defer(() -> {
+    //         Optional<PathPlannerPath> nearestPath = Arrays.stream(pathNames)
+    //             .map(name -> {
+    //                 try {
+    //                     return PathPlannerPath.fromPathFile(name);
+    //                 } catch (Exception e) {
+    //                     return null; // skip nonexistent/bad paths
+    //                 }
+    //             })
+    //             .filter(Objects::nonNull)
+    //             .min(Comparator.comparingDouble(
+    //                 p -> p.getPoint(0)
+    //                     .position
+    //                     .getDistance(robotPose.get().getTranslation())
+    //             ));
 
-            return nearestPath.map(path -> AutoBuilder.pathfindThenFollowPath(path, constraints))
-        }, Set.of(drivetrain)).withName("pathFindToNearestPath");
-    }
+    //         return nearestPath.map(path -> AutoBuilder.pathfindThenFollowPath(path, constraints))
+    //     }, Set.of(drivetrain)).withName("pathFindToNearestPath");
+    // }
 
     /**
      * Pathfinds to a destination while arriving faced toward a separate target.

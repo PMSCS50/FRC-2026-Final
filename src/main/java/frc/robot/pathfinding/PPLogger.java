@@ -116,7 +116,7 @@ public class PPLogger {
     Logger.recordOutput("Pathmaster/activePath", posesArray);
     field.getObject("activePath").setPoses(lastPathPoses);
 
-    updatePathProgress();
+    //updatePathProgress();
   }
 
   /**

@@ -13,11 +13,12 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 //import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.subsystems.vision.PV_Sim;
+import frc.robot.subsystems.vision.VisionGeneral;
 
 public class PV_Align extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final PV_Sim vision;
+    private final VisionGeneral vision;
     private final int targetId;
 
     private static final double DESIRED_DISTANCE_METERS = 1.5;
@@ -29,9 +30,10 @@ public class PV_Align extends Command {
     private Timer settleTimer;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
     private double SETTLETIME = .1;
+
     public PV_Align(
         CommandSwerveDrivetrain drivetrain,
-        PV_Sim vision,
+        VisionGeneral vision,
         int targetId,
         double xSetpoint,
         double ySetpoint,
@@ -73,11 +75,6 @@ public class PV_Align extends Command {
         SmartDashboard.putBoolean("rotSetpoint", rotController.atSetpoint());
         SmartDashboard.putNumber("rot Difference", vision.getYawRad(targetId) - rotController.getSetpoint());
         
-
-        
-
-        
-        
         SmartDashboard.putNumber("x Difference", vision.getX(targetId) - xController.getSetpoint());
         SmartDashboard.putBoolean("x Setpoint", xController.atSetpoint());
 
@@ -85,7 +82,6 @@ public class PV_Align extends Command {
         SmartDashboard.putBoolean("y Setpoint", yController.atSetpoint());
 
         SmartDashboard.putNumber("settle timer", settleTimer.get());
-
 
         if (!vision.hasTarget(targetId)) {
             drivetrain.setControl(new SwerveRequest.Idle());
@@ -114,7 +110,6 @@ public class PV_Align extends Command {
         }
         // if (!yController.atSetpoint()) yVel = yController.calculate(vision.getY(), 0);
          
-
         drivetrain.setControl(
             drive.withVelocityX(-xVel)
                  .withVelocityY(-yVel)

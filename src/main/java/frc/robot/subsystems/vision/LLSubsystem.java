@@ -281,14 +281,15 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
     //getters
 
     public Pose2d  getPose()        { return estimatedRobotPose; }
-    public double  getX()           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
-    public double  getY()           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
+    public double  getX(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
+    public double  getY(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
     public double  getYaw()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
-    public double  getYawRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
+    public double  getYawRad(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
     public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera2); }
+    //public boolean hasTarget(int i)      { return hasTargets(); } // alias for compatibility with VisionGeneral
 
     public double getTagX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
@@ -402,7 +403,6 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
         Matrix<N3, N1> stdDevMatrix = calculateStdDevs(latestEstimate);
         inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
 
-        inputs.distanceToHub   = getDistanceToTarget(VisionConstants.getHubPose());
-    }
+         }
 
 }
