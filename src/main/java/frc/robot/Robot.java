@@ -47,8 +47,8 @@ public class Robot extends LoggedRobot {
 
   private final RobotContainer m_robotContainer;
   
-  int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-  int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
+  // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+  // int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
   public Robot() {
     //setUseTiming(isReal());
@@ -89,13 +89,13 @@ public class Robot extends LoggedRobot {
 
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
-    boolean red = (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) ? true : false;
-    if (red) {
-      LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, redTags);
-    }
-    else {
-      LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, blueTags);
-    }
+    // boolean red = (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) ? true : false;
+    // if (red) {
+    //   LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, redTags);
+    // }
+    // else {
+    //   LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, blueTags);
+    // }
   }
     
   @Override
@@ -193,9 +193,11 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-    m_robotContainer.drivetrain.getPigeon2().setYaw(DriverStation.getAlliance().get() == Alliance.Red ? 180 : 0);
-    LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
+    // m_robotContainer.drivetrain.getPigeon2().setYaw(DriverStation.getAlliance().get() == Alliance.Red ? 180 : 0);
+    // LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
 
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    m_robotContainer.drivetrain.getPigeon2().setYaw(alliance == Alliance.Red ? 180 : 0);
 
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 

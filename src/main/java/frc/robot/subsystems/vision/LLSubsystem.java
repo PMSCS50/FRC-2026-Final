@@ -66,6 +66,10 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
 
         setPipeline(9); 
         setIMUMode(4);
+
+        //Clear tag filters
+        LimelightHelpers.SetFiducialIDFiltersOverride(llCamera1, new int[]{});
+        LimelightHelpers.SetFiducialIDFiltersOverride(llCamera2, new int[]{});
     }
 
 
@@ -104,7 +108,7 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
             }
         }
 
-        // send camera2 pose estimate ,
+        // send camera2 po2585se estimate ,
         if (cam2Valid) {
             Matrix<N3, N1> stdDevs = calculateStdDevs(llMeasurement2);
             if (stdDevs != null) {

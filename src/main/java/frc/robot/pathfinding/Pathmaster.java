@@ -15,9 +15,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -357,7 +360,7 @@ public class Pathmaster {
     //                     .getDistance(robotPose.get().getTranslation())
     //             ));
 
-    //         return nearestPath.map(path -> AutoBuilder.pathfindThenFollowPath(path, constraints))
+    //         return AutoBuilder.pathfindThenFollowPath(nearestPath);
     //     }, Set.of(drivetrain)).withName("pathFindToNearestPath");
     // }
 
@@ -397,20 +400,11 @@ public class Pathmaster {
     // -------
 
     /** Returns the rotation needed at 'from' to face toward 'target'. */
-    private Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
-        Translation2d delta = target.getTranslation().minus(from.getTranslation());
-        return new Rotation2d(delta.getX(), delta.getY());
-    }
-
-    /** Returns the nearest registered waypoint pose to the robot's current position. */
-    private Pose2d getNearestWaypoint() {
-        if (!checkConfigured("getNearestWaypoint")) return new Pose2d();
-        return waypoints.values().stream()
-            .min(Comparator.comparingDouble(
-                p -> p.getTranslation()
-                       .getDistance(robotPose.get().getTranslation())
-            ))
-            .orElseThrow();
+    private Rotation2d getRotationToPose(Pose2d start, Pose2d target) {
+        Transform2d transform = target.minus(start);
+        Translation2d translation = transform.getTranslation();
+        Rotation2d angleToTarget = new Rotation2d(translation.getX(), translation.getY());
+        return angleToTarget;
     }
 
     public boolean isPathing() {
