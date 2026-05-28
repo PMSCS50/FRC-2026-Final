@@ -10,13 +10,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+//import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.subsystems.vision.PV_Sim;
 
 public class PV_Orient extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final VisionSubsystem vision;
+    private final PV_Sim vision;
     private final int targetId;
     private double rotSetpoint;
     
@@ -25,7 +26,7 @@ public class PV_Orient extends Command {
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
     public PV_Orient(
         CommandSwerveDrivetrain drivetrain,
-        VisionSubsystem vision,
+        PV_Sim vision,
         int targetId,
         double rotSetpoint
     ) {

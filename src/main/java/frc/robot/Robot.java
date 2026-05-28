@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.swerve.SwerveModule;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.util.Units;
@@ -26,6 +27,15 @@ import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LLSubsystem;
 import frc.robot.subsystems.Shooter;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
+
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+
+import frc.robot.pathfinding.Pathmaster;
+
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
@@ -41,6 +51,7 @@ public class Robot extends LoggedRobot {
   int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
   public Robot() {
+    //setUseTiming(isReal());
     Logger.recordMetadata("ProjectName", "MyProject");
 
     if (isReal()) {
@@ -52,25 +63,41 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-  
+    Pathmaster.initializePathfinder();
     m_robotContainer = new RobotContainer();
+
+    DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
+
+    Pathmaster.startWarmupCommand();
   }
 
+  //robotInit() will be removed after SystemCore, so these methods were moved to the constructor
+  
+  // @Override
+  // public void robotInit() {
+  //     DataLogManager.start();
+  //     DriverStation.startDataLog(DataLogManager.getLog());
+
+  //     Pathmaster.startWarmupCommand();
+  //   }
 
   @Override
   public void robotInit() {
-        m_robotContainer.drivetrain.getPigeon2().setYaw(DriverStation.getAlliance().get() == Alliance.Red ? 180 : 0);
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    m_robotContainer.drivetrain.getPigeon2().setYaw(alliance == Alliance.Red ? 180 : 0);
 
-      DataLogManager.start();
-      DriverStation.startDataLog(DataLogManager.getLog());
-      boolean red = (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) ? true : false;
-      if (red) {
-        LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, redTags);
-      }
-      else {
-        LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, blueTags);
-      }
+    DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
+    boolean red = (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) ? true : false;
+    if (red) {
+      LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, redTags);
     }
+    else {
+      LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, blueTags);
+    }
+  }
+    
   @Override
   public void robotPeriodic() {
 
@@ -89,7 +116,65 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putNumber("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
     Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
 
+    /*
+     * This example of adding Limelight is very simple and may not be sufficient for on-field use.
+     * Users typically need to provide a standard deviation that scales with the distance to target
+     * and changes with number of tags available.
+     *
+     * This example is sufficient to show that vision integration is possible, though exact implementation
+     * of how to use vision should be tuned per-robot and to the team's specification.
+     */
+    // if (kUseLimelight) {
+    //   var driveState = m_robotContainer.drivetrain.getState();
+    //   double headingDeg = driveState.Pose.getRotation().getDegrees();
+    //   double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
+    //   LimelightHelpers.SetRobotOrientation("limelight", headingDeg, 0, 0, 0, 0, 0);
+    //   var llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+    //   if (llMeasurement != null && llMeasurement.tagCount > 0 && omegaRps < 2.0) {
+    //     m_robotContainer.drivetrain.addVisionMeasurement(llMeasurement.pose, Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds));
+    //   }
+    // }
+
+    Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBrownoutVoltage());
+    Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
+    Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
+    Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
+    Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
+    Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
+    Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
+    Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
+
+    for (int i = 0; i < 4; i++) {
+      SwerveModule<?, ?, ?> module = m_robotContainer.drivetrain.getModule(i);
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getDriveMotor().getMotorVoltage().getValueAsDouble());
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/SupplyCurrent", module.getDriveMotor().getSupplyCurrent().getValueAsDouble());
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/StatorCurrent", module.getDriveMotor().getStatorCurrent().getValueAsDouble());
+
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/Voltage", module.getSteerMotor().getMotorVoltage().getValueAsDouble());
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/SupplyCurrent", module.getSteerMotor().getSupplyCurrent().getValueAsDouble());
+      Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/StatorCurrent", module.getSteerMotor().getStatorCurrent().getValueAsDouble());
+    }
+
+    // double totalDrivetrainCurrent = 0.0;
+    // for (int i = 0; i < 4; i++) {
+    //     totalDrivetrainCurrent += moduleInputs[i].driveSupplyCurrentAmps;
+    //     totalDrivetrainCurrent += moduleInputs[i].turnSupplyCurrentAmps;
+    // }
+
+    //Logger.recordOutput("Drive/TotalCurrent", totalDrivetrainCurrent);
+
+    Logger.recordOutput("Subsystems/Shooter/shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
+    Logger.recordOutput("Subsystems/Shooter/shooter speed", RobotContainer.shooterSpeed);
+    Logger.recordOutput("Subsystems/Pivot/pivot speed", RobotContainer.pivotSpeed);
+    Logger.recordOutput("Subsystems/Pivot/pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    Logger.recordOutput("Subsystems/Intake/intake Speed", RobotContainer.intakeSpeed);
+    Logger.recordOutput("Subsystems/Intake/intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
+
+    Logger.recordOutput("Pathmaster/pathing", m_robotContainer.monkeyDLuffy.isPathing());
+    Logger.recordOutput("Pathmaster/warmup", m_robotContainer.monkeyDLuffy.warmedUp());
+    Logger.recordOutput("Pathmaster/AutoBuilderConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderConfigured());
+    Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderPathFindingConfigured());
 
   }
 

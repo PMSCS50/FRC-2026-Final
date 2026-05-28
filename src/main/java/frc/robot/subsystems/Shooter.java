@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.vision.VisionGeneral;
 
 public class Shooter extends SubsystemBase {
 
@@ -30,36 +31,36 @@ public class Shooter extends SubsystemBase {
     // ************************
 
     public static TalonFX shooterMotor1;
-        private final TalonFX shooterMotor2;
-        private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
-        private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
-    
-        private final LLSubsystem vision;
-    
-    
-        // ************************
-        // MOTOR CONTROLS
-        // ************************
-    
-        // DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
-        private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
-    
-        // VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
-        private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
-    
-        // ************************
-        // SHOOTER PHYSICS CONSTANTS
-        // ************************
-    
-        private double velocity = 0.0;
-        private final double shooterAngle = 70.0;                  // degrees
-        private final double phi = Math.toRadians(shooterAngle);   // radians
-        private final double shooterHeight = 0.508;                // meters from ground
+    private final TalonFX shooterMotor2;
+    private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
+    private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
+
+    private final VisionGeneral vision;
+
+
+    // ************************
+    // MOTOR CONTROLS
+    // ************************
+
+    // DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
+    private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
+
+    // VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
+    private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
+
+    // ************************
+    // SHOOTER PHYSICS CONSTANTS
+    // ************************
+
+    private double velocity = 0.0;
+    private final double shooterAngle = 70.0;                  // degrees
+    private final double phi = Math.toRadians(shooterAngle);   // radians
+    private final double shooterHeight = 0.508;                // meters from ground
     
     
 
     // CONSTRUCTOR
-    public Shooter(LLSubsystem vision) {
+    public Shooter(VisionGeneral vision) {
         this.vision = vision;
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
@@ -116,9 +117,9 @@ public class Shooter extends SubsystemBase {
     public void periodic()   
     {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
-        Logger.recordOutput("Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
-        Logger.recordOutput("Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Subsystems/Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Subsystems/Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
+        Logger.recordOutput("Subsystems/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
         
 
     }
@@ -140,10 +141,18 @@ public class Shooter extends SubsystemBase {
         // SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
-   
+    //Why tf was this in vision???
+    public double rpmFromDistanceRegression(double distance) {
+        double rps = 0.1322042143 * Math.pow(distance, 4)
+                   - 1.110063156  * Math.pow(distance, 3)
+                   + 3.621489461  * Math.pow(distance, 2)
+                   + 0.1849702218 * distance
+                   + 33.86388054;
+        return rps * 60.0;
+    }
 
     public void rpmControl(double distance) {
-        double rpm = vision.rpmFromDistanceRegression(distance);
+        double rpm = this.rpmFromDistanceRegression(distance);
         double rps = rpm / 60;
         shooterMotor1.setControl(velocityRequest.withVelocity(rps));
         // SmartDashboard.putNumber("Target RPM", rpm);
@@ -164,7 +173,7 @@ public class Shooter extends SubsystemBase {
     public boolean atCorrectRPM() {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = vision.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose())); 
+        double targetRPM = this.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose2())); 
         SmartDashboard.putNumber("current rpm meow", currentRPM);
         SmartDashboard.putNumber("target rpm meow", targetRPM);
         return Math.abs(currentRPM - targetRPM) < 300.0;
@@ -174,7 +183,7 @@ public class Shooter extends SubsystemBase {
     public boolean atCorrectRPMFixed(double distance) {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60;
-        double targetRPM = vision.rpmFromDistanceRegression(distance);
+        double targetRPM = this.rpmFromDistanceRegression(distance);
         return Math.abs(currentRPM - targetRPM) < 180.0;
     }
 

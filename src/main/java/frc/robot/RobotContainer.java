@@ -5,10 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-
-import java.util.function.DoubleSupplier;
-
-import org.photonvision.PhotonCamera;
+import edu.wpi.first.math.util.Units;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -16,16 +13,14 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import edu.wpi.first.math.filter.Debouncer;
+
 import frc.robot.Constants.VisionConstants;
 //import frc.robot.commands.ChaseTagCommand;
-import frc.robot.commands.*;
-import edu.wpi.first.math.geometry.Pose2d;
+
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.math.geometry.Translation2d;
+
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,29 +28,36 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
+
 import frc.robot.subsystems.Intake;
-// import frc.robot.subsystems.L3Climb;
 import frc.robot.subsystems.Climb;
-import frc.robot.subsystems.VisionSubsystem;
-import frc.robot.subsystems.LLSubsystem;
+import frc.robot.subsystems.vision.*;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import edu.wpi.first.cameraserver.CameraServer;
-import frc.robot.Constants;
 
-
-
+import frc.robot.commands.AlignToHub;
+import frc.robot.commands.DistanceBasedShooting;
+import frc.robot.commands.FixedPIDShooting;
+import frc.robot.commands.Pivoting;
+import frc.robot.commands.Intaking;
+import frc.robot.commands.PV_Align;
+import frc.robot.pathfinding.Pathmaster;
 public class RobotContainer {
 
     // **************************************************************************************************************
     // DRIVETRAIN CONSTANTS
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
+
+    //High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
+    private double pathMaxLinearAcceleration = 13.67; // m/s^2
+    private double pathMaxAngularAcceleration = 12; // rad/s^2
 
     public static double intakeSpeed = 0.5;
     public static double pivotSpeed = .05;
@@ -74,52 +76,68 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.Velocity);
     
 
-    private final Telemetry logger = new Telemetry(MaxSpeed);
+    //private final Telemetry logger = new Telemetry(MaxSpeed);
 
     // **************************************************************************************************************
 
     // **************************************************************************************************************
     // ACTUAL IMPORTANT STUFF
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
- 
-    private final VisionSubsystem vision = new VisionSubsystem("meow", drivetrain);
-    private final LLSubsystem LLVision = new LLSubsystem(drivetrain, VisionConstants.limelightName);
+    
+    private final VisionGeneral vision;
+    //private final VisionSimSystem vision;
+    //private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
+
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
 
-    private final Shooter shooter = new Shooter(LLVision);
+    private final Shooter shooter;
     private final Intake intake = new Intake();
     private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
+
+    public final Pathmaster monkeyDLuffy;
 
     /* Path follower */
     private SendableChooser<Command> autoChooser;
 
     double turningSpeed = 0; // for speed scaling
-    // **************************************************************************************************************
-
 
     public RobotContainer() {
-       NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, LLVision).withTimeout(4));
-// Intaking
+        if (Constants.currentMode == Constants.Mode.SIM) {
+            vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
+        } else {
+            vision = new LLSubsystem(drivetrain, "limelight", "pppr");
+        }
+        
+        shooter = new Shooter(vision);
+        
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
+        monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
+        monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
+
+        NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
+
+        // Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
         NamedCommands.registerCommand("4 sec Intaking", new Intaking(intake).withTimeout(4));
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
 
-// Alignment
-    // Middle
+        // Alignment
+        // Middle
 
-    // Left
+        // Left
 
-    // Right
+        // Right
         NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
         NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
-// Pivoting
-
+        // Pivoting
         NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
-        NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false ).withTimeout(.5));
+        NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
@@ -128,7 +146,7 @@ public class RobotContainer {
         
 
 
-// Configuring
+        // Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
         CameraServer.startAutomaticCapture();
@@ -167,11 +185,20 @@ public class RobotContainer {
 
     // POV Controls    
         subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
-        subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter, LLVision));
+        subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
        //  subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new FixedPIDShooting(shooter, 3.3));
         
 
         
+        // subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
+        // subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
+        // subjoystick.povLeft().onTrue(new RunCommand(() -> LLVision.setPigeon()));
+        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new FixedPIDShooting(shooter,1.23));
+        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter, 2.25));
+        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));
+        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter,() -> shooterSpeed));
+        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter, () -> shooterSpeed));
+        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision));
 
 
         // subjoystick.povLeft()
@@ -201,10 +228,9 @@ public class RobotContainer {
             Commands.parallel(
                 new RunCommand(() -> intake.stopIntake(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
-            )
-        );
-        joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        ));
+        //joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        //joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
         joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
         joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
@@ -224,40 +250,28 @@ public class RobotContainer {
         // joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
     // Letters
-        joystick.a().whileTrue(new AlignToHub(drivetrain, LLVision));
-        joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
+        
+        if (vision instanceof LLSubsystem) {
+            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystem) vision));
+        }
+        
+        //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        // joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-        joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
-
- 
+        //joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
 
- 
-        
-        
-
-        
-
-
-        
         /*
-        Here, we use Pathfinder to create a path to a specific Pose2d, even on teleop.
-        Then it will follow the path as long as the button is held
-        Releasing button will stop the path following and allow for manual control again.
-        We can basically create waypoints on the field and map them to certain buttons.
-        This is crazy because if there is a setpoint in future games that we want to be able to quickly and easily drive to,
-            we can just make a button for it and use Pathfinder to get there.
-
-        In the context of REBUILT, we could use this in teleop to align to climb perfectly
+        Pathmaster implementation
         */
-        // joystick.rightTrigger().whileTrue(pathfinder.makePathTo(new Pose2d(3, 3, new Rotation2d(0))));
 
-        
-        // Command climbPath = pathfinder.makePathTo(Constants.ClimbConstants.getClimbPose(), drivetrain, vision);
+        /*
+         * 
+         */
 
-        // joystick.rightTrigger().onTrue(climbPath);
-
-        // joystick.rightTrigger().onFalse(Commands.runOnce(climbPath::cancel));
+        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.aimPose, Constants.VisionConstants.getHubPose()));
+        joystick.y().onTrue(monkeyDLuffy.cancelPathing());
         
         
     }

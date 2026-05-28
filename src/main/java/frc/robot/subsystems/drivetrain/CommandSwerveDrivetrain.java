@@ -1,7 +1,6 @@
 
 
-
-package frc.robot.subsystems;
+package frc.robot.subsystems.drivetrain;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -19,6 +18,10 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -34,15 +37,20 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+
 import frc.robot.Constants.VisionConstants;
 import frc.robot.LimelightHelpers;
+
+import frc.robot.pathfinding.PPLogger;
+import frc.robot.Constants.VisionConstants;
+
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
  * Subsystem so it can easily be used in command-based projects.
  */
-public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem, DriveIO {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
@@ -54,13 +62,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    /** Swerve request to apply during robot-centric path following */
+    private final DriveIOInputsAutoLogged m_inputs = new DriveIOInputsAutoLogged();
+
+    /** Swerve request to apply during robot-centric path following 
+     *  This also takes in our robot's physical constrants to create optimal path speeds.
+    */
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
+    /**Setpoint generator to optimize traversal through paths, made by FRC team 254.*/
+    private SwerveSetpointGenerator m_setpointGenerator;
+
+    /**A setpoint value */
+    private SwerveSetpoint m_previousSetpoint;
+    
+    /** Swerve request to apply after the robot finished going through a path in Pathmaster. */
+    private final SwerveRequest.Idle m_idle = new SwerveRequest.Idle();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
+    
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -207,16 +229,47 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private void configureAutoBuilder() {
         try {
             var config = RobotConfig.fromGUISettings();
+
+            m_setpointGenerator = new SwerveSetpointGenerator(
+                config,
+                RotationsPerSecond.of(3).in(RadiansPerSecond) // max rotational velocity in rad/s
+            );
+
+            m_previousSetpoint = new SwerveSetpoint(
+                getState().Speeds,
+                getState().ModuleStates,
+                DriveFeedforwards.zeros(config.numModules)
+            );
+
             AutoBuilder.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
                 this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
-                // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                (speeds, feedforwards) -> setControl(
-                    m_pathApplyRobotSpeeds.withSpeeds(speeds)
-                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                ),
+
+                (speeds, feedforwards) -> {
+
+                    // Generate next setpoint. Thanks Cheesy Poofs. 
+                    m_previousSetpoint = m_setpointGenerator.generateSetpoint(
+                        m_previousSetpoint,
+                        speeds,
+                        0.02
+                    );
+
+                    PPLogger.logVelocities(
+                        Math.hypot(getState().Speeds.vxMetersPerSecond, getState().Speeds.vyMetersPerSecond),
+                        Math.hypot(m_previousSetpoint.robotRelativeSpeeds().vxMetersPerSecond, m_previousSetpoint.robotRelativeSpeeds().vyMetersPerSecond),
+                        getState().Speeds.omegaRadiansPerSecond,
+                        m_previousSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond
+                    );
+
+                    // Apply generated module states
+                    setControl(
+                        m_pathApplyRobotSpeeds
+                            .withSpeeds(m_previousSetpoint.robotRelativeSpeeds())
+                            .withWheelForceFeedforwardsX(m_previousSetpoint.feedforwards().robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(m_previousSetpoint.feedforwards().robotRelativeForcesYNewtons())
+                    );
+                },
                 new PPHolonomicDriveController(
                     // PID constants for translation
                     new PIDConstants(8, 0, 0),
@@ -265,7 +318,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-
     //get robot pose
     public Pose2d getPose() {
         return getState().Pose;
@@ -275,27 +327,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return getState().Speeds;
     }
 
+    public Command idle() {
+        return applyRequest(() -> m_idle);
+    }
 
     @Override
     public void periodic() {
-        for (int i = 0; i < getModules().length; i++) {
-            var module = getModule(i);
-            
-            // Drive motor signals
-           double driveStatorCurrent = module.getDriveMotor().getStatorCurrent().getValueAsDouble();
-           double driveSupplyCurrent = module.getDriveMotor().getSupplyCurrent().getValueAsDouble();
-           double driveVoltage      = module.getDriveMotor().getMotorVoltage().getValueAsDouble();
-            // Steer motor signals
-           double steerStatorCurrent = module.getSteerMotor().getStatorCurrent().getValueAsDouble();
-           double steerSupplyCurrent = module.getSteerMotor().getSupplyCurrent().getValueAsDouble();
-           double steerVoltage       = module.getSteerMotor().getMotorVoltage().getValueAsDouble();
-           // Logger.recordOutput(getModule(i), module.getDriveMotor().getStatorCurrent().getValueasDouble()); 
+        updateInputs(m_inputs);
+        Logger.processInputs("LoggedDrivetrain", m_inputs);  // also needed for AdvantageKit to log it
+
+        if (Utils.isSimulation()) {
+            if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+                DriverStation.getAlliance().ifPresent(allianceColor -> {
+                    setOperatorPerspectiveForward(
+                        allianceColor == Alliance.Red
+                            ? kRedAlliancePerspectiveRotation
+                            : kBlueAlliancePerspectiveRotation
+                    );
+                    m_hasAppliedOperatorPerspective = true;
+                });
+            }
         }
-
-        
-
-
-
     }
 
     private void startSimThread() {
@@ -312,6 +364,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
+
     private void configureSignalLogging() {
         for (int i = 0; i < getModules().length; i++) {
             var module = getModule(i);
@@ -325,5 +378,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             module.getSteerMotor().getMotorVoltage().setUpdateFrequency(50);
         }
         SignalLogger.start(); // starts .hoot logging
+    }
+
+    @Override
+    public void updateInputs(DriveIOInputs inputs) {
+        var state = getState();
+
+        inputs.moduleStates = state.ModuleStates;
+
+        inputs.timestamp = Utils.getCurrentTimeSeconds();
+
+        inputs.robotChassisSpeeds = state.Speeds;
+        inputs.robotHeading = state.Pose.getRotation().getRadians();
+        inputs.robotPose = state.Pose;
+        
+        // For this example, we'll just set this to false. Implementing field-oriented control is left as an exercise to the user.
+        inputs.isFieldOriented = false;
+        inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
     }
 }

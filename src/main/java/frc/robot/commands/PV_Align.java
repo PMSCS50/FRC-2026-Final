@@ -10,13 +10,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+//import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.subsystems.vision.PV_Sim;
 
 public class PV_Align extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final VisionSubsystem vision;
+    private final PV_Sim vision;
     private final int targetId;
 
     private static final double DESIRED_DISTANCE_METERS = 1.5;
@@ -30,7 +31,7 @@ public class PV_Align extends Command {
     private double SETTLETIME = .1;
     public PV_Align(
         CommandSwerveDrivetrain drivetrain,
-        VisionSubsystem vision,
+        PV_Sim vision,
         int targetId,
         double xSetpoint,
         double ySetpoint,
