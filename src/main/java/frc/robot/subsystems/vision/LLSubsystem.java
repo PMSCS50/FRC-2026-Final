@@ -77,9 +77,6 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
     public void periodic() {
         var driveState = drivetrain.getState();
 
-        updateInputs(inputs);
-        Logger.processInputs("LoggedVision", inputs);
-
         double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
@@ -180,7 +177,6 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
         }
 
         //AdvantageKit Logging 
-
         Logger.recordOutput("Vision/Heading Sent to LL",    headingDeg);
         Logger.recordOutput("Vision/Raw Pigeon Yaw",        drivetrain.getPigeon2().getYaw().getValueAsDouble());
         Logger.recordOutput("Vision/Omega RPS",             omegaRps);
@@ -188,6 +184,9 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
         Logger.recordOutput("Vision/Cam2 Tag Count",        llMeasurement2 != null ? llMeasurement2.tagCount : 0);
         Logger.recordOutput("Vision/Cam1 Valid",            cam1Valid);
         Logger.recordOutput("Vision/Cam2 Valid",            cam2Valid);
+
+        updateInputs(inputs);
+        Logger.processInputs("LoggedVision", inputs);
     }
 
     //Validation
