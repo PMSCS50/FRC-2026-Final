@@ -270,8 +270,12 @@ public class RobotContainer {
          * 
          */
 
-        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.aimPose, Constants.VisionConstants.getHubPose()));
-        joystick.y().onTrue(monkeyDLuffy.cancelPathing());
+        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(VisionConstants.aimPose,VisionConstants.getHubPose()));
+        //Selected waypoint system to allow multiple different potential setpoints.
+        //BEFORE actually using this, we must try and finish the final path correction in the commands
+
+        //joystick.b().whileTrue(monkeyDLuffy.gotoSelectedWaypoint());
+        joystick.y().onTrue(new InstantCommand(() -> monkeyDLuffy.switchSelectedWaypoint()));
         
         
     }

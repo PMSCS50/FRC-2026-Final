@@ -38,12 +38,14 @@ public class Pathmaster {
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean pathing = false;
     private static boolean warmup = false;
+    private static int selectedWaypointIndex;
 
     //Used to prevent cancelPathing() from canceling other ddrivetrain commands.
     private List<String> commandNames = List.of(
         "makePathTo",
         "pathfindToPath",
         "goToWaypoint",
+        "goToSelectedWaypoint",
         "pathToNearestPose",
         "pathToNearestWaypoint",
         "pathFindToNearestPath",
@@ -66,6 +68,8 @@ public class Pathmaster {
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
+        this.selectedWaypointIndex = 0;
+
         createLoggingCallbacks();
         linkStartingState();
     }
@@ -82,6 +86,9 @@ public class Pathmaster {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, maxVoltage);
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
+
+        this.selectedWaypointIndex = 0;
+
 
         createLoggingCallbacks();
         linkStartingState();
@@ -143,6 +150,11 @@ public class Pathmaster {
     /** Register a waypoint on the field. By calling gotoWaypoint() we can align here automatically. */
     public void addWaypoint(String name, Pose2d pose) {
         waypoints.put(name, pose);
+    }
+
+    public void switchSelectedWaypoint() {
+        int length = waypoints.keySet().length();
+        selectedWaypointIndex = (selectedWaypointIndex + 1) % length;
     }
 
     // ---------------
@@ -290,6 +302,18 @@ public class Pathmaster {
         ).withName("goToWaypoint");
     }
 
+    /** Pathfind to waypoint corresponding with selectedWaypointIndex*/
+    public Command gotoSelectedWaypoint() {
+        // if (!checkConfigured("gotoWaypoint")) return Commands.none();
+        if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name))
+            return Commands.none();
+        String selectedWaypoint = waypoints.keySet().get(selectedWaypointIndex);
+        return Commands.defer(
+            () -> AutoBuilder.pathfindToPose(waypoints.get(selectedWaypoint), constraints),
+            Set.of(drivetrain)
+        ).withName("goToSelectedWaypoint");
+    }
+
     /**
      * Intended alignment pipeline.
      * pathfindToPose() has ~5cm error at endpoint.
@@ -419,6 +443,10 @@ public class Pathmaster {
 
     public boolean warmedUp() {
         return warmup;
+    }
+
+    public String selectedWaypoint() {
+        return waypoints.keySet().get(selectedWaypointIndex);
     }
     
     public boolean AutoBuilderPathFindingConfigured() {

@@ -175,6 +175,7 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Pathmaster/warmup", m_robotContainer.monkeyDLuffy.warmedUp());
     Logger.recordOutput("Pathmaster/AutoBuilderConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderConfigured());
     Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderPathFindingConfigured());
+    Logger.recordOutput("Pathmaster/SelectedWaypoint", m_robotContainer.monkeyDLuffy.selectedWaypoint());
 
   }
 
