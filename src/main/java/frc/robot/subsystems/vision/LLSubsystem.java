@@ -188,6 +188,7 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
         Logger.recordOutput("Vision/Cam2 Tag Count",        llMeasurement2 != null ? llMeasurement2.tagCount : 0);
         Logger.recordOutput("Vision/Cam1 Valid",            cam1Valid);
         Logger.recordOutput("Vision/Cam2 Valid",            cam2Valid);
+        //Logger.recordOutput("Vision/VisibleTagIDs", );
     }
 
     //Validation
