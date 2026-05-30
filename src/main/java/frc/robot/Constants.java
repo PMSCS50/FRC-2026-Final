@@ -156,7 +156,9 @@ import edu.wpi.first.math.geometry.Transform3d;
           }
 
           // Aimpose for testing set-point pathing to shooting
-          public static Pose2d aimPose = AllianceRelativePose(new Pose2d(2, 2, Rotation2d.fromDegrees(0)));
+          // Facing toward blue hub at (4.611624, 4.024) from (2, 2)
+          // Angle = atan2(2.024, 2.611624) ≈ 37.592°
+          public static Pose2d aimPose = AllianceRelativePose(new Pose2d(2, 2, Rotation2d.fromDegrees(37.592)));
           // Basic filtering thresholds
           // public static double maxAmbiguity = 0.3;
           // public static double maxZError = 0.75;
