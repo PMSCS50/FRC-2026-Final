@@ -1,7 +1,6 @@
-package frc.robot.pathfinding;
+package frc.robot.commands;
 
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.util.DriveFeedforwards;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -13,55 +12,52 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.Constants.DriveConstants;
 
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import frc.robot.pathfinding.PPLogger;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
+//Made by AI and not yet reviewed by a human.
+//Follow up to pathfinding by PP_Align that provides a more precise setpoint alignment using
+//three ProfiledPIDControllers. 
+
+//Error can go from 5cm and 5 degrees down to under 1cm and 0.5 degrees
 
 public class PreciseAlignmentCommand extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
     private final Pose2d targetPose;
 
-    // --- Tuning ---
-    private static final double TRANSLATION_kP = 4.0;
-    private static final double TRANSLATION_kD = 0.1;
-    private static final double ROTATION_kP    = 4.0;
+    private static final double xy_kp = 4.0;
+    private static final double xy_kd = 0.1;
+    private static final double theta_kp    = 4.0;
 
-    // Correction-scale constraints — much tighter than PathPlanner travel values
-    private static final double MAX_CORRECTION_SPEED     = 0.75;         // m/s
-    private static final double MAX_CORRECTION_ACCEL     = 1.5;          // m/s²
-    private static final double MAX_CORRECTION_ANG_SPEED = Math.PI;      // rad/s
-    private static final double MAX_CORRECTION_ANG_ACCEL = Math.PI * 2;  // rad/s²
+    private static final double maxLinVel     = 0.75;         // m/s
+    private static final double maxLinAcc     = 1.5;          // m/s²
+    private static final double maxAngVel = Math.PI;          // rad/s
+    private static final double maxAngAcc = Math.PI * 2;      // rad/s²
 
-    // Finish tolerances
-    private static final double POSITION_TOLERANCE_METERS  = 0.005;
-    private static final double ROTATION_TOLERANCE_RADIANS = Math.toRadians(1.0);
-    private static final double LINEAR_VELOCITY_TOLERANCE  = 0.05;
-    private static final double ANGULAR_VELOCITY_TOLERANCE = 0.1;
+    private static final double xy_tolerance  = 0.005;
+    private static final double theta_tolerance = Math.toRadians(1.0);
+    private static final double linVelTolerance  = 0.05;
+    private static final double angVelTolerance = 0.1;
 
-    // Robot must hold tolerance for this long before finishing
-    private static final double SETTLE_TIME_SECONDS = 0.1;
+    private static final double settleTime = 0.1;
 
-    // Command aborts after this regardless of tolerance
-    private static final double MAX_DURATION_SECONDS = 2.5;
+    private static final double maxElapsedtime = 30;
 
-    // Only apply feedforward outside this radius — FF is noise at close range
-    private static final double FF_DEADZONE_METERS = 0.05;
+    private static final double ffBounds = 0.05;
 
-    // Loop period
-    private static final double DT = 0.02;
+    private static final double dt = 0.02;
 
-    // --- Controllers ---
     private final ProfiledPIDController xController;
     private final ProfiledPIDController yController;
     private final ProfiledPIDController thetaController;
 
-    // --- State ---
     private RobotConfig robotConfig;
     private ChassisSpeeds prevSpeeds;
     private double settleStartTime = -1;
-    private double commandStartTime;
+    private double startTime;
 
     private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds =
         new SwerveRequest.ApplyRobotSpeeds();
@@ -74,14 +70,14 @@ public class PreciseAlignmentCommand extends Command {
         this.targetPose = targetPose;
 
         TrapezoidProfile.Constraints translationConstraints =
-            new TrapezoidProfile.Constraints(MAX_CORRECTION_SPEED, MAX_CORRECTION_ACCEL);
+            new TrapezoidProfile.Constraints(maxLinVel, maxLinAcc);
 
         TrapezoidProfile.Constraints rotationConstraints =
-            new TrapezoidProfile.Constraints(MAX_CORRECTION_ANG_SPEED, MAX_CORRECTION_ANG_ACCEL);
+            new TrapezoidProfile.Constraints(maxAngVel, maxAngAcc);
 
-        xController     = new ProfiledPIDController(TRANSLATION_kP, 0, TRANSLATION_kD, translationConstraints);
-        yController     = new ProfiledPIDController(TRANSLATION_kP, 0, TRANSLATION_kD, translationConstraints);
-        thetaController = new ProfiledPIDController(ROTATION_kP, 0, 0, rotationConstraints);
+        xController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
+        yController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
+        thetaController = new ProfiledPIDController(theta_kp, 0, 0, rotationConstraints);
 
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -112,16 +108,15 @@ public class PreciseAlignmentCommand extends Command {
 
         prevSpeeds       = new ChassisSpeeds();
         settleStartTime  = -1;
-        commandStartTime = Timer.getFPGATimestamp();
+        startTime = Timer.getFPGATimestamp();
     }
 
     @Override
     public void execute() {
         var state = drivetrain.getState();
-        Pose2d currentPose      = state.Pose;
+        Pose2d currentPose          = state.Pose;
         ChassisSpeeds currentSpeeds = state.Speeds;
 
-        // Field-relative PID outputs
         double vxField = xController.calculate(currentPose.getX(), targetPose.getX());
         double vyField = yController.calculate(currentPose.getY(), targetPose.getY());
         double omega   = thetaController.calculate(
@@ -129,27 +124,24 @@ public class PreciseAlignmentCommand extends Command {
             targetPose.getRotation().getRadians()
         );
 
-        // Convert to robot-relative for drivetrain
         ChassisSpeeds targetSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             vxField, vyField, omega, currentPose.getRotation()
         );
 
-        // Feedforward — only outside the deadzone to avoid injecting noise while settling
         double[] ffX = new double[4];
         double[] ffY = new double[4];
 
         double distance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
 
-        if (robotConfig != null && distance > FF_DEADZONE_METERS) {
-            // F = ma per axis, torque = MOI * angular_accel
-            double ax = (targetSpeeds.vxMetersPerSecond     - prevSpeeds.vxMetersPerSecond)     / DT;
-            double ay = (targetSpeeds.vyMetersPerSecond     - prevSpeeds.vyMetersPerSecond)     / DT;
-            double aa = (targetSpeeds.omegaRadiansPerSecond - prevSpeeds.omegaRadiansPerSecond) / DT;
+        if (robotConfig != null && distance > ffBounds) {
+            double ax = (targetSpeeds.vxMetersPerSecond     - prevSpeeds.vxMetersPerSecond)     / dt;
+            double ay = (targetSpeeds.vyMetersPerSecond     - prevSpeeds.vyMetersPerSecond)     / dt;
+            double aa = (targetSpeeds.omegaRadiansPerSecond - prevSpeeds.omegaRadiansPerSecond) / dt;
 
             ChassisSpeeds chassisForces = new ChassisSpeeds(
                 robotConfig.massKG * ax,   // X force (N)
                 robotConfig.massKG * ay,   // Y force (N)
-                robotConfig.MOI    * aa    // Torque (N*m), passed as omega slot
+                robotConfig.MOI    * aa    // Torque (N*m)
             );
 
             Translation2d[] wheelForces = robotConfig.chassisForcesToWheelForceVectors(chassisForces);
@@ -192,11 +184,8 @@ public class PreciseAlignmentCommand extends Command {
     public boolean isFinished() {
         double now = Timer.getFPGATimestamp();
 
-        // Hard timeout — always bail out eventually
-        if (now - commandStartTime > MAX_DURATION_SECONDS) {
-            DriverStation.reportWarning(
-                "PreciseAlignmentCommand timed out after " + MAX_DURATION_SECONDS + "s", false
-            );
+        //Safety timeout
+        if (now - startTime > maxElapsedtime) {
             return true;
         }
 
@@ -212,14 +201,14 @@ public class PreciseAlignmentCommand extends Command {
         double angularVelocity  = Math.abs(speeds.omegaRadiansPerSecond);
 
         boolean withinTolerance =
-            translationError < POSITION_TOLERANCE_METERS  &&
-            rotationError    < ROTATION_TOLERANCE_RADIANS &&
-            linearVelocity   < LINEAR_VELOCITY_TOLERANCE  &&
-            angularVelocity  < ANGULAR_VELOCITY_TOLERANCE;
+            translationError < xy_tolerance  &&
+            rotationError    < theta_tolerance &&
+            linearVelocity   < linVelTolerance  &&
+            angularVelocity  < angVelTolerance;
 
         if (withinTolerance) {
             if (settleStartTime < 0) settleStartTime = now;
-            return (now - settleStartTime) >= SETTLE_TIME_SECONDS;
+            return (now - settleStartTime) >= settleTime;
         } else {
             settleStartTime = -1;
             return false;
