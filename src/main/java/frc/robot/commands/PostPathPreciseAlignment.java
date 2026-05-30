@@ -17,8 +17,7 @@ import frc.robot.pathfinding.PPLogger;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-//Follow up to pathfinding by PP_Align that provides a more precise setpoint alignment using
-//three ProfiledPIDControllers. 
+//Follow up to pathfinding by PP_Align that provides a more precise setpoint alignment using three ProfiledPIDControllers. 
 
 //Error can go from 5cm and 5 degrees down to under 1cm and 0.5 degrees
 
@@ -61,7 +60,7 @@ public class PostPathPreciseAlignment extends Command {
     private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds =
         new SwerveRequest.ApplyRobotSpeeds();
 
-    public PreciseAlignmentCommand(
+    public PostPathPreciseAlignment(
         CommandSwerveDrivetrain drivetrain,
         Pose2d targetPose
     ) {
@@ -83,7 +82,7 @@ public class PostPathPreciseAlignment extends Command {
         try {
             robotConfig = RobotConfig.fromGUISettings();
         } catch (Exception e) {
-            DriverStation.reportError("PreciseAlignmentCommand: Failed to load RobotConfig" + e.getMessage(), false);
+            DriverStation.reportError("PostPathPreciseAlignment: Failed to load RobotConfig" + e.getMessage(), false);
             robotConfig = null;
         }
 
