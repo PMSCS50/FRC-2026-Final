@@ -17,34 +17,33 @@ import frc.robot.pathfinding.PPLogger;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-//Made by AI and not yet reviewed by a human.
 //Follow up to pathfinding by PP_Align that provides a more precise setpoint alignment using
 //three ProfiledPIDControllers. 
 
 //Error can go from 5cm and 5 degrees down to under 1cm and 0.5 degrees
 
-public class PreciseAlignmentCommand extends Command {
+public class PostPathPreciseAlignment extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
     private final Pose2d targetPose;
 
-    private static final double xy_kp = 4.0;
-    private static final double xy_kd = 0.1;
+    private static final double xy_kp       = 4.0;
+    private static final double xy_kd       = 0.1;
     private static final double theta_kp    = 4.0;
 
-    private static final double maxLinVel     = 0.75;         // m/s
-    private static final double maxLinAcc     = 1.5;          // m/s²
+    private static final double maxLinVel = 0.75;             // m/s
+    private static final double maxLinAcc = 1.5;              // m/s²
     private static final double maxAngVel = Math.PI;          // rad/s
-    private static final double maxAngAcc = Math.PI * 2;      // rad/s²
+    private static final double maxAngAcc = 2*Math.PI;        // rad/s²
 
-    private static final double xy_tolerance  = 0.005;
+    private static final double xy_tolerance    = 0.005;
     private static final double theta_tolerance = Math.toRadians(1.0);
-    private static final double linVelTolerance  = 0.05;
+    private static final double linVelTolerance = 0.05;
     private static final double angVelTolerance = 0.1;
 
     private static final double settleTime = 0.1;
 
-    private static final double maxElapsedtime = 30;
+    private static final double maxElapsedtime = 5;
 
     private static final double ffBounds = 0.05;
 
@@ -84,11 +83,7 @@ public class PreciseAlignmentCommand extends Command {
         try {
             robotConfig = RobotConfig.fromGUISettings();
         } catch (Exception e) {
-            DriverStation.reportError(
-                "PreciseAlignmentCommand: Failed to load RobotConfig — feedforward disabled. "
-                    + e.getMessage(),
-                e.getStackTrace()
-            );
+            DriverStation.reportError("PreciseAlignmentCommand: Failed to load RobotConfig" + e.getMessage(), false);
             robotConfig = null;
         }
 
@@ -101,10 +96,7 @@ public class PreciseAlignmentCommand extends Command {
 
         xController.reset(state.Pose.getX(), state.Speeds.vxMetersPerSecond);
         yController.reset(state.Pose.getY(), state.Speeds.vyMetersPerSecond);
-        thetaController.reset(
-            state.Pose.getRotation().getRadians(),
-            state.Speeds.omegaRadiansPerSecond
-        );
+        thetaController.reset(state.Pose.getRotation().getRadians(), state.Speeds.omegaRadiansPerSecond);
 
         prevSpeeds       = new ChassisSpeeds();
         settleStartTime  = -1;
@@ -189,8 +181,8 @@ public class PreciseAlignmentCommand extends Command {
             return true;
         }
 
-        var state      = drivetrain.getState();
-        Pose2d current = state.Pose;
+        var state            = drivetrain.getState();
+        Pose2d current       = state.Pose;
         ChassisSpeeds speeds = state.Speeds;
 
         double translationError = current.getTranslation().getDistance(targetPose.getTranslation());
