@@ -6,18 +6,15 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.MAXMotionConfig.MAXMotionPositionMode;
 import frc.robot.Constants.IntakeConstants;
 
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Pivot extends SubsystemBase {
@@ -27,8 +24,12 @@ public class Pivot extends SubsystemBase {
     private final SparkMax pivotMotor = new SparkMax(IntakeConstants.pivotMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
 
-    private double outputMin = -0.5, outputMax = 0.5;
+    private double outputMin = -0.3, outputMax = 0.3;
 
+    // MAXMotion profile constraints.
+    private static final double kMaxMotionMaxVelocityRpm        = 2000;
+    private static final double kMaxMotionMaxAccelerationRpmSec = 3000;
+    private static final double kMaxMotionAllowedErrorRotations  = 0.05;
 
     // calculations for freespinning neo
     public static final class NeoMotorConstants {
@@ -46,38 +47,40 @@ public class Pivot extends SubsystemBase {
     public Pivot() {
         pivotEncoder.setPosition(0);
         pivotClosedLoopController = pivotMotor.getClosedLoopController();
+
         pivotMotorConfig
                 .inverted(true)
                 .idleMode(IdleMode.kBrake)
-                .smartCurrentLimit(40).closedLoopRampRate(1);
+                .smartCurrentLimit(40)
+                .closedLoopRampRate(1);
+
         pivotMotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(.04, 0, 0) // .05,0,0 works with .4, .4
-                .outputRange(-.3, .3)
+                .pid(.04, 0, 0)
+                .outputRange(outputMin, outputMax)
                 .positionWrappingEnabled(false);
 
-        pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        //MaxMotion config
+        pivotMotorConfig.closedLoop.maxMotion
+                .positionMode(MAXMotionPositionMode.kMAXMotionTrapezoidal)
+                .cruiseVelocity(kMaxMotionMaxVelocityRpm)
+                .maxAcceleration(kMaxMotionMaxAccelerationRpmSec)
+                .allowedProfileError(kMaxMotionAllowedErrorRotations);
 
+        pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     @Override
     public void periodic() {
-
         if (!(getPivotAmps() > 30)) {
             unStallCount++;
-        } else {   
+        } else {
             unStallCount = 0;
             pivotStalled = true;
         }
         if (unStallCount > 30) {
             pivotStalled = false;
         }
-
-        // Logger.recordOutput("Intake/Velocity", intakeEncoder.getVelocity());
-        // Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
-        // Logger.recordOutput("Intake/Volts", intakeMotor.getBusVoltage());
-
-        // SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
     }
 
     public double getPivotAmps() {
@@ -87,12 +90,6 @@ public class Pivot extends SubsystemBase {
     public boolean pivotIsStalled() {
         return pivotStalled;
     }
-
-
-    public void stopPivot() {
-        pivotMotor.stopMotor();
-    }
-
 
     public void spinPivotPIDAmped(double percent) {
         double targetRPM = 5676 * percent;
@@ -106,9 +103,7 @@ public class Pivot extends SubsystemBase {
         pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kPosition);
     }
 
-
     public void spinPivotDutyAmped(double speed) {
-        pivotMotor.set(speed);
         if (!pivotIsStalled()) {
             pivotMotor.set(speed);
         } else {
@@ -119,6 +114,7 @@ public class Pivot extends SubsystemBase {
     public void spinPivotDuty(double speed) {
         pivotMotor.set(speed);
     }
+
     public SparkMaxConfig getPivotMotorConfig() {
         return pivotMotorConfig;
     }
@@ -127,9 +123,14 @@ public class Pivot extends SubsystemBase {
         return pivotMotor;
     }
 
+    public void stopPivot() {
+        pivotMotor.stopMotor();
+    }
+
     public RelativeEncoder getPivotEncoder() {
         return pivotEncoder;
     }
+
     public double getPivotVelocity() {
         return pivotEncoder.getVelocity();
     }
@@ -142,24 +143,37 @@ public class Pivot extends SubsystemBase {
         pivotEncoder.setPosition(0);
     }
 
+    // Plain position control — no profiling
     public void goToPosition(double targetRotations) {
         pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kPosition);
     }
 
+    // MAXMotion position control — trapezoidal profile, use this for deployment
+    public void goToPositionMAXMotion(double targetRotations) {
+        pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kMAXMotionPositionControl);
+    }
+
+    // MAXMotion with stall guard
+    public void goToPositionMAXMotionAmped(double targetRotations) {
+        if (!pivotIsStalled()) {
+            pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kMAXMotionPositionControl);
+        }
+    }
+
     public boolean atPosition(double targetRotations, double toleranceRotations) {
         return Math.abs(getPivotPosition() - targetRotations) < toleranceRotations;
-
     }
 
     public void setOutputLimits(double speed) {
         outputMin = -speed;
         outputMax = speed;
     }
+
     public void setTopLimit(double speed) {
         outputMax = speed;
     }
+
     public void setBottomLimit(double speed) {
         outputMin = -speed;
     }
-
 }

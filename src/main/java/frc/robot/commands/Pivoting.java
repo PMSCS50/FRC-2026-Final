@@ -13,8 +13,6 @@ public class Pivoting extends Command {
     private static final double SETPOINT_B = IntakeConstants.kPivotSetpointB; // down
     private static final double TOLERANCE = 0.05;
 
-    
-
     private final Pivot pivot;
     private final double targetSetpoint;
 
@@ -26,13 +24,12 @@ public class Pivoting extends Command {
 
     @Override
     public void initialize() {
-
-        pivot.goToPosition(targetSetpoint);
+        pivot.goToPositionMAXMotion(targetSetpoint);
     }
 
     @Override
     public void execute() {
-        SmartDashboard.putNumber("pivot location", pivot.getPivotEncoder().getPosition());
+        SmartDashboard.putNumber("pivot location", pivot.getPivotPosition());
     }
 
     @Override
@@ -42,6 +39,8 @@ public class Pivoting extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        pivot.goToPosition(targetSetpoint); 
+        pivot.goToPositionMAXMotion(targetSetpoint); 
     }
 }
+
+//So Ive reverted everything and am starting from scratch.

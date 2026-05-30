@@ -5,6 +5,9 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+
+import java.util.Set;
+
 import edu.wpi.first.math.util.Units;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -14,6 +17,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
+import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.VisionConstants;
 //import frc.robot.commands.ChaseTagCommand;
 
@@ -120,6 +124,12 @@ public class RobotContainer {
         shooter = new Shooter(vision);
         
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
+        
+        //Hypothetical Waypoints for testing purposes
+        monkeyDLuffy.addWaypoint("Shooting Setpoint", VisionConstants.aimPose);
+        monkeyDLuffy.addWaypoint("Climb", ClimbConstants.getClimbPose());
+        monkeyDLuffy.addWaypoint("Center", VisionConstants.getCenter());
+        
         monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
         monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
         monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
@@ -183,9 +193,10 @@ public class RobotContainer {
 // ******************************************************************************************************
     // Triggers and Bumpers
         subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        subjoystick.leftTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake)); 
-        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        subjoystick.leftBumper().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
+            .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        subjoystick.leftBumper().and(subjoystick.leftTrigger())
+            .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
         subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
         subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
@@ -193,20 +204,6 @@ public class RobotContainer {
     // POV Controls    
         subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
         subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
-       //  subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new FixedPIDShooting(shooter, 3.3));
-        
-
-        
-        // subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
-        // subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
-        // subjoystick.povLeft().onTrue(new RunCommand(() -> LLVision.setPigeon()));
-        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.23));
-        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter, 2.25));
-        // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));
-        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter,() -> shooterSpeed));
-        // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter, () -> shooterSpeed));
-        subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new DistanceBasedShooting(shooter, vision));
-
 
         // subjoystick.povLeft()
         // subjoystick.povRight()
@@ -274,8 +271,14 @@ public class RobotContainer {
          * 
          */
 
-        joystick.b().whileTrue(monkeyDLuffy.makePathTo(Constants.VisionConstants.aimPose));
-        joystick.y().whileTrue(new PostPathPreciseAlignment(drivetrain, Constants.VisionConstants.aimPose));
+        joystick.b().whileTrue(
+            Commands.defer(
+                () -> monkeyDLuffy.gotoSelectedWaypoint()
+                    .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose())),
+                Set.of(drivetrain)
+            )
+        );
+        joystick.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
     }
 
     public void setShooterSpeed(double speed) {

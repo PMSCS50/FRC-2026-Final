@@ -190,9 +190,12 @@ import edu.wpi.first.math.geometry.Transform3d;
           public static final double pivotPower = 0.1;
           public static final double intakePower = 0.4;
 
-          // public static final double kP = 0;
-          // public static final double kI = 0;
-          // public static final double kD = 0;
+          public static final double pivotkP = 1;
+          public static final double pivotkI = 0;
+          public static final double pivotkD = 0;
+
+          public static final double kMaxPivotVelocity =     1.0; // rotations per second, tune as needed
+          public static final double kMaxPivotAcceleration = 1.0; // rotations per second^2, tune as needed
 
           public static final double kPivotSetpointA = 0.0;  
           public static final double kPivotSetpointB = 16; 

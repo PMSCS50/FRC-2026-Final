@@ -1,5 +1,7 @@
 package frc.robot.pathfinding;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.*;
@@ -15,12 +17,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -41,12 +41,14 @@ public class Pathmaster {
     private final HashMap<String, Pose2d> waypoints = new HashMap<>();
     private static boolean pathing = false;
     private static boolean warmup = false;
+    private int selectedWaypointIndex;
 
     //Used to prevent cancelPathing() from canceling other ddrivetrain commands.
     private List<String> commandNames = List.of(
         "makePathTo",
         "pathfindToPath",
         "goToWaypoint",
+        "goToSelectedWaypoint",
         "pathToNearestPose",
         "pathToNearestWaypoint",
         "pathFindToNearestPath",
@@ -69,6 +71,8 @@ public class Pathmaster {
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
+        this.selectedWaypointIndex = 0;
+
         createLoggingCallbacks();
         linkStartingState();
     }
@@ -85,6 +89,8 @@ public class Pathmaster {
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, maxVoltage);
         this.robotPose = () -> drivetrain.getState().Pose;
         this.robotSpeeds = () -> drivetrain.getState().Speeds;
+
+        this.selectedWaypointIndex = 0;
 
         createLoggingCallbacks();
         linkStartingState();
@@ -146,6 +152,11 @@ public class Pathmaster {
     /** Register a waypoint on the field. By calling gotoWaypoint() we can align here automatically. */
     public void addWaypoint(String name, Pose2d pose) {
         waypoints.put(name, pose);
+    }
+
+    public void selectNextWaypoint() {
+        int length = waypoints.keySet().size();
+        selectedWaypointIndex = (selectedWaypointIndex + 1) % length;
     }
 
     // ---------------
@@ -293,6 +304,20 @@ public class Pathmaster {
         ).withName("goToWaypoint");
     }
 
+    /** Pathfind to waypoint corresponding with selectedWaypointIndex*/
+    public Command gotoSelectedWaypoint() {
+        // if (!checkConfigured("gotoWaypoint")) return Commands.none();
+        if (!AutoBuilder.isConfigured())
+            return Commands.none();
+        return Commands.defer(
+            () -> {
+                String selectedWaypoint = new ArrayList<>(waypoints.keySet()).get(selectedWaypointIndex);
+                return AutoBuilder.pathfindToPose(waypoints.get(selectedWaypoint), constraints);
+                },
+            Set.of(drivetrain)
+        ).withName("goToSelectedWaypoint");
+    }
+
     /**
      * Intended alignment pipeline.
      * pathfindToPose() has ~5cm error at endpoint.
@@ -360,7 +385,7 @@ public class Pathmaster {
     //                     .getDistance(robotPose.get().getTranslation())
     //             ));
 
-    //         return AutoBuilder.pathfindThenFollowPath(nearestPath);
+    //         return nearestPath.map(path -> AutoBuilder.pathfindThenFollowPath(path, constraints))
     //     }, Set.of(drivetrain)).withName("pathFindToNearestPath");
     // }
 
@@ -400,12 +425,11 @@ public class Pathmaster {
     // -------
 
     /** Returns the rotation needed at 'from' to face toward 'target'. */
-    private Rotation2d getRotationToPose(Pose2d start, Pose2d target) {
-        Transform2d transform = target.minus(start);
-        Translation2d translation = transform.getTranslation();
-        Rotation2d angleToTarget = new Rotation2d(translation.getX(), translation.getY());
-        return angleToTarget;
+    private Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
+        Translation2d delta = target.getTranslation().minus(from.getTranslation());
+        return new Rotation2d(delta.getX(), delta.getY());
     }
+
 
     public boolean isPathing() {
         return pathing;
@@ -413,6 +437,14 @@ public class Pathmaster {
 
     public boolean warmedUp() {
         return warmup;
+    }
+
+    public String selectedWaypoint() {
+        return new ArrayList<>(waypoints.keySet()).get(selectedWaypointIndex);
+    }
+
+    public Pose2d selectedWaypointPose() {
+        return waypoints.get(selectedWaypoint());
     }
     
     public boolean AutoBuilderPathFindingConfigured() {
