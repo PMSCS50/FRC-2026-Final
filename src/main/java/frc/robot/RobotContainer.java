@@ -35,7 +35,6 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Climb;
 
 import frc.robot.subsystems.vision.*;
-import frc.robot.subsystems.LLSubsystem;
 
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
@@ -111,7 +110,7 @@ public class RobotContainer {
         if (Constants.currentMode == Constants.Mode.SIM) {
             vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
-            vision = new LLSubsystemNew(drivetrain, "limelight-meowlit", "pppr");
+            vision = new LLSubsystemSingle(drivetrain, "limelight-meowlit");
         }
         
         shooter = new Shooter(vision);

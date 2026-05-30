@@ -57,8 +57,6 @@ public class Shooter extends SubsystemBase {
     private final double phi = Math.toRadians(shooterAngle);   // radians
     private final double shooterHeight = 0.508;                // meters from ground
     
-    
-
     // CONSTRUCTOR
     public Shooter(VisionGeneral vision) {
         this.vision = vision;
@@ -79,7 +77,6 @@ public class Shooter extends SubsystemBase {
         SparkMaxConfig kickerConfig1 = new SparkMaxConfig();
         SparkMaxConfig kickerConfig2 = new SparkMaxConfig();
         
-
         kickerConfig1
             .inverted(false)
             .idleMode(IdleMode.kCoast)
@@ -120,10 +117,7 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Subsystems/Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
         Logger.recordOutput("Subsystems/Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
         Logger.recordOutput("Subsystems/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
-        
-
     }
-
 
     // ************************
     // SHOOTING METHODS
@@ -134,6 +128,7 @@ public class Shooter extends SubsystemBase {
      * Used for manual testing from RobotContainer buttons.
      * Also runs kickers at full power.
      */
+
     public void setShooterSpeed(double speed) {
         shooterMotor1.setControl(motorControl.withOutput(speed));
         kicker1.set(1);
@@ -141,14 +136,14 @@ public class Shooter extends SubsystemBase {
         // SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
-    //Why tf was this in vision???
     public double rpmFromDistanceRegression(double distance) {
         double rps = 0.1322042143 * Math.pow(distance, 4)
                    - 1.110063156  * Math.pow(distance, 3)
                    + 3.621489461  * Math.pow(distance, 2)
                    + 0.1849702218 * distance
                    + 33.86388054;
-        return rps * 60.0;
+        double rpm = rps * 60.0;
+        return rpm;
     }
 
     public void rpmControl(double distance) {
@@ -160,12 +155,10 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
     }
 
-
-
-    
     public void spinKickers() {
         kicker1.set(1);
     }
+
     public void spinKickersAgain(double speed) {
         kicker1.set(speed);
     }
@@ -249,19 +242,5 @@ public class Shooter extends SubsystemBase {
     //     }
 
     //     return new double[]{ correctedVx, correctedVy, yaw };
-    // }
-        
-
-
-
-    /** Returns the current target velocity in m/s */
-    
-
-
-   
-    
-
-   
-
-   
+    // } 
 }
