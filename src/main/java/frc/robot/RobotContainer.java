@@ -39,6 +39,9 @@ import frc.robot.subsystems.vision.*;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+
+import frc.robot.pathfinding.Pathmaster;
+
 import edu.wpi.first.cameraserver.CameraServer;
 
 import frc.robot.commands.AlignToHub;
@@ -47,7 +50,6 @@ import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
 import frc.robot.commands.PV_Align;
-import frc.robot.pathfinding.Pathmaster;
 import frc.robot.commands.PostPathPreciseAlignment;
 
 public class RobotContainer {
