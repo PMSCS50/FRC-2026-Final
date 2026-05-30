@@ -33,7 +33,10 @@ import frc.robot.generated.TunerConstants;
 
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Climb;
+
 import frc.robot.subsystems.vision.*;
+import frc.robot.subsystems.LLSubsystem;
+
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
@@ -85,6 +88,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     
     private final VisionGeneral vision;
+    //private final LLSubsystem oldVision;
     //private final VisionSimSystem vision;
     //private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
 
@@ -107,7 +111,7 @@ public class RobotContainer {
         if (Constants.currentMode == Constants.Mode.SIM) {
             vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
-            vision = new LLSubsystem(drivetrain, "limelight", "pppr");
+            vision = new LLSubsystemNew(drivetrain, "limelight-meowlit", "pppr");
         }
         
         shooter = new Shooter(vision);
@@ -193,7 +197,7 @@ public class RobotContainer {
         // subjoystick.povLeft().whileTrue(new FixedPIDShooting(shooter, 3)); // side of climb
         // subjoystick.povUp().whileTrue(new FixedPIDShooting(shooter, 2.5)); // side of slope
         // subjoystick.povLeft().onTrue(new RunCommand(() -> LLVision.setPigeon()));
-        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new FixedPIDShooting(shooter,1.23));
+        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.23));
         // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter, 2.25));
         // subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).onTrue(new InstantCommand(() -> shooterSpeed += .01));
         // subjoystick.povDown().or(subjoystick.povDownRight()).or(subjoystick.povDownLeft()).whileTrue(new FixedPIDShooting(shooter,() -> shooterSpeed));
@@ -235,9 +239,6 @@ public class RobotContainer {
         joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
         joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
 
-
-        
-
     // POV Controls
         // joystick.povUp()
         // joystick.povRight()
@@ -252,8 +253,8 @@ public class RobotContainer {
     // Letters
         // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
-        if (vision instanceof LLSubsystem) {
-            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystem) vision));
+        if (vision instanceof LLSubsystemNew) {
+            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemNew) vision));
         }
         
         //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
@@ -272,8 +273,6 @@ public class RobotContainer {
 
         joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.aimPose, Constants.VisionConstants.getHubPose()));
         joystick.y().onTrue(monkeyDLuffy.cancelPathing());
-        
-        
     }
 
     public void setShooterSpeed(double speed) {
@@ -306,8 +305,6 @@ public class RobotContainer {
         speedLimiter = speed;
         
     }
-
-
 
     public void flipDirection(double newDir){
         this.directionFlipper = newDir;

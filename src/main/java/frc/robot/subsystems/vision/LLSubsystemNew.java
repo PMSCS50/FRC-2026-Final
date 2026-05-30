@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 // llCamera2: rear-facing camera  (180 deg yaw offset)
 // Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
 
-public class LLSubsystem extends VisionGeneral implements VisionIO {
+public class LLSubsystemNew extends VisionGeneral implements VisionIO {
 
     private final CommandSwerveDrivetrain drivetrain;
     private final String llCamera1; // front camera: peepee peeper
@@ -59,7 +59,7 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
 
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
-    public LLSubsystem(CommandSwerveDrivetrain drivetrain, String llCamera1, String llCamera2) {
+    public LLSubsystemNew(CommandSwerveDrivetrain drivetrain, String llCamera1, String llCamera2) {
         this.drivetrain = drivetrain;
         this.llCamera1  = llCamera1;
         this.llCamera2  = llCamera2;
@@ -207,7 +207,7 @@ public class LLSubsystem extends VisionGeneral implements VisionIO {
         return true;
     }
 
-    // Vision Sexually Transmitted Diseases 
+    // Vision STDs
 
     //This one was made by Big C bc aint no way I'm creating a system for stdDevs myself
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
