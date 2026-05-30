@@ -98,6 +98,10 @@ public class Robot extends LoggedRobot {
     else {
       LimelightHelpers.SetFiducialIDFiltersOverride(VisionConstants.limelightName, blueTags);
     }
+
+    if (Robot.isSimulation()) {
+      DriverStation.silenceJoystickConnectionWarning(true);
+    }
   }
     
   @Override
@@ -138,7 +142,7 @@ public class Robot extends LoggedRobot {
     //   }
     // }
 
-    Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBrownoutVoltage());
+    Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
     Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
     Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
     Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
@@ -243,5 +247,7 @@ public class Robot extends LoggedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    m_robotContainer.drivetrain.updateSimState(0.02, RobotController.getBatteryVoltage());
+  }
 }

@@ -48,6 +48,8 @@ import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
 import frc.robot.commands.PV_Align;
 import frc.robot.pathfinding.Pathmaster;
+import frc.robot.commands.PreciseAlignmentCommand;
+
 public class RobotContainer {
 
     // **************************************************************************************************************
@@ -270,8 +272,8 @@ public class RobotContainer {
          * 
          */
 
-        joystick.b().whileTrue(monkeyDLuffy.pathfindFaceTargetPose(Constants.VisionConstants.aimPose, Constants.VisionConstants.getHubPose()));
-        joystick.y().onTrue(monkeyDLuffy.cancelPathing());
+        joystick.b().whileTrue(monkeyDLuffy.makePathTo(Constants.VisionConstants.aimPose));
+        joystick.y().whileTrue(new PreciseAlignmentCommand(drivetrain, Constants.VisionConstants.aimPose));
     }
 
     public void setShooterSpeed(double speed) {

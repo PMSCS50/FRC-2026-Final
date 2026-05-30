@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.*;
+import edu.wpi.first.math.util.Units;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -11,9 +15,12 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.generated.TunerConstants;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
+import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -48,6 +55,28 @@ import edu.wpi.first.math.geometry.Transform3d;
       /** Replaying from a log file. */
       REPLAY
     }
+        public static class DriveConstants {
+
+          public static final double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+          public static final double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+
+
+          public static final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 2% deadband
+            .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
+          public static final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
+          public static final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+          public static final SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric()
+                  .withDriveRequestType(DriveRequestType.Velocity);
+
+          //High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
+          public static final double pathMaxLinearAcceleration = 13.67; // m/s^2
+          public static final double pathMaxAngularAcceleration = 12; // rad/s^2
+
+        }
+
+
+
         public static class VisionConstants{
           public static final String limelightName = "limelight-meowlit";
 

@@ -118,7 +118,7 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         // AdvantageKit Logging
         Logger.recordOutput("Vision/Heading Sent to LL", headingDeg);
         Logger.recordOutput("Vision/Raw Pigeon Yaw",     drivetrain.getPigeon2().getYaw().getValueAsDouble());
-        Logger.recordOutput("Vision/ω (rps)",          omegaRps);
+        Logger.recordOutput("Vision/ω (rps)",            omegaRps);
         Logger.recordOutput("Vision/Tag Count",          llMeasurement != null ? llMeasurement.tagCount : 0);
         Logger.recordOutput("Vision/Camera Valid",       camValid);
 
@@ -293,16 +293,6 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
         if (tagDist > 0) return tagDist;
         return getDistanceToTarget(VisionConstants.getHubPose());
-    }
-
-    public double rpmFromDistanceRegression(double distance) {
-        double rps = .1322042143 * Math.pow(distance, 4)
-        - 1.110063156 * Math.pow(distance, 3) 
-        + 3.621489461 * Math.pow(distance, 2)
-        + .1849702218 * distance
-        + 33.86388054 + 1;
-        double rpm = rps * 60;
-        return rpm;
     }
 
     public PoseEstimate getPoseEstimate(PoseEstimate red, PoseEstimate blue) {

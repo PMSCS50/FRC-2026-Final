@@ -176,16 +176,11 @@ public class VisionIOSim implements VisionIO {
             return;
         }
 
-        Optional<EstimatedRobotPose> latestEst = Optional.empty();
-        List<PhotonTrackedTarget> latestTargets = List.of();
-
-        for (PhotonPipelineResult r : camera.getAllUnreadResults()) {
-            Optional<EstimatedRobotPose> est = photonPoseEstimator.update(r);
-            if (est.isPresent()) {
-                latestEst     = est;
-                latestTargets = r.getTargets();
-            }
-        }
+        PhotonPipelineResult poseResult = camera.getLatestResult();
+        Optional<EstimatedRobotPose> latestEst = photonPoseEstimator.update(poseResult);
+        List<PhotonTrackedTarget> latestTargets = latestEst.isPresent()
+            ? poseResult.getTargets()
+            : List.of();
 
         if (latestEst.isPresent()) {
             EstimatedRobotPose est = latestEst.get();
