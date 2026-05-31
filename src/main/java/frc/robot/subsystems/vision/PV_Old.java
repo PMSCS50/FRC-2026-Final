@@ -217,7 +217,6 @@
 //     // ************************
 //     // SHOOTER HELPERS
 //     // ************************
-
 //     double shooterHeight = 0.508;
 //     double phi = Math.toRadians(70);
 

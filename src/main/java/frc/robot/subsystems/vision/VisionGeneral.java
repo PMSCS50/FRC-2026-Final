@@ -22,11 +22,13 @@ public abstract class VisionGeneral extends SubsystemBase {
      * @return The x value
      */
     public abstract double getX(int i);
+
     /**
      * @param i 
      * @return The y value
      */
     public abstract double getY(int i);
+    
     /**
     * @param i 
     * @return The yaw angle of the target, in radians

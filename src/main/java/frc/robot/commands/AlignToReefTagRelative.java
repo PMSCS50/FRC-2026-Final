@@ -73,7 +73,7 @@ public class AlignToReefTagRelative extends Command {
         double ySpeed = -yController.calculate(postions[0]);
         double rotValue = rotController.calculate(postions[4]);
 
-        //drivebase.drive(new Translation2d(xSpeed, ySpeed), rotValue, false);
+        // drivebase.drive(new Translation2d(xSpeed, ySpeed), rotValue, false);
 
         m_drivetrain.setControl(m_drive
                 .withVelocityX(xSpeed) // Drive forward with negative Y(forward)
@@ -90,7 +90,7 @@ public class AlignToReefTagRelative extends Command {
         .withVelocityX(0) // Drive forward with negative Y(forward)
         .withVelocityY(0) // Drive left with negative X (left)
         .withRotationalRate(0));
-        //System.out.println("No target detected");
+        // System.out.println("No target detected");
     }
 
     SmartDashboard.putNumber("poseValidTimer", stopTimer.get());
@@ -106,7 +106,7 @@ public class AlignToReefTagRelative extends Command {
 
   @Override
   public boolean isFinished() {
-    // Requires the robot to stay in the correct position for 0.3 seconds, as long as it gets a tag in the camera
+    // *Requires the robot to stay in the correct position for 0.3 seconds, as long as it gets a tag in the camera
     return (this.dontSeeTagTimer.hasElapsed(Constants.DONT_SEE_TAG_WAIT_TIME) ||
         this.stopTimer.hasElapsed(Constants.POSE_VALIDATION_TIME)) || this.idleTimer.hasElapsed(1.5);
   }

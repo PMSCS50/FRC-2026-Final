@@ -28,27 +28,27 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
-// 2-camera Limelight subsystem.
-// llCamera1: front-facing camera (0 deg yaw offset)
-// llCamera2: rear-facing camera  (180 deg yaw offset)
-// Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
+// !2-camera Limelight subsystem.
+// ?llCamera1: front-facing camera (0 deg yaw offset)
+// ?llCamera2: rear-facing camera  (180 deg yaw offset)
+// ?Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
 
-public class LLSubsystemNew extends VisionGeneral implements VisionIO {
+public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final String llCamera1; // front camera: peepee peeper
-    private final String llCamera2; // rear camera: ass tumor
+    private final String llCamera1; // |front camera: peepee peeper
+    private final String llCamera2; // |rear camera: ass tumor
 
     private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
 
     private double omegaRps;
 
-    //Pose of the robot, wrapped in latestEstimate
+    // *Pose of the robot, wrapped in latestEstimate
     private Pose2d estimatedRobotPose;
     private PoseEstimate latestEstimate;
 
 
-    //Vision standard deviations
+    // *Vision standard deviations
     private static final double BASE_XY_STD_DEV      = 0.5;
     private static final double THETA_STD_DEV        = 9999.0;
     private static final double MAX_AMBIGUITY        = 0.9;
@@ -59,7 +59,8 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
 
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
-    public LLSubsystemNew(CommandSwerveDrivetrain drivetrain, String llCamera1, String llCamera2) {
+    // !Constructor
+    public LLSubsystemDouble(CommandSwerveDrivetrain drivetrain, String llCamera1, String llCamera2) {
         this.drivetrain = drivetrain;
         this.llCamera1  = llCamera1;
         this.llCamera2  = llCamera2;
@@ -67,12 +68,13 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         setPipeline(9); 
         setIMUMode(4);
 
-        //Clear tag filters
+        // *Clear tag filters
         LimelightHelpers.SetFiducialIDFiltersOverride(llCamera1, new int[]{});
         LimelightHelpers.SetFiducialIDFiltersOverride(llCamera2, new int[]{});
     }
 
 
+    // !Periodic
     @Override
     public void periodic() {
         var driveState = drivetrain.getState();
@@ -86,38 +88,38 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         PoseEstimate llMeasurement1 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera1);
         PoseEstimate llMeasurement2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera2);
 
-        // Reset each loop to ensure we don't accidentally use stale data if both cameras are invalid
+        // *Reset each loop to ensure we don't accidentally use stale data if both cameras are invalid
         estimatedRobotPose = null;
         latestEstimate     = null;
 
         boolean cam1Valid = isEstimateValid(llMeasurement1);
         boolean cam2Valid = isEstimateValid(llMeasurement2);
 
-        // Send camera1 pose estimate
+        // *Send camera1 pose estimate
         if (cam1Valid) {
             Matrix<N3, N1> stdDevs = calculateStdDevs(llMeasurement1);
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
                     llMeasurement1.pose,
                     Utils.fpgaToCurrentTime(llMeasurement1.timestampSeconds)//,
-                    //stdDevs
+                    // stdDevs
                 );
             }
         }
 
-        // send camera2 po2585se estimate ,
+        // *send camera2 po2585se estimate ,
         if (cam2Valid) {
             Matrix<N3, N1> stdDevs = calculateStdDevs(llMeasurement2);
             if (stdDevs != null) {
                 drivetrain.addVisionMeasurement(
                     llMeasurement2.pose,
                     Utils.fpgaToCurrentTime(llMeasurement2.timestampSeconds)//,
-                    //stdDevs
+                    // stdDevs
                 );
             }
         }
 
-        // Wrap estimatedRobotPose inside a PoseEstimate for more metadata.
+        // *Wrap estimatedRobotPose inside a PoseEstimate for more metadata.
         if (cam1Valid || cam2Valid) {
             estimatedRobotPose = drivetrain.getState().Pose;
 
@@ -136,11 +138,11 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
             double avgLatency = (llMeasurement1.latency + llMeasurement2.latency) / 2.0;
             double avgTagSpan = (llMeasurement1.tagSpan + llMeasurement2.tagSpan) / 2.0;
 
-            // Total unique tags seen across both cameras (no double-counting overlaps)
+            // *Total unique tags seen across both cameras (no double-counting overlaps)
             RawFiducial[] totalTagsUsed = totalTagsUsed(llMeasurement1, llMeasurement2);
             int totalTags = totalTagsUsed.length;
 
-            //Fused metadata from both pose estimates.
+            // *Fused metadata from both pose estimates.
             latestEstimate = new PoseEstimate(
                 estimatedRobotPose,
                 avgTimestamp,
@@ -154,7 +156,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
             );
         }
 
-        //Reset tagtransforms every periodic
+        // *Reset tagtransforms every periodic
         tagtransforms.clear();
 
         LimelightTarget_Fiducial[] allTags = allVisibleTags(
@@ -162,7 +164,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
             LimelightHelpers.getLatestResults(llCamera2).targets_Fiducials
         );
 
-        //Tag HashMap thing Kevin did
+        // *Tag HashMap thing Kevin did
         for (LimelightTarget_Fiducial fiducial : allTags) {
             Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
             Transform2d tagToRobot = new Transform2d(
@@ -176,7 +178,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
             );
         }
 
-        //AdvantageKit Logging 
+        // *AdvantageKit Logging 
         Logger.recordOutput("Vision/Heading Sent to LL",    headingDeg);
         Logger.recordOutput("Vision/Raw Pigeon Yaw",        drivetrain.getPigeon2().getYaw().getValueAsDouble());
         Logger.recordOutput("Vision/Omega RPS",             omegaRps);
@@ -189,8 +191,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         Logger.processInputs("LoggedVision", inputs);
     }
 
-    //Validation
-
+    // *Validation
     private boolean isEstimateValid(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return false;
 
@@ -207,9 +208,8 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         return true;
     }
 
-    // Vision STDs
-
-    //This one was made by Big C bc aint no way I'm creating a system for stdDevs myself
+    // !Vision STDs
+    // |This one was made by Big C bc aint no way I'm creating a system for stdDevs myself
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return VecBuilder.fill(9999.0, 9999.0, 9999.0);
 
@@ -231,7 +231,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
     }
 
 
-    //Used to count tags for POSE ESTIMATION
+    // *Used to count tags for POSE ESTIMATION
     private RawFiducial[] totalTagsUsed(PoseEstimate est1, PoseEstimate est2) {
         if (est1 == null && est2 == null) return new RawFiducial[0];
         if (est1 != null && est2 == null) return est1.rawFiducials;
@@ -244,14 +244,14 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         return combined;
     }
 
-    //Used to count tags for TAG DATA
+    // *Used to count tags for TAG DATA
     private LimelightTarget_Fiducial[] allVisibleTags(LimelightTarget_Fiducial[] t1, LimelightTarget_Fiducial[] t2) {
 
         if (t1 == null && t2 == null) return new LimelightTarget_Fiducial[0];
         if (t1 != null && t2 == null) return t1;
         if (t1 == null && t2 != null) return t2;
 
-        //Removes all duplicates from the array.
+        // *Removes all duplicates from the array.
         LimelightTarget_Fiducial[] allTags = Stream.of(t1, t2)
                                                    .flatMap(Arrays::stream)
                                                    .distinct()
@@ -281,8 +281,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         return sum / estimate.rawFiducials.length;
     }
 
-    //getters
-
+    // !Getters
     public Pose2d  getPose()        { return estimatedRobotPose; }
     public double  getX(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
     public double  getY(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
@@ -292,7 +291,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
     public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera1) || LimelightHelpers.getTV(llCamera2); }
-    //public boolean hasTarget(int i)      { return hasTargets(); } // alias for compatibility with VisionGeneral
+    // public boolean hasTarget(int i)      { return hasTargets(); } // alias for compatibility with VisionGeneral
 
     public double getTagX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
@@ -329,8 +328,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         LimelightHelpers.SetIMUMode(llCamera2, mode);
     }
 
-    // distance utilities
-
+    // !distance utilities
     public double getDistanceToTarget(Pose2d targetPose) {
         if (!hasTargets()) return -1.0;
         return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
@@ -352,7 +350,7 @@ public class LLSubsystemNew extends VisionGeneral implements VisionIO {
         return -1.0;
     }
 
-    // For the closest (primary) tag, mainly to make it usable for VisionGeneral
+    // *For the closest (primary) tag, mainly to make it usable for VisionGeneral
     public double getDistance() {
         if (latestEstimate == null || latestEstimate.rawFiducials == null || latestEstimate.rawFiducials.length == 0) return -1.0;
         

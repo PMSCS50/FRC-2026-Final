@@ -36,7 +36,7 @@ public class FixedPIDShooting extends Command {
         // double speed = supplier != null ? supplier.getAsDouble() : distance;
         shooter.rpmControl(distance);
         if (shooter.atCorrectRPMFixed(distance)) { 
-            shooter.spinKickers();
+            shooter.spinKickersMax();
         }
     }   
 

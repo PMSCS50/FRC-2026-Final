@@ -6,18 +6,14 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.numbers.N1;
 
-//I dont think records are in this version of wpilib. So, we need to make a class instead
+// |I dont think records are in this version of wpilib. So, we need to make a class instead
 
-/*
- * Class that stores the configuration values for SSController, 
- * which includes everything EXCEPT the system.
- * You can pass this class into SSController directly.
- * This way we can put an SSControllerConfigs inside the constants for each subsystem.
- * Then it just makes initialization easier. 
- * 
- * Normally this can be automated with a record, but since records seem to not be in
- * this version of java, we have to make it by hand. Stupid boilerplate code.
- */
+// *Class that stores the configuration values for SSController, which includes everything EXCEPT the system.
+// *You can pass this class into SSController directly.
+// *This way we can put an SSControllerConfigs inside the constants for each subsystem.
+// *Then it just makes initialization easier.
+
+// !Normally this can be automated with a record, but since records seem to not be in this version of java, we have to make it by hand. Stupid boilerplate code.
 
 public class SSControllerConfigs<States extends Num, Inputs extends Num, Outputs extends Num> {
     

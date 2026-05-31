@@ -42,5 +42,3 @@ public class Pivoting extends Command {
         pivot.goToPositionMAXMotion(targetSetpoint); 
     }
 }
-
-//So Ive reverted everything and am starting from scratch.

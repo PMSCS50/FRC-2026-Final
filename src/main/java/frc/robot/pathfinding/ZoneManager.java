@@ -1,6 +1,6 @@
 package frc.robot.pathfinding;
 
-import frc.robot.pathfinding.PathZone;
+//import frc.robot.pathfinding.PathZone;
 import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.ArrayList;
@@ -9,18 +9,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Static class that manages rotation and orientation zones for the pathfinding system.
- * Provides thread-safe zone registration and state management.
- * 
- * Zones define regions on the field where the robot should:
+ * !Static class that manages rotation and orientation zones for the pathfinding system.
+ * ?Provides thread-safe zone registration and state management.
+ * ?Zones define regions on the field where the robot should:
  * 
  * * RotationZone: Hold a fixed heading
  * * OrientationZone: Orient to a specific target pose
  * * ConstraintZone: Adjust path constraints
  * * EventZones: Activate a specific command
  * 
- * This class maintains a concurrent map of zones and their active states,
- * accessible to the RoronoaZoro pathfinder.
+ * ?This class maintains a concurrent map of zones and their active states,
+ * ?accessible to the RoronoaZoro pathfinder.
  */
 public class ZoneManager {
     
@@ -28,7 +27,7 @@ public class ZoneManager {
     private static final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();
     
     /**
-     * Registers a zone in the zone manager.
+     * *Registers a zone in the zone manager.
      * 
      * @param zone The PathZone to add (RotationZone or OrientationZone)
      * @param active Whether the zone should be active by default
@@ -38,7 +37,7 @@ public class ZoneManager {
     }
     
     /**
-     * Sets the active state of a named zone.
+     * *Sets the active state of a named zone.
      * 
      * @param zoneName The name of the zone to modify
      * @param newState The new active state (true = active, false = inactive)
@@ -55,7 +54,7 @@ public class ZoneManager {
     }
     
     /**
-     * Sets all zones to the same active state.
+     * *Sets all zones to the same active state.
      * 
      * @param newState The new active state for all zones
      */
@@ -66,8 +65,8 @@ public class ZoneManager {
     }
     
     /**
-     * Gets a list of currently active zones.
-     * Returns a snapshot copy to prevent concurrent modification issues.
+     * *Gets a list of currently active zones.
+     * ?Returns a snapshot copy to prevent concurrent modification issues.
      * 
      * @return List of active PathZone objects
      */
@@ -82,7 +81,7 @@ public class ZoneManager {
     }
     
     /**
-     * Gets all registered zones regardless of active state.
+     * *Gets all registered zones regardless of active state.
      * 
      * @return List of all registered PathZone objects
      */
@@ -91,7 +90,7 @@ public class ZoneManager {
     }
     
     /**
-     * Checks if a zone is currently active.
+     * *Checks if a zone is currently active.
      * 
      * @param zoneName The name of the zone to check
      * @return true if the zone is registered and active, false otherwise
@@ -106,7 +105,7 @@ public class ZoneManager {
     }
 
     /**
-     * Deletes the given zone. Highly unlikely we will use this
+     * *Deletes the given zone. Highly unlikely we will use this
      */
     public static boolean deleteZone(String zoneName) {
         for (PathZone zone : zones.keySet()) {
@@ -119,14 +118,14 @@ public class ZoneManager {
     }
     
     /**
-     * Clears all registered zones. Useful for resetting state or testing.
+     * *Clears all registered zones. Useful for resetting state or testing.
      */
     public static void clearAllZones() {
         zones.clear();
     }
     
     /**
-     * Gets the total number of registered zones.
+     * *Gets the total number of registered zones.
      * 
      * @return Number of zones currently registered
      */

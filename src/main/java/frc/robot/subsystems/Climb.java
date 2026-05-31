@@ -13,10 +13,10 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-//import edu.wpi.first.wpilibj2.command.WaitCommand;
+// import edu.wpi.first.wpilibj2.command.WaitCommand;
 
 public class Climb extends SubsystemBase {
-    //1 = left (facing forwards), 2 = right (facing forwards)
+    // ?1 = left (facing forwards), 2 = right (facing forwards)
 
     private final DigitalInput limitSwitchHook = new DigitalInput(9);
     private final DigitalInput limitSwitchTop = new DigitalInput(8);
@@ -30,7 +30,7 @@ public class Climb extends SubsystemBase {
 
 
 
-    //private SparkMax CoralRoller2 = new SparkMax(CoralRollersConstants.coralRoller1CanId, MotorType.kBrushless);
+    // private SparkMax CoralRoller2 = new SparkMax(CoralRollersConstants.coralRoller1CanId, MotorType.kBrushless);
 
 
 

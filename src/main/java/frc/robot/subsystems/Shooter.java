@@ -105,11 +105,7 @@ public class Shooter extends SubsystemBase {
         config.Slot0.kD = 0;     // derivative
     }
 
-
-    // ************************
-    // PERIODIC
-    // ************************
-
+    // !Periodic
     @Override
     public void periodic()   
     {
@@ -119,16 +115,9 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Subsystems/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
-    // ************************
-    // SHOOTING METHODS
-    // ************************
-
-    /**
-     * Simple duty cycle control (0.0 to 1.0).
-     * Used for manual testing from RobotContainer buttons.
-     * Also runs kickers at full power.
-     */
-
+    // !SHOOTING METHODS
+    //*Simple duty cycle control (0.0 to 1.0).
+    // ?Used for manual testing from RobotContainer buttons. Also runs kickers at full power.
     public void setShooterSpeed(double speed) {
         shooterMotor1.setControl(motorControl.withOutput(speed));
         kicker1.set(1);
@@ -136,6 +125,7 @@ public class Shooter extends SubsystemBase {
         // SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
+    // *Regression model by Kevin
     public double rpmFromDistanceRegression(double distance) {
         double rps = 0.1322042143 * Math.pow(distance, 4)
                    - 1.110063156  * Math.pow(distance, 3)
@@ -146,6 +136,7 @@ public class Shooter extends SubsystemBase {
         return rpm;
     }
 
+    // *Sets shooter velocity based on distance to target, using the regression model. Also runs kickers at full power.
     public void rpmControl(double distance) {
         double rpm = this.rpmFromDistanceRegression(distance);
         double rps = rpm / 60;
@@ -155,14 +146,17 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
     }
 
-    public void spinKickers() {
+    // *Runs the kicker motors at full power to feed balls into the shooter.
+    public void spinKickersMax() {
         kicker1.set(1);
     }
 
-    public void spinKickersAgain(double speed) {
+    // *Runs the kicker motors at a specified speed.
+    public void spinKickersSpecified(double speed) {
         kicker1.set(speed);
     }
 
+    // *Checks if the shooter is within a certain RPM threshold of the target RPM based on current distance to target.
     public boolean atCorrectRPM() {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60.0;
@@ -170,9 +164,10 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putNumber("current rpm meow", currentRPM);
         SmartDashboard.putNumber("target rpm meow", targetRPM);
         return Math.abs(currentRPM - targetRPM) < 300.0;
-
     }
 
+    // *Same as atCorrectRPM but with a tighter threshold for more precise shooting.
+    // ?Useful for testing and tuning the regression model and PID gains.
     public boolean atCorrectRPMFixed(double distance) {
         double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
         double currentRPM = rotationsPerSecond * 60;
@@ -191,56 +186,4 @@ public class Shooter extends SubsystemBase {
     public double getVelocity() {
         return shooterMotor1.getVelocity().getValueAsDouble();
     }
-
-    /**
-     * Calculates required exit velocity (m/s) to reach target at horizontal distance x (meters).
-     * Assumes flat ground and fixed shooter angle (phi).
-     */
-    
-
-    // /**f
-    //  * Velocity calculation variant for shooting while climbing.
-    //  * Accounts for robot height offset and pitch angle.
-    //  */
-    // public double velocityFromDistance(double x, double robotZ, double pitch) {
-    //     double y = 1.8288 - shooterHeight - robotZ;
-
-    //     // FIX: was "double phi = phi + pitch" which caused variable shadowing
-    //     double adjustedPhi = this.phi + pitch;
-
-    //     double v = Math.sqrt(
-    //         (9.807 * x * x) /
-    //         (2 * Math.cos(adjustedPhi) * Math.cos(adjustedPhi) * (x * Math.tan(adjustedPhi) + shooterHeight - y))
-    //     );
-
-    //     double dragFactor = (1 + 0.015 * x) * 1.04;
-    //     return dragFactor * v;
-    // }
-
-    
-    // public double[] correctVandYaw(double dx, double dy, double yaw, double vxField, double vyField) {
-    //     double distance = Math.hypot(dx, dy);
-
-    //     double unitX = dx / distance;
-    //     double unitY = dy / distance;
-
-    //     double vStationary = velocityFromDistance(distance);
-    //     double vHorizontal = vStationary * Math.cos(phi);
-
-    //     double correctedVx = vHorizontal * unitX;
-    //     double correctedVy = vHorizontal * unitY;
-
-    //     if (Math.hypot(vxField, vyField) > 0.01) {
-    //         correctedVx -= vxField;
-    //         correctedVy -= vyField;
-
-    //         double correctedYaw = Math.atan2(correctedVy, correctedVx);
-    //         double correction = MathUtil.angleModulus(correctedYaw - yaw);
-
-    //         correction = MathUtil.clamp(correction, -0.2, 0.2);
-    //         yaw += correction;
-    //     }
-
-    //     return new double[]{ correctedVx, correctedVy, yaw };
-    // } 
 }

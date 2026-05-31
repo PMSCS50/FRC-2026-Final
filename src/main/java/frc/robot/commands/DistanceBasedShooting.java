@@ -11,7 +11,6 @@ public class DistanceBasedShooting extends Command {
 
     private final Shooter shooter;
     private final VisionGeneral vision;
-
     
     public DistanceBasedShooting(Shooter shooter, VisionGeneral vision) {
         this.shooter = shooter;
@@ -19,13 +18,9 @@ public class DistanceBasedShooting extends Command {
         addRequirements(shooter);
     }
 
-
-
     @Override
     public void initialize() {
     }
-
-
     
     @Override
     public void execute() {
@@ -36,13 +31,10 @@ public class DistanceBasedShooting extends Command {
         if (distance > 0) {
             shooter.rpmControl(distance);
             if (shooter.atCorrectRPM()) {
-                shooter.spinKickers();
+                shooter.spinKickersMax();
             }
         }
     }
-
-
-
 
     @Override
     public void end(boolean interrupted) {

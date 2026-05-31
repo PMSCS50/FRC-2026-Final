@@ -28,7 +28,7 @@ public class Intake extends SubsystemBase {
     private final SparkMax intakeMotor = new SparkMax(IntakeConstants.intakeMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder intakeEncoder = intakeMotor.getEncoder();
 
-    // calculations for freespinning neo
+    // *calculations for freespinning neo
     public static final class NeoMotorConstants {
         public static final double kFreeSpeedRpm = 5676;
     }
@@ -38,7 +38,7 @@ public class Intake extends SubsystemBase {
     private int unStallCount = 0;
     public boolean pivotStalled;
 
-    // for starting the intake
+    // *for starting the intake
     public boolean initializing = false;
 
     public Intake() {

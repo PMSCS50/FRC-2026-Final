@@ -17,10 +17,9 @@ import frc.robot.pathfinding.PPLogger;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-//Follow up to pathfinding by PP_Align that provides a more precise setpoint alignment using three ProfiledPIDControllers. 
-
-//Error can go from 5cm and 5 degrees down to under 1cm and 0.5 degrees
-
+// *Follow up to pathfinding by PP_Align (runs after pathfinder finishes)
+// ?Provides a more precise setpoint alignment using three ProfiledPIDControllers. 
+// ?Error can go from 5cm and 5 degrees down to under 1cm and 0.5 degrees
 public class PostPathPreciseAlignment extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;

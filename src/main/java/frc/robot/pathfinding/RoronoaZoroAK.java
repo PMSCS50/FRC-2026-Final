@@ -16,32 +16,26 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * AdvantageKit-compatible wrapper around RoronoaZoro.
- * Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
+ * *AdvantageKit-compatible wrapper around RoronoaZoro.
+ * ?Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
  */
 public class RoronoaZoroAK implements Pathfinder {
 
     private final ZoroIO io = new ZoroIO();
 
     public RoronoaZoroAK() {
-        // RoronoaZoro instantiated inside ZoroIO
+        // *RoronoaZoro instantiated inside ZoroIO
     }
 
-    // -----------------------------------------------------------------------
-    // Delegation to RoronoaZoro
-    // -----------------------------------------------------------------------
-
+    // !Delegation to RoronoaZoro
     /**
-     * Links the Pathmaster's IdealStartingState supplier to RoronoaZoro
+     * *Links the Pathmaster's IdealStartingState supplier to RoronoaZoro
      */
     public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
         io.zoro.setStartingStateSupplier(supplier);
     }
 
-    // -----------------------------------------------------------------------
-    // Pathfinder interface
-    // -----------------------------------------------------------------------
-
+    // !Pathfinder interface
     @Override
     public boolean isNewPathAvailable() {
         if (!Logger.hasReplaySource()) {
@@ -85,10 +79,7 @@ public class RoronoaZoroAK implements Pathfinder {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // AK IO layer
-    // -----------------------------------------------------------------------
-
+    // !AK IO layer
     private static class ZoroIO implements LoggableInputs {
 
         public final RoronoaZoro zoro = new RoronoaZoro();
@@ -101,7 +92,7 @@ public class RoronoaZoroAK implements Pathfinder {
         public void toLog(LogTable table) {
             table.put("IsNewPathAvailable", isNewPathAvailable);
 
-            // Log path points for replay
+            // *Log path points for replay
             double[] pointsLogged = new double[currentPathPoints.size() * 2];
             int idx = 0;
             for (PathPoint point : currentPathPoints) {
@@ -116,7 +107,7 @@ public class RoronoaZoroAK implements Pathfinder {
         public void fromLog(LogTable table) {
             isNewPathAvailable = table.get("IsNewPathAvailable", false);
 
-            // Reconstruct path points from logged data during replay
+            // *Reconstruct path points from logged data during replay
             double[] pointsLogged = table.get("CurrentPathPoints", new double[0]);
             List<PathPoint> pathPoints = new ArrayList<>();
             for (int i = 0; i < pointsLogged.length; i += 2) {
@@ -137,7 +128,7 @@ public class RoronoaZoroAK implements Pathfinder {
             PathPlannerPath path = zoro.getCurrentPath(constraints, goalEndState);
             this.currentPath = path;
             
-            // Also cache path points for logging
+            // *Also cache path points for logging
             if (path != null) {
                 currentPathPoints = path.getAllPathPoints();
             } else {

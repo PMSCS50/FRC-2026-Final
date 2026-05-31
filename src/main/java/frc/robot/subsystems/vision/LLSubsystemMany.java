@@ -27,23 +27,20 @@ import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 import java.util.Arrays;
 import java.util.HashMap;
 
-// Single Limelight subsystem.
-// Uses MegaTag2 for pose estimation and fuses into the drivetrain's Kalman filter.
+public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
-public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
-
+    // *Initialization
     private final CommandSwerveDrivetrain drivetrain;
-    private final String llCamera;
 
     private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
 
     private double omegaRps;
 
-    // Pose of the robot, wrapped in latestEstimate
+    // *Pose of the robot, wrapped in latestEstimate
     private Pose2d estimatedRobotPose;
     private PoseEstimate latestEstimate;
 
-    // Vision standard deviations
+    // *Vision standard deviations
     private static final double BASE_XY_STD_DEV     = 0.5;
     private static final double THETA_STD_DEV        = 9999.0;
     private static final double MAX_AMBIGUITY        = 0.9;
@@ -52,87 +49,85 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
     private static final double FIELD_MAX_X          = 16.5;
     private static final double FIELD_MAX_Y          = 8.5;
 
+    private Matrix<N3, N1> stdDevs = VecBuilder.fill(9999.0, 9999.0, 9999.0);
+
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
-    public LLSubsystemSingle(CommandSwerveDrivetrain drivetrain, String llCamera) {
-        this.drivetrain = drivetrain;
-        this.llCamera   = llCamera;
+    private final String[] llCameras;
 
-        LimelightHelpers.setPipelineIndex(llCamera, 9);
-        LimelightHelpers.SetIMUMode(llCamera, 4);
+    // *Constructor
+    public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
+        this.drivetrain = drivetrain;
+        this.llCameras  = llCameras;
+
+        for (String cam : llCameras) {
+            LimelightHelpers.setPipelineIndex(cam, 9);
+            LimelightHelpers.SetIMUMode(cam, 4);
+        }
     }
 
+    // *Periodic
     @Override
     public void periodic() {
         var driveState = drivetrain.getState();
-
         double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
-        LimelightHelpers.SetRobotOrientation(llCamera, headingDeg, 0, 0, 0, 0, 0);
-
-        PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llCamera);
-
-        // Reset each loop to ensure we don't accidentally use stale data if camera is invalid
         estimatedRobotPose = null;
         latestEstimate     = null;
-
-        boolean camValid = isEstimateValid(llMeasurement);
-
-        if (camValid) {
-            Matrix<N3, N1> stdDevs = calculateStdDevs(llMeasurement);
-            if (stdDevs != null) {
-                drivetrain.addVisionMeasurement(
-                    llMeasurement.pose,
-                    Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds)//,
-                    //stdDevs
-                );
-            }
-
-            estimatedRobotPose = drivetrain.getState().Pose;
-            latestEstimate     = llMeasurement;
-
-            Logger.recordOutput("Vision/PE Odometry PE difference magnitude", Math.hypot(
-                llMeasurement.pose.getX() - driveState.Pose.getX(),
-                llMeasurement.pose.getY() - driveState.Pose.getY()
-            ));
-        }
-
-        // Reset tagtransforms every periodic
+        stdDevs            = VecBuilder.fill(9999.0, 9999.0, 9999.0);
         tagtransforms.clear();
 
-        LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(llCamera).targets_Fiducials;
-        if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
+        for (String cam : llCameras) {
+            LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
+            PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
 
-        // Tag-Transform HashMap
-        for (LimelightTarget_Fiducial fiducial : allTags) {
-            Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
-            Transform2d tagToRobot = new Transform2d(
-                pose.getX(),
-                pose.getY(),
-                pose.getRotation()
-            );
-            tagtransforms.put((int) fiducial.fiducialID, tagToRobot);
+            boolean camValid = isEstimateValid(llMeasurement);
+            if (camValid) {
+                stdDevs = calculateStdDevs(llMeasurement);
+                if (stdDevs != null) {
+                    drivetrain.addVisionMeasurement(
+                        llMeasurement.pose,
+                        Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds)
+                    );
+                }
+
+                // *Keep whichever estimate has more tags / is closer
+                if (latestEstimate == null || isBetterEstimate(llMeasurement, latestEstimate)) {
+                    latestEstimate     = llMeasurement;
+                    estimatedRobotPose = drivetrain.getState().Pose;
+                }
+            }
+
+            // *Merge tag transforms from all cameras
+            LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
+            if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
+            for (LimelightTarget_Fiducial fiducial : allTags) {
+                Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
+                tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+            }
+
+            Logger.recordOutput("Vision/Camera Valid/" + cam, camValid);
         }
-
-        // AdvantageKit Logging
-        Logger.recordOutput("Vision/Heading Sent to LL", headingDeg);
-        Logger.recordOutput("Vision/Raw Pigeon Yaw",     drivetrain.getPigeon2().getYaw().getValueAsDouble());
-        Logger.recordOutput("Vision/ω (rps)",            omegaRps);
-        Logger.recordOutput("Vision/Tag Count",          llMeasurement != null ? llMeasurement.tagCount : 0);
-        Logger.recordOutput("Vision/Camera Valid",       camValid);
 
         updateInputs(inputs);
         Logger.processInputs("LoggedVision", inputs);
     }
 
-    // Validation
+    // *Estimate comparison - prefer estimates with more tags, then closer tags
+    private boolean isBetterEstimate(PoseEstimate candidate, PoseEstimate current) {
+        if (candidate.tagCount != current.tagCount)
+            return candidate.tagCount > current.tagCount;
+        return candidate.avgTagDist < current.avgTagDist;
+    }
 
+    // *Validation
     private boolean isEstimateValid(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return false;
 
-        double ageSeconds = Utils.fpgaToCurrentTime(0)
-                          - Utils.fpgaToCurrentTime(estimate.timestampSeconds);
+        double ageSeconds = edu.wpi.first.wpilibj.Timer.getFPGATimestamp() - estimate.timestampSeconds;
+        // double ageSeconds = Utils.fpgaToCurrentTime(0) - Utils.fpgaToCurrentTime(estimate.timestampSeconds);
+
         if (ageSeconds > MAX_LATENCY_SECONDS) return false;
 
         if (Math.abs(omegaRps) > MAX_OMEGA_RPS) return false;
@@ -144,8 +139,7 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         return true;
     }
 
-    // Vision STDs
-
+    // *Vision STDs
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return VecBuilder.fill(9999.0, 9999.0, 9999.0);
 
@@ -166,8 +160,7 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
 
-    // Getters
-
+    // *Getters
     public Pose2d  getPose()        { return estimatedRobotPose; }
     public double  getX(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
     public double  getY(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
@@ -176,7 +169,6 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
-    public boolean hasTargets()     { return LimelightHelpers.getTV(llCamera); }
 
     public double getTagX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
@@ -194,24 +186,30 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero;
     }
 
+    // private boolean hasFiducial(int id) {
+    //     for (String cam : llCameras)
+    //         if (LimelightHelpers.getFiducialID(cam) == id) return true;
+    //     return false;
+    // }
+
     public boolean hasTarget(int desiredId) {
-        return hasFiducial(llCamera, desiredId);
+        return tagtransforms.containsKey(desiredId);
     }
 
-    private boolean hasFiducial(String cameraName, int id) {
-        return LimelightHelpers.getFiducialID(cameraName) == id;
+    public boolean hasTargets() {
+        return !tagtransforms.isEmpty();
     }
 
+    // *Setters
     public void setPipeline(int pipeline) {
-        LimelightHelpers.setPipelineIndex(llCamera, pipeline);
+    for (String cam : llCameras) LimelightHelpers.setPipelineIndex(cam, pipeline);
     }
 
     public void setIMUMode(int mode) {
-        LimelightHelpers.SetIMUMode(llCamera, mode);
+        for (String cam : llCameras) LimelightHelpers.SetIMUMode(cam, mode);
     }
 
-    // Distance utilities
-
+    // *Distance utilities
     public double getDistanceToTarget(Pose2d targetPose) {
         if (!hasTargets()) return -1.0;
         return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
@@ -230,7 +228,7 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         return -1.0;
     }
 
-    // Returns distance to the closest visible tag
+    // *Returns distance to the closest visible tag
     public double getDistance() {
         if (latestEstimate == null || latestEstimate.rawFiducials == null || latestEstimate.rawFiducials.length == 0) return -1.0;
 
@@ -247,17 +245,33 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         return closest != null ? closest.distToRobot : -1.0;
     }
 
-    // Returns the best available distance to a target — raw tag distance first, pose-based fallback
+    // *Returns the best available distance to a target — raw tag distance first, pose-based fallback
     public double getBestDistanceToTarget(int tagId, Pose2d targetPose) {
         double tagDist = getDistanceToTag(tagId);
         if (tagDist > 0) return tagDist;
         return getDistanceToTarget(targetPose);
     }
 
+    // *Returns the best available distance to the hub
+    public double getBestDistanceToHub() {
+        double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
+        if (tagDist > 0) return tagDist;
+        return getDistanceToTarget(VisionConstants.getHubPose());
+    }
+
+    // *Returns the poseEstimate corresponding to the alliance color (red or blue)
+    public PoseEstimate getPoseEstimate(PoseEstimate red, PoseEstimate blue) {
+        return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? red : blue;
+    }
+
+    // *VisionIO implementation
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         inputs.hasTarget       = hasTargets();
-        inputs.targetId        = hasTargets() ? (int) LimelightHelpers.getFiducialID(llCamera) : -1;
+        inputs.targetId        = !tagtransforms.isEmpty() 
+                               ? tagtransforms.keySet().iterator().next() 
+                               : -1;
+
         inputs.hasTagTransform = inputs.hasTarget;
 
         inputs.tagToRobotX    = inputs.hasTagTransform ? getTagX(inputs.targetId) : 0.0;
@@ -267,7 +281,6 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
 
         inputs.visibleTagIds   = tagtransforms.keySet().stream().mapToInt(Integer::intValue).toArray();
         inputs.visibleTagPoses = Arrays.stream(inputs.visibleTagIds)
-                                       .filter(tagtransforms::containsKey)
                                        .mapToObj(id -> new Pose2d(getTagX(id), getTagY(id), new Rotation2d(getTagYaw(id))))
                                        .toArray(Pose2d[]::new);
 
@@ -285,17 +298,7 @@ public class LLSubsystemSingle extends VisionGeneral implements VisionIO {
         inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
         inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
 
-        Matrix<N3, N1> stdDevMatrix = calculateStdDevs(latestEstimate);
+        Matrix<N3, N1> stdDevMatrix = stdDevs;
         inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
-    }
-
-    public double getBestDistanceToHub() {
-        double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
-        if (tagDist > 0) return tagDist;
-        return getDistanceToTarget(VisionConstants.getHubPose());
-    }
-
-    public PoseEstimate getPoseEstimate(PoseEstimate red, PoseEstimate blue) {
-        return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? red : blue;
     }
 }

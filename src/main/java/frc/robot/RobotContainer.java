@@ -19,11 +19,11 @@ import com.pathplanner.lib.auto.NamedCommands;
 
 import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.VisionConstants;
-//import frc.robot.commands.ChaseTagCommand;
+// import frc.robot.commands.ChaseTagCommand;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -58,25 +58,22 @@ import frc.robot.commands.PostPathPreciseAlignment;
 
 public class RobotContainer {
 
-    // **************************************************************************************************************
-    // DRIVETRAIN CONSTANTS
+    // *DRIVETRAIN CONSTANTS
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
 
-    //High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
-    private double pathMaxLinearAcceleration = 13.67; // m/s^2
-    private double pathMaxAngularAcceleration = 12; // rad/s^2
+    //! High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
+    private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
+    private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
 
     public static double intakeSpeed = 0.5;
     public static double pivotSpeed = .05;
     public static double shooterSpeed = .01;
-    // **************************************************************************************************************
 
-    // **************************************************************************************************************
-    // EXTRA SETUP - I GOT NO CLUE
-    /* Setting up bindings for necessary control of the swerve drive platform */
+    // *EXTRA SETUP - I GOT NO CLUE
+    // *Setting up bindings for necessary control of the swerve drive platform
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 2% deadband
             .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
@@ -88,10 +85,7 @@ public class RobotContainer {
 
     //private final Telemetry logger = new Telemetry(MaxSpeed);
 
-    // **************************************************************************************************************
-
-    // **************************************************************************************************************
-    // ACTUAL IMPORTANT STUFF
+    //! ACTUAL IMPORTANT STUFF (initiallize subsystems and the like)
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     
     private final VisionGeneral vision;
@@ -109,24 +103,25 @@ public class RobotContainer {
 
     public final Pathmaster monkeyDLuffy;
 
-    /* Path follower */
+    // Path follower
     private SendableChooser<Command> autoChooser;
 
     double turningSpeed = 0; // for speed scaling
 
+    // *Constructor
     public RobotContainer() {
         if (Constants.currentMode == Constants.Mode.SIM) {
             vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
-            vision = new LLSubsystemSingle(drivetrain, "limelight-meowlit");
+            vision = new LLSubsystemMany(drivetrain, "limelight-meowlit");
         }
         
         shooter = new Shooter(vision);
         
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         
-        //Hypothetical Waypoints for testing purposes
-        monkeyDLuffy.addWaypoint("Shooting Setpoint", VisionConstants.aimPose);
+        // *Hypothetical Waypoints for testing purposes
+        monkeyDLuffy.addWaypoint("Shooting Setpoint", VisionConstants.getAimPose());
         monkeyDLuffy.addWaypoint("Climb", ClimbConstants.getClimbPose());
         monkeyDLuffy.addWaypoint("Center", VisionConstants.getCenter());
         
@@ -137,22 +132,17 @@ public class RobotContainer {
 
         NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
 
-        // Intaking
+        // *Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
         NamedCommands.registerCommand("4 sec Intaking", new Intaking(intake).withTimeout(4));
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
 
-        // Alignment
-        // Middle
-
-        // Left
-
-        // Right
+        // *Alignment (Right???)
         NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
         NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
-        // Pivoting
+        // *Pivoting
         NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
         NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
@@ -160,17 +150,14 @@ public class RobotContainer {
 
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
 
-        
-
-
-        // Configuring
+        // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
         CameraServer.startAutomaticCapture();
         configureBindings();
     }
 
-    
+    // *Configure Bindings
     private void configureBindings() {
 
         SmartDashboard.putNumber("Shooting Speed", shooterSpeed);
@@ -189,9 +176,8 @@ public class RobotContainer {
         );
 
 
-// SUBJOYSTICK 
-// ******************************************************************************************************
-    // Triggers and Bumpers
+        //! SUBJOYSTICK
+        // *Triggers and Bumpers
         subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
         subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
             .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
@@ -201,14 +187,14 @@ public class RobotContainer {
         subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
         subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
 
-    // POV Controls    
+        // *POV Controls
         subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
         subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
 
         // subjoystick.povLeft()
         // subjoystick.povRight()
 
-    // Letters
+        // *Letters
         subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
         subjoystick.b().onTrue(new RunCommand(() -> pivot.resetPivot(), pivot));
         subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
@@ -218,14 +204,12 @@ public class RobotContainer {
         
 
 
-// DRIVETRAIN JOYSTICK
-// *******************************************************************************************************
-
-    // Triggers and Bumpers
+        //! JOYSTICK 
+        // *Triggers and Bumpers
         joystick.leftTrigger().whileTrue(
             Commands.parallel(
                 new RunCommand(() -> intake.spinIntakePID(1), intake),
-                new RunCommand(() -> shooter.spinKickersAgain(-.6), shooter)
+                new RunCommand(() -> shooter.spinKickersSpecified(-.6), shooter)
             )
         );
         joystick.leftTrigger().onFalse(
@@ -238,8 +222,11 @@ public class RobotContainer {
 
         joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
         joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
+        
+        // *May be unnecessary; we shall see at TRI or later testing
+        joystick.rightTrigger().and(joystick.povDownLeft()).onTrue(directionFlipper == 1.0 ? new InstantCommand(() -> this.flipDirection(-1.0)) : new InstantCommand(() -> this.flipDirection(1.0)));
 
-    // POV Controls
+        // *POV Controls
         // joystick.povUp()
         // joystick.povRight()
         // joystick.povLeft()
@@ -250,27 +237,19 @@ public class RobotContainer {
         // joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         // joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
-    // Letters
+        // *Letters
         // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
-        if (vision instanceof LLSubsystemNew) {
-            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemNew) vision));
+        if (vision instanceof LLSubsystemDouble) {
+            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemDouble) vision));
         }
         
-        //joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
+        // joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
         // joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
         joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-        //joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
+        // joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
 
-
-        /*
-        Pathmaster implementation
-        */
-
-        /*
-         * 
-         */
-
+        // *Pathfinding
         joystick.b().whileTrue(
             Commands.defer(
                 () -> monkeyDLuffy.gotoSelectedWaypoint()
@@ -281,6 +260,7 @@ public class RobotContainer {
         joystick.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
     }
 
+    // *changing shooter speed
     public void setShooterSpeed(double speed) {
         if (speed < 0.01) {
             speed = 0.01;
@@ -291,9 +271,7 @@ public class RobotContainer {
         }
     }
 
-
-    // changing drivetrain speed
-    //   crawl, low, mid, high
+    // *changing drivetrain speed: crawl, low, mid, high
     public void setSpeed(double speed) {
         if (speed < 0.1) {
             speed = 0.1;
@@ -312,13 +290,15 @@ public class RobotContainer {
         
     }
 
+    // *flipping direction for driver orientation
     public void flipDirection(double newDir){
         this.directionFlipper = newDir;
     }
     
 
+    // *Getters for subsystems and commands
     public Command getAutonomousCommand() {
-        /* Run the path selected from the auto chooser */
+        // !Run the path selected from the auto chooser
         // return null;
         return autoChooser.getSelected();
     }
@@ -335,6 +315,4 @@ public class RobotContainer {
     public Pivot getPivot() {
         return pivot;
     }
-
-
 }

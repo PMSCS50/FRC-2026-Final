@@ -26,12 +26,12 @@ public class Pivot extends SubsystemBase {
 
     private double outputMin = -0.3, outputMax = 0.3;
 
-    // MAXMotion profile constraints.
+    // *MAXMotion profile constraints.
     private static final double kMaxMotionMaxVelocityRpm        = 2000;
     private static final double kMaxMotionMaxAccelerationRpmSec = 3000;
     private static final double kMaxMotionAllowedErrorRotations  = 0.05;
 
-    // calculations for freespinning neo
+    // *calculations for freespinning neo
     public static final class NeoMotorConstants {
         public static final double kFreeSpeedRpm = 5676;
     }
@@ -41,7 +41,7 @@ public class Pivot extends SubsystemBase {
     private int unStallCount = 0;
     public boolean pivotStalled;
 
-    // for starting the intake
+    // *for starting the intake
     public boolean initializing = false;
 
     public Pivot() {
@@ -60,7 +60,7 @@ public class Pivot extends SubsystemBase {
                 .outputRange(outputMin, outputMax)
                 .positionWrappingEnabled(false);
 
-        //MaxMotion config
+        // *MaxMotion config
         pivotMotorConfig.closedLoop.maxMotion
                 .positionMode(MAXMotionPositionMode.kMAXMotionTrapezoidal)
                 .cruiseVelocity(kMaxMotionMaxVelocityRpm)
@@ -143,17 +143,17 @@ public class Pivot extends SubsystemBase {
         pivotEncoder.setPosition(0);
     }
 
-    // Plain position control — no profiling
+    // *Plain position control — no profiling
     public void goToPosition(double targetRotations) {
         pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kPosition);
     }
 
-    // MAXMotion position control — trapezoidal profile, use this for deployment
+    // *MAXMotion position control — trapezoidal profile, use this for deployment
     public void goToPositionMAXMotion(double targetRotations) {
         pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kMAXMotionPositionControl);
     }
 
-    // MAXMotion with stall guard
+    // *MAXMotion with stall guard
     public void goToPositionMAXMotionAmped(double targetRotations) {
         if (!pivotIsStalled()) {
             pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kMAXMotionPositionControl);

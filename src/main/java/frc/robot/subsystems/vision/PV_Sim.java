@@ -22,17 +22,6 @@ import org.littletonrobotics.junction.Logger;
 
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-
-/**
- * Vision subsystem for AdvantageKit — Limelight 4 edition.
- *
- * All hardware/sim interaction is delegated to a VisionIO implementation:
- *   - VisionIOReal  → real robot  (LimelightHelpers over NetworkTables)
- *   - VisionIOSim   → simulation  (PhotonVision VisionSystemSim, same input schema)
- *
- * This class only reads from the logged VisionIOInputsAutoLogged snapshot —
- * fully replay-safe. All getters mirror VisionSubsystem (non-AK) exactly.
- */
 public class PV_Sim extends VisionGeneral {
 
     private final VisionIO io;

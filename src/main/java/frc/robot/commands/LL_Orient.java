@@ -38,7 +38,7 @@ public class LL_Orient extends Command {
 
     @Override
     public void execute() {
-        // search visible tags for our target
+        // *Search visible tags for our target
         LimelightTarget_Fiducial[] tags = LimelightHelpers.getLatestResults(limelightName).targets_Fiducials;
         
         LimelightTarget_Fiducial lockedTag = null;
