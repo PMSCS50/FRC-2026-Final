@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * *AdvantageKit-compatible wrapper around RoronoaZoro.
- * ?Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
+ * // *AdvantageKit-compatible wrapper around RoronoaZoro.
+ * // ?Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
  */
 public class RoronoaZoroAK implements Pathfinder {
 

@@ -28,11 +28,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
-// !2-camera Limelight subsystem.
-// ?llCamera1: front-facing camera (0 deg yaw offset)
-// ?llCamera2: rear-facing camera  (180 deg yaw offset)
-// ?Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
-
+/**
+ * // !2-camera Limelight subsystem.
+ * // ?llCamera1: front-facing camera (0 deg yaw offset)
+ * // ?llCamera2: rear-facing camera  (180 deg yaw offset)
+ * // *Fuses pose estimates from both cameras in the drivetrain's Kalman filter.
+ */
 public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
 
     private final CommandSwerveDrivetrain drivetrain;

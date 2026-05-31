@@ -1,5 +1,3 @@
-
-
 package frc.robot.subsystems.drivetrain;
 
 import static edu.wpi.first.units.Units.*;
@@ -47,50 +45,53 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
- * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
- * Subsystem so it can easily be used in command-based projects.
+ * // !Class that extends the Phoenix 6 SwerveDrivetrain class and implements
+ * // !Subsystem so it can easily be used in command-based projects.
  */
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem, DriveIO {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
-    /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
+    //* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
-    /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
+
+    //* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
-    /* Keep track if we've ever applied the operator perspective before or not */
+
+    //* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
     private final DriveIOInputsAutoLogged m_inputs = new DriveIOInputsAutoLogged();
 
-    /** Swerve request to apply during robot-centric path following 
-     *  This also takes in our robot's physical constrants to create optimal path speeds.
+    /** // !Swerve request to apply during robot-centric path following 
+     *  // *This also takes in our robot's physical constrants to create optimal path speeds.
     */
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
-    /**Setpoint generator to optimize traversal through paths, made by FRC team 254.*/
+    //**Setpoint generator to optimize traversal through paths, made by FRC team 254.*/
     private SwerveSetpointGenerator m_setpointGenerator;
 
-    /**A setpoint value */
+    //**A setpoint value */
     private SwerveSetpoint m_previousSetpoint;
     
-    /** Swerve request to apply after the robot finished going through a path in Pathmaster. */
+    //** Swerve request to apply after the robot finished going through a path in Pathmaster. */
     private final SwerveRequest.Idle m_idle = new SwerveRequest.Idle();
 
-    /* Swerve requests to apply during SysId characterization */
+    //* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     
 
-    /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
+    //* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
         new SysIdRoutine.Config(
             null,        // Use default ramp rate (1 V/s)
             Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
             null,        // Use default timeout (10 s)
-            // Log state with SignalLogger class
+
+            // *Log state with SignalLogger class
             state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())
         ),
         new SysIdRoutine.Mechanism(
@@ -100,13 +101,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         )
     );
 
-    /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
+    //* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
         new SysIdRoutine.Config(
             null,        // Use default ramp rate (1 V/s)
             Volts.of(7), // Use dynamic voltage of 7 V
             null,        // Use default timeout (10 s)
-            // Log state with SignalLogger class
+
+            // *Log state with SignalLogger class
             state -> SignalLogger.writeString("SysIdSteer_State", state.toString())
         ),
         new SysIdRoutine.Mechanism(
@@ -117,9 +119,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     );
 
     /*
-     * SysId routine for characterizing rotation.
-     * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
-     * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
+     * // !SysId routine for characterizing rotation.
+     * // *This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
+     * // *See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
      */
     private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -147,11 +149,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
     /**
-     * Constructs a CTRE SwerveDrivetrain using the specified constants.
+     * // !Constructs a CTRE SwerveDrivetrain using the specified constants.
      * <p>
-     * This constructs the underlying hardware devices, so users should not construct
-     * the devices themselves. If they need the devices, they can access them through
-     * getters in the classes.
+     * // *This constructs the underlying hardware devices, so users should not construct
+     * // *the devices themselves. If they need the devices, they can access them through
+     * // *getters in the classes.
      *
      * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
      * @param modules             Constants for each specific module
@@ -169,11 +171,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
-     * Constructs a CTRE SwerveDrivetrain using the specified constants.
+     * // !Constructs a CTRE SwerveDrivetrain using the specified constants.
      * <p>
-     * This constructs the underlying hardware devices, so users should not construct
-     * the devices themselves. If they need the devices, they can access them through
-     * getters in the classes.
+     * // *This constructs the underlying hardware devices, so users should not construct
+     * // *the devices themselves. If they need the devices, they can access them through
+     * // *getters in the classes.
      *
      * @param drivetrainConstants        Drivetrain-wide constants for the swerve drive
      * @param odometryUpdateFrequency    The frequency to run the odometry loop. If
@@ -194,11 +196,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
-     * Constructs a CTRE SwerveDrivetrain using the specified constants.
-     * <p>
-     * This constructs the underlying hardware devices, so users should not construct
-     * the devices themselves. If they need the devices, they can access them through
-     * getters in the classes.
+     * !Constructs a CTRE SwerveDrivetrain using the specified constants.
+     * 
+     * *This constructs the underlying hardware devices, so users should not construct
+     * *the devices themselves. If they need the devices, they can access them through
+     * *getters in the classes.
      *
      * @param drivetrainConstants        Drivetrain-wide constants for the swerve drive
      * @param odometryUpdateFrequency    The frequency to run the odometry loop. If
@@ -248,7 +250,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
                 (speeds, feedforwards) -> {
 
-                    // Generate next setpoint. Thanks Cheesy Poofs. 
+                    // *Generate next setpoint. Thanks Cheesy Poofs.
                     m_previousSetpoint = m_setpointGenerator.generateSetpoint(
                         m_previousSetpoint,
                         speeds,
@@ -262,7 +264,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         m_previousSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond
                     );
 
-                    // Apply generated module states
+                    // *Apply generated module states
                     setControl(
                         m_pathApplyRobotSpeeds
                             .withSpeeds(m_previousSetpoint.robotRelativeSpeeds())
@@ -271,13 +273,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     );
                 },
                 new PPHolonomicDriveController(
-                    // PID constants for translation
+                    // *PID constants for translation
                     new PIDConstants(8, 0, 0),
-                    // PID constants for rotation
+                    // *PID constants for rotation
                     new PIDConstants(4, 0, 0)
                 ),
                 config,
-                // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                // *Assume the path needs to be flipped for Red vs Blue, this is normally the case
                 () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
                 this // Subsystem for requirements
             );
@@ -287,7 +289,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
-     * Returns a command that applies the specified control request to this swerve drivetrain.
+     * *Returns a command that applies the specified control request to this swerve drivetrain.
      *
      * @param request Function returning the request to apply
      * @return Command to run
@@ -297,8 +299,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
-     * Runs the SysId Quasistatic test in the given direction for the routine
-     * specified by {@link #m_sysIdRoutineToApply}.
+     * *Runs the SysId Quasistatic test in the given direction for the routine
+     * *specified by {@link #m_sysIdRoutineToApply}.
      *
      * @param direction Direction of the SysId Quasistatic test
      * @return Command to run
@@ -308,8 +310,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
-     * Runs the SysId Dynamic test in the given direction for the routine
-     * specified by {@link #m_sysIdRoutineToApply}.
+     * *Runs the SysId Dynamic test in the given direction for the routine
+     * *specified by {@link #m_sysIdRoutineToApply}.
      *
      * @param direction Direction of the SysId Dynamic test
      * @return Command to run
@@ -318,7 +320,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    //get robot pose
+    // *get robot pose
     public Pose2d getPose() {
         return getState().Pose;
     }
@@ -353,13 +355,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
 
-        /* Run simulation at a faster rate so PID gains behave more reasonably */
+        // *Run simulation at a faster rate so PID gains behave more reasonably
         m_simNotifier = new Notifier(() -> {
             final double currentTime = Utils.getCurrentTimeSeconds();
             double deltaTime = currentTime - m_lastSimTime;
             m_lastSimTime = currentTime;
 
-            /* use the measured time delta, get battery voltage from WPILib */
+            // *use the measured time delta, get battery voltage from WPILib
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
@@ -368,8 +370,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private void configureSignalLogging() {
         for (int i = 0; i < getModules().length; i++) {
             var module = getModule(i);
-            // Phoenix automatically logs these at the CANivore rate
-            // Just ensure signal update frequency is set
+            // *Phoenix automatically logs these at the CANivore rate
+            // *Just ensure signal update frequency is set
             module.getDriveMotor().getStatorCurrent().setUpdateFrequency(50);
             module.getDriveMotor().getSupplyCurrent().setUpdateFrequency(50);
             module.getDriveMotor().getMotorVoltage().setUpdateFrequency(50);
@@ -392,7 +394,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         inputs.robotHeading = state.Pose.getRotation().getRadians();
         inputs.robotPose = state.Pose;
         
-        // For this example, we'll just set this to false. Implementing field-oriented control is left as an exercise to the user.
+        // *For this example, we'll just set this to false. Implementing field-oriented control is left as an exercise to the user.
         inputs.isFieldOriented = false;
         inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
     }

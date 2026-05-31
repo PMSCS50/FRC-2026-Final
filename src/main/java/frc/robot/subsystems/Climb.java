@@ -26,13 +26,7 @@ public class Climb extends SubsystemBase {
     private SparkMax climbMotor = new SparkMax(ClimbConstants.climbMotorCanId, MotorType.kBrushless);
     private RelativeEncoder climbEncoder = climbMotor.getEncoder(); 
 
-
-
-
-
     // private SparkMax CoralRoller2 = new SparkMax(CoralRollersConstants.coralRoller1CanId, MotorType.kBrushless);
-
-
 
     public Climb() {
         climbMotorConfig
@@ -40,8 +34,6 @@ public class Climb extends SubsystemBase {
             .idleMode(IdleMode.kBrake)
             .smartCurrentLimit(40);
         
-        
-
        climbMotor.configure(climbMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
@@ -58,7 +50,6 @@ public class Climb extends SubsystemBase {
 
     public void stopClimb() {
         climbMotor.stopMotor();
-
     } 
 
    public void pull(){
@@ -79,8 +70,6 @@ public class Climb extends SubsystemBase {
         }
     }
 
-
-
     public void reset(){
         climbMotor.set(-ClimbConstants.climbSpeed);
     }
@@ -97,15 +86,9 @@ public class Climb extends SubsystemBase {
         return limitSwitchTop.get();
     }
     
-    
     public double getDistance() {
         double climbMotorRadius = 0.689;
         double distance = climbEncoder.getPosition() * 2 * Math.PI * climbMotorRadius;
         return distance;
-    }
-
-    
-
-
-    
+    }   
 }

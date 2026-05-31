@@ -24,16 +24,18 @@ import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 
-// !AdvantageKit simulation implementation of VisionIO.
+/**
+ * !AdvantageKit simulation implementation of VisionIO.
+ * 
+ * ?We can't run LimelightHelpers in simulation (it needs real NT data from
+ * ?the LL firmware), so we keep PhotonVision's VisionSystemSim here to
+ * ?generate synthetic detections — but we write the results into VisionIOInputs
+ * ?using the SAME field layout and std-dev logic as VisionIOReal, so the
+ * ?subsystem layer (VisionSimSystem) sees identical data in sim and on hardware.
 
-// ?We can't run LimelightHelpers in simulation (it needs real NT data from
-// ?the LL firmware), so we keep PhotonVision's VisionSystemSim here to
-// ?generate synthetic detections — but we write the results into VisionIOInputs
-// ?using the SAME field layout and std-dev logic as VisionIOReal, so the
-// ?subsystem layer (VisionSimSystem) sees identical data in sim and on hardware.
-
-// *The only sim-specific call is updateSimPose(), which VisionSimSystem calls
-// *every loop to push the drivetrain's ground-truth pose into VisionSystemSim.
+ * *The only sim-specific call is updateSimPose(), which VisionSimSystem calls
+ * *every loop to push the drivetrain's ground-truth pose into VisionSystemSim.
+*/
 
 public class VisionIOSim implements VisionIO {
 
@@ -92,7 +94,7 @@ public class VisionIOSim implements VisionIO {
     public void updateInputs(VisionIOInputs inputs) {
         PhotonPipelineResult result = camera.getLatestResult();
 
-        // *--- Primary target + per-tag arrays ----------------------------------
+        // *--- Primary target + per-tag arrays
         if (result.hasTargets()) {
             PhotonTrackedTarget best = result.getBestTarget();
             inputs.hasTarget = true;

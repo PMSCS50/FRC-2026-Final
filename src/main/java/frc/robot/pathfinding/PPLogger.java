@@ -90,7 +90,7 @@ public class PPLogger {
   }
 
   /**
-   * *Publish the robot's current pose.
+   * // *Publish the robot's current pose.
    *
    * @param pose Current robot pose from odometry / vision estimator
    */
@@ -104,8 +104,8 @@ public class PPLogger {
   }
 
   /**
-   * *Publish the active path being followed.
-   * ?Also updates the path progress metric.
+   * // *Publish the active path being followed.
+   * // ?Also updates the path progress metric.
    *
    * @param path The PathMasterPath currently being executed
    */
@@ -119,7 +119,7 @@ public class PPLogger {
   }
 
   /**
-   * *Publish the immediate target pose on the path (the lookahead / setpoint).
+   * // *Publish the immediate target pose on the path (the lookahead / setpoint).
    *
    * @param targetPose Target pose from the path follower controller
    */
@@ -135,8 +135,8 @@ public class PPLogger {
   // !Derived metrics
 
   /**
-   * *Recomputes path inaccuracy (distance between current and target pose).
-   * ?Called automatically whenever current or target pose is updated.
+   * // *Recomputes path inaccuracy (distance between current and target pose).
+   * // ?Called automatically whenever current or target pose is updated.
    */
   private static void updatePathInnacuracy() {
     double inaccuracy = lastCurrentPose

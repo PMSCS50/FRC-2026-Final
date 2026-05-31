@@ -55,21 +55,16 @@ public class Intake extends SubsystemBase {
                 .outputRange(-.95, .95).feedForward.kV(.6); // current value = .00017618
 
         intakeMotor.configure(intakeMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
     }
 
     @Override
     public void periodic() {
-
-
         Logger.recordOutput("Intake/Velocity", intakeEncoder.getVelocity());
         Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
         Logger.recordOutput("Intake/Volts", intakeMotor.getBusVoltage());
 
         SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
-    }
-
- 
+    } 
 
     public boolean pivotIsStalled() {
         return pivotStalled;
@@ -83,14 +78,11 @@ public class Intake extends SubsystemBase {
         double targetRPM = 5676 * percent;
         intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
     }
-    
-
 
     public void spinIntakeDuty(double speed) {
         intakeMotor.set(speed);
     }
 
-    
     public RelativeEncoder getIntakeEncoder() {
         return intakeEncoder;
     }
