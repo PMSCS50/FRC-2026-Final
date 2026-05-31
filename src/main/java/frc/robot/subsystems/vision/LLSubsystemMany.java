@@ -83,9 +83,10 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
 
             boolean camValid = isEstimateValid(llMeasurement);
+
             if (camValid) {
-                stdDevs = calculateStdDevs(llMeasurement);
-                if (stdDevs != null) {
+                Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
+                if (camStdDevs != null) {
                     drivetrain.addVisionMeasurement(
                         llMeasurement.pose,
                         Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds)
@@ -96,16 +97,34 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 if (latestEstimate == null || isBetterEstimate(llMeasurement, latestEstimate)) {
                     latestEstimate     = llMeasurement;
                     estimatedRobotPose = drivetrain.getState().Pose;
+                    stdDevs            = camStdDevs != null ? camStdDevs : VecBuilder.fill(9999.0, 9999.0, 9999.0);
+                }
+
+                // *Merge tag transforms from all cameras
+                LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
+                if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
+                for (LimelightTarget_Fiducial fiducial : allTags) {
+                    Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
+                    tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
                 }
             }
 
-            // *Merge tag transforms from all cameras
-            LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
-            if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
-            for (LimelightTarget_Fiducial fiducial : allTags) {
-                Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
-                tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
-            }
+            // if (camValid) {
+            //     stdDevs = calculateStdDevs(llMeasurement);
+            //     if (stdDevs != null) {
+            //         drivetrain.addVisionMeasurement(
+            //             llMeasurement.pose,
+            //             Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds)
+            //         );
+            //     }
+
+            //     // *Keep whichever estimate has more tags / is closer
+            //     if (latestEstimate == null || isBetterEstimate(llMeasurement, latestEstimate)) {
+            //         latestEstimate     = llMeasurement;
+            //         estimatedRobotPose = drivetrain.getState().Pose;
+            //         stdDevs            = calculateStdDevs(llMeasurement); // move it here
+            //     }
+            // }
 
             Logger.recordOutput("Vision/Camera Valid/" + cam, camValid);
         }
