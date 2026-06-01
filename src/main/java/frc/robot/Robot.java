@@ -79,6 +79,13 @@ public class Robot extends LoggedRobot {
     );
   }
 
+  private void applyAllianceDirFlip() {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    boolean red = alliance == Alliance.Red;
+
+    m_robotContainer.flipDirection(red ? -1 : 1); 
+  }
+
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
@@ -171,6 +178,7 @@ public class Robot extends LoggedRobot {
   public void teleopInit() {
     LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
 
+    applyAllianceDirFlip();
     applyAllianceConfig();
 
     if (m_autonomousCommand != null) {
