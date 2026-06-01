@@ -17,53 +17,45 @@ import java.util.List;
 public class PPLogger {
 
   // !Field widget (Elastic picks this up from SmartDashboard)
-  private static final Field2d field = new Field2d();
+  //private static final Field2d field = new Field2d();
 
   // !Raw NT4 publishers (split so Elastic can graph each series separately)
   private static final DoublePublisher actualVelPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathMaster/vel/actual")
+          .getDoubleTopic("/PathPlanner/vel/actual")
           .publish();
 
   private static final DoublePublisher commandedVelPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathMaster/vel/commanded")
+          .getDoubleTopic("/Pathmaster/vel/commanded")
           .publish();
 
   private static final DoublePublisher actualAngVelPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathMaster/vel/actualAngular")
+          .getDoubleTopic("/Pathmaster/vel/actualAngular")
           .publish();
 
   private static final DoublePublisher commandedAngVelPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathMaster/vel/commandedAngular")
+          .getDoubleTopic("/Pathmaster/vel/commandedAngular")
           .publish();
 
   private static final DoublePublisher inaccuracyPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathMaster/pathInaccuracy")
+          .getDoubleTopic("/Pathmaster/pathInaccuracy")
           .publish();
 
 
-  // !Internal state for derived metrics
+  // !Internal state for loggable stuff
   private static Pose2d lastCurrentPose  = new Pose2d();
   private static Pose2d lastTargetPose   = new Pose2d();
   private static List<Pose2d> lastPathPoses = List.of();
 
-  // !nitialization
-  /**
-   * *Call once in robotInit() (or in the static block of your drive subsystem)
-   * *to register the Field2d with SmartDashboard so Elastic can find it.
-   */
-  public static void init() {
-    SmartDashboard.putData("Field", field);
-  }
-
-  // !Public setters (mirrors PPLibTelemetry API)
+  // !Public setters
 
   /**
    * *Publish actual and commanded velocities.
+   * Called in COmmandSwerveDriveTrain in path-following command, as well as PostPathPreciseAlignment
    *
    * @param actualVel       Actual chassis speed in m/s
    * @param commandedVel    Commanded chassis speed in m/s
@@ -98,7 +90,6 @@ public class PPLogger {
     lastCurrentPose = pose;
 
     Logger.recordOutput("Pathmaster/currentPose", pose);
-    field.setRobotPose(pose);
 
     updatePathInnacuracy();
   }
@@ -107,15 +98,12 @@ public class PPLogger {
    * // *Publish the active path being followed.
    * // ?Also updates the path progress metric.
    *
-   * @param path The PathMasterPath currently being executed
+   * @param path The PathPlannerPath currently being executed
    */
   public static void logActivePath(List<Pose2d> path) {
     Pose2d[] posesArray = path.toArray(new Pose2d[0]);
-
     Logger.recordOutput("Pathmaster/activePath", posesArray);
-    field.getObject("activePath").setPoses(lastPathPoses);
 
-    // updatePathProgress();
   }
 
   /**
@@ -127,7 +115,6 @@ public class PPLogger {
     lastTargetPose = targetPose;
 
     Logger.recordOutput("Pathmaster/targetPose", targetPose);
-    field.getObject("targetPose").setPoses(targetPose);
 
     updatePathInnacuracy();
   }
