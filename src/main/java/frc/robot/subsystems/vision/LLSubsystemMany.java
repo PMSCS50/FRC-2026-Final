@@ -32,6 +32,8 @@ import java.util.List;
 public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     // *Initialization
+    private int numCameras;
+
     private final CommandSwerveDrivetrain drivetrain;
 
     private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
@@ -69,6 +71,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
         this.drivetrain = drivetrain;
         this.llCameras  = llCameras;
+        this.numCameras = llCameras.length;
 
         for (String cam : llCameras) {
             LimelightHelpers.setPipelineIndex(cam, 9);
@@ -97,27 +100,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         tagtransforms.clear();
         cameraEstimates.clear();
     
-
-        // *For tagtransforms
-        for (String cam : llCameras) {
-            LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
-            PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
-            boolean camValid = isEstimateValid(llMeasurement);
-            if (camValid) {
-                // *Merge tag transforms from all cameras
-                // |Currently same tags are overwritten; if you want to change this to get the best estimate or fuse estimates you can but personally there's little to gain
-                LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
-                if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
-                for (LimelightTarget_Fiducial fiducial : allTags) {
-                    Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
-                    tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
-                }
-            }
-        }
         
         // *For vision estimation and logging
         for (String cam : llCameras) {
             // *Logging
+            LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
             PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
             cameraEstimates.add(llMeasurement.pose);
 
@@ -136,6 +123,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                                         .map(f -> tagtransforms.getOrDefault(f.id, Transform2d.kZero))
                                         .map(t -> new Pose2d(t.getX(), t.getY(), t.getRotation()))
                                         .toArray(Pose2d[]::new);
+
                 Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
             } else {
                 // |To make it look nice
@@ -161,6 +149,32 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
                     totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
                     allCameraRawFiducials.add(llMeasurement.rawFiducials);
+
+                    // *Merge tag transforms from all cameras
+                    // |Currently same tags are overwritten; if you want to change this to get the best estimate or fuse estimates you can but personally there's little to gain
+                    LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
+                    if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
+
+                    int leastAmbiguity = 9999;
+                    for (LimelightTarget_Fiducial fiducial : allTags) {
+
+                        Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
+
+                        // if (tagTransforms.get(fiducial.fiducialId) != null) {
+                            
+                        //     for (RawFiducial f : llMeasurement.rawFiducials) {
+                        //         if (f.id = fiducial.fiducialId) {
+                        //             int ambiguity = f.ambiguity;
+                        //             if (ambiguity < leastAmbiguity) {
+                        //                 tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+                        //                 leastAmbiguity = ambiguity;
+                        //                 continue;
+                        //             }
+                        //         }
+                        //     }
+                        // }
+                        tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+                    }
                 }
             }
         }
@@ -174,10 +188,10 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             totalTags > 0 ? totalTimestamp / cameraEstimates.size() : 0.0,
             totalTags > 0 ? totalLatency / cameraEstimates.size() : 0.0,
             totalTags,
-            totalTags > 0 ? totalTagSpan / totalTags : 0.0,
-            totalTags > 0 ? totalTagDist / totalTags : 0.0,
-            totalTags > 0 ? totalTagArea / totalTags : 0.0,
-            tagsUsed, //Placeholder
+            totalTags > 0 ? totalTagSpan / numCameras : 0.0,
+            totalTags > 0 ? totalTagDist / numCameras : 0.0,
+            totalTags > 0 ? totalTagArea / numCameras : 0.0,
+            tagsUsed, 
             true
         );
 
