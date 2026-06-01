@@ -22,7 +22,7 @@ public class PPLogger {
   // !Raw NT4 publishers (split so Elastic can graph each series separately)
   private static final DoublePublisher actualVelPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/PathPlanner/vel/actual")
+          .getDoubleTopic("/Pathmaster/vel/actual")
           .publish();
 
   private static final DoublePublisher commandedVelPub =
