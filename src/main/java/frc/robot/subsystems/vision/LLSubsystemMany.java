@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import com.ctre.phoenix6.Utils;
 
 import frc.robot.Constants.VisionConstants;
@@ -141,7 +142,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
                     totalTimestamp += llMeasurement.timestampSeconds;
                     totalLatency   += Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds) - Utils.fpgaToCurrentTime(0);
-                    //totalTags      += llMeasurement.tagCount;
                     totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
                     totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
                     totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
@@ -164,7 +164,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                                 break;
                             }
                         }
-
                         // Only update if this camera sees it with lower ambiguity than what's stored
                         if (!tagambiguities.containsKey(id) || ambiguity < tagambiguities.get(id)) {
                             tagambiguities.put(id, ambiguity);
@@ -191,6 +190,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             true
         );
 
+        Logger.recordOutput("Vision/Pose-Estimate", estimatedRobotPose);
+
         updateInputs(inputs);
         Logger.processInputs("LoggedVision", inputs);
     }
@@ -199,8 +200,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private boolean isEstimateValid(PoseEstimate estimate) {
         if (estimate == null || estimate.tagCount == 0) return false;
 
-        double ageSeconds = edu.wpi.first.wpilibj.Timer.getFPGATimestamp() - estimate.timestampSeconds;
-        // double ageSeconds = Utils.fpgaToCurrentTime(0) - Utils.fpgaToCurrentTime(estimate.timestampSeconds);
+        double ageSeconds = Timer.getFPGATimestamp() - estimate.timestampSeconds;
 
         if (ageSeconds > MAX_LATENCY_SECONDS) return false;
 
@@ -235,6 +235,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     }
 
     private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {
+        
         RawFiducial[] tagsUsed = allTags.stream()
                                 .filter(tags -> tags != null)
                                 .flatMap(tags -> Arrays.stream(tags))
@@ -248,8 +249,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public Pose2d  getPose()        { return estimatedRobotPose; }
     public double  getX()           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
     public double  getY()           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
-    public double  getYawRad()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
-    public double  getYawRadRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
+    public double  getYawDeg()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
+    public double  getYawRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
@@ -260,6 +261,10 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     public double getY(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0;
+    }
+
+    public double getYawDeg(int id) {
+        return hasTarget(id) ? tagtransforms.get(id).getRotation().getDegrees() : 0.0;
     }
 
     public double getYawRad(int id) {
@@ -293,7 +298,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
     }
 
-    public double getYawRadToTarget(Pose2d targetPose) {
+    public double getYawToTarget(Pose2d targetPose) {
         if (!hasTargets()) return -1.0;
         return estimatedRobotPose.minus(targetPose).getRotation().getRadians();
     }
@@ -336,12 +341,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         if (tagDist > 0) return tagDist;
         return getDistanceToTarget(VisionConstants.getHubPose());
     }
-
-    // // *Returns the poseEstimate corresponding to the alliance color (red or blue)
-    // public PoseEstimate getPoseEstimate(PoseEstimate red, PoseEstimate blue) {
-    //     return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? red : blue;
-    // }
-
+    
     // *VisionIO implementation
     @Override
     public void updateInputs(VisionIOInputs inputs) {
