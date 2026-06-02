@@ -122,16 +122,16 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
 
         // *Wrap estimatedRobotPose inside a PoseEstimate for more metadata.
         if (cam1Valid || cam2Valid) {
-            estimatedRobotPose = drivetrain.getState().Pose;
+            estimatedRobotPose = driveState.Pose;
 
-            Logger.recordOutput("Vision/Front Cam PE Odometry PE difference magnitude", Math.hypot(
-                llMeasurement1.pose.getX() - drivetrain.getState().Pose.getX(),
-                llMeasurement1.pose.getY() - drivetrain.getState().Pose.getY()
+            Logger.recordOutput("Vision/Front PE difference magnitude", Math.hypot(
+                llMeasurement1.pose.getX() - driveState.Pose.getX(),
+                llMeasurement1.pose.getY() - driveState.Pose.getY()
             ));
 
-            Logger.recordOutput("Vision/Back Cam PE Odometry PE difference magnitude", Math.hypot(
-                llMeasurement2.pose.getX() - drivetrain.getState().Pose.getX(),
-                llMeasurement2.pose.getY() - drivetrain.getState().Pose.getY()
+            Logger.recordOutput("Vision/Back PE difference magnitude", Math.hypot(
+                llMeasurement2.pose.getX() - driveState.Pose.getX(),
+                llMeasurement2.pose.getY() - driveState.Pose.getY()
             ));
 
 
@@ -165,7 +165,7 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
             LimelightHelpers.getLatestResults(llCamera2).targets_Fiducials
         );
 
-        // *Tag HashMap thing Kevin did
+        // *Tag-Transform HashMap thing Kevin did
         for (LimelightTarget_Fiducial fiducial : allTags) {
             Pose2d pose = fiducial.getRobotPose_TargetSpace().toPose2d();
             Transform2d tagToRobot = new Transform2d(
@@ -284,10 +284,10 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
 
     // !Getters
     public Pose2d  getPose()        { return estimatedRobotPose; }
-    public double  getX(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
-    public double  getY(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
+    public double  getX(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
+    public double  getY(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
     public double  getYaw()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
-    public double  getYawRad(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
+    public double  getYawRad(int i) { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
@@ -384,7 +384,8 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
                                   .filter(tagtransforms::containsKey)
                                   .mapToObj(id -> new Pose2d(getTagX(id), getTagY(id), new Rotation2d(getTagYaw(id))))
                                   .toArray(Pose2d[]::new);
-                                  
+        
+        Logger.recordOutput("Vision/VisibleTagIds",   inputs.visibleTagIds);
         Logger.recordOutput("Vision/VisibleTagPoses", inputs.visibleTagPoses);
 
         inputs.allTagToRobotX    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagX).toArray();
@@ -405,6 +406,6 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
         Matrix<N3, N1> stdDevMatrix = calculateStdDevs(latestEstimate);
         inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
 
-         }
+    }
 
 }
