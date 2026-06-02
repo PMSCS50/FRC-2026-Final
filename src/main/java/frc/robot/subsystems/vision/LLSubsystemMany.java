@@ -10,18 +10,13 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-
 import com.ctre.phoenix6.Utils;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
-import frc.robot.subsystems.vision.VisionIOInputsAutoLogged;
 import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
 import java.util.ArrayList;
