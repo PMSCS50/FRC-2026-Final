@@ -302,7 +302,7 @@ public class Pathmaster {
     }
 
     // *Pathfind to waypoint corresponding with selectedWaypointIndex
-    public Command goToSelctedWaypoint() {
+    public Command goToSelectedWaypoint() {
         // if (!checkConfigured("gotoWaypoint")) return Commands.none();
         if (!AutoBuilder.isConfigured())
             return Commands.none();

@@ -13,6 +13,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import com.ctre.phoenix6.Utils;
 
+import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -54,8 +55,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private static final double MAX_AMBIGUITY        = 0.9;
     private static final double MAX_LATENCY_SECONDS  = 0.25;
     private static final double MAX_OMEGA_RPS        = 2.0;
-    private static final double FIELD_MAX_X          = 16.5;
-    private static final double FIELD_MAX_Y          = 8.5;
+    private static final double FIELD_MAX_X          = Constants.FIELD_MAX_X;
+    private static final double FIELD_MAX_Y          = Constants.FIELD_MAX_Y;
 
     private Matrix<N3, N1> stdDevs = VecBuilder.fill(9999.0, 9999.0, 9999.0);
     private final List<Pose2d> cameraEstimates = new ArrayList<>();

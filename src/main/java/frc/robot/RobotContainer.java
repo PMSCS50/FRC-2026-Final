@@ -64,7 +64,6 @@ public class RobotContainer {
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
 
-    //! High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
 
@@ -252,7 +251,7 @@ public class RobotContainer {
         // *Pathfinding
         joystick.b().whileTrue(
             Commands.defer(
-                () -> monkeyDLuffy.goToSelctedWaypoint()
+                () -> monkeyDLuffy.goToSelectedWaypoint()
                     .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose())),
                 Set.of(drivetrain)
             )
