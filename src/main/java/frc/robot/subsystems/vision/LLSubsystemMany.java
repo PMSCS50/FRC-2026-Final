@@ -37,6 +37,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private final CommandSwerveDrivetrain drivetrain;
 
     private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
+    private final HashMap<Integer, Double> tagambiguities = new HashMap<>();
 
     private double omegaRps;
 
@@ -98,6 +99,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         totalTagArea       = 0.0;
         allCameraRawFiducials.clear();
         tagtransforms.clear();
+        tagambiguities.clear();
         cameraEstimates.clear();
     
         
@@ -155,25 +157,24 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
                     if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
 
-                    int leastAmbiguity = 9999;
                     for (LimelightTarget_Fiducial fiducial : allTags) {
-
                         Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
+                        int id = (int) fiducial.fiducialID;
 
-                        // if (tagTransforms.get(fiducial.fiducialId) != null) {
-                            
-                        //     for (RawFiducial f : llMeasurement.rawFiducials) {
-                        //         if (f.id = fiducial.fiducialId) {
-                        //             int ambiguity = f.ambiguity;
-                        //             if (ambiguity < leastAmbiguity) {
-                        //                 tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
-                        //                 leastAmbiguity = ambiguity;
-                        //                 continue;
-                        //             }
-                        //         }
-                        //     }
-                        // }
-                        tagtransforms.put((int) fiducial.fiducialID, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+                        // Find ambiguity for this fiducial from rawFiducials
+                        double ambiguity = 1.0; // default high
+                        for (RawFiducial f : llMeasurement.rawFiducials) {
+                            if (f.id == id) {
+                                ambiguity = f.ambiguity;
+                                break;
+                            }
+                        }
+
+                        // Only update if this camera sees it with lower ambiguity than what's stored
+                        if (!tagambiguities.containsKey(id) || ambiguity < tagambiguities.get(id)) {
+                            tagambiguities.put(id, ambiguity);
+                            tagtransforms.put(id, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+                        }
                     }
                 }
             }
@@ -197,13 +198,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         updateInputs(inputs);
         Logger.processInputs("LoggedVision", inputs);
-    }
-
-    // *Estimate comparison - prefer estimates with more tags, then closer tags
-    private boolean isBetterEstimate(PoseEstimate candidate, PoseEstimate current) {
-        if (candidate.tagCount != current.tagCount)
-            return candidate.tagCount > current.tagCount;
-        return candidate.avgTagDist < current.avgTagDist;
     }
 
     // *Validation
@@ -259,21 +253,21 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public Pose2d  getPose()        { return estimatedRobotPose; }
     public double  getX()           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
     public double  getY()           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
-    public double  getYaw()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
-    public double  getYawRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
+    public double  getYawRad()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
+    public double  getYawRadRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
 
-    public double getTagX(int id) {
+    public double getX(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
     }
 
-    public double getTagY(int id) {
+    public double getY(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0;
     }
 
-    public double getTagYaw(int id) {
+    public double getYawRad(int id) {
         return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0;
     }
 
@@ -304,7 +298,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
     }
 
-    public double getYawToTarget(Pose2d targetPose) {
+    public double getYawRadToTarget(Pose2d targetPose) {
         if (!hasTargets()) return -1.0;
         return estimatedRobotPose.minus(targetPose).getRotation().getRadians();
     }
@@ -363,23 +357,23 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         inputs.hasTagTransform = inputs.hasTarget;
 
-        inputs.tagToRobotX    = inputs.hasTagTransform ? getTagX(inputs.targetId) : 0.0;
-        inputs.tagToRobotY    = inputs.hasTagTransform ? getTagY(inputs.targetId) : 0.0;
+        inputs.tagToRobotX    = inputs.hasTagTransform ? getX(inputs.targetId) : 0.0;
+        inputs.tagToRobotY    = inputs.hasTagTransform ? getY(inputs.targetId) : 0.0;
         inputs.tagToRobotZ    = 0.0;
-        inputs.tagToRobotRotZ = inputs.hasTagTransform ? getTagYaw(inputs.targetId) : 0.0;
+        inputs.tagToRobotRotZ = inputs.hasTagTransform ? getYawRad(inputs.targetId) : 0.0;
 
         inputs.visibleTagIds   = tagtransforms.keySet().stream().mapToInt(Integer::intValue).toArray();
         inputs.visibleTagPoses = Arrays.stream(inputs.visibleTagIds)
-                                       .mapToObj(id -> new Pose2d(getTagX(id), getTagY(id), new Rotation2d(getTagYaw(id))))
+                                       .mapToObj(id -> new Pose2d(getX(id), getY(id), new Rotation2d(getYawRad(id))))
                                        .toArray(Pose2d[]::new);
 
         Logger.recordOutput("Vision/VisibleTagIds",   inputs.visibleTagIds);
         Logger.recordOutput("Vision/VisibleTagPoses", inputs.visibleTagPoses);
 
-        inputs.allTagToRobotX    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagX).toArray();
-        inputs.allTagToRobotY    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagY).toArray();
+        inputs.allTagToRobotX    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getX).toArray();
+        inputs.allTagToRobotY    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getY).toArray();
         inputs.allTagToRobotZ    = new double[inputs.visibleTagIds.length];
-        inputs.allTagToRobotRotZ = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getTagYaw).toArray();
+        inputs.allTagToRobotRotZ = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getYawRad).toArray();
 
         inputs.hasEstimatedPose       = estimatedRobotPose != null;
         inputs.estimatedPose          = estimatedRobotPose != null ? estimatedRobotPose : new Pose2d();

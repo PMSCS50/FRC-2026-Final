@@ -135,11 +135,6 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderPathFindingConfigured());
     Logger.recordOutput("Pathmaster/Selected Waypoint", m_robotContainer.monkeyDLuffy.selectedWaypoint());
     Logger.recordOutput("Pathmaster/Selected Waypoint Pose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
-
-    // *Ensure waypoints are updated with alliance-relative poses
-    m_robotContainer.monkeyDLuffy.addWaypoint("Shooting Setpoint", VisionConstants.getAimPose());
-    m_robotContainer.monkeyDLuffy.addWaypoint("Climb", ClimbConstants.getClimbPose());
-    m_robotContainer.monkeyDLuffy.addWaypoint("Center", VisionConstants.getCenter());
   }
 
   // *Disabled mode

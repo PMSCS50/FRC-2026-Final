@@ -4,8 +4,6 @@ package frc.robot.pathfinding;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.List;
@@ -16,8 +14,6 @@ import java.util.List;
  */
 public class PPLogger {
 
-  // !Field widget (Elastic picks this up from SmartDashboard)
-  //private static final Field2d field = new Field2d();
 
   // !Raw NT4 publishers (split so Elastic can graph each series separately)
   private static final DoublePublisher actualVelPub =
@@ -40,16 +36,19 @@ public class PPLogger {
           .getDoubleTopic("/Pathmaster/vel/commandedAngular")
           .publish();
 
-  private static final DoublePublisher inaccuracyPub =
+  private static final DoublePublisher transInnacuracyPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/pathInaccuracy")
+          .getDoubleTopic("/Pathmaster/translationInaccuracy")
           .publish();
 
+  private static final DoublePublisher rotInnacuracyPub =
+      NetworkTableInstance.getDefault()
+          .getDoubleTopic("/Pathmaster/rotationalInaccuracy")
+          .publish();
 
   // !Internal state for loggable stuff
   private static Pose2d lastCurrentPose  = new Pose2d();
   private static Pose2d lastTargetPose   = new Pose2d();
-  private static List<Pose2d> lastPathPoses = List.of();
 
   // !Public setters
 
@@ -126,12 +125,19 @@ public class PPLogger {
    * // ?Called automatically whenever current or target pose is updated.
    */
   private static void updatePathInnacuracy() {
-    double inaccuracy = lastCurrentPose
+    double translationInaccuracy = lastCurrentPose
         .getTranslation()
         .getDistance(lastTargetPose.getTranslation());
 
-    Logger.recordOutput("Pathmaster/pathInaccuracy", inaccuracy);
-    inaccuracyPub.set(inaccuracy);
+    double rotationalInaccuracy = Math.abs(lastCurrentPose
+        .getRotation()
+        .minus(lastTargetPose.getRotation())
+        .getRadians());
+
+    Logger.recordOutput("Pathmaster/translationInaccuracy", translationInaccuracy);
+    Logger.recordOutput("Pathmaster/rotationalInaccuracy", rotationalInaccuracy);
+    transInnacuracyPub.set(translationInaccuracy);
+    rotInnacuracyPub.set(rotationalInaccuracy);
   }
 
 }

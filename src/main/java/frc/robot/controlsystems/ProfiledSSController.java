@@ -11,10 +11,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
-import edu.wpi.first.math.controller.LinearPlantInversionFeedforward;
 
 
 
@@ -40,8 +37,6 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
 
     private final TrapezoidProfile profile;
     
-    private final TrapezoidProfile.Constraints constraints;
-
     // FIX 1: Removed 'final' — trapezoidState is reassigned in calculate() and reset()
     private TrapezoidProfile.State trapezoidState;
 
@@ -67,7 +62,7 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
     private double secondarySensorWeight = 0.0;  // 0.0 = trust primary only, 1.0 = equal weight
     private double lastPrimaryMeasurement = 0.0;
     private double lastSecondaryMeasurement = 0.0;
-    private Matrix<N2, N1> kalmanFilterCovariance = null;
+    private Matrix<N2, N2> kalmanFilterCovariance = null;
 
     /**
      * Creates a generic state space controller.
@@ -118,7 +113,6 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
         this.plant         = plant;
         this.tolerance     = tolerance;
         this.dtSeconds = dtSeconds;
-        this.constraints = constraints;
         this.profile = new TrapezoidProfile(constraints);
         this.trapezoidState = new TrapezoidProfile.State();
 
@@ -157,13 +151,12 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
             SSControllerConfigs<N2, Inputs, Outputs> configs,
             TrapezoidProfile.Constraints constraints) {
 
-        this.statesNat     = configs.getStatesNat();
-        this.outputsNat    = configs.getOutputsNat();
-        this.plant         = plant;
-        this.tolerance     = configs.getTolerance();
-        this.dtSeconds = configs.getdtSeconds();
-        this.constraints = constraints;
-        this.profile = new TrapezoidProfile(constraints);
+        this.statesNat      = configs.getStatesNat();
+        this.outputsNat     = configs.getOutputsNat();
+        this.plant          = plant;
+        this.tolerance      = configs.getTolerance();
+        this.dtSeconds      = configs.getdtSeconds();
+        this.profile        = new TrapezoidProfile(constraints);
         this.trapezoidState = new TrapezoidProfile.State();
 
         // LQR computes optimal feedback gains

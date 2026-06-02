@@ -27,9 +27,9 @@ public class Pivot extends SubsystemBase {
     private double outputMin = -0.3, outputMax = 0.3;
 
     // *MAXMotion profile constraints.
-    private static final double kMaxMotionMaxVelocityRpm        = 2000;
-    private static final double kMaxMotionMaxAccelerationRpmSec = 3000;
-    private static final double kMaxMotionAllowedErrorRotations  = 0.05;
+    private static final double kMaxMotionMaxVelocityRpm        = 1702.8;
+    private static final double kMaxMotionMaxAccelerationRpmSec = 2000;
+    private static final double kMaxMotionAllowedErrorRotations = 0.05;
 
     // *calculations for freespinning neo
     public static final class NeoMotorConstants {
@@ -56,7 +56,7 @@ public class Pivot extends SubsystemBase {
 
         pivotMotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(.04, 0, 0)
+                .pid(.05, 0, 0)
                 .outputRange(outputMin, outputMax)
                 .positionWrappingEnabled(false);
 
