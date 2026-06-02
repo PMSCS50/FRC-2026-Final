@@ -82,21 +82,20 @@ public final class Constants {
     public static final int redRightTagId = 2;
 
     public static int getMiddleTagId () {
-      return AllianceRelativeFiducials(blueMiddleTagId, redMiddleTagId);
+      return AllianceRelativeFiducial(blueMiddleTagId);
     }
     public static int getLeftTagId () {
-      return AllianceRelativeFiducials(blueLeftTagId, redLeftTagId);
+      return AllianceRelativeFiducial(blueLeftTagId);
     }
     public static int getRightTagId () {
-      return AllianceRelativeFiducials(blueRightTagId, redRightTagId);
+      return AllianceRelativeFiducial(blueRightTagId);
     }
 
     public static int getDirectionFlipper() {
       return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? 1 : -1;
     }
 
-    // public static Pose3d cameraToRobot = new Pose3d(0.0,0.0,0.0, new Rotation3d(0.0,0.0,0.0));
-    // public static double distanceToTag = 1;
+
     public static AprilTagFieldLayout aprilTagLayoutWelded = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     public static AprilTagFieldLayout aprilTagLayoutAndymark = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
@@ -109,19 +108,6 @@ public final class Constants {
     // *Hub Positions (IDK WHAT THIS IS DOING HERE BUT IT'S PROBABLY IMPORTANT)
     static final Pose2d RED_HUB = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
     static final Pose2d BLUE_HUB = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
-
-    private static final Pose2d RED_HUB_WPIRED = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
-    private static final Pose2d BLUE_HUB_WPIRED = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
-
-    public static Pose2d getBlueHubPose() {
-      return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? BLUE_HUB_WPIRED : BLUE_HUB;
-    }
-      public static Pose2d getRedHubPose() {
-      return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? RED_HUB_WPIRED : RED_HUB;
-    }
-      public static Pose2d getHubPose2() {
-      return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? getRedHubPose() : getBlueHubPose();
-    }
 
     public static Pose2d getHubPose() {
       return AllianceRelativePose(BLUE_HUB);
@@ -151,27 +137,6 @@ public final class Constants {
       return AllianceRelativePose(aimPose);
     }
 
-    // *Basic filtering thresholds
-    // public static double maxAmbiguity = 0.3;
-    // public static double maxZError = 0.75;
-
-    // *Standard deviation baselines, for 1 meter distance and 1 tag
-    // ?(Adjusted automatically based on distance and # of tags)
-    // public static double linearStdDevBaseline = 0.02; // Meters
-    // public static double angularStdDevBaseline = 0.06; // Radians
-
-    // *Standard deviation multipliers for each camera
-    // ?(Adjust to trust some cameras more than others)
-    // public static double[] cameraStdDevFactors =
-    //   new double[] {
-    //     1.0, // Camera 0
-    //     1.0 // Camera 1
-    //   };
-
-    // *Multipliers to apply for MegaTag 2 observations
-    // public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
-    // public static double angularStdDevMegatag2Factor =
-    // Double.POSITIVE_INFINITY; // No rotation data available
   }
 
   // *intake motorIDs are values of 20
@@ -259,9 +224,9 @@ public final class Constants {
   }
 
   // *Helper method for alliance-relative tag IDs, since the red and blue tags are in different positions on the field.
-  private static int AllianceRelativeFiducials(int blueTagId, int redTagId) {
+  private static int AllianceRelativeFiducial(int blueTagId) {
     if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) {
-        return redTagId;
+        return blueTagId - 16;
     } else {
         return blueTagId;
     }
