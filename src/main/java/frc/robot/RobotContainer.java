@@ -252,12 +252,14 @@ public class RobotContainer {
         // *Pathfinding
         joystick.b().whileTrue(
             Commands.defer(
-                () -> monkeyDLuffy.gotoSelectedWaypoint()
+                () -> monkeyDLuffy.goToSelctedWaypoint()
                     .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose())),
                 Set.of(drivetrain)
             )
         );
+
         joystick.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
+        
     }
 
     // *changing shooter speed
