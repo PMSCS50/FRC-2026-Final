@@ -166,7 +166,7 @@ public class Robot extends LoggedRobot {
   public void teleopInit() {
     LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
 
-    applyAllianceDirFlip();
+    //applyAllianceDirFlip();
     applyAllianceConfig();
 
     if (m_autonomousCommand != null) {
