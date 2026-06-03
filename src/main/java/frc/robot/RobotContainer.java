@@ -238,8 +238,8 @@ public class RobotContainer {
         // *Letters
         // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
-        if (vision instanceof LLSubsystemDouble) {
-            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemDouble) vision));
+        if (vision instanceof LLSubsystemMany) {
+            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
         
         // joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));

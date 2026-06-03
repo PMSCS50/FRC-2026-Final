@@ -7,15 +7,16 @@ import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 // import frc.robot.subsystems.vision.LLSubsystem;
-import frc.robot.subsystems.vision.LLSubsystemDouble;
+import frc.robot.subsystems.vision.LLSubsystemMany;
+import java.lang.Math;
 
 public class AlignToHub extends Command {
     private final PIDController rotController;
-    private final LLSubsystemDouble llvision;
+    private final LLSubsystemMany llvision;
     private final CommandSwerveDrivetrain drivetrain;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
 
-    public AlignToHub(CommandSwerveDrivetrain drivetrain, LLSubsystemDouble llvision) {
+    public AlignToHub(CommandSwerveDrivetrain drivetrain, LLSubsystemMany llvision) {
         this.drivetrain = drivetrain;
         this.llvision = llvision;
         this.rotController = new PIDController(Constants.ROT_REEF_ALIGNMENT_P, 0, 0);
@@ -27,7 +28,6 @@ public class AlignToHub extends Command {
     @Override
     public void initialize() {
         rotController.reset();
-        llvision.setPipeline(0);
     }
 
     @Override
@@ -41,13 +41,11 @@ public class AlignToHub extends Command {
             return;
         }
 
-        double robotX = drivetrain.getState().Pose.getX();
-        double robotY = drivetrain.getState().Pose.getY();
-        double hubX = VisionConstants.getHubPose().getX();
-        double hubY = VisionConstants.getHubPose().getY();
+        double robotX = llVision.getX();
+        double robotY = llVision.getY();
 
-        double angleToHub = Math.toDegrees(Math.atan2(hubY - robotY, hubX - robotX));
-        double currentHeading = drivetrain.getState().Pose.getRotation().getDegrees();
+        double angleToHub = llVision.getYawToTarget(VisionConstants.getHubPose()) * 180 / Math.PI;
+        double currentHeading = llVision.getYawDeg();
         double rotValue = rotController.calculate(currentHeading, angleToHub);
 
         drivetrain.setControl(drive
