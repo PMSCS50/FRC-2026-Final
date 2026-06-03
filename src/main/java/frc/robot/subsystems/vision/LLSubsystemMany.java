@@ -245,6 +245,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         RawFiducial[] tagsUsed = allTags.stream()
                                 .filter(tags -> tags != null)
                                 .flatMap(tags -> Arrays.stream(tags))
+                                .distinct()
                                 .toArray(RawFiducial[]::new);
 
         return tagsUsed;
