@@ -98,38 +98,40 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         tagtransforms.clear();
         tagambiguities.clear();
         cameraEstimates.clear();
-    
-        
+
         // *For vision estimation and logging
         for (String cam : llCameras) {
-            // *Logging
             LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
             PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
-            cameraEstimates.add(llMeasurement.pose);
 
-            boolean camValid = isEstimateValid(llMeasurement);
-            Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
-
-            if (llMeasurement != null) {
-                Logger.recordOutput("Vision/" + cam + "/Estimate", llMeasurement.pose);
-
-                int[] tagIds = Arrays.stream(llMeasurement.rawFiducials)
-                                    .mapToInt(f -> f.id)
-                                    .toArray();
-                Logger.recordOutput("Vision/" + cam + "/TagIds", tagIds);
-
-                Pose2d[] tagPoses = Arrays.stream(llMeasurement.rawFiducials)
-                                        .map(f -> tagtransforms.getOrDefault(f.id, Transform2d.kZero))
-                                        .map(t -> new Pose2d(t.getX(), t.getY(), t.getRotation()))
-                                        .toArray(Pose2d[]::new);
-
-                Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
-            } else {
-                // |To make it look nice
+            if (llMeasurement == null) {
+                Logger.recordOutput("Vision/" + cam + "/Valid", false);
                 Logger.recordOutput("Vision/" + cam + "/Estimate", new Pose2d());
                 Logger.recordOutput("Vision/" + cam + "/TagIds", new int[0]);
                 Logger.recordOutput("Vision/" + cam + "/TagPoses", new Pose2d[0]);
+                continue;
             }
+
+            cameraEstimates.add(llMeasurement.pose);
+
+            RawFiducial[] fiducials = llMeasurement.rawFiducials != null
+                ? llMeasurement.rawFiducials
+                : new RawFiducial[0];
+
+            boolean camValid = isEstimateValid(llMeasurement);
+            Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
+            Logger.recordOutput("Vision/" + cam + "/Estimate", llMeasurement.pose);
+
+            int[] tagIds = Arrays.stream(fiducials)
+                .mapToInt(f -> f.id)
+                .toArray();
+            Logger.recordOutput("Vision/" + cam + "/TagIds", tagIds);
+
+            Pose2d[] tagPoses = Arrays.stream(fiducials)
+                .map(f -> tagtransforms.getOrDefault(f.id, Transform2d.kZero))
+                .map(t -> new Pose2d(t.getX(), t.getY(), t.getRotation()))
+                .toArray(Pose2d[]::new);
+            Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
 
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
@@ -138,7 +140,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     drivetrain.addVisionMeasurement(
                         llMeasurement.pose,
                         Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
-                        camStdDevs  // pass std devs here so the EKF weights it properly
+                        camStdDevs
                     );
 
                     totalTimestamp += llMeasurement.timestampSeconds;
@@ -146,26 +148,29 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
                     totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
                     totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
-                    allCameraRawFiducials.add(llMeasurement.rawFiducials);
+                    allCameraRawFiducials.add(fiducials);
 
                     // *Merge tag transforms from all cameras
                     // |Currently same tags are overwritten; if you want to change this to get the best estimate or fuse estimates you can but personally there's little to gain
-                    LimelightTarget_Fiducial[] allTags = LimelightHelpers.getLatestResults(cam).targets_Fiducials;
-                    if (allTags == null) allTags = new LimelightTarget_Fiducial[0];
+                    var results = LimelightHelpers.getLatestResults(cam);
+                    LimelightTarget_Fiducial[] allTags = (results != null && results.targets_Fiducials != null)
+                        ? results.targets_Fiducials
+                        : new LimelightTarget_Fiducial[0];
 
                     for (LimelightTarget_Fiducial fiducial : allTags) {
                         Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
                         int id = (int) fiducial.fiducialID;
 
-                        // Find ambiguity for this fiducial from rawFiducials
+                        // *Find ambiguity for this fiducial from rawFiducials
                         double ambiguity = 1.0; // default high
-                        for (RawFiducial f : llMeasurement.rawFiducials) {
+                        for (RawFiducial f : fiducials) {
                             if (f.id == id) {
                                 ambiguity = f.ambiguity;
                                 break;
                             }
                         }
-                        // Only update if this camera sees it with lower ambiguity than what's stored
+
+                        // *Only update if this camera sees it with lower ambiguity than what's stored
                         if (!tagambiguities.containsKey(id) || ambiguity < tagambiguities.get(id)) {
                             tagambiguities.put(id, ambiguity);
                             tagtransforms.put(id, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
@@ -246,43 +251,25 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         
     }
 
-    // *Getters
-    public Pose2d  getPose()        { return estimatedRobotPose; }
-    public double  getX()           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
-    public double  getY()           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
-    public double  getYawDeg()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
-    public double  getYawRad()      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
-    public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
-    public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
-    public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
+    // *Getters for overall info
+    public Pose2d  getPose()                        { return estimatedRobotPose; }
+    public double  getX()                           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
+    public double  getY()                           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
+    public double  getRobotYawDeg()                 { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
+    public double  getRobotYawRad()                 { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
+    public int     getTagCount()                    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
+    public double  getAvgTagDist()                  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
+    public double  getAvgTagArea()                  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
+    public boolean hasTargets()                     { return !tagtransforms.isEmpty(); }
 
-    public double getX(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0;
-    }
-
-    public double getY(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0;
-    }
-
-    public double getYawDeg(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getRotation().getDegrees() : 0.0;
-    }
-
-    public double getYawRad(int id) {
-        return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0;
-    }
-
-    public Transform2d getTransformToTag(int id) {
-        return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero;
-    }
-
-    public boolean hasTarget(int desiredId) {
-        return tagtransforms.containsKey(desiredId);
-    }
-
-    public boolean hasTargets() {
-        return !tagtransforms.isEmpty();
-    }
+    // *Getters for specific tags
+    // !These return 0 or false if the tag isn't currently visible, so be sure to check hasTarget() first if you want to avoid ambiguity with a real measurement of 0!
+    public boolean hasTarget(int id)                { return tagtransforms.containsKey(id); }
+    public double getX(int id)                      { return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0; }
+    public double getY(int id)                      { return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0; }
+    public double getYawDeg(int id)                 { return hasTarget(id) ? tagtransforms.get(id).getRotation().getDegrees() : 0.0; }
+    public double getYawRad(int id)                 { return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0; }
+    public Transform2d getTransformToTag(int id)    { return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero; }
 
     // *Setters
     public void setPipeline(int pipeline) {

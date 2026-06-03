@@ -8,9 +8,10 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.Set;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.util.Units;
 
-import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -20,11 +21,9 @@ import com.pathplanner.lib.auto.NamedCommands;
 import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.VisionConstants;
 // import frc.robot.commands.ChaseTagCommand;
-
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -67,9 +66,9 @@ public class RobotContainer {
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
 
-    public static double intakeSpeed = 0.5;
-    public static double pivotSpeed = .05;
-    public static double shooterSpeed = .01;
+    private static double intakeSpeed = 0.5;
+    private static double pivotSpeed = .05;
+    private static double shooterSpeed = .01;
 
     // *EXTRA SETUP - I GOT NO CLUE
     // *Setting up bindings for necessary control of the swerve drive platform
@@ -159,8 +158,8 @@ public class RobotContainer {
     // *Configure Bindings
     private void configureBindings() {
 
-        SmartDashboard.putNumber("Shooting Speed", shooterSpeed);
-        SmartDashboard.putBoolean("Has Targets", vision.hasTargets());
+        Logger.recordOutput("Shooter/Shooter Speed", shooterSpeed);
+        // SmartDashboard.putBoolean("Has Targets", vision.hasTargets());  <--- presumably already being logged and hence will be avaliable on the dashboard, so maybe unnecessary? Also useless because its not being updated continuously, but only when the command is executed, so it will always show false on the dashboard. We should probably log this value in the vision subsystem instead for better visibility and debugging.
 
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
@@ -262,30 +261,25 @@ public class RobotContainer {
     }
 
     // *changing shooter speed
-    public void setShooterSpeed(double speed) {
-        if (speed < 0.01) {
-            speed = 0.01;
-        } else if (speed > 1) {
-            shooterSpeed = 1;
-        } else {
-            shooterSpeed = speed;
-        }
+    public void changeShooterSpeed(double speed) {
+        shooterSpeed = MathUtil.clamp(speed, 0.01, 1.0);
     }
 
     // *changing drivetrain speed: crawl, low, mid, high
     public void setSpeed(double speed) {
         if (speed < 0.1) {
             speed = 0.1;
-            SmartDashboard.putString( "Swerve Speed", "CRAWL");
+            Logger.recordOutput("Drivetrain/Swerve Speed", "CRAWL");
         }
         if(speed <= .25) {
             turningSpeed = .25;
-            SmartDashboard.putString("Swerve Speed", "LOW");
+            Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
         } else {
             turningSpeed = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
-            if (speed <= 0.3) SmartDashboard.putString("Swerve Speed", "LOW");
-            else if (speed <= 0.5) SmartDashboard.putString("Swerve Speed", "MID");
-            else SmartDashboard.putString("Swerve Speed", "HIGH");
+
+            if (speed <= 0.3) Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
+            else if (speed <= 0.5) Logger.recordOutput("Drivetrain/Swerve Speed", "MID");
+            else Logger.recordOutput("Drivetrain/Swerve Speed", "HIGH");
         }
         speedLimiter = speed;
         
@@ -298,22 +292,16 @@ public class RobotContainer {
     
 
     // *Getters for subsystems and commands
-    public Command getAutonomousCommand() {
-        // !Run the path selected from the auto chooser
-        // return null;
-        return autoChooser.getSelected();
-    }
 
-    public Intake getIntake() {
-        return intake;
-    }
-    public Climb getClimb() {
-        return climb;
-    }
-    public Shooter getShooter() {
-        return shooter;
-    }
-    public Pivot getPivot() {
-        return pivot;
-    }
+    // !Run the path selected from the auto chooser
+    public Command getAutonomousCommand() { return autoChooser.getSelected(); }
+
+    public Intake getIntake() { return intake; }
+    public Climb getClimb() { return climb; }
+    public Shooter getShooter() { return shooter; }
+    public Pivot getPivot() { return pivot; }
+
+    public static double getIntakeSpeed() { return intakeSpeed; }
+    public static double getPivotSpeed() { return pivotSpeed; }
+    public static double getShooterSpeed() { return shooterSpeed; }
 }

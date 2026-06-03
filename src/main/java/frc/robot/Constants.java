@@ -5,31 +5,23 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import edu.wpi.first.math.util.Units;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.generated.TunerConstants;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
+import frc.robot.generated.TunerConstants;
 
 // *The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean constants.
 // !This class should not be used for any other purpose. All constants should be declared globally (i.e. public static).
@@ -40,6 +32,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+  // *Enum for different robot modes, used to switch between real, sim, and replay implementations of subsystems and commands.
   public static enum Mode {
     /** Running on a real robot. */
     REAL,
@@ -50,6 +44,8 @@ public final class Constants {
     /** Replaying from a log file. */
     REPLAY
   }
+
+  // *Constants for the drivetrain
   public static class DriveConstants {
 
     public static final double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -69,6 +65,7 @@ public final class Constants {
     public static final double pathMaxAngularAcceleration = 12; // rad/s^2
   }
 
+  // *Constants for vision processing and AprilTag field layout
   public static class VisionConstants{
     public static final String limelightName = "limelight-meowlit";
 
@@ -117,6 +114,14 @@ public final class Constants {
       return alliance == DriverStation.Alliance.Red ? RED_HUB : BLUE_HUB;
     }
 
+    public static class hubPositionRed {
+      public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+    }
+
+    public static class hubPositionBlue {
+      public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+    }
+
     public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
     public static LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
     public static LoggedNetworkNumber centerRot = new LoggedNetworkNumber("Vision/Center/Rot", 0.0);
@@ -129,14 +134,13 @@ public final class Constants {
         );
     }
 
-    // *Aimpose for testing set-point pathing to shooting
+    // |Aimpose for testing set-point pathing to shooting
     // ?Facing toward blue hub at (4.611624, 4.024) from (2, 2)
     // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°
     public static Pose2d aimPose = new Pose2d(2, 2, Rotation2d.fromDegrees(37.592));
     public static Pose2d getAimPose() {
       return AllianceRelativePose(aimPose);
     }
-
   }
 
   // *intake motorIDs are values of 20
@@ -160,11 +164,13 @@ public final class Constants {
     public static final double pivotUpPosition   = 0/* rotations */;
     public static final double pivotDownPosition = 0.5;
     public static final double pivotTolerance    = 0.05; // rotations, tune as needed
+
+    public static final double kPivotFreeSpeedRpm = 5676;
+    public static final double kPivotStallCurrent = 30;
   }
 
   // *shooter motorIDs are values of 30
   public static final class ShooterConstants {
-
     public static final int shooterMotorCanId1 = 31;
     public static final int shooterMotorCanId2 = 32;
 
@@ -183,15 +189,7 @@ public final class Constants {
     */
   }
 
-  public static class hubPositionRed {
-    public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-  }
-
-  public static class hubPositionBlue {
-    public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-  }
-
-  // *alimb motorIDs are values of 40
+  // *climb motorIDs are values of 40
   public static final class ClimbConstants{
     public static final int climbMotorCanId = 41;
     public static final double climbSpeed = .1;

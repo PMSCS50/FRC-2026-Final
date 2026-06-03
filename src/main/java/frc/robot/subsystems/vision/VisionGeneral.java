@@ -24,6 +24,7 @@ public abstract class VisionGeneral extends SubsystemBase {
      * // ?Positive yaw means the target is to the left of the robot's forward direction.
      */
     public abstract double getYawRad(int i);
+    public abstract double getYawDeg(int i);
 
     // *The distance to the target, in the robot's coordinate frame.
     public abstract double getDistanceToTarget(Pose2d hubPose);

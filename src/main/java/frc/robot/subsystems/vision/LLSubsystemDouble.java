@@ -286,8 +286,8 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
     public Pose2d  getPose()        { return estimatedRobotPose; }
     public double  getX(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getX() : 0.0; }
     public double  getY(int i)           { return estimatedRobotPose != null ? estimatedRobotPose.getY() : 0.0; }
-    public double  getYaw()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
-    public double  getYawRad(int i)      { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
+    public double  getRobotYawDeg()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getDegrees() : 0.0; }
+    public double  getRobotYawRad()         { return estimatedRobotPose != null ? estimatedRobotPose.getRotation().getRadians() : 0.0; }
     public int     getTagCount()    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
@@ -310,6 +310,13 @@ public class LLSubsystemDouble extends VisionGeneral implements VisionIO {
         return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero;    
     }
     
+    public double getYawDeg(int id) {
+        return hasTarget(id) ? tagtransforms.get(id).getRotation().getDegrees() : 0.0;
+    }
+
+    public double getYawRad(int id) {
+        return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0;
+    }
     
     public boolean hasTarget(int desiredId) {
         return hasFiducial(llCamera1, desiredId) || hasFiducial(llCamera2, desiredId);

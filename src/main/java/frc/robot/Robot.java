@@ -9,38 +9,27 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule;
-import com.pathplanner.lib.pathfinding.Pathfinding;
 
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.Climb;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Shooter;
 
 import frc.robot.pathfinding.Pathmaster;
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
-  private Pigeon2 mGyro = new Pigeon2(0);
+  //private Pigeon2 mGyro = new Pigeon2(0);
   private final RobotContainer m_robotContainer;
 
   int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
   public Robot() {
-    Logger.recordMetadata("ProjectName", "MyProject");
+    Logger.recordMetadata("ProjectName", "Orion (Pissbot)");
 
     if (isReal()) {
       Logger.addDataReceiver(new WPILOGWriter());
@@ -51,21 +40,21 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    Pathmaster.initializePathfinder();
-    m_robotContainer = new RobotContainer();
-
-    DataLogManager.start();
-    DriverStation.startDataLog(DataLogManager.getLog());
-
-    Pathmaster.startWarmupCommand();
-  }
-
-  @Override
-  public void robotInit() {
     if (Robot.isSimulation()) {
       DriverStation.silenceJoystickConnectionWarning(true);
     }
+
+    m_robotContainer = new RobotContainer();
+
+    Pathmaster.initializePathfinder();
+    m_robotContainer.monkeyDLuffy.startWarmupCommand();
+
+    // DataLogManager.start();
+    // DriverStation.startDataLog(DataLogManager.getLog());
   }
+
+  @Override
+  public void robotInit() {}
 
   // *Set gyro yaw and Limelight fiducial filters based on alliance color
   private void applyAllianceConfig() {
@@ -91,17 +80,14 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().run();
 
     // *Logging and SmartDashboard updates
-    SmartDashboard.putNumber("SHOOTER RPS", m_robotContainer.getShooter().getVelocity());
-    SmartDashboard.putNumber("intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
-    SmartDashboard.putNumber("PIVOT AMOUNT", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    // |Drivetrain pose and heading
+    Logger.recordOutput("Drivetrain/Yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
+    Logger.recordOutput("Drivetrain/X", m_robotContainer.drivetrain.getState().Pose.getX());
+    Logger.recordOutput("Drivetrain/Y", m_robotContainer.drivetrain.getState().Pose.getY());
+    Logger.recordOutput("Drivetrain/Distance to Hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
+    Logger.recordOutput("Drivetrain/Robot Pose", m_robotContainer.drivetrain.getState().Pose);
 
-    SmartDashboard.putNumber("drivetrain yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
-    SmartDashboard.putNumber("drivetrain x", m_robotContainer.drivetrain.getState().Pose.getX());
-    SmartDashboard.putNumber("drivetrain y", m_robotContainer.drivetrain.getState().Pose.getY());
-    SmartDashboard.putNumber("drivetrain distance to hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
-
-    Logger.recordOutput("robotPose", m_robotContainer.drivetrain.getState().Pose);
-
+    // |RoboRIO voltage and current monitoring
     Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
     Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
     Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
@@ -111,6 +97,7 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
     Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
 
+    // |Swerve module states and motor outputs
     for (int i = 0; i < 4; i++) {
       SwerveModule<?, ?, ?> module = m_robotContainer.drivetrain.getModule(i);
       Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getDriveMotor().getMotorVoltage().getValueAsDouble());
@@ -122,13 +109,19 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/StatorCurrent", module.getSteerMotor().getStatorCurrent().getValueAsDouble());
     }
 
-    Logger.recordOutput("Subsystems/Shooter/shooterMotor1 subsystem rpmControl", m_robotContainer.getShooter().getVelocity());
-    Logger.recordOutput("Subsystems/Shooter/shooter speed", RobotContainer.shooterSpeed);
-    Logger.recordOutput("Subsystems/Pivot/pivot speed", RobotContainer.pivotSpeed);
-    Logger.recordOutput("Subsystems/Pivot/pivot amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
-    Logger.recordOutput("Subsystems/Intake/intake Speed", RobotContainer.intakeSpeed);
-    Logger.recordOutput("Subsystems/Intake/intake motor velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
+    // |Subsystems
+    Logger.recordOutput("Subsystems/Shooter/Shooter shooterMotor1 Angular Velocity", m_robotContainer.getShooter().getVelocity());
+    Logger.recordOutput("Subsystems/Shooter/Shooter Speed", RobotContainer.getShooterSpeed());
 
+    Logger.recordOutput("Subsystems/Pivot/Pivot Speed", RobotContainer.getPivotSpeed());
+    Logger.recordOutput("Subsystems/Pivot/Pivot Amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    Logger.recordOutput("Subsystems/Pivot/Pivot Motor Voltage", m_robotContainer.getPivot().getPivotMotor().getBusVoltage()); // sparkmax
+
+    Logger.recordOutput("Subsystems/Intake/Intake Speed", RobotContainer.getIntakeSpeed());
+    Logger.recordOutput("Subsystems/Intake/Intake Motor Velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
+    //Logger.recordOutput("Subsystems/Intake/Intake Motor Voltage", m_robotContainer.getIntake().getIntakeMotor().getBusVoltage()); // sparkmax
+
+    // |Pathmaster
     Logger.recordOutput("Pathmaster/pathing", m_robotContainer.monkeyDLuffy.isPathing());
     Logger.recordOutput("Pathmaster/warmup", m_robotContainer.monkeyDLuffy.warmedUp());
     Logger.recordOutput("Pathmaster/AutoBuilderConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderConfigured());
@@ -143,7 +136,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledPeriodic() {
-    double robotYaw = mGyro.getYaw().getValueAsDouble();
+    double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
     LimelightHelpers.SetRobotOrientation(VisionConstants.limelightName, robotYaw, 0, 0, 0, 0, 0);
     LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 1);
   }

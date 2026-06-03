@@ -6,6 +6,8 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -15,6 +17,8 @@ import frc.robot.Constants.IntakeConstants;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Pivot extends SubsystemBase {
@@ -31,15 +35,11 @@ public class Pivot extends SubsystemBase {
     private static final double kMaxMotionMaxAccelerationRpmSec = 2000;
     private static final double kMaxMotionAllowedErrorRotations = 0.05;
 
-    // *calculations for freespinning neo
-    public static final class NeoMotorConstants {
-        public static final double kFreeSpeedRpm = 5676;
-    }
+    private final Debouncer stallDebouncer = new Debouncer(0.1, DebounceType.kRising);
+    private final Debouncer unstallDebouncer = new Debouncer(0.6, DebounceType.kFalling);
+    public boolean pivotStalled = false;
 
-    public static final double kIntakeMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
-
-    private int unStallCount = 0;
-    public boolean pivotStalled;
+    public static final double kIntakeMotorFreeSpeedRps = IntakeConstants.kPivotFreeSpeedRpm / 60;
 
     // *for starting the intake
     public boolean initializing = false;
@@ -72,15 +72,12 @@ public class Pivot extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (!(getPivotAmps() > 30)) {
-            unStallCount++;
-        } else {
-            unStallCount = 0;
-            pivotStalled = true;
-        }
-        if (unStallCount > 30) {
-            pivotStalled = false;
-        }
+        boolean overcurrent = getPivotAmps() > IntakeConstants.kPivotStallCurrent;
+        pivotStalled = stallDebouncer.calculate(overcurrent) && !unstallDebouncer.calculate(!overcurrent);
+        Logger.recordOutput("Subsystems/Pivot/isStalled", pivotStalled);
+        Logger.recordOutput("Subsystems/Pivot/amps", getPivotAmps());
+
+        Logger.recordOutput("Subsystems/Pivot/Is Stalled", pivotStalled);
     }
 
     public double getPivotAmps() {

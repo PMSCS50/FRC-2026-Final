@@ -193,6 +193,11 @@ public class PV_Sim extends VisionGeneral {
         return idx >= 0 ? inputs.allTagToRobotRotZ[idx] : 0.0;
     }
 
+    public double getYawDeg(int id) {
+        int idx = indexOfTag(id);
+        return idx >= 0 ? Math.toDegrees(inputs.allTagToRobotRotZ[idx]) : 0.0;
+    }
+
     /** Straight-line XY distance to a specific tag (meters), or 0 if not visible. */
     public double getDistance(int id) {
         int idx = indexOfTag(id);
@@ -240,10 +245,10 @@ public class PV_Sim extends VisionGeneral {
         Pose2d hubPose = VisionConstants.getHubPose();
         Pose2d tagPose = atagPose.get().toPose2d();
 
-        // hub → tag (field layout geometry)
+        // *hub → tag (field layout geometry)
         Transform2d hubToTag = new Transform2d(hubPose, tagPose);
 
-        // tag → robot (live from vision — changes as robot rotates)
+        // *tag → robot (live from vision — changes as robot rotates)
         int idx = indexOfTag(targetId);
         Transform2d tagToRobot = new Transform2d(
             new Translation2d(

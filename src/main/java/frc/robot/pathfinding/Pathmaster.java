@@ -37,8 +37,8 @@ public class Pathmaster {
     private Supplier<ChassisSpeeds> robotSpeeds;
     private static RoronoaZoroAK zoro;
     private final LinkedHashMap<String, Pose2d> waypoints = new LinkedHashMap<>();
-    private static boolean pathing = false;
-    private static boolean warmup = false;
+    private boolean pathing = false;
+    private boolean warmup = false;
     private int selectedWaypointIndex;
 
     // *Used to prevent cancelPathing() from canceling other drivetrain commands.
@@ -93,12 +93,12 @@ public class Pathmaster {
 
     // *Call in Robot.java before RobotContainer is initialized.
     public static void initializePathfinder() {
-        Pathmaster.zoro = new RoronoaZoroAK();
+        zoro = new RoronoaZoroAK();
         Pathfinding.setPathfinder(Pathmaster.zoro);
     }
 
     // *Call in Robot.java as the last line in Robot contructor
-    public static void startWarmupCommand() {
+    public void startWarmupCommand() {
         PathfindingCommand.warmupCommand().schedule();
         warmup = true;
     }
