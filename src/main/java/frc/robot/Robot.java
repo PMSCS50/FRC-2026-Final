@@ -44,9 +44,9 @@ public class Robot extends LoggedRobot {
       DriverStation.silenceJoystickConnectionWarning(true);
     }
 
-    m_robotContainer = new RobotContainer();
-
     Pathmaster.initializePathfinder();
+
+    m_robotContainer = new RobotContainer();
     m_robotContainer.monkeyDLuffy.startWarmupCommand();
 
     // DataLogManager.start();
