@@ -116,7 +116,7 @@ public class RobotContainer {
         
         shooter = new Shooter(vision);
         
-        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         
         // *Hypothetical Waypoints for testing purposes
         monkeyDLuffy.addWaypoint("Shooting Setpoint", VisionConstants.getAimPose());
