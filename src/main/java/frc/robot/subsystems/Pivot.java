@@ -32,7 +32,7 @@ public class Pivot extends SubsystemBase {
 
     // *MAXMotion profile constraints.
     private static final double kMaxMotionMaxVelocityRpm        = 1702.8;
-    private static final double kMaxMotionMaxAccelerationRpmSec = 2000;
+    private static final double kMaxMotionMaxAccelerationRpmSec = 1000;
     private static final double kMaxMotionAllowedErrorRotations = 0.05;
 
     private final Debouncer stallDebouncer = new Debouncer(0.1, DebounceType.kRising);

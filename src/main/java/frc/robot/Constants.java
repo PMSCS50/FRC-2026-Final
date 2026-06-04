@@ -231,8 +231,8 @@ public final class Constants {
   }
      
   // *From Reefscape
-  public static final double FIELD_MAX_X = 16.513048;
-  public static final double FIELD_MAX_Y = 8.042656;
+  public static final double FIELD_MAX_X = 16.518;
+  public static final double FIELD_MAX_Y = 8.043;
 
   public static final double X_REEF_ALIGNMENT_P = 2;
   public static final double Y_REEF_ALIGNMENT_P = 3;

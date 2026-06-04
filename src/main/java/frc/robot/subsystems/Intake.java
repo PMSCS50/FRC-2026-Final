@@ -34,7 +34,6 @@ public class Intake extends SubsystemBase {
 
     public static final double kIntakeMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
 
-    private int unStallCount = 0;
     public boolean pivotStalled;
 
     // *for starting the intake

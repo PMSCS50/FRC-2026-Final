@@ -24,6 +24,7 @@ import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 public class LLSubsystemMany extends VisionGeneral implements VisionIO {
@@ -74,11 +75,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         for (String cam : llCameras) {
             LimelightHelpers.setPipelineIndex(cam, 9);
             LimelightHelpers.SetIMUMode(cam, 4);
+            // *No filter anymore bitch
+            //LimelightHelpers.SetFiducialIDFiltersOverride(cam, new int[]{});
         }
     }
 
     // *Periodic
-    @SuppressWarnings("unused")
     @Override
     public void periodic() {
         var driveState = drivetrain.getState();
@@ -145,7 +147,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
                     totalTimestamp += llMeasurement.timestampSeconds;
                     totalLatency   += Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds) - Utils.fpgaToCurrentTime(0);
-                    totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
+                    totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.tagSpan : 0.0;
                     totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
                     totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
                     allCameraRawFiducials.add(fiducials);
@@ -334,10 +336,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     // *VisionIO implementation
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        inputs.hasTarget       = hasTargets();
-        inputs.targetId        = !tagtransforms.isEmpty() 
-                               ? tagtransforms.keySet().iterator().next() 
-                               : -1;
+        inputs.hasTarget = hasTargets();
+        inputs.targetId = tagambiguities.entrySet().stream()
+                            .min(Map.Entry.comparingByValue())
+                            .map(Map.Entry::getKey)
+                            .orElse(-1);
 
         inputs.hasTagTransform = inputs.hasTarget;
 

@@ -222,7 +222,7 @@ public class RobotContainer {
         joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
         
         // *May be unnecessary; we shall see at TRI or later testing
-        joystick.rightTrigger().and(joystick.povDownLeft()).onTrue(directionFlipper == 1.0 ? new InstantCommand(() -> this.flipDirection(-1.0)) : new InstantCommand(() -> this.flipDirection(1.0)));
+        joystick.rightTrigger().and(joystick.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection(directionFlipper == 1.0 ? -1.0 : 1.0)));
 
         // *POV Controls
         // joystick.povUp()

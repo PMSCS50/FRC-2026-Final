@@ -41,11 +41,8 @@ public class AlignToHub extends Command {
             return;
         }
 
-        double robotX = llVision.getX();
-        double robotY = llVision.getY();
-
-        double angleToHub = llVision.getYawToTarget(VisionConstants.getHubPose()) * 180 / Math.PI;
-        double currentHeading = llVision.getRobotYawDeg();
+        double angleToHub = llvision.getYawToTarget(VisionConstants.getHubPose()) * 180 / Math.PI;
+        double currentHeading = llvision.getRobotYawDeg();
         double rotValue = rotController.calculate(currentHeading, angleToHub);
 
         drivetrain.setControl(drive

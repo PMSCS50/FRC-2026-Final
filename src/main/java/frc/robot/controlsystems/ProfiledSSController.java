@@ -23,21 +23,21 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
  */
 public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
 
-    //The system. Will be passed in the constructor
+    // *The system. Will be passed in the constructor
     private final LinearSystem<N2, Inputs, Outputs> plant;
 
-    //The LQR will compute the feedback gains for the system to move to the next state
+    // *The LQR will compute the feedback gains for the system to move to the next state
     private final LinearQuadraticRegulator<N2, Inputs, Outputs> controller;
 
-    //The Kalman Filter fuses sensor/encoder values and resultant state to get the true state
+    // *The Kalman Filter fuses sensor/encoder values and resultant state to get the true state
     private final KalmanFilter<N2, Inputs, Outputs> observer;
 
-    //The entire state space control loop.
+    // *The entire state space control loop.
     private final LinearSystemLoop<N2, Inputs, Outputs> stateSpaceLoop;
 
     private final TrapezoidProfile profile;
     
-    // FIX 1: Removed 'final' — trapezoidState is reassigned in calculate() and reset()
+    // |FIX 1: Removed 'final' — trapezoidState is reassigned in calculate() and reset()
     private TrapezoidProfile.State trapezoidState;
 
 
@@ -45,19 +45,19 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
     private boolean atSetpoint = false;
     private Matrix<N2, N1> tolerance;
 
-    //Copy of states and inputs needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
-    //So now you have to instantiate states and outputs in the generics AND the constructor, even though they always are equal
+    // *Copy of states and inputs needed only for Kalman Filter. Stupid compile / run time errors force us to do this.
+    // ?So now you have to instantiate states and outputs in the generics AND the constructor, even though they always are equal
     private final Nat<N2> statesNat;
     private final Nat<Outputs> outputsNat;
 
-    //How long the looping period will be.
-    //For commands, this will be 20 ms, passed as 0.02
+    // *How long the looping period will be.
+    // ?For commands, this will be 20 ms, passed as 0.02
     private final double dtSeconds;
 
-    //Just instantiated here to avoid creating a new matrix every 20 ms.
+    // *Just instantiated here to avoid creating a new matrix every 20 ms.
     private Matrix<N2, N1> error;
 
-    // Sensor Fusion Fields
+    // !Sensor Fusion Fields
     private boolean useDualSensors = false;
     private double secondarySensorWeight = 0.0;  // 0.0 = trust primary only, 1.0 = equal weight
     private double lastPrimaryMeasurement = 0.0;
@@ -116,7 +116,7 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
         this.profile = new TrapezoidProfile(constraints);
         this.trapezoidState = new TrapezoidProfile.State();
 
-        // LQR computes optimal feedback gains
+        // *LQR computes optimal feedback gains
         controller = new LinearQuadraticRegulator<>(
             plant,
             qCost,
@@ -124,7 +124,7 @@ public class ProfiledSSController<Inputs extends Num, Outputs extends Num> {
             dtSeconds
         );
 
-        //Kalman Filter corrects predicted values
+        // *Kalman Filter corrects predicted values
         observer = new KalmanFilter<>(
             statesNat,
             outputsNat,

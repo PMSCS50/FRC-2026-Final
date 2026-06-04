@@ -8,23 +8,22 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpers;
-import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+import frc.robot.subsystems.vision.LLSubsystemMany;
 
 public class LL_Orient extends Command {
     private final PIDController rotController;
     private final CommandSwerveDrivetrain drivetrain;
+    private final LLSubsystemMany llVision;
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
     private final DoubleSupplier xInput, yInput;
-    private final int targetTagID;
-    private final String limelightName;
+    private final int tagId;
 
-    public LL_Orient(CommandSwerveDrivetrain drivetrain, String limelightName, int targetTagID, DoubleSupplier xInput, DoubleSupplier yInput) {
+    public LL_Orient(CommandSwerveDrivetrain drivetrain, LLSubsystemMany llVision, int tagId, DoubleSupplier xInput, DoubleSupplier yInput) {
         rotController = new PIDController(Constants.ROT_REEF_ALIGNMENT_P, 0, 0);
         this.drivetrain = drivetrain;
-        this.limelightName = limelightName;
-        this.targetTagID = targetTagID;
+        this.llVision = llVision;
+        this.tagId = tagId;
         this.xInput = xInput;
         this.yInput = yInput;
         addRequirements(drivetrain);
@@ -39,30 +38,23 @@ public class LL_Orient extends Command {
     @Override
     public void execute() {
         // *Search visible tags for our target
-        LimelightTarget_Fiducial[] tags = LimelightHelpers.getLatestResults(limelightName).targets_Fiducials;
-        
-        LimelightTarget_Fiducial lockedTag = null;
-        for (LimelightTarget_Fiducial tag : tags) {
-            if ((int) tag.fiducialID == targetTagID) {
-                lockedTag = tag;
-                break;
-            }
-        }
 
-        if (lockedTag == null) {
+        if (!llVision.hasTarget(tagId)) {
             stop();
             return;
         }
 
-        double yaw = lockedTag.getTargetPose_RobotSpace().getRotation().getZ();
+        double yaw = llVision.getYawDeg(tagId);
 
         SmartDashboard.putNumber("LL_Orient/yaw", yaw);
         SmartDashboard.putBoolean("LL_Orient/atSetpoint", rotController.atSetpoint());
 
-        drivetrain.setControl(drive
+        drivetrain.setControl(
+            drive
             .withVelocityX(xInput.getAsDouble())
             .withVelocityY(yInput.getAsDouble())
-            .withRotationalRate(rotController.calculate(yaw)));
+            .withRotationalRate(rotController.calculate(yaw))
+        );
     }
 
     @Override
@@ -76,6 +68,11 @@ public class LL_Orient extends Command {
     }
 
     private void stop() {
-        drivetrain.setControl(drive.withVelocityX(0).withVelocityY(0).withRotationalRate(0));
+        drivetrain.setControl(
+            drive
+            .withVelocityX(0)
+            .withVelocityY(0)
+            .withRotationalRate(0)
+        );
     }
 }
