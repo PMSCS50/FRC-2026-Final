@@ -2,13 +2,8 @@ package frc.robot.pathfinding;
 
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.LocalADStar;
-
-// import edu.wpi.first.math.geometry.Translation2d;
-// import edu.wpi.first.wpilibj.DriverStation;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * // !Custom pathfinder extending AD* with support for many different Zones
@@ -35,7 +30,6 @@ public class RoronoaZoro extends LocalADStar {
         super();
     }
 
-    private Supplier<IdealStartingState> startingState;
 
     // *Im defining these here to avoid constantly creating new objects
     private PathPlannerPath lastBasePath;
@@ -46,10 +40,6 @@ public class RoronoaZoro extends LocalADStar {
     private final List<ConstraintsZone> constraintZones = new ArrayList<>();
     private final List<EventMarker> eventMarkers = new ArrayList<>();
 
-    // *Links Pathmaster method to RoronoaZoro.
-    public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
-        this.startingState = supplier;
-    }
 
     @Override
     public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
@@ -142,7 +132,7 @@ public class RoronoaZoro extends LocalADStar {
             new ArrayList<>(constraintZones),                       // constraint zones  (copy)
             new ArrayList<>(eventMarkers),                          // event zones       (copy)
             constraints,                                            // global path constraints
-            (startingState != null) ? startingState.get() : null,   // starting velocity + heading
+            null,                                // use current velocity + heading
             goalEndState,                                           // goal end state
             false                                          // don't flip for red alliance
         );

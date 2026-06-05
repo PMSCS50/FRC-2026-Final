@@ -13,7 +13,6 @@ import org.littletonrobotics.junction.inputs.LoggableInputs;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * // *AdvantageKit-compatible wrapper around RoronoaZoro.
@@ -27,13 +26,7 @@ public class RoronoaZoroAK implements Pathfinder {
         // *RoronoaZoro instantiated inside ZoroIO
     }
 
-    // !Delegation to RoronoaZoro
-    /**
-     * *Links the Pathmaster's IdealStartingState supplier to RoronoaZoro
-     */
-    public void setStartingStateSupplier(Supplier<IdealStartingState> supplier) {
-        io.zoro.setStartingStateSupplier(supplier);
-    }
+
 
     // !Pathfinder interface
     @Override

@@ -69,7 +69,6 @@ public class Pathmaster {
         this.selectedWaypointIndex = 0;
 
         createLoggingCallbacks();
-        linkStartingState();
     }
 
     public Pathmaster(
@@ -88,7 +87,6 @@ public class Pathmaster {
         this.selectedWaypointIndex = 0;
 
         createLoggingCallbacks();
-        linkStartingState();
     }
 
     // *Call in Robot.java before RobotContainer is initialized.
@@ -111,10 +109,7 @@ public class Pathmaster {
         return new IdealStartingState(Math.hypot(vx, vy), rot);
     }
 
-    // *Called in constructor to set RoronoaZoroAK IdealStartingStateSupplier
-    private void linkStartingState() {
-        zoro.setStartingStateSupplier(this::getIdealStartingState);
-    }
+
 
     private void createLoggingCallbacks() {
          PathPlannerLogging.setLogCurrentPoseCallback((pose) -> {
