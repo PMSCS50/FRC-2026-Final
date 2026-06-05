@@ -45,7 +45,9 @@ public class Intake extends SubsystemBase {
         intakeMotorConfig
                 .inverted(false)
                 .idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(40).closedLoopRampRate(.3);
+                .smartCurrentLimit(40)
+                .secondaryCurrentLimit(60)
+                .closedLoopRampRate(.3);
         intakeMotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 // .pid(0.0025, 0, .1) // p = 0.01 pulses // d = .01 seems alright

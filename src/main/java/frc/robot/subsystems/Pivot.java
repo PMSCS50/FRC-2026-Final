@@ -52,6 +52,7 @@ public class Pivot extends SubsystemBase {
                 .inverted(true)
                 .idleMode(IdleMode.kBrake)
                 .smartCurrentLimit(40)
+                .secondaryCurrentLimit(60)
                 .closedLoopRampRate(1);
 
         pivotMotorConfig.closedLoop

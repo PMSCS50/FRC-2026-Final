@@ -82,7 +82,9 @@ public class Shooter extends SubsystemBase {
     private void configureShooterMotor(TalonFXConfiguration config) {
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.CurrentLimits.SupplyCurrentLimit = 20.0;
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
         // *Velocity PID gains — tune these on the real robot
