@@ -38,12 +38,12 @@ public class PPLogger {
 
   private static final DoublePublisher transInnacuracyPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/translationInaccuracy")
+          .getDoubleTopic("/Pathmaster/PathfindingInnacuracy/translationInaccuracy")
           .publish();
 
   private static final DoublePublisher rotInnacuracyPub =
       NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/rotationalInaccuracy")
+          .getDoubleTopic("/Pathmaster/PathfindingInnacuracy/rotationalInaccuracy")
           .publish();
 
   // !Internal state for loggable stuff
@@ -133,8 +133,8 @@ public class PPLogger {
         .minus(lastTargetPose.getRotation())
         .getRadians());
 
-    Logger.recordOutput("Pathmaster/translationInaccuracy", translationInaccuracy);
-    Logger.recordOutput("Pathmaster/rotationalInaccuracy", rotationalInaccuracy);
+    Logger.recordOutput("Pathmaster/PathfindingInnacuracy/translationInaccuracy", translationInaccuracy);
+    Logger.recordOutput("Pathmaster/PathfindingInnacuracy/rotationalInaccuracy", rotationalInaccuracy);
     transInnacuracyPub.set(translationInaccuracy);
     rotInnacuracyPub.set(rotationalInaccuracy);
   }
