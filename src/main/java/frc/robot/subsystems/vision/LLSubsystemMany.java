@@ -274,8 +274,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public double getYawRad(int id)                 { return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0; }
     public Transform2d getTransformToTag(int id)    { return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero; }
 
-    // *Setters
-    public void setPipeline(int pipeline) {
+    // *Setters (for all cams)
+    public void setPipelineAll(int pipeline) {
         for (String cam : llCameras) LimelightHelpers.setPipelineIndex(cam, pipeline);
     }
 
@@ -283,9 +283,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         for (String cam : llCameras) LimelightHelpers.SetIMUMode(cam, mode);
     }
 
-    // |give orientation in degrees for ease of use, since that's what the gyro gives and it's more intuitive for humans; the limelight code will convert to radians internally
     public void setRobotOrientationAll(double yaw, double yawRate, double pitch, double pitchRate, double roll, double rollRate) {
         for (String cam : llCameras) LimelightHelpers.SetRobotOrientation(cam, yaw, yawRate, pitch, pitchRate, roll, rollRate);
+    }
+
+    public void SetFiducialIDFiltersOverrideAll(int[] ids) {
+        for (String cam : llCameras) LimelightHelpers.SetFiducialIDFiltersOverride(cam, ids);
     }
 
     // *Distance utilities

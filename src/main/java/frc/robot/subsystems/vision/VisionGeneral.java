@@ -29,9 +29,10 @@ public abstract class VisionGeneral extends SubsystemBase {
     // *The distance to the target, in the robot's coordinate frame.
     public abstract double getDistanceToTarget(Pose2d hubPose);
 
+    public void setPipelineAll(int pipeline) {}
     public void setIMUModeAll(int mode) {}
     public void setRobotOrientationAll(double yaw, double yawRate, double pitch, double pitchRate, double roll, double rollRate) {}
-    public void SetFiducialIDFiltersOverride(String limelightName, int[] ids) {}
+    public void SetFiducialIDFiltersOverrideAll(int[] ids) {}
 }
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%%%@@@%@%%@%%%%%%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@@@@%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%%%%@%%@%@@@@@@@@@%%%%%%%%

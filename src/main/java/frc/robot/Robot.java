@@ -64,7 +64,7 @@ public class Robot extends LoggedRobot {
       boolean red = alliance == Alliance.Red;
 
       m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-      m_robotContainer.vision.SetFiducialIDFiltersOverride( VisionConstants.limelightName, red ? redTags : blueTags);
+      m_robotContainer.vision.SetFiducialIDFiltersOverrideAll(red ? redTags : blueTags);
       allianceConfigApplied = true;
   }
 
