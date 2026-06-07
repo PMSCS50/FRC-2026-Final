@@ -63,7 +63,7 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
         Logger.recordOutput("Intake/Volts", intakeMotor.getBusVoltage());
 
-        SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
+        //SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
     } 
 
     public boolean pivotIsStalled() {

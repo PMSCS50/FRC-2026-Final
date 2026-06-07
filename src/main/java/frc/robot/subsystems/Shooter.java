@@ -95,7 +95,7 @@ public class Shooter extends SubsystemBase {
         config.Slot0.kD = 0;     // derivative
     }
 
-    // !Periodic
+    // !PERIODIC
     @Override
     public void periodic()   
     {

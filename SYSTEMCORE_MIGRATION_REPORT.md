@@ -33,7 +33,7 @@ This report documents all usage of **removed features** that will not be availab
 **Impact:** SystemCore does not use NT3; SmartDashboard requires NT3 protocol  
 **Replacement:** Use **Elastic** (driver dashboard) + **AdvantageScope** (debugging/visualization)
 
-## WE WILL REPLACE THE MAJORITY OF SMARTDASHBOARD WITH ADVANTAGESCOPE LOGGING
+## WE WILL REPLACE THE MAJORITY OF SMARTDASHBOARD WITH ADVANTAGESCOPE LOGGING and maybe try Telemetry to see if its any good
 
 
 #### Affected Files:

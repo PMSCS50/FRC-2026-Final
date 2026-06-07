@@ -279,8 +279,13 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         for (String cam : llCameras) LimelightHelpers.setPipelineIndex(cam, pipeline);
     }
 
-    public void setIMUMode(int mode) {
+    public void setIMUModeAll(int mode) {
         for (String cam : llCameras) LimelightHelpers.SetIMUMode(cam, mode);
+    }
+
+    // |give orientation in degrees for ease of use, since that's what the gyro gives and it's more intuitive for humans; the limelight code will convert to radians internally
+    public void setRobotOrientationAll(double yaw, double yawRate, double pitch, double pitchRate, double roll, double rollRate) {
+        for (String cam : llCameras) LimelightHelpers.SetRobotOrientation(cam, yaw, yawRate, pitch, pitchRate, roll, rollRate);
     }
 
     // *Distance utilities

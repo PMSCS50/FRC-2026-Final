@@ -74,10 +74,16 @@ public class Pivot extends SubsystemBase {
     @Override
     public void periodic() {
         boolean overcurrent = getPivotAmps() > IntakeConstants.kPivotStallCurrent;
-        pivotStalled = stallDebouncer.calculate(overcurrent) && !unstallDebouncer.calculate(!overcurrent);
-        Logger.recordOutput("Subsystems/Pivot/isStalled", pivotStalled);
-        Logger.recordOutput("Subsystems/Pivot/amps", getPivotAmps());
+        boolean stalledRising = stallDebouncer.calculate(overcurrent);
 
+        if (stalledRising) {
+            pivotStalled = !unstallDebouncer.calculate(!overcurrent);
+        } else {
+            unstallDebouncer.calculate(false); // keep it reset
+            pivotStalled = false;
+        }
+        
+        Logger.recordOutput("Subsystems/Pivot/amps", getPivotAmps());
         Logger.recordOutput("Subsystems/Pivot/Is Stalled", pivotStalled);
     }
 
@@ -92,13 +98,13 @@ public class Pivot extends SubsystemBase {
     public void spinPivotPIDAmped(double percent) {
         double targetRPM = 5676 * percent;
         if (!pivotIsStalled()) {
-            pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kPosition);
+            pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
         }
     }
 
     public void spinPivotPID(double percent) {
         double targetRPM = 5676 * percent;
-        pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kPosition);
+        pivotClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
     }
 
     public void spinPivotDutyAmped(double speed) {
@@ -162,16 +168,16 @@ public class Pivot extends SubsystemBase {
         return Math.abs(getPivotPosition() - targetRotations) < toleranceRotations;
     }
 
-    public void setOutputLimits(double speed) {
-        outputMin = -speed;
-        outputMax = speed;
-    }
+    // public void setOutputLimits(double speed) {
+    //     outputMin = -speed;
+    //     outputMax = speed;
+    // }
 
-    public void setTopLimit(double speed) {
-        outputMax = speed;
-    }
+    // public void setTopLimit(double speed) {
+    //     outputMax = speed;
+    // }
 
-    public void setBottomLimit(double speed) {
-        outputMin = -speed;
-    }
+    // public void setBottomLimit(double speed) {
+    //     outputMin = -speed;
+    // }
 }

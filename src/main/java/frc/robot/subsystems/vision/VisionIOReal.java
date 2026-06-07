@@ -31,7 +31,7 @@ public class VisionIOReal implements VisionIO {
     private final String llName;
     private final AprilTagFieldLayout aprilTagLayout;
 
-    // Camera mounting — must match VisionSubsystem constants
+    // *Camera mounting — must match VisionSubsystem constants
     private static final double CAM_FORWARD_M =  0.072;
     private static final double CAM_SIDE_M    = -0.072;
     private static final double CAM_UP_M      =  0.495;
@@ -49,7 +49,7 @@ public class VisionIOReal implements VisionIO {
         this.llName = cameraName;
         this.aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
 
-        // Tell the Limelight where the camera is mounted once at construction
+        // *Tell the Limelight where the camera is mounted once at construction
         LimelightHelpers.setCameraPose_RobotSpace(
             llName,
             CAM_FORWARD_M, CAM_SIDE_M, CAM_UP_M,
@@ -70,7 +70,7 @@ public class VisionIOReal implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
 
-        // --- Primary target presence & ID ------------------------------------
+        // *--- Primary target presence & ID ------------------------------------
         inputs.hasTarget = LimelightHelpers.getTV(llName);
 
         if (!inputs.hasTarget) {
@@ -95,8 +95,8 @@ public class VisionIOReal implements VisionIO {
 
         inputs.targetId = (int) LimelightHelpers.getFiducialID(llName);
 
-        // --- Primary tagToRobot (botpose_targetspace) -------------------------
-        // botpose_targetspace = robot's pose in the primary tag's frame = tagToRobot
+        // *--- Primary tagToRobot (botpose_targetspace) -------------------------
+        // ?botpose_targetspace = robot's pose in the primary tag's frame = tagToRobot
         Pose3d primaryTagToRobot = LimelightHelpers.getBotPose3d_TargetSpace(llName);
         inputs.hasTagTransform = true;
         inputs.tagToRobotX    = primaryTagToRobot.getX();
@@ -104,9 +104,9 @@ public class VisionIOReal implements VisionIO {
         inputs.tagToRobotZ    = primaryTagToRobot.getZ();
         inputs.tagToRobotRotZ = primaryTagToRobot.getRotation().getZ();
 
-        // --- Per-tag HashMap → parallel arrays --------------------------------
-        // getLatestResults() parses full JSON; each fiducial exposes
-        // getRobotPose_TargetSpace() = tagToRobot for that specific tag.
+        // *--- Per-tag HashMap → parallel arrays --------------------------------
+        // ?getLatestResults() parses full JSON; each fiducial exposes 
+        // ?getRobotPose_TargetSpace() = tagToRobot for that specific tag.
         LimelightResults results = LimelightHelpers.getLatestResults(llName);
         LimelightTarget_Fiducial[] fiducials = results.targets_Fiducials;
 
@@ -132,10 +132,10 @@ public class VisionIOReal implements VisionIO {
         inputs.allTagToRobotZ    = tzArr;
         inputs.allTagToRobotRotZ = trArr;
 
-        // --- Hub distance (tag-space geometry) --------------------------------
+        // *--- Hub distance (tag-space geometry) --------------------------------
         //inputs.distanceToHub = computeHubDistance(inputs);
 
-        // --- MegaTag2 pose estimate -------------------------------------------
+        // *--- MegaTag2 pose estimate -------------------------------------------
         PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llName);
 
         if (!LimelightHelpers.validPoseEstimate(pe)) {
@@ -152,7 +152,7 @@ public class VisionIOReal implements VisionIO {
         inputs.numTagsUsed            = pe.tagCount;
         inputs.avgTagDistMeters       = pe.avgTagDist;
 
-        // MegaTag2 std-devs
+        // *MegaTag2 std-devs
         if (pe.tagCount >= 2) {
             inputs.visionStdDevs = new double[] {
                 0.5 * pe.avgTagDist,
@@ -167,14 +167,4 @@ public class VisionIOReal implements VisionIO {
             };
         }
     }
-
-    // /**
-    //  * Computes the straight-line distance from the robot to the hub using
-    //  * tag-space geometry, mirroring VisionSubsystem.getDistance(id).
-    //  * Returns 0 if no tags are visible.
-    //  */
-    // private double computeHubDistance(VisionIOInputs inputs) {
-    //     if (!inputs.hasTagTransform) return 0.0;
-    //     return Math.hypot(inputs.tagToRobotX, inputs.tagToRobotY);
-    // }
 }

@@ -14,16 +14,17 @@ import com.ctre.phoenix6.swerve.SwerveModule;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotController;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Constants.VisionConstants;
 
+import frc.robot.Constants.VisionConstants;
 import frc.robot.pathfinding.Pathmaster;
+
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
   //private Pigeon2 mGyro = new Pigeon2(0);
   private final RobotContainer m_robotContainer;
+  private boolean allianceConfigApplied = false;
 
   int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
@@ -36,13 +37,10 @@ public class Robot extends LoggedRobot {
       Logger.addDataReceiver(new NT4Publisher());
     } else {
       Logger.addDataReceiver(new NT4Publisher());
+      DriverStation.silenceJoystickConnectionWarning(true);
     }
 
     Logger.start();
-
-    if (Robot.isSimulation()) {
-      DriverStation.silenceJoystickConnectionWarning(true);
-    }
 
     Pathmaster.initializePathfinder();
 
@@ -54,20 +52,24 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void robotInit() {}
+  public void robotInit() {
+    applyAllianceConfig();
+  }
 
   // *Set gyro yaw and Limelight fiducial filters based on alliance color
   private void applyAllianceConfig() {
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-    boolean red = alliance == Alliance.Red;
+      if (allianceConfigApplied) return;
+      
+      Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+      boolean red = alliance == Alliance.Red;
 
-    m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-    LimelightHelpers.SetFiducialIDFiltersOverride(
-        VisionConstants.limelightName,
-        red ? redTags : blueTags
-    );
+      m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
+      m_robotContainer.vision.SetFiducialIDFiltersOverride( VisionConstants.limelightName, red ? redTags : blueTags);
+      allianceConfigApplied = true;
   }
 
+  // *Flip robot direction based on alliance color (if needed) for driver control
+  // |not currently used since we are using field-oriented control, but can be useful if we switch to robot-oriented control for teleop
   private void applyAllianceDirFlip() {
     Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
     boolean red = alliance == Alliance.Red;
@@ -137,8 +139,9 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
-    LimelightHelpers.SetRobotOrientation(VisionConstants.limelightName, robotYaw, 0, 0, 0, 0, 0);
-    LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 1);
+    //LimelightHelpers.SetRobotOrientation(VisionConstants.limelightName, robotYaw, 0, 0, 0, 0, 0);
+    m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
+    m_robotContainer.vision.setIMUModeAll(1);
   }
 
   @Override

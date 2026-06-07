@@ -35,7 +35,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.TunerConstants;
 
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Climb;
+//import frc.robot.subsystems.Climb;
 
 import frc.robot.subsystems.vision.*;
 
@@ -86,7 +86,7 @@ public class RobotContainer {
     //! ACTUAL IMPORTANT STUFF (initiallize subsystems and the like)
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     
-    private final VisionGeneral vision;
+    public final VisionGeneral vision;
     //private final LLSubsystem oldVision;
     //private final VisionSimSystem vision;
     //private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
@@ -96,7 +96,7 @@ public class RobotContainer {
 
     private final Shooter shooter;
     private final Intake intake = new Intake();
-    private final Climb climb = new Climb();
+    //private final Climb climb = new Climb();
     private final Pivot pivot = new Pivot();
 
     public final Pathmaster monkeyDLuffy;
@@ -104,6 +104,7 @@ public class RobotContainer {
     // Path follower
     private SendableChooser<Command> autoChooser;
 
+    // |we arent even using ts, ill decide if we should remove it when we test next next week
     double turningSpeed = 0; // for speed scaling
 
     // *Constructor
@@ -136,8 +137,21 @@ public class RobotContainer {
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
 
         // *Alignment (Right???)
-        NamedCommands.registerCommand("Left Shoot PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0));
-        NamedCommands.registerCommand("T-26 PV-Align", new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
+        // |more stuff from the PV days (could be the reason why our PV align was so bad, since we were using the wrong tag IDs for each alliance)
+        // // |just in case alliance is not known yet
+        // NamedCommands.registerCommand("Left Shoot PV-Align",
+        //     Commands.defer(
+        //         () -> new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0),
+        //         Set.of(drivetrain)
+        //     )
+        // );
+
+        // NamedCommands.registerCommand("T-26 PV-Align",
+        //     Commands.defer(
+        //         () -> new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0),
+        //         Set.of(drivetrain)
+        //     )
+        // );
         // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
         // *Pivoting
@@ -194,7 +208,7 @@ public class RobotContainer {
 
         // *Letters
         subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
-        subjoystick.b().onTrue(new RunCommand(() -> pivot.resetPivot(), pivot));
+        subjoystick.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
         subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
         subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
         subjoystick.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
@@ -297,7 +311,7 @@ public class RobotContainer {
     public Command getAutonomousCommand() { return autoChooser.getSelected(); }
 
     public Intake getIntake() { return intake; }
-    public Climb getClimb() { return climb; }
+    //public Climb getClimb() { return climb; }
     public Shooter getShooter() { return shooter; }
     public Pivot getPivot() { return pivot; }
 

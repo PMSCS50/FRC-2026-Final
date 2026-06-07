@@ -88,7 +88,7 @@ public final class Constants {
       return AllianceRelativeFiducial(blueRightTagId);
     }
 
-    public static int getDirectionFlipper() {
+    public static double getDirectionFlipper() {
       return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? 1 : -1;
     }
 
@@ -114,13 +114,13 @@ public final class Constants {
       return alliance == DriverStation.Alliance.Red ? RED_HUB : BLUE_HUB;
     }
 
-    public static class hubPositionRed {
-      public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-    }
+    // public static class hubPositionRed {
+    //   public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
+    // }
 
-    public static class hubPositionBlue {
-      public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-    }
+    // public static class hubPositionBlue {
+    //   public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
+    // }
 
     public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
     public static LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
