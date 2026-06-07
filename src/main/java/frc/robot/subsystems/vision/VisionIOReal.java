@@ -1,9 +1,6 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 
 import frc.robot.LimelightHelpers;
@@ -11,8 +8,6 @@ import frc.robot.LimelightHelpers.LimelightResults;
 import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.Constants.VisionConstants;
-
-import java.util.Optional;
 
 /**
  * Real hardware implementation of VisionIO using a Limelight 4.

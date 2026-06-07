@@ -13,8 +13,6 @@ import java.util.List;
  * ?Provides helper methods to be called in PathPlannerLogging
  */
 public class PPLogger {
-
-
   // !Raw NT4 publishers (split so Elastic can graph each series separately)
   private static final DoublePublisher actualVelPub =
       NetworkTableInstance.getDefault()

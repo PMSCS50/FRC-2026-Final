@@ -1,22 +1,21 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
-
-import org.littletonrobotics.junction.Logger;
-
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import frc.robot.Constants.IntakeConstants;
-
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import org.littletonrobotics.junction.Logger;
+
+import frc.robot.Constants.IntakeConstants;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
@@ -33,8 +32,6 @@ public class Intake extends SubsystemBase {
     }
 
     public static final double kIntakeMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60;
-
-    public boolean pivotStalled;
 
     // *for starting the intake
     public boolean initializing = false;
@@ -61,13 +58,8 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         Logger.recordOutput("Intake/Velocity", intakeEncoder.getVelocity());
         Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
-        Logger.recordOutput("Intake/Volts", intakeMotor.getBusVoltage());
 
         //SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
-    } 
-
-    public boolean pivotIsStalled() {
-        return pivotStalled;
     }
 
     public void stopIntake() {
@@ -87,7 +79,7 @@ public class Intake extends SubsystemBase {
         return intakeEncoder;
     }
 
-    public SparkMax getIntake() {
+    public SparkMax getIntakeMotor() {
         return intakeMotor;
     }
 }

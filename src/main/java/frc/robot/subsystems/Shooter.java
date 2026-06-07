@@ -18,6 +18,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.vision.VisionGeneral;
@@ -100,9 +101,8 @@ public class Shooter extends SubsystemBase {
     public void periodic()   
     {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
-        Logger.recordOutput("Subsystems/Shooter/Shooter1/rpm", shooterMotor1.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Subsystems/Shooter/Shooter1/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
-        Logger.recordOutput("Subsystems/Shooter/Shooter1/volts", shooterMotor1.getMotorVoltage().getValueAsDouble());
+        Logger.recordOutput("Shooter/rpm", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Shooter/amps",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
     }
 
     // !SHOOTING METHODS
@@ -173,9 +173,11 @@ public class Shooter extends SubsystemBase {
         shooterMotor1.stopMotor();
         kicker1.stopMotor();
     }
+
     public void stopKicker() {
         kicker1.stopMotor();
     }
+
     public double getVelocity() {
         return shooterMotor1.getVelocity().getValueAsDouble();
     }

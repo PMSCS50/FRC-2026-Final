@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -10,7 +9,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 // import frc.robot.subsystems.vision.VisionSubsystem;
-import frc.robot.subsystems.vision.PV_Sim;
 import frc.robot.subsystems.vision.VisionGeneral;
 
 public class PV_Align extends Command {
@@ -19,7 +17,6 @@ public class PV_Align extends Command {
     private final VisionGeneral vision;
     private final int targetId;
 
-    private static final double DESIRED_DISTANCE_METERS = 1.5;
     private double xSetpoint, ySetpoint, rotSetpoint;
     
     private PIDController xController = new PIDController(1.1, 0, 0); // kp = 1.45, ki = .001
@@ -27,7 +24,6 @@ public class PV_Align extends Command {
     private final PIDController rotController = new PIDController(1, 0, 0); // kp = 2.5
     private Timer settleTimer;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
-    private double SETTLETIME = .1;
 
     public PV_Align(
         CommandSwerveDrivetrain drivetrain,

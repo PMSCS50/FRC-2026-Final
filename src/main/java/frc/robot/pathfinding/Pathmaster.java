@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 // *Command factory that uses PathPlanner's pathfinding features to pathfind to a position on the field.
 // *Uses custom pathfinding class RoronoaZoroAK for zone-aware rotation.
 // !Must call initializePathfinder() and scheduleWarmup() before using any other methods.
 public class Pathmaster {
-
-
     private PathConstraints constraints;
     private CommandSwerveDrivetrain drivetrain;
     private Supplier<Pose2d> robotPose;
@@ -429,6 +429,17 @@ public class Pathmaster {
 
     public boolean AutoBuilderConfigured() {
         return AutoBuilder.isConfigured();
+    }
+
+    // !I SURE DO WONDER WHAT THIS DOES
+    // |This logs stuff to AdvantageKit, which is really useful for debugging pathfinding issues and analyzing pathing performance after matches.
+    public void log() {
+        Logger.recordOutput("Pathmaster/pathing", isPathing());
+        Logger.recordOutput("Pathmaster/warmup", warmedUp());
+        Logger.recordOutput("Pathmaster/AutoBuilderConfigured", AutoBuilderConfigured());
+        Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", AutoBuilderPathFindingConfigured());
+        Logger.recordOutput("Pathmaster/Selected Waypoint", selectedWaypoint());
+        Logger.recordOutput("Pathmaster/Selected Waypoint Pose", selectedWaypointPose());
     }
 }
 

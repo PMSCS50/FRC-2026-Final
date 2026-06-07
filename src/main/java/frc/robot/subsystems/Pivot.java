@@ -83,8 +83,9 @@ public class Pivot extends SubsystemBase {
             pivotStalled = false;
         }
         
-        Logger.recordOutput("Subsystems/Pivot/amps", getPivotAmps());
-        Logger.recordOutput("Subsystems/Pivot/Is Stalled", pivotStalled);
+        Logger.recordOutput("Pivot/Amperage (amps)", getPivotAmps());
+        Logger.recordOutput("Pivot/Is Stalled", pivotStalled);
+        Logger.recordOutput("Pivot/Pivot Amount", getPivotEncoder().getPosition());
     }
 
     public double getPivotAmps() {

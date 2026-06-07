@@ -9,8 +9,6 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import com.ctre.phoenix6.swerve.SwerveModule;
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotController;
@@ -81,14 +79,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
 
-    // *Logging and SmartDashboard updates
-    // |Drivetrain pose and heading
-    Logger.recordOutput("Drivetrain/Yaw", m_robotContainer.drivetrain.getState().Pose.getRotation().getDegrees());
-    Logger.recordOutput("Drivetrain/X", m_robotContainer.drivetrain.getState().Pose.getX());
-    Logger.recordOutput("Drivetrain/Y", m_robotContainer.drivetrain.getState().Pose.getY());
-    Logger.recordOutput("Drivetrain/Distance to Hub", m_robotContainer.drivetrain.getState().Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation()));
-    Logger.recordOutput("Drivetrain/Robot Pose", m_robotContainer.drivetrain.getState().Pose);
-
     // |RoboRIO voltage and current monitoring
     Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
     Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
@@ -98,38 +88,6 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
     Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
     Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
-
-    // |Swerve module states and motor outputs
-    for (int i = 0; i < 4; i++) {
-      SwerveModule<?, ?, ?> module = m_robotContainer.drivetrain.getModule(i);
-      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getDriveMotor().getMotorVoltage().getValueAsDouble());
-      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/SupplyCurrent", module.getDriveMotor().getSupplyCurrent().getValueAsDouble());
-      Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/StatorCurrent", module.getDriveMotor().getStatorCurrent().getValueAsDouble());
-
-      Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/Voltage", module.getSteerMotor().getMotorVoltage().getValueAsDouble());
-      Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/SupplyCurrent", module.getSteerMotor().getSupplyCurrent().getValueAsDouble());
-      Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/StatorCurrent", module.getSteerMotor().getStatorCurrent().getValueAsDouble());
-    }
-
-    // |Subsystems
-    Logger.recordOutput("Subsystems/Shooter/Shooter shooterMotor1 Angular Velocity", m_robotContainer.getShooter().getVelocity());
-    Logger.recordOutput("Subsystems/Shooter/Shooter Speed", RobotContainer.getShooterSpeed());
-
-    Logger.recordOutput("Subsystems/Pivot/Pivot Speed", RobotContainer.getPivotSpeed());
-    Logger.recordOutput("Subsystems/Pivot/Pivot Amount", m_robotContainer.getPivot().getPivotEncoder().getPosition());
-    Logger.recordOutput("Subsystems/Pivot/Pivot Motor Voltage", m_robotContainer.getPivot().getPivotMotor().getBusVoltage()); // sparkmax
-
-    Logger.recordOutput("Subsystems/Intake/Intake Speed", RobotContainer.getIntakeSpeed());
-    Logger.recordOutput("Subsystems/Intake/Intake Motor Velocity", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
-    //Logger.recordOutput("Subsystems/Intake/Intake Motor Voltage", m_robotContainer.getIntake().getIntakeMotor().getBusVoltage()); // sparkmax
-
-    // |Pathmaster
-    Logger.recordOutput("Pathmaster/pathing", m_robotContainer.monkeyDLuffy.isPathing());
-    Logger.recordOutput("Pathmaster/warmup", m_robotContainer.monkeyDLuffy.warmedUp());
-    Logger.recordOutput("Pathmaster/AutoBuilderConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderConfigured());
-    Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", m_robotContainer.monkeyDLuffy.AutoBuilderPathFindingConfigured());
-    Logger.recordOutput("Pathmaster/Selected Waypoint", m_robotContainer.monkeyDLuffy.selectedWaypoint());
-    Logger.recordOutput("Pathmaster/Selected Waypoint Pose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
   }
 
   // *Disabled mode

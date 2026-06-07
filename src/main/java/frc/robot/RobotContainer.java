@@ -10,18 +10,13 @@ import java.util.Set;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.util.Units;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
-import frc.robot.Constants.ClimbConstants;
-import frc.robot.Constants.VisionConstants;
-// import frc.robot.commands.ChaseTagCommand;
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -31,20 +26,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-
-import frc.robot.generated.TunerConstants;
-
-import frc.robot.subsystems.Intake;
-//import frc.robot.subsystems.Climb;
-
-import frc.robot.subsystems.vision.*;
-
-import frc.robot.subsystems.Pivot;
-import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-
-import frc.robot.pathfinding.Pathmaster;
-
 import edu.wpi.first.cameraserver.CameraServer;
 
 import frc.robot.commands.AlignToHub;
@@ -52,11 +33,21 @@ import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
-import frc.robot.commands.PV_Align;
 import frc.robot.commands.PostPathPreciseAlignment;
 
-public class RobotContainer {
+import frc.robot.subsystems.Intake;
+//import frc.robot.subsystems.Climb;
+import frc.robot.subsystems.vision.*;
+import frc.robot.subsystems.Pivot;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
+import frc.robot.generated.TunerConstants;
+import frc.robot.Constants.ClimbConstants;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.pathfinding.Pathmaster;
+
+public class RobotContainer {
     // *DRIVETRAIN CONSTANTS
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -65,10 +56,6 @@ public class RobotContainer {
 
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
-
-    private static double intakeSpeed = 0.5;
-    private static double pivotSpeed = .05;
-    private static double shooterSpeed = .01;
 
     // *EXTRA SETUP - I GOT NO CLUE
     // *Setting up bindings for necessary control of the swerve drive platform
@@ -171,10 +158,6 @@ public class RobotContainer {
 
     // *Configure Bindings
     private void configureBindings() {
-
-        Logger.recordOutput("Shooter/Shooter Speed", shooterSpeed);
-        // SmartDashboard.putBoolean("Has Targets", vision.hasTargets());  <--- presumably already being logged and hence will be avaliable on the dashboard, so maybe unnecessary? Also useless because its not being updated continuously, but only when the command is executed, so it will always show false on the dashboard. We should probably log this value in the vision subsystem instead for better visibility and debugging.
-
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
                 double forward =  joystick.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;
@@ -274,11 +257,6 @@ public class RobotContainer {
         
     }
 
-    // *changing shooter speed
-    public void changeShooterSpeed(double speed) {
-        shooterSpeed = MathUtil.clamp(speed, 0.01, 1.0);
-    }
-
     // *changing drivetrain speed: crawl, low, mid, high
     public void setSpeed(double speed) {
         if (speed < 0.1) {
@@ -314,8 +292,4 @@ public class RobotContainer {
     //public Climb getClimb() { return climb; }
     public Shooter getShooter() { return shooter; }
     public Pivot getPivot() { return pivot; }
-
-    public static double getIntakeSpeed() { return intakeSpeed; }
-    public static double getPivotSpeed() { return pivotSpeed; }
-    public static double getShooterSpeed() { return shooterSpeed; }
 }

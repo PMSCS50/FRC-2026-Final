@@ -1,7 +1,6 @@
 package frc.robot.controlsystems;
 
 import edu.wpi.first.math.Num;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Vector;
