@@ -2,8 +2,11 @@ package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -36,6 +39,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
     private final HashMap<Integer, Double> tagambiguities = new HashMap<>();
+    private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
     private double omegaRps;
 
@@ -198,7 +202,9 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             true
         );
 
-        Logger.recordOutput("Vision/Pose-Estimate", estimatedRobotPose);
+        Logger.recordOutput("Vision/PoseEstimate", estimatedRobotPose);
+        Logger.recordOutput("Vision/IsAlignedToHub", isAlignedToHub());
+
 
         updateInputs(inputs);
         Logger.processInputs("LoggedVision", inputs);
@@ -242,8 +248,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
 
-    private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {
-        
+    private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {    
         RawFiducial[] tagsUsed = allTags.stream()
                                 .filter(tags -> tags != null)
                                 .flatMap(tags -> Arrays.stream(tags))
@@ -251,7 +256,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                                 .toArray(RawFiducial[]::new);
 
         return tagsUsed;
-        
     }
 
     // *Getters for overall info
@@ -339,6 +343,27 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
         if (tagDist > 0) return tagDist;
         return getDistanceToTarget(VisionConstants.getHubPose());
+    }
+
+    // *Returns true if both the vision pose and drivetrain pose agree that we're within the HUB_ALIGN_TOLERANCE_DEG of facing the hub, and that the two methods agree with each other (to avoid trusting a potentially bad vision estimate that just happens to be aligned)
+    public boolean isAlignedToHub() {
+        Pose2d hubPose   = VisionConstants.getHubPose();
+        Pose2d robotPose = drivetrain.getState().Pose;
+
+        // |Bearing from robot toward hub
+        double angleToHub = Math.toDegrees(Math.atan2(
+            hubPose.getY() - robotPose.getY(),
+            hubPose.getX() - robotPose.getX()
+        ));
+
+        // |Error between robot heading and direction to hub
+        double yawError = MathUtil.inputModulus(
+            angleToHub - robotPose.getRotation().getDegrees(),
+            -180, 180
+        );
+
+        boolean aligned = Math.abs(yawError) <= VisionConstants.HUB_ALIGN_TOLERANCE_DEG;
+        return alignDebouncer.calculate(aligned);
     }
     
     // *VisionIO implementation

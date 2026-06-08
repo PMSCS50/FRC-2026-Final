@@ -1,7 +1,10 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -10,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 
 import java.util.ArrayList;
@@ -26,6 +30,8 @@ public class PV_Sim extends VisionGeneral {
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
     private final CommandSwerveDrivetrain drivetrain;
     private final AprilTagFieldLayout aprilTagLayout;
+    private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
+
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(
         Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
@@ -72,6 +78,7 @@ public class PV_Sim extends VisionGeneral {
         Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
         Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
         Logger.recordOutput("Vision/TargetId", inputs.targetId);
+        Logger.recordOutput("Vision/IsAlignedToHub", isAlignedToHub()); 
 
         if (aprilTagLayout != null && inputs.hasTarget) {
             aprilTagLayout
@@ -215,56 +222,36 @@ public class PV_Sim extends VisionGeneral {
     public double getYawFromHub() {
         Pose2d hubPose   = VisionConstants.getHubPose();
         Pose2d robotPose = drivetrain.getState().Pose;
-        Transform2d hubToRobot = new Transform2d(hubPose, robotPose);
-        return hubToRobot.getRotation().getDegrees();
-    }
 
-    /**
-     * Tag-based hub yaw error (degrees) — no drivetrain odometry required.
-     *
-     * Chains hub → tag (from field layout) → robot (from tagToRobot transform)
-     * and reads the resulting rotation. Because the tagToRobot yaw updates live
-     * as the robot rotates, this is already an error signal — feed directly into
-     * PID with setpoint 0.
-     *
-     * Works with any visible tag, even ones not facing the hub.
-     *
-     * @param targetId  The AprilTag ID currently visible to use as the spatial origin.
-     * @return Hub yaw error in degrees, or 0.0 if the tag is not visible.
-     */
-    public double getYawFromHub(int targetId) {
-        if (!seesTarget(targetId)) return 0.0;
-        if (aprilTagLayout == null) return 0.0;
+        // Bearing from robot toward hub
+        double angleToHub = Math.toDegrees(Math.atan2(
+            hubPose.getY() - robotPose.getY(),
+            hubPose.getX() - robotPose.getX()
+        ));
 
-        Optional<Pose3d> atagPose =
-            aprilTagLayout.getTagPose(targetId);
-        if (atagPose.isEmpty()) return 0.0;
-
-        Pose2d hubPose = VisionConstants.getHubPose();
-        Pose2d tagPose = atagPose.get().toPose2d();
-
-        // *hub → tag (field layout geometry)
-        Transform2d hubToTag = new Transform2d(hubPose, tagPose);
-
-        // *tag → robot (live from vision — changes as robot rotates)
-        int idx = indexOfTag(targetId);
-        Transform2d tagToRobot = new Transform2d(
-            new Translation2d(
-                inputs.allTagToRobotX[idx],
-                inputs.allTagToRobotY[idx]
-            ),
-            new Rotation2d(inputs.allTagToRobotRotZ[idx])
+        // How far off the robot's heading is from pointing at the hub
+        return MathUtil.inputModulus(
+            angleToHub - robotPose.getRotation().getDegrees(),
+            -180, 180
         );
-
-        // hub → robot = hub → tag → robot
-        Transform2d hubToRobot = hubToTag.plus(tagToRobot);
-        return hubToRobot.getRotation().getDegrees();
     }
 
     // |getPose() returns the full estimated robot pose from vision, if available.
     public Pose2d getPose() {
         if (!inputs.hasEstimatedPose) return new Pose2d();
         return inputs.estimatedPose;
+    }
+
+    public boolean isAlignedToHub() {
+        // Optional: bail if vision hasn't updated recently
+        if (Timer.getFPGATimestamp() - inputs.estimatedPoseTimestamp > 1.0) {
+            return alignDebouncer.calculate(false);
+        }
+
+        double odometryYawError = getYawFromHub();
+        boolean aligned = Math.abs(odometryYawError) <= VisionConstants.HUB_ALIGN_TOLERANCE_DEG;
+
+        return alignDebouncer.calculate(aligned);
     }
 
     // =========================================================================

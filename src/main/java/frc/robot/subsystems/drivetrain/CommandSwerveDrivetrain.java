@@ -195,7 +195,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /**
-     * !Constructs a CTRE SwerveDrivetrain using the specified constants.
+     * // !Constructs a CTRE SwerveDrivetrain using the specified constants.
      * 
      * *This constructs the underlying hardware devices, so users should not construct
      * *the devices themselves. If they need the devices, they can access them through
@@ -352,8 +352,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         // *Raw Pigeon2 Gyro Logging and Config
         Pigeon2 pigeon = getPigeon2();
-        SmartDashboard.putData("RobotGyro", pigeon);
-
         // |Orientation
         Logger.recordOutput("Gyro/RawYaw",   pigeon.getYaw().getValueAsDouble());
         Logger.recordOutput("Gyro/Pitch",    pigeon.getPitch().getValueAsDouble());

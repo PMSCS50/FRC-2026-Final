@@ -47,6 +47,7 @@ public class PPLogger {
   // !Internal state for loggable stuff
   private static Pose2d lastCurrentPose  = new Pose2d();
   private static Pose2d lastTargetPose   = new Pose2d();
+  private static Pose2d[] posesArray     = new Pose2d[0];
 
   // !Public setters
 
@@ -92,15 +93,18 @@ public class PPLogger {
   }
 
   /**
-   * // *Publish the active path being followed.
+   * // *Publish the active path being followed and created a getter for said path so it can be used in Elastic for path visualization.
    * // ?Also updates the path progress metric.
    *
    * @param path The PathPlannerPath currently being executed
    */
   public static void logActivePath(List<Pose2d> path) {
-    Pose2d[] posesArray = path.toArray(new Pose2d[0]);
+    posesArray = path.toArray(new Pose2d[0]);
     Logger.recordOutput("Pathmaster/activePath", posesArray);
-    Logger.recordOutput("Field/currentPath", posesArray);
+  }
+
+  public static Pose2d[] getActivePath() {
+    return posesArray;
   }
 
   /**

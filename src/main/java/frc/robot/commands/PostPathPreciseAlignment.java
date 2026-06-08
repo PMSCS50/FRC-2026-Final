@@ -27,25 +27,41 @@ public class PostPathPreciseAlignment extends Command {
     private final CommandSwerveDrivetrain drivetrain;
     private final Pose2d targetPose;
 
-    private final double xy_kp       = 4.0;
-    private final double xy_kd       = 0.1;
-    private final double theta_kp    = 4.0;
+    private final double xy_kp       = 8.0;
+    private final double xy_kd       = 0.05;
+    private final double theta_kp    = 6.0;
 
-    private final double maxLinVel = 0.75;             // m/s
-    private final double maxLinAcc = 1.5;              // m/s²
-    private final double maxAngVel = Math.PI;          // rad/s
-    private final double maxAngAcc = 2*Math.PI;        // rad/s²
+    private final double maxLinVel = 1.5;
+    private final double maxLinAcc = 3.0;
+    private final double maxAngVel = 2 * Math.PI;
+    private final double maxAngAcc = 4 * Math.PI;
 
-    private final double xy_tolerance    = 0.005;
+    private final double xy_tolerance    = 0.01;
     private final double theta_tolerance = Math.toRadians(1.0);
     private final double linVelTolerance = 0.05;
     private final double angVelTolerance = 0.1;
 
-    private final double settleTime = 0.1;
+    private final double settleTime = 0.05;
+    private final double ffBounds   = 0.01;
+
+    // private final double xy_kp       = 4.0;
+    // private final double xy_kd       = 0.1;
+    // private final double theta_kp    = 4.0;
+
+    // private final double maxLinVel = 0.75;             // m/s
+    // private final double maxLinAcc = 1.5;              // m/s²
+    // private final double maxAngVel = Math.PI;          // rad/s
+    // private final double maxAngAcc = 2*Math.PI;        // rad/s²
+
+    // private final double xy_tolerance    = 0.005;
+    // private final double theta_tolerance = Math.toRadians(.5);
+    // private final double linVelTolerance = 0.05;
+    // private final double angVelTolerance = 0.1;
+
+    // private final double settleTime = 0.1;
+// `   private final double ffBounds = 0.05;
 
     private final double maxElapsedtime = 5;
-
-    private final double ffBounds = 0.05;
 
     private final double dt = 0.02;
 

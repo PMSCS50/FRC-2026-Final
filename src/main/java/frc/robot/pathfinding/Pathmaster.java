@@ -431,6 +431,10 @@ public class Pathmaster {
         return AutoBuilder.isConfigured();
     }
 
+    public Pose2d[] getActivePath() {
+        return PPLogger.getActivePath();
+    }
+
     // !I SURE DO WONDER WHAT THIS DOES
     // |This logs stuff to AdvantageKit, which is really useful for debugging pathfinding issues and analyzing pathing performance after matches.
     public void log() {

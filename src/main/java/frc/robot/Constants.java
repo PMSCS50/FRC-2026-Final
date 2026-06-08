@@ -67,7 +67,8 @@ public final class Constants {
 
   // *Constants for vision processing and AprilTag field layout
   public static class VisionConstants{
-    public static final String limelightName = "limelight-meowlit";
+    //public static final String limelightName = "limelight-meowlit";
+    public static final double HUB_ALIGN_TOLERANCE_DEG = 3.0;
 
     public static final int blueMiddleTagId = 26;
     public static final int redMiddleTagId = 10;

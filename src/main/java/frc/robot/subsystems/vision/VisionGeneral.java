@@ -30,6 +30,9 @@ public abstract class VisionGeneral extends SubsystemBase {
     public abstract double getDistanceToTarget(Pose2d hubPose);
     public abstract Pose2d getPose();
 
+    // *Whether the robot is aligned to the hub within a certain tolerance, based on both vision and odometry estimates.
+    public abstract boolean isAlignedToHub();
+
     public void setPipelineAll(int pipeline) {}
     public void setIMUModeAll(int mode) {}
     public void setRobotOrientationAll(double yaw, double yawRate, double pitch, double pitchRate, double roll, double rollRate) {}

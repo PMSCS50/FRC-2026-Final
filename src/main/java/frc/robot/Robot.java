@@ -9,13 +9,15 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-import frc.robot.Constants.VisionConstants;
 import frc.robot.pathfinding.Pathmaster;
 
 public class Robot extends LoggedRobot {
@@ -52,6 +54,22 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotInit() {
     applyAllianceConfig();
+    SmartDashboard.putData("Swerve Drive", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("SwerveDrive");
+
+        builder.addDoubleProperty("Front Left Angle",     () -> m_robotContainer.drivetrain.getState().ModuleStates[0].angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity",  () -> m_robotContainer.drivetrain.getState().ModuleStates[0].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Front Right Angle",    () -> m_robotContainer.drivetrain.getState().ModuleStates[1].angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> m_robotContainer.drivetrain.getState().ModuleStates[1].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Back Left Angle",      () -> m_robotContainer.drivetrain.getState().ModuleStates[2].angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity",   () -> m_robotContainer.drivetrain.getState().ModuleStates[2].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Back Right Angle",     () -> m_robotContainer.drivetrain.getState().ModuleStates[3].angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity",  () -> m_robotContainer.drivetrain.getState().ModuleStates[3].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Robot Angle",          () -> m_robotContainer.drivetrain.getState().Pose.getRotation().getRadians(), null);
+      }
+    });
   }
 
   // *Set gyro yaw and Limelight fiducial filters based on alliance color
@@ -97,7 +115,10 @@ public class Robot extends LoggedRobot {
 
     Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
     Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
+    Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
     Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
+
+    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
   }
 
   // *Disabled mode
@@ -107,7 +128,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
-    //LimelightHelpers.SetRobotOrientation(VisionConstants.limelightName, robotYaw, 0, 0, 0, 0, 0);
     m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
     m_robotContainer.vision.setIMUModeAll(1);
   }
@@ -135,7 +155,6 @@ public class Robot extends LoggedRobot {
   // *Teleop mode
   @Override
   public void teleopInit() {
-    LimelightHelpers.SetIMUMode(VisionConstants.limelightName, 4);
 
     //applyAllianceDirFlip();
     applyAllianceConfig();
