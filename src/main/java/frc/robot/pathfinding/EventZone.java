@@ -23,7 +23,7 @@ public class EventZone extends PathZone {
     //Create an EventZone with a registered NamedCommand
     public EventZone(String name,Translation2d min,Translation2d max, String namedCommand) {
         super(name, min, max);
-        this.command = (NamedCommands.hasCommand(namedCommand)) ? NamedCommands.getCommand(namedCommand) : Commands.none();
+        this.command = NamedCommands.getCommand(namedCommand);
     }
 
     public Command getEvent() {

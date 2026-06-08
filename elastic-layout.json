@@ -300,7 +300,7 @@
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/RealOutputs/Subsystems/Intake Velocity (rpm)",
+                  "topic": "/AdvantageKit/RealOutputs/Intake/Velocity (rpm)",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -314,21 +314,21 @@
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/RealOutputs/Subsystems/Pivot Position (rotations)",
+                  "topic": "/AdvantageKit/RealOutputs/Pivot/Pivot Amount (rotations)",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
                 }
               },
               {
-                "title": "Shooter Velocity (rpm)",
+                "title": "Shooter Velocity (rps)",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 128.0,
                 "height": 128.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/RealOutputs/Subsystems/Shooter Velocity (rpm)",
+                  "topic": "/AdvantageKit/RealOutputs/Shooter/Velocity (rps)",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
