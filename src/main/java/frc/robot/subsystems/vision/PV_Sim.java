@@ -261,6 +261,12 @@ public class PV_Sim extends VisionGeneral {
         return hubToRobot.getRotation().getDegrees();
     }
 
+    // |getPose() returns the full estimated robot pose from vision, if available.
+    public Pose2d getPose() {
+        if (!inputs.hasEstimatedPose) return new Pose2d();
+        return inputs.estimatedPose;
+    }
+
     // =========================================================================
     // SHOOTER HELPERS
     // =========================================================================

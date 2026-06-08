@@ -56,8 +56,8 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        Logger.recordOutput("Intake/Velocity", intakeEncoder.getVelocity());
-        Logger.recordOutput("Intake/Amps", intakeMotor.getOutputCurrent());
+        Logger.recordOutput("Intake/Amperage (amps)", intakeMotor.getOutputCurrent());
+        Logger.recordOutput("Intake/Velocity (rpm)", intakeEncoder.getVelocity());
 
         //SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
     }

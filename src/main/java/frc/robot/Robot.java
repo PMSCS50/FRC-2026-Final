@@ -62,7 +62,7 @@ public class Robot extends LoggedRobot {
       boolean red = alliance == Alliance.Red;
 
       m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-      m_robotContainer.vision.SetFiducialIDFiltersOverrideAll(red ? redTags : blueTags);
+      m_robotContainer.vision.setFiducialIDFiltersOverrideAll(red ? redTags : blueTags);
       allianceConfigApplied = true;
   }
 
@@ -78,6 +78,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    m_robotContainer.monkeyDLuffy.log();
 
     // |RoboRIO voltage and current monitoring
     Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
@@ -88,6 +89,15 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
     Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
     Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
+
+    // |Subsystem-specific telemetry for Elastic
+    Logger.recordOutput("Subsystems/Intake Velocity (rpm)", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
+    Logger.recordOutput("Subsystems/Pivot Position (rotations)", m_robotContainer.getPivot().getPivotEncoder().getPosition());
+    Logger.recordOutput("Subsystems/Shooter Velocity (rpm)", m_robotContainer.getShooter().getVelocity());
+
+    Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
+    Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
+    Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
   }
 
   // *Disabled mode
