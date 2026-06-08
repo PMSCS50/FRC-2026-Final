@@ -26,8 +26,8 @@ public class DistanceBasedShooting extends Command {
         double distance = vision.getDistanceToTarget(VisionConstants.getHubPose());
 
         if (distance > 0) {
-            shooter.rpmControl(distance);
-            if (shooter.atCorrectRPM()) {
+            shooter.rpsControl(distance);
+            if (shooter.atCorrectRPS()) {
                 shooter.spinKickersMax();
             }
         }

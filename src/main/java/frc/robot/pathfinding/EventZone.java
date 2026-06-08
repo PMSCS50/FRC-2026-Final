@@ -2,7 +2,6 @@ package frc.robot.pathfinding;
 
 // import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.math.geometry.Translation2d;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -23,7 +22,7 @@ public class EventZone extends PathZone {
     //Create an EventZone with a registered NamedCommand
     public EventZone(String name,Translation2d min,Translation2d max, String namedCommand) {
         super(name, min, max);
-        this.command = (NamedCommands.hasCommand(namedCommand)) ? NamedCommands.getCommand(namedCommand) : Commands.none();
+        this.command = NamedCommands.getCommand(namedCommand);
     }
 
     public Command getEvent() {

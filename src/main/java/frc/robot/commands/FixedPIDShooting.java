@@ -34,8 +34,8 @@ public class FixedPIDShooting extends Command {
     // |they are separated by topic and subtopic in the logs, so they can be easily compared and analyzed together.
     public void execute() {
         // double speed = supplier != null ? supplier.getAsDouble() : distance;
-        shooter.rpmControl(distance);
-        if (shooter.atCorrectRPMFixed(distance)) { 
+        shooter.rpsControl(distance);
+        if (shooter.atCorrectRPSFixed(distance)) { 
             shooter.spinKickersMax();
         }
     }   

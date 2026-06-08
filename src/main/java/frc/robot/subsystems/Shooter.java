@@ -102,7 +102,7 @@ public class Shooter extends SubsystemBase {
     {
         // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
         Logger.recordOutput("Shooter/Amperage (amps)",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
-        Logger.recordOutput("Shooter/Velocity (rpm)", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Shooter/Velocity (rps)", shooterMotor1.getVelocity().getValueAsDouble());
     }
 
     // !SHOOTING METHODS
@@ -116,24 +116,22 @@ public class Shooter extends SubsystemBase {
     }
 
     // *Regression model by Kevin
-    public double rpmFromDistanceRegression(double distance) {
+    public double rpsFromDistanceRegression(double distance) {
         double rps = 0.1322042143 * Math.pow(distance, 4)
                    - 1.110063156  * Math.pow(distance, 3)
                    + 3.621489461  * Math.pow(distance, 2)
                    + 0.1849702218 * distance
                    + 33.86388054;
-        double rpm = rps * 60.0;
-        return rpm;
+        return rps;
     }
 
     // *Sets shooter velocity based on distance to target, using the regression model. Also runs kickers at full power.
-    public void rpmControl(double distance) {
-        double rpm = this.rpmFromDistanceRegression(distance);
-        double rps = rpm / 60;
+    public void rpsControl(double distance) {
+        double rps = this.rpsFromDistanceRegression(distance);
         shooterMotor1.setControl(velocityRequest.withVelocity(rps));
         // SmartDashboard.putNumber("Target RPM", rpm);
-        Logger.recordOutput("Shooter/rpmControl/Target RPS", rps);
-        Logger.recordOutput("Shooter/rpmControl/Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Shooter/rpsControl/Target RPS", rps);
+        Logger.recordOutput("Shooter/rpsControl/Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
     }
 
     // *Runs the kicker motors at full power to feed balls into the shooter.
@@ -147,25 +145,23 @@ public class Shooter extends SubsystemBase {
     }
 
     // *Checks if the shooter is within a certain RPM threshold of the target RPM based on current distance to target.
-    public boolean atCorrectRPM() {
-        double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
-        double currentRPM = rotationsPerSecond * 60.0;
-        double targetRPM = this.rpmFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose())); 
+    public boolean atCorrectRPS() {
+        double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
+        double targetRPS = this.rpsFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose())); 
 
-        Logger.recordOutput("Shooter/atCurrentRPM/Current RPM", currentRPM);
-        Logger.recordOutput("Shooter/atCurrentRPM/Target RPM", targetRPM);
-        Logger.recordOutput("Shooter/atCurrentRPM/RPM Difference", Math.abs(currentRPM - targetRPM));
+        Logger.recordOutput("Shooter/atCurrentRPS/Current RPS", currentRPS);
+        Logger.recordOutput("Shooter/atCurrentRPS/Target RPS", targetRPS);
+        Logger.recordOutput("Shooter/atCurrentRPS/RPS Difference", Math.abs(currentRPS - targetRPS));
 
-        return Math.abs(currentRPM - targetRPM) < 300.0;
+        return Math.abs(currentRPS - targetRPS) < 5.0;
     }
 
     // *Same as atCorrectRPM but with a tighter threshold for more precise shooting.
     // ?Useful for testing and tuning the regression model and PID gains.
-    public boolean atCorrectRPMFixed(double distance) {
-        double rotationsPerSecond = shooterMotor1.getVelocity().getValueAsDouble();
-        double currentRPM = rotationsPerSecond * 60;
-        double targetRPM = this.rpmFromDistanceRegression(distance);
-        return Math.abs(currentRPM - targetRPM) < 180.0;
+    public boolean atCorrectRPSFixed(double distance) {
+        double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
+        double targetRPS = this.rpsFromDistanceRegression(distance);
+        return Math.abs(currentRPS - targetRPS) < 5.0;
     }
 
     /** Stops all motors */
