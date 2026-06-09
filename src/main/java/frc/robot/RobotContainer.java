@@ -107,18 +107,6 @@ public class RobotContainer {
         
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         
-        // *Hypothetical Waypoints for testing purposes
-        monkeyDLuffy.addWaypoint("1:Shooting", ShooterConstants.getShootingSetpoint1());
-        monkeyDLuffy.addWaypoint("2:Shooting", ShooterConstants.getShootingSetpoint2());
-        monkeyDLuffy.addWaypoint("3:Shooting", ShooterConstants.getShootingSetpoint3());
-        monkeyDLuffy.addWaypoint("4:Shooting", ShooterConstants.getShootingSetpoint4());
-        monkeyDLuffy.addWaypoint("5:Shooting", ShooterConstants.getShootingSetpoint5());
-
-        monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
-        monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
-        monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
-        monkeyDLuffy.addRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
-
         NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
 
         // *Intaking
@@ -133,6 +121,18 @@ public class RobotContainer {
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
+
+        // *HFive shooting setpoints that form a semicircle around the hub
+        monkeyDLuffy.addWaypoint("1:Shooting", ShooterConstants.getShootingSetpoint1());
+        monkeyDLuffy.addWaypoint("2:Shooting", ShooterConstants.getShootingSetpoint2());
+        monkeyDLuffy.addWaypoint("3:Shooting", ShooterConstants.getShootingSetpoint3());
+        monkeyDLuffy.addWaypoint("4:Shooting", ShooterConstants.getShootingSetpoint4());
+        monkeyDLuffy.addWaypoint("5:Shooting", ShooterConstants.getShootingSetpoint5());
+
+        monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
+        monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
 
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
