@@ -29,8 +29,10 @@ public class PostPathPreciseAlignment extends Command {
 
     private final double xy_kp       = 8.0;
     private final double xy_kd       = 0.05;
-    private final double theta_kp    = 8.0;
-    private final double theta_kd    = 0.05;
+
+    private final double theta_kp    = 2.47;
+    private final double theta_ki    = 0.04;
+    private final double theta_kd    = 0.032;
 
 
     private final double maxLinVel = 1.5;
@@ -39,7 +41,7 @@ public class PostPathPreciseAlignment extends Command {
     private final double maxAngAcc = 4 * Math.PI;
 
     private final double xy_tolerance    = 0.01;
-    private final double theta_tolerance = Math.toRadians(0.5);
+    private final double theta_tolerance = Math.toRadians(0.75);
     private final double linVelTolerance = 0.05;
     private final double angVelTolerance = 0.1;
 
@@ -94,7 +96,7 @@ public class PostPathPreciseAlignment extends Command {
 
         xController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
         yController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
-        thetaController = new ProfiledPIDController(theta_kp, 0, theta_kd, rotationConstraints);
+        thetaController = new ProfiledPIDController(theta_kp, theta_ki, theta_kd, rotationConstraints);
 
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
 

@@ -184,7 +184,9 @@ public class Robot extends LoggedRobot {
 
   // *Simulation mode
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+  }
 
   @Override
   public void simulationPeriodic() {
