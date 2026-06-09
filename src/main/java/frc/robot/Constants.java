@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -115,6 +116,10 @@ public final class Constants {
       return alliance == DriverStation.Alliance.Red ? RED_HUB : BLUE_HUB;
     }
 
+    public static Pose2d getAimPose() {
+      return ShooterConstants.getShootingSetpoint1();
+    }
+
     // public static class hubPositionRed {
     //   public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
     // }
@@ -135,13 +140,7 @@ public final class Constants {
         );
     }
 
-    // |Aimpose for testing set-point pathing to shooting
-    // ?Facing toward blue hub at (4.611624, 4.024) from (2, 2)
-    // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°
-    public static Pose2d aimPose = new Pose2d(2, 2, Rotation2d.fromDegrees(37.592));
-    public static Pose2d getAimPose() {
-      return AllianceRelativePose(aimPose);
-    }
+    
   }
 
   // *intake motorIDs are values of 20
@@ -180,14 +179,36 @@ public final class Constants {
 
 
     public static final double kickerMotorPower = 0.59;
-    /*
-    public static final int coralRoller2CanId = 22;
+    
 
-    public static final double chuteSpeed = .7;
-    public static final double rollerSlowSpeed = 0.175;
-    public static final double rollerFastSpeed = 0.4;
-    public static final double rollerBack = -0.2;
-    */
+    // |Aimpose for testing setpoint pathing to shootinng
+    // ?Facing toward blue hub at (4.611624, 4.024) from (2, 2)
+    // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°
+    public static Pose2d shootingSetpoint1 = facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose());
+    public static Pose2d shootingSetpoint2 = facePose(new Pose2d(2, 2, Rotation2d.kZero), VisionConstants.getHubPose());
+    public static Pose2d shootingSetpoint3 = facePose(new Pose2d(1.6, 4, Rotation2d.kZero), VisionConstants.getHubPose());
+    public static Pose2d shootingSetpoint4 = facePose(new Pose2d(2, 6, Rotation2d.kZero), VisionConstants.getHubPose());
+    public static Pose2d shootingSetpoint5 = facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose());
+
+    public static Pose2d getShootingSetpoint1() {
+      return AllianceRelativePose(shootingSetpoint1);
+    }
+
+    public static Pose2d getShootingSetpoint2() {
+      return AllianceRelativePose(shootingSetpoint2);
+    }
+
+    public static Pose2d getShootingSetpoint3() {
+      return AllianceRelativePose(shootingSetpoint3);
+    }
+
+    public static Pose2d getShootingSetpoint4() {
+      return AllianceRelativePose(shootingSetpoint4);
+    }
+
+    public static Pose2d getShootingSetpoint5() {
+      return AllianceRelativePose(shootingSetpoint5);
+    }
   }
 
   // *climb motorIDs are values of 40
@@ -230,6 +251,12 @@ public final class Constants {
         return blueTagId;
     }
   }
+
+  // *Helper method to calculate the angle from the robot to a target pose, copied straight from PhotonUtils.
+  private static Pose2d facePose(Pose2d pose, Pose2d facing) {
+        Translation2d relativeTrl = facing.relativeTo(pose).getTranslation();
+        return new Pose2d(pose.getTranslation(), new Rotation2d(relativeTrl.getX(), relativeTrl.getY()));
+    }
      
   // *From Reefscape
   public static final double FIELD_MAX_X = 16.518;

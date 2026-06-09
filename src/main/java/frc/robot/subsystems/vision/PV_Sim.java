@@ -74,7 +74,7 @@ public class PV_Sim extends VisionGeneral {
         //Logger.recordOutput("Vision/VisibleTagCount", visibleTagPoses.size());
         //Logger.recordOutput("Vision/VisibleTagPoses", visibleTagPoses.toArray(new Pose2d[0]));
         //Logger.recordOutput("Vision/PathfindToPose", VisionConstants.getCenter());
-        Logger.recordOutput("Vision/AimPose", VisionConstants.aimPose);
+        Logger.recordOutput("Vision/AimPose", VisionConstants.getAimPose());
         Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
         Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
         Logger.recordOutput("Vision/TargetId", inputs.targetId);

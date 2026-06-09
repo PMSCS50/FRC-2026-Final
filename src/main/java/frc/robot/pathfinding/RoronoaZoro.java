@@ -12,15 +12,13 @@ import java.util.List;
  * // ?Zones can be toggled active/inactive at runtime.
  * 
  * // *There are 4 types of zones:
- * // *1. RotationZone: When the robot enters, it starts rotating towards a specified angle
- * // *2. OrientationZone: When the robot enters, it starts orienting towards a specified target
- * // *3. ConstraintZone: When the robot enters, certain path constraints are applied
- * // *4. EventZone: When the robot enters, a specified command is triggered
+ * // *1. RotationZone: When the robot enters this zone, it starts rotating towards a specified angle
+ * // *2. OrientationZone: When the robot enters this zone, it starts orienting towards a specified target
+ * // *3. ConstraintZone: When the robot enters this zone, certain path constraints are applied
+ * // *4. EventZone: When the robot enters this zone, a specified command is triggered
  * 
  * // ?Although one can already populate path files with these in Pathplanner,
  * // ?it was not possible for pathfinding, which is why I created this extension.
- * 
- * // ?Furthermore, the class takes your current valocity and rotation as its ideal starting state.
  * 
  */
 
@@ -43,7 +41,7 @@ public class RoronoaZoro extends LocalADStar {
 
     @Override
     public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-        // *Gets LocalAD* path to fill in zones
+        // *Gets AD* path to fill in zones
         PathPlannerPath basePath = super.getCurrentPath(constraints, goalEndState);
 
         if (basePath == null) {
