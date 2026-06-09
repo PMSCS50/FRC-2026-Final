@@ -108,11 +108,7 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
     Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
 
-    // // |Subsystem-specific telemetry for Elastic
-    // Logger.recordOutput("Subsystems/Intake Velocity (rpm)", m_robotContainer.getIntake().getIntakeEncoder().getVelocity());
-    // Logger.recordOutput("Subsystems/Pivot Position (rotations)", m_robotContainer.getPivot().getPivotEncoder().getPosition());
-    // Logger.recordOutput("Subsystems/Shooter Velocity (rps)", m_robotContainer.getShooter().getVelocity());
-
+    
     Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
     Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
     Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());

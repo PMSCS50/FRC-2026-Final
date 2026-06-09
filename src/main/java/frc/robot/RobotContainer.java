@@ -45,6 +45,7 @@ import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.generated.TunerConstants;
 import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.pathfinding.Pathmaster;
 
 public class RobotContainer {
@@ -107,10 +108,12 @@ public class RobotContainer {
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         
         // *Hypothetical Waypoints for testing purposes
-        monkeyDLuffy.addWaypoint("Shooting Setpoint", VisionConstants.getAimPose());
-        monkeyDLuffy.addWaypoint("Climb", ClimbConstants.getClimbPose());
-        monkeyDLuffy.addWaypoint("Center", VisionConstants.getCenter());
-        
+        monkeyDLuffy.addWaypoint("1:Shooting", ShooterConstants.getShootingSetpoint1());
+        monkeyDLuffy.addWaypoint("2:Shooting", ShooterConstants.getShootingSetpoint2());
+        monkeyDLuffy.addWaypoint("3:Shooting", ShooterConstants.getShootingSetpoint3());
+        monkeyDLuffy.addWaypoint("4:Shooting", ShooterConstants.getShootingSetpoint4());
+        monkeyDLuffy.addWaypoint("5:Shooting", ShooterConstants.getShootingSetpoint5());
+
         monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
         monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
         monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
@@ -122,24 +125,6 @@ public class RobotContainer {
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
         NamedCommands.registerCommand("4 sec Intaking", new Intaking(intake).withTimeout(4));
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
-
-        // *Alignment (Right???)
-        // |more stuff from the PV days (could be the reason why our PV align was so bad, since we were using the wrong tag IDs for each alliance)
-        // // |just in case alliance is not known yet
-        // NamedCommands.registerCommand("Left Shoot PV-Align",
-        //     Commands.defer(
-        //         () -> new PV_Align(drivetrain, vision, VisionConstants.getLeftTagId(), 0, 0, 0),
-        //         Set.of(drivetrain)
-        //     )
-        // );
-
-        // NamedCommands.registerCommand("T-26 PV-Align",
-        //     Commands.defer(
-        //         () -> new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0),
-        //         Set.of(drivetrain)
-        //     )
-        // );
-        // NamedCommands.registerCommand("Fixed Shooting", new FixedPIDShooting(shooter, 0));
 
         // *Pivoting
         NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
