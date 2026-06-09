@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -106,7 +107,7 @@ public final class Constants {
 
     // *Hub Positions (IDK WHAT THIS IS DOING HERE BUT IT'S PROBABLY IMPORTANT)
     static final Pose2d RED_HUB = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
-    static final Pose2d BLUE_HUB = new Pose2d(4.611624, 4.024, Rotation2d.fromDegrees(0));
+    static final Pose2d BLUE_HUB = new Pose2d(4.611, 4.024, Rotation2d.fromDegrees(0));
 
     public static Pose2d getHubPose() {
       return AllianceRelativePose(BLUE_HUB);
@@ -184,12 +185,12 @@ public final class Constants {
     // |Aimpose for testing setpoint pathing to shootinng
     // ?Facing toward blue hub at (4.611624, 4.024) from (2, 2)
     // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°
-    public static Pose2d shootingSetpoint1 = facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose());
-    public static Pose2d shootingSetpoint2 = facePose(new Pose2d(2, 2, Rotation2d.kZero), VisionConstants.getHubPose());
-    public static Pose2d shootingSetpoint3 = facePose(new Pose2d(1.6, 4, Rotation2d.kZero), VisionConstants.getHubPose());
-    public static Pose2d shootingSetpoint4 = facePose(new Pose2d(2, 6, Rotation2d.kZero), VisionConstants.getHubPose());
-    public static Pose2d shootingSetpoint5 = facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose());
-
+    public static Pose2d shootingSetpoint1 = facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
+    public static Pose2d shootingSetpoint2 = facePose(new Pose2d(2, 2, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
+    public static Pose2d shootingSetpoint3 = facePose(new Pose2d(1.6, 4, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
+    public static Pose2d shootingSetpoint4 = facePose(new Pose2d(2, 6, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
+    public static Pose2d shootingSetpoint5 = facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
+    
     public static Pose2d getShootingSetpoint1() {
       return AllianceRelativePose(shootingSetpoint1);
     }

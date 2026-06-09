@@ -78,7 +78,8 @@ public class PV_Sim extends VisionGeneral {
         Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
         Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
         Logger.recordOutput("Vision/TargetId", inputs.targetId);
-        Logger.recordOutput("Vision/IsAlignedToHub", isAlignedToHub()); 
+        Logger.recordOutput("Vision/IsAlignedToHub", isAlignedToHub());
+        //Logger.recordOutput("Vision/HubPose", VisionConstants.getHubPose());
 
         if (aprilTagLayout != null && inputs.hasTarget) {
             aprilTagLayout
