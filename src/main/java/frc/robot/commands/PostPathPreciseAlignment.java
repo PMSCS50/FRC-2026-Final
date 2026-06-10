@@ -30,9 +30,9 @@ public class PostPathPreciseAlignment extends Command {
     private final double xy_kp       = 8.0;
     private final double xy_kd       = 0.05;
 
-    private final double theta_kp    = 2.47;
-    private final double theta_ki    = 0.04;
-    private final double theta_kd    = 0.032;
+    private final double theta_kp    = 3.35;
+    private final double theta_ki    = 0.0;
+    private final double theta_kd    = 0.02;
 
 
     private final double maxLinVel = 1.5;
