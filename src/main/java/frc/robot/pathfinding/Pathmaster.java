@@ -111,7 +111,7 @@ public class Pathmaster {
 
 
     private void createLoggingCallbacks() {
-         PathPlannerLogging.setLogCurrentPoseCallback((pose) -> {
+        PathPlannerLogging.setLogCurrentPoseCallback((pose) -> {
             PPLogger.logCurrentPose(pose);
         });
 
@@ -124,18 +124,6 @@ public class Pathmaster {
         PathPlannerLogging.setLogActivePathCallback((poses) -> {
             PPLogger.logActivePath(poses);
         });
-    }
-
-
-    //* Guards all methods — reports error and returns false if not fully configured
-   private boolean checkConfigured(String methodName) {
-        if (!(warmup &&AutoBuilder.isPathfindingConfigured())) {
-            DriverStation.reportWarning(
-                "[Pathmaster] Not configured when calling " + methodName +
-                ". Call initializePathfinder() and startWarmupCommand() first.", false);
-            return false;
-        }
-        return true;
     }
 
     // *Register a waypoint on the field. By calling gotoWaypoint() we can align here automatically
@@ -180,7 +168,6 @@ public class Pathmaster {
     // *Creates an orientation zone. 
     // ?When the robot paths through it, it will continuously face the given target pose.
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
-        //if (!checkConfigured("addOrientationZone")) return;
         ZoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
 
         StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
@@ -198,7 +185,6 @@ public class Pathmaster {
     // *Creates an orientation zone.
     //?When the robot paths through it, it will continuously face the given target pose.
     public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {
-        //if (!checkConfigured("addConstraintZone")) return;
         ZoneManager.addZone(new ConstraintZone(name, min, max, constraints), active);
 
         StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
@@ -216,7 +202,6 @@ public class Pathmaster {
     // *Creates an event zone
      // ?When the robot paths through it, it will schedule the given command.
     public void addEventZone(String name, Translation2d min, Translation2d max, Command command, boolean active) {
-        //if (!checkConfigured("addEventZone")) return;
         ZoneManager.addZone(new EventZone(name, min, max, command), active);
 
         StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
@@ -233,38 +218,32 @@ public class Pathmaster {
 
     // *Activates a single zone
     public void activateZone(String name) {
-        if (!checkConfigured("activateZone")) return;
         ZoneManager.setZoneState(name, true);
     }
 
     // *Activates multiple zones
     public void activateZones(String... names) {
-        if (!checkConfigured("activateZones")) return;
         for (String name : names) ZoneManager.setZoneState(name, true);
     }
 
     // *Activates only the named zones, but deactivates everything else
     public void activateOnly(String... names) {
-        if (!checkConfigured("activateOnly")) return;
         ZoneManager.setAllZones(false);
         for (String name : names) ZoneManager.setZoneState(name, true);
     }
 
     // *Deactivates a single zone
     public void deactivateZone(String name) {
-        if (!checkConfigured("deactivateZone")) return;
         ZoneManager.setZoneState(name, false);
     }
 
     // *Deactivates multiple zones
     public void deactivateZones(String... names) {
-        if (!checkConfigured("deactivateZones")) return;
         for (String name : names) ZoneManager.setZoneState(name, false);
     }
 
     /** Deactivates only the named zones, but activates everything else. */
     public void deactivateOnly(String... names) {
-        if (!checkConfigured("deactivateOnly")) return;
         ZoneManager.setAllZones(true);
         for (String name : names) ZoneManager.setZoneState(name, false);
     }
@@ -272,7 +251,6 @@ public class Pathmaster {
     // !Pathfinding Commands
     // *Pathfind to any field pose with obstacle avoidance
     public Command makePathTo(Pose2d destination) {
-        //if (!checkConfigured("makePathTo")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         pathing = true;
         return Commands.defer(
@@ -286,7 +264,6 @@ public class Pathmaster {
     // *Pathfind to a registered waypoint
     // ?Waypoints are defined in Robot.java and updated with alliance-relative poses in robotPeriodic()
     public Command gotoWaypoint(String name) {
-        // if (!checkConfigured("gotoWaypoint")) return Commands.none();
         if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name))
             return Commands.none();
         return Commands.defer(
@@ -297,7 +274,6 @@ public class Pathmaster {
 
     // *Pathfind to waypoint corresponding with selectedWaypointIndex
     public Command goToSelectedWaypoint() {
-        // if (!checkConfigured("gotoWaypoint")) return Commands.none();
         if (!AutoBuilder.isConfigured())
             return Commands.none();
         return Commands.defer(
@@ -314,7 +290,6 @@ public class Pathmaster {
     // ?A predetermined .path file has much less error, around <1cm.
     // ?This pathfinds to the start of the .path, then follows it precisely to the end.
     public Command pathfindToPath(String pathName) {
-        // if (!checkConfigured("pathfindToPath")) return Commands.none();
         if (!AutoBuilder.isConfigured()) return Commands.none();
         try {
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
@@ -332,7 +307,6 @@ public class Pathmaster {
     //*Pathfinds to the nearest pose from a list of candidates.
     // ?Copied from Spartronics.
     public Command pathToNearestPose(List<Pose2d> candidates) {
-        // if (!checkConfigured("pathToNearestPose")) return Commands.none();
         if (candidates.isEmpty()) return Commands.none();
         return Commands.defer(() -> {
             Pose2d nearest = candidates.stream()
@@ -347,7 +321,6 @@ public class Pathmaster {
 
     // *Pathfinds to the nearest registered waypoint.
     public Command pathToNearestWaypoint() {
-        // if (!checkConfigured("pathToNearestWaypoint")) return Commands.none();
         if (waypoints.isEmpty()) return Commands.none();
         return pathToNearestPose(waypoints.values().stream().toList()).withName("pathToNearestWaypoint");
     }
@@ -355,11 +328,9 @@ public class Pathmaster {
 
     /**
      * *Pathfinds to a destination while arriving faced toward a separate target.
-     * |I dont think we should ever use this method over vision.
      */
     public Command pathfindFaceTargetPose(Pose2d destination, Pose2d faceTarget) {
-        // if (!checkConfigured("pathfindFaceTargetPose")) return Commands.none();
-        // if (!AutoBuilder.isConfigured()) return Commands.none();
+
         return Commands.defer(() -> {
             Rotation2d facing = getRotationToPose(destination, faceTarget);
             Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
@@ -371,7 +342,6 @@ public class Pathmaster {
      * *Cancels any currently running pathfinding command and immediately stops the drivetrain.
      */
     public Command cancelPathing() {
-        // if (!checkConfigured("cancelPathing")) return Commands.none();
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
             if (current != null) {
