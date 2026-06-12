@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -20,13 +21,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+import com.ctre.phoenix6.Orchestra;
+
 import frc.robot.pathfinding.Pathmaster;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
-  //private Pigeon2 mGyro = new Pigeon2(0);
+
   private final RobotContainer m_robotContainer;
   private boolean allianceConfigApplied = false;
+
+  private final Orchestra m_choralChambersOrchestra = new Orchestra("Choral_Chambers.chrp");
 
   int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
@@ -49,8 +54,10 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.monkeyDLuffy.startWarmupCommand();
 
-    // DataLogManager.start();
-    // DriverStation.startDataLog(DataLogManager.getLog());
+    for (int i = 0; i < 4; i++) {
+      m_choralChambersOrchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor());
+      m_choralChambersOrchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor());
+    }
   }
 
   @Override
@@ -117,6 +124,12 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
+
+    if (!m_choralChambersOrchestra.isPlaying() && m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
+      m_choralChambersOrchestra.play();
+    } else if (m_choralChambersOrchestra.isPlaying() && !m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
+      m_choralChambersOrchestra.stop();
+    }
   }
 
   // *Disabled mode
