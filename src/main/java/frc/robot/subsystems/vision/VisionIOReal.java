@@ -24,7 +24,6 @@ import frc.robot.Constants.VisionConstants;
 public class VisionIOReal implements VisionIO {
 
     private final String llName;
-    private final AprilTagFieldLayout aprilTagLayout;
 
     // *Camera mounting — must match VisionSubsystem constants
     private static final double CAM_FORWARD_M =  0.072;
@@ -42,7 +41,6 @@ public class VisionIOReal implements VisionIO {
      */
     public VisionIOReal(String cameraName) {
         this.llName = cameraName;
-        this.aprilTagLayout = VisionConstants.aprilTagLayoutAndymark;
 
         // *Tell the Limelight where the camera is mounted once at construction
         LimelightHelpers.setCameraPose_RobotSpace(

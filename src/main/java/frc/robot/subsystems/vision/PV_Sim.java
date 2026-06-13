@@ -6,9 +6,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -18,8 +15,6 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 import org.littletonrobotics.junction.Logger;
 
 import frc.robot.Constants.VisionConstants;
