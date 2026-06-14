@@ -31,6 +31,7 @@ public class Robot extends LoggedRobot {
   private final RobotContainer m_robotContainer;
   private boolean allianceConfigApplied = false;
 
+  private boolean allowOrchestra = false; // Orchestra currently disabled.
   private final Orchestra m_choralChambersOrchestra = new Orchestra("audio/HKSS_Choral_Chambers.chrp");
 
   int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
@@ -124,12 +125,15 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
-
-    if (!m_choralChambersOrchestra.isPlaying() && m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
+    if (allowOrchestra){
+      if (!m_choralChambersOrchestra.isPlaying() && m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
       m_choralChambersOrchestra.play();
-    } else if (m_choralChambersOrchestra.isPlaying() && !m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
-      m_choralChambersOrchestra.stop();
+
+      } else if (m_choralChambersOrchestra.isPlaying() && !m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
+        m_choralChambersOrchestra.stop();
+      }
     }
+    
   }
 
   // *Disabled mode
