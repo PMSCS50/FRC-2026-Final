@@ -68,12 +68,7 @@ public class VisionIOSim implements VisionIO {
         visionSim.addCamera(cameraSim, ROBOT_TO_CAMERA);
 
         if (VisionConstants.aprilTagLayoutAndymark != null) {
-            photonPoseEstimator = new PhotonPoseEstimator(
-                VisionConstants.aprilTagLayoutAndymark,
-                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                ROBOT_TO_CAMERA
-            );
-            photonPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+            photonPoseEstimator = new PhotonPoseEstimator(VisionConstants.aprilTagLayoutAndymark, ROBOT_TO_CAMERA);
         } else {
             photonPoseEstimator = null;
         }
@@ -88,65 +83,12 @@ public class VisionIOSim implements VisionIO {
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        PhotonPipelineResult result = camera.getLatestResult();
+        List<PhotonPipelineResult> results = camera.getAllUnreadResults();
+        
+        Optional<EstimatedRobotPose> latestEst = Optional.empty();
+        List<PhotonTrackedTarget> latestTargets = List.of();
 
-        // *--- Primary target + per-tag arrays
-        if (result.hasTargets()) {
-            PhotonTrackedTarget best = result.getBestTarget();
-            inputs.hasTarget = true;
-            inputs.targetId  = best.getFiducialId();
-
-            // *Primary tagToRobot (mirrors VisionIOReal: botpose_targetspace)
-            Transform3d cameraToTag = best.getBestCameraToTarget();
-            Transform3d robotToTag  = ROBOT_TO_CAMERA.plus(cameraToTag);
-            Transform3d tagToRobot  = robotToTag.inverse();
-
-            inputs.hasTagTransform = true;
-            inputs.tagToRobotX    = tagToRobot.getX();
-            inputs.tagToRobotY    = tagToRobot.getY();
-            inputs.tagToRobotZ    = tagToRobot.getZ();
-            inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
-
-            // *Per-tag parallel arrays (mirrors VisionIOReal's JSON loop)
-            List<PhotonTrackedTarget> allTargets = result.getTargets();
-            int n = allTargets.size();
-
-            int[]    ids   = new int[n];
-            double[] txArr = new double[n];
-            double[] tyArr = new double[n];
-            double[] tzArr = new double[n];
-            double[] trArr = new double[n];
-
-            for (int i = 0; i < n; i++) {
-                PhotonTrackedTarget t    = allTargets.get(i);
-                Transform3d c2t         = t.getBestCameraToTarget();
-                Transform3d r2t         = ROBOT_TO_CAMERA.plus(c2t);
-                Transform3d t2r         = r2t.inverse();
-                ids[i]   = t.getFiducialId();
-                txArr[i] = t2r.getX();
-                tyArr[i] = t2r.getY();
-                tzArr[i] = t2r.getZ();
-                trArr[i] = t2r.getRotation().getZ();
-            }
-
-            inputs.visibleTagIds     = ids;
-  
-            if (VisionConstants.aprilTagLayoutAndymark != null) {
-                List<Pose2d> tagPoses = new ArrayList<>();
-                for (int id : inputs.visibleTagIds) {
-                    VisionConstants.aprilTagLayoutAndymark
-                        .getTagPose(id)
-                        .ifPresent(pose -> tagPoses.add(pose.toPose2d()));
-                }
-                inputs.visibleTagPoses = tagPoses.toArray(new Pose2d[0]);
-            }
-
-            inputs.allTagToRobotX    = txArr;
-            inputs.allTagToRobotY    = tyArr;
-            inputs.allTagToRobotZ    = tzArr;
-            inputs.allTagToRobotRotZ = trArr;
-
-        } else {
+        if (results.isEmpty()) {
             inputs.hasTarget       = false;
             inputs.targetId        = -1;
             inputs.hasTagTransform = false;
@@ -160,6 +102,88 @@ public class VisionIOSim implements VisionIO {
             inputs.allTagToRobotZ    = new double[0];
             inputs.allTagToRobotRotZ = new double[0];
             inputs.distanceToHub     = 0.0;
+        } else {
+            PhotonPipelineResult result = results.get(results.size() - 1); // single declaration
+
+            // *--- Primary target + per-tag arrays
+            if (result.hasTargets()) {
+                PhotonTrackedTarget best = result.getBestTarget();
+                inputs.hasTarget = true;
+                inputs.targetId  = best.getFiducialId();
+
+                // *Primary tagToRobot (mirrors VisionIOReal: botpose_targetspace)
+                Transform3d cameraToTag = best.getBestCameraToTarget();
+                Transform3d robotToTag  = ROBOT_TO_CAMERA.plus(cameraToTag);
+                Transform3d tagToRobot  = robotToTag.inverse();
+
+                inputs.hasTagTransform = true;
+                inputs.tagToRobotX    = tagToRobot.getX();
+                inputs.tagToRobotY    = tagToRobot.getY();
+                inputs.tagToRobotZ    = tagToRobot.getZ();
+                inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
+
+                // *Per-tag parallel arrays (mirrors VisionIOReal's JSON loop)
+                List<PhotonTrackedTarget> allTargets = result.getTargets();
+                int n = allTargets.size();
+
+                int[]    ids   = new int[n];
+                double[] txArr = new double[n];
+                double[] tyArr = new double[n];
+                double[] tzArr = new double[n];
+                double[] trArr = new double[n];
+
+                for (int i = 0; i < n; i++) {
+                    PhotonTrackedTarget t    = allTargets.get(i);
+                    Transform3d c2t         = t.getBestCameraToTarget();
+                    Transform3d r2t         = ROBOT_TO_CAMERA.plus(c2t);
+                    Transform3d t2r         = r2t.inverse();
+                    ids[i]   = t.getFiducialId();
+                    txArr[i] = t2r.getX();
+                    tyArr[i] = t2r.getY();
+                    tzArr[i] = t2r.getZ();
+                    trArr[i] = t2r.getRotation().getZ();
+                }
+
+                inputs.visibleTagIds     = ids;
+    
+                if (VisionConstants.aprilTagLayoutAndymark != null) {
+                    List<Pose2d> tagPoses = new ArrayList<>();
+                    for (int id : inputs.visibleTagIds) {
+                        VisionConstants.aprilTagLayoutAndymark
+                            .getTagPose(id)
+                            .ifPresent(pose -> tagPoses.add(pose.toPose2d()));
+                    }
+                    inputs.visibleTagPoses = tagPoses.toArray(new Pose2d[0]);
+                }
+
+                inputs.allTagToRobotX    = txArr;
+                inputs.allTagToRobotY    = tyArr;
+                inputs.allTagToRobotZ    = tzArr;
+                inputs.allTagToRobotRotZ = trArr;
+            } else {
+                inputs.hasTarget       = false;
+                inputs.targetId        = -1;
+                inputs.hasTagTransform = false;
+                inputs.tagToRobotX     = 0.0;
+                inputs.tagToRobotY     = 0.0;
+                inputs.tagToRobotZ     = 0.0;
+                inputs.tagToRobotRotZ  = 0.0;
+                inputs.visibleTagIds     = new int[0];
+                inputs.allTagToRobotX    = new double[0];
+                inputs.allTagToRobotY    = new double[0];
+                inputs.allTagToRobotZ    = new double[0];
+                inputs.allTagToRobotRotZ = new double[0];
+                inputs.distanceToHub     = 0.0;
+            }
+
+            // *--- Pose estimation
+            if (photonPoseEstimator != null) {
+                latestEst = photonPoseEstimator.estimateCoprocMultiTagPose(result);
+                if (latestEst.isEmpty()) {
+                    latestEst = photonPoseEstimator.estimateLowestAmbiguityPose(result);
+                }
+                latestTargets = latestEst.isPresent() ? result.getTargets() : List.of();
+            }
         }
 
         // *--- Pose estimation --------------------------------------------------
@@ -170,12 +194,6 @@ public class VisionIOSim implements VisionIO {
             };
             return;
         }
-
-        PhotonPipelineResult poseResult = camera.getLatestResult();
-        Optional<EstimatedRobotPose> latestEst = photonPoseEstimator.update(poseResult);
-        List<PhotonTrackedTarget> latestTargets = latestEst.isPresent()
-            ? poseResult.getTargets()
-            : List.of();
 
         if (latestEst.isPresent()) {
             EstimatedRobotPose est = latestEst.get();
