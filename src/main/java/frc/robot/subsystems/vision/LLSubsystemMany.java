@@ -32,8 +32,6 @@ import java.util.List;
 
 public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
-    // *Initialization
-    private int numCameras;
 
     private final CommandSwerveDrivetrain drivetrain;
 
@@ -74,12 +72,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
         this.drivetrain = drivetrain;
         this.llCameras  = llCameras;
-        this.numCameras = llCameras.length;
 
         for (String cam : llCameras) {
             LimelightHelpers.setPipelineIndex(cam, 9);
-            LimelightHelpers.SetIMUMode(cam, 4);
-            // *No filter anymore bitch
+            //No native IMU usage, only use Pigeon2 heading
+            LimelightHelpers.SetIMUMode(cam, 0);
+
             //LimelightHelpers.SetFiducialIDFiltersOverride(cam, new int[]{});
         }
     }
@@ -195,9 +193,9 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             totalTags > 0 ? totalTimestamp / cameraEstimates.size() : 0.0,
             totalTags > 0 ? totalLatency / cameraEstimates.size() : 0.0,
             totalTags,
-            totalTags > 0 ? totalTagSpan / numCameras : 0.0,
-            totalTags > 0 ? totalTagDist / numCameras : 0.0,
-            totalTags > 0 ? totalTagArea / numCameras : 0.0,
+            totalTags > 0 ? totalTagSpan / cameraEstimates.size() : 0.0,
+            totalTags > 0 ? totalTagDist / cameraEstimates.size() : 0.0,
+            totalTags > 0 ? totalTagArea / cameraEstimates.size() : 0.0,
             tagsUsed, 
             true
         );

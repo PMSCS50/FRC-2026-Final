@@ -105,7 +105,7 @@ public final class Constants {
       new Rotation3d(0, Math.toRadians(10), 0)
     );
 
-    // *Hub Positions (IDK WHAT THIS IS DOING HERE BUT IT'S PROBABLY IMPORTANT)
+    // *Hub Positions
     static final Pose2d RED_HUB = new Pose2d(11.901424, 4.024, Rotation2d.fromDegrees(0));
     static final Pose2d BLUE_HUB = new Pose2d(4.611, 4.024, Rotation2d.fromDegrees(0));
 
@@ -118,16 +118,9 @@ public final class Constants {
     }
 
     public static Pose2d getAimPose() {
-      return ShooterConstants.getShootingSetpoint1();
+      return ShooterConstants.getShootingSetpoint(1);
     }
 
-    // public static class hubPositionRed {
-    //   public static final Pose2d RedHub = new Pose2d(11.912, 4.024, Rotation2d.fromDegrees(0));
-    // }
-
-    // public static class hubPositionBlue {
-    //   public static final Pose2d BlueHub = new Pose2d(4.628, 4.024, Rotation2d.fromDegrees(0));
-    // }
 
     public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
     public static LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
@@ -191,24 +184,16 @@ public final class Constants {
     public static Pose2d shootingSetpoint4 = facePose(new Pose2d(2, 6, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
     public static Pose2d shootingSetpoint5 = facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
     
-    public static Pose2d getShootingSetpoint1() {
-      return AllianceRelativePose(shootingSetpoint1);
-    }
+    public static Pose2d[] shootingSetpoints = {
+      shootingSetpoint1,
+      shootingSetpoint2,
+      shootingSetpoint3,
+      shootingSetpoint4,
+      shootingSetpoint5
+    };
 
-    public static Pose2d getShootingSetpoint2() {
-      return AllianceRelativePose(shootingSetpoint2);
-    }
-
-    public static Pose2d getShootingSetpoint3() {
-      return AllianceRelativePose(shootingSetpoint3);
-    }
-
-    public static Pose2d getShootingSetpoint4() {
-      return AllianceRelativePose(shootingSetpoint4);
-    }
-
-    public static Pose2d getShootingSetpoint5() {
-      return AllianceRelativePose(shootingSetpoint5);
+    public static Pose2d getShootingSetpoint(int num) {
+      return AllianceRelativePose(shootingSetpoints[num - 1]);
     }
   }
 
