@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-
+import frc.robot.Constants.VisionConstants;
 import frc.robot.pathfinding.PPLogger;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -30,9 +30,9 @@ public class PostPathPreciseAlignment extends Command {
     private final double xy_kp       = 8.0;
     private final double xy_kd       = 0.05;
 
-    private final double theta_kp    = 3.35;
+    private final double theta_kp    = 3.5;
     private final double theta_ki    = 0.0;
-    private final double theta_kd    = 0.02;
+    private final double theta_kd    = 0.0;
 
 
     private final double maxLinVel = 1.5;
@@ -41,31 +41,14 @@ public class PostPathPreciseAlignment extends Command {
     private final double maxAngAcc = 4 * Math.PI;
 
     private final double xy_tolerance    = 0.01;
-    private final double theta_tolerance = Math.toRadians(0.75);
+    private final double theta_tolerance = Math.toRadians(VisionConstants.HUB_ALIGN_TOLERANCE_DEG);
     private final double linVelTolerance = 0.05;
     private final double angVelTolerance = 0.1;
 
-    private final double settleTime = 0.1;
+    private final double settleTime = 0.05;
     private final double ffBounds   = 0.01;
 
-    // private final double xy_kp       = 4.0;
-    // private final double xy_kd       = 0.1;
-    // private final double theta_kp    = 4.0;
-
-    // private final double maxLinVel = 0.75;             // m/s
-    // private final double maxLinAcc = 1.5;              // m/s²
-    // private final double maxAngVel = Math.PI;          // rad/s
-    // private final double maxAngAcc = 2*Math.PI;        // rad/s²
-
-    // private final double xy_tolerance    = 0.005;
-    // private final double theta_tolerance = Math.toRadians(.5);
-    // private final double linVelTolerance = 0.05;
-    // private final double angVelTolerance = 0.1;
-
-    // private final double settleTime = 0.1;
-    // private final double ffBounds = 0.05;
-
-    private final double maxElapsedtime = 5;
+    private final double maxElapsedtime = 10;
 
     private final double dt = 0.02;
 
@@ -99,6 +82,7 @@ public class PostPathPreciseAlignment extends Command {
         thetaController = new ProfiledPIDController(theta_kp, theta_ki, theta_kd, rotationConstraints);
 
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
+        thetaController.setIZone(Math.toRadians(2));
 
         try {
             robotConfig = RobotConfig.fromGUISettings();
