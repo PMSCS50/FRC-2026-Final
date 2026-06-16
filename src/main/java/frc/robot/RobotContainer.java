@@ -100,7 +100,7 @@ public class RobotContainer {
         if (Constants.currentMode == Constants.Mode.SIM) {
             vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
         } else {
-            vision = new LLSubsystemMany(drivetrain, "limelight-meowlit");
+            vision = new LLSubsystemMany(drivetrain, "");
         }
         
         shooter = new Shooter(vision);

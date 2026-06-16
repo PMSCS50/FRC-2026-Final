@@ -143,8 +143,11 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     //DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+    if (Constants.currentMode == Constants.simMode) {
+      DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+    }
 
-    double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
+    //double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
     // m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
     //m_robotContainer.vision.setIMUModeAll(1);
   }

@@ -85,8 +85,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     // *Periodic
     @Override
     public void periodic() {
+        Logger.recordOutput("Vision/PeriodicRunning", true);
+        Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
+
         var driveState = drivetrain.getState();
         double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
+
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
         estimatedRobotPose = null;
@@ -116,6 +120,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 continue;
             }
 
+            Logger.recordOutput("Vision/" + cam + "/RawPose", llMeasurement.pose);
             cameraEstimates.add(llMeasurement.pose);
 
             RawFiducial[] fiducials = llMeasurement.rawFiducials != null
@@ -137,6 +142,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 .toArray(Pose2d[]::new);
             Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
 
+            // !New version (faster since it pulls directly from RawFiducial)
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
                 Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
@@ -154,34 +160,65 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
                     allCameraRawFiducials.add(fiducials);
 
-                    // *Merge tag transforms from all cameras
-                    // |Currently same tags are overwritten; if you want to change this to get the best estimate or fuse estimates you can but personally there's little to gain
-                    var results = LimelightHelpers.getLatestResults(cam);
-                    LimelightTarget_Fiducial[] allTags = (results != null && results.targets_Fiducials != null)
-                        ? results.targets_Fiducials
-                        : new LimelightTarget_Fiducial[0];
+                    // Replace entire getLatestResults block with this:
+                    for (RawFiducial f : fiducials) {
+                        double x = f.distToRobot * Math.cos(Math.toRadians(f.txnc));
+                        double y = f.distToRobot * Math.sin(Math.toRadians(f.txnc));
 
-                    for (LimelightTarget_Fiducial fiducial : allTags) {
-                        Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
-                        int id = (int) fiducial.fiducialID;
-
-                        // *Find ambiguity for this fiducial from rawFiducials
-                        double ambiguity = 1.0; // default high
-                        for (RawFiducial f : fiducials) {
-                            if (f.id == id) {
-                                ambiguity = f.ambiguity;
-                                break;
-                            }
-                        }
-
-                        // *Only update if this camera sees it with lower ambiguity than what's stored
-                        if (!tagambiguities.containsKey(id) || ambiguity < tagambiguities.get(id)) {
-                            tagambiguities.put(id, ambiguity);
-                            tagtransforms.put(id, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+                        if (!tagambiguities.containsKey(f.id) || f.ambiguity < tagambiguities.get(f.id)) {
+                            tagambiguities.put(f.id, f.ambiguity);
+                            tagtransforms.put(f.id, new Transform2d(x, y, new Rotation2d(Math.toRadians(f.txnc))));
                         }
                     }
                 }
             }
+
+            // *Fuse vision pose estimates to drivetrain pose estimate
+            //! Old version (deprecated since it is slower and unreliable)
+            // if (camValid) {
+            //     Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
+            //     if (camStdDevs != null) {
+            //         drivetrain.addVisionMeasurement(
+            //             llMeasurement.pose,
+            //             Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
+            //             camStdDevs
+            //         );
+
+            //         totalTimestamp += llMeasurement.timestampSeconds;
+            //         totalLatency   += Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds) - Utils.fpgaToCurrentTime(0);
+            //         totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.tagSpan : 0.0;
+            //         totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
+            //         totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
+            //         allCameraRawFiducials.add(fiducials);
+
+            //         // *Merge tag transforms from all cameras
+            //         // |Currently same tags are overwritten; if you want to change this to get the best estimate or fuse estimates you can but personally there's little to gain
+            //         var results = LimelightHelpers.getLatestResults(cam);
+            //         LimelightTarget_Fiducial[] allTags = (results != null && results.targets_Fiducials != null)
+            ///            ? results.targets_Fiducials
+            //             : new LimelightTarget_Fiducial[0];
+
+            //         for (LimelightTarget_Fiducial fiducial : allTags) {
+            //             Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
+            //             int id = (int) fiducial.fiducialID;
+
+            //             // *Find ambiguity for this fiducial from rawFiducials
+            //             double ambiguity = 1.0; // default high
+            //             for (RawFiducial f : fiducials) {
+            //                 if (f.id == id) {
+            //                     ambiguity = f.ambiguity;
+            //                     break;
+            //                 }
+            //             }
+
+            //             // *Only update if this camera sees it with lower ambiguity than what's stored
+            //             if (!tagambiguities.containsKey(id) || ambiguity < tagambiguities.get(id)) {
+            //                 tagambiguities.put(id, ambiguity);
+            //                 tagtransforms.put(id, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
+            //             }
+            //         }
+            //     }
+            // }
         }
 
         estimatedRobotPose = drivetrain.getState().Pose;
@@ -213,17 +250,20 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         if (estimate == null || estimate.tagCount == 0) return false;
 
         double ageSeconds = Timer.getFPGATimestamp() - estimate.timestampSeconds;
+        Pose2d pose = estimate.pose;
 
         if (ageSeconds > MAX_LATENCY_SECONDS) return false;
-
         if (Math.abs(omegaRps) > MAX_OMEGA_RPS) return false;
-
-        Pose2d pose = estimate.pose;
         if (pose.getX() < 0 || pose.getX() > FIELD_MAX_X) return false;
         if (pose.getY() < 0 || pose.getY() > FIELD_MAX_Y) return false;
 
         return true;
     }
+
+    //| Always returns true for debugging
+    // private boolean isEstimateValid(PoseEstimate estimate) {
+    //     return true;
+    // }
 
     // *Vision STDs
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
@@ -245,6 +285,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
+
+    //| Always returns true for debugging
+    // private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
+    //     return VecBuilder.fill(0.5, 0.5, 9999.0);
+    // }
 
     private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {    
         RawFiducial[] tagsUsed = allTags.stream()
