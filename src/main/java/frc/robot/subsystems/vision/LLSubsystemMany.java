@@ -22,7 +22,6 @@ import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
 import java.util.ArrayList;
 import java.util.Arrays;

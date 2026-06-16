@@ -94,14 +94,14 @@ public class Robot extends LoggedRobot {
       allianceConfigApplied = true;
   }
 
-  // *Flip robot direction based on alliance color (if needed) for driver control
-  // |not currently used since we are using field-oriented control, but can be useful if we switch to robot-oriented control for teleop
-  private void applyAllianceDirFlip() {
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-    boolean red = alliance == Alliance.Red;
+  // // *Flip robot direction based on alliance color (if needed) for driver control
+  // // |not currently used since we are using field-oriented control, but can be useful if we switch to robot-oriented control for teleop
+  // private void applyAllianceDirFlip() {
+  //   Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+  //   boolean red = alliance == Alliance.Red;
 
-    m_robotContainer.flipDirection(red ? -1 : 1); 
-  }
+  //   m_robotContainer.flipDirection(red ? -1 : 1); 
+  // }
 
   @Override
   public void robotPeriodic() {
