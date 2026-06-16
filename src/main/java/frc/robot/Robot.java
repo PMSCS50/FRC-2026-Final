@@ -31,8 +31,8 @@ public class Robot extends LoggedRobot {
   private final RobotContainer m_robotContainer;
   private boolean allianceConfigApplied = false;
 
-  private boolean allowOrchestra = false; // Orchestra currently disabled.
-  private final Orchestra m_choralChambersOrchestra = new Orchestra("audio/HKSS_Choral_Chambers.chrp");
+  private boolean allowOrchestra = true; // Orchestra currently disabled.
+  private final Orchestra m_orchestra = new Orchestra();
 
   int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
@@ -56,8 +56,8 @@ public class Robot extends LoggedRobot {
     m_robotContainer.monkeyDLuffy.startWarmupCommand();
 
     for (int i = 0; i < 4; i++) {
-      m_choralChambersOrchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor());
-      m_choralChambersOrchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor());
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(),0);
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(),0);
     }
   }
 
@@ -90,8 +90,13 @@ public class Robot extends LoggedRobot {
       boolean red = alliance == Alliance.Red;
 
       m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-      m_robotContainer.vision.setFiducialIDFiltersOverrideAll(red ? redTags : blueTags);
+      //m_robotContainer.vision.setFiducialIDFiltersOverrideAll(red ? redTags : blueTags);
       allianceConfigApplied = true;
+  }
+
+  private void setOrchestraTrack(String audioPath) {
+    m_orchestra.stop();
+    m_orchestra.loadMusic(audioPath);
   }
 
   // // *Flip robot direction based on alliance color (if needed) for driver control
@@ -125,14 +130,14 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
-    if (allowOrchestra){
-      if (!m_choralChambersOrchestra.isPlaying() && m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
-      m_choralChambersOrchestra.play();
+    // if (allowOrchestra){
+    //   if (!m_orchestra.isPlaying() && m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
+    //   m_orchestra.play();
 
-      } else if (m_choralChambersOrchestra.isPlaying() && !m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
-        m_choralChambersOrchestra.stop();
-      }
-    }
+    //   } else if (m_orchestra.isPlaying() && !m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
+    //     m_orchestra.stop();
+    //   }
+    // }
     
   }
 
@@ -147,13 +152,22 @@ public class Robot extends LoggedRobot {
       DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
     }
 
+    if (!m_orchestra.isPlaying()) {
+      setOrchestraTrack("audio/LR_PHY_SSJ2_Gohan_Active_Skill.chrp");
+      m_orchestra.play();
+    }
+
+    //applyAllianceConfig();
+
     //double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
     // m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
     //m_robotContainer.vision.setIMUModeAll(1);
   }
 
   @Override
-  public void disabledExit() {}
+  public void disabledExit() {
+    m_orchestra.stop();
+  }
 
   // *Autonomous mode
   @Override

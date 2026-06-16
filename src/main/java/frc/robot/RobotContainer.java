@@ -50,7 +50,7 @@ import frc.robot.pathfinding.Pathmaster;
 public class RobotContainer {
     // *DRIVETRAIN CONSTANTS
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     private double speedLimiter = 0.5;
     private double directionFlipper = VisionConstants.getDirectionFlipper();
 
@@ -104,7 +104,7 @@ public class RobotContainer {
         
         shooter = new Shooter(vision);
         
-        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * 0.5, pathMaxLinearAcceleration, MaxAngularRate, pathMaxAngularAcceleration);
         
         NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
 
