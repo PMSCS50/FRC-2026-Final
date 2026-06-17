@@ -54,10 +54,15 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.monkeyDLuffy.startWarmupCommand();
 
+    //Add all orchestra instruments
     for (int i = 0; i < 4; i++) {
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(),0);
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(),1);
+      //Drivetrain
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(), 0);
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(), 1);
     }
+    //Shooter
+    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor1(), 0);
+    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor2(), 1);
   }
 
   @Override
