@@ -15,10 +15,12 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.config.RobotConfig;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -92,7 +94,17 @@ public class RobotContainer {
     private SendableChooser<Command> autoChooser;
 
     // |we arent even using ts, ill decide if we should remove it when we test next next week
-    double turningSpeed = 0; // for speed scaling
+    public double turningSpeed = 0; // for speed scaling
+
+    public static RobotConfig robotConfig = null;
+    static {
+        try {
+            robotConfig = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            DriverStation.reportError("Failed to load RobotConfig: " + e.getMessage(), true);
+        }
+    }
+    
 
     // *Constructor
     public RobotContainer() {
@@ -231,7 +243,7 @@ public class RobotContainer {
         joystick.b().whileTrue(
             Commands.defer(
                 () -> monkeyDLuffy.goToSelectedWaypoint()
-                    .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose())),
+                    .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 Set.of(drivetrain)
             )
         );

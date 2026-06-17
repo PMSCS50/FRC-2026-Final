@@ -22,6 +22,7 @@ public class FixedPIDShooting extends Command {
     public FixedPIDShooting(Shooter shooter, double distance) {
         this.shooter = shooter;
         this.distance = distance;
+        addRequirements(shooter);
     }
 
     

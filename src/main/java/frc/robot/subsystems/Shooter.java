@@ -20,7 +20,6 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.vision.VisionGeneral;
 
 public class Shooter extends SubsystemBase {
@@ -147,7 +146,7 @@ public class Shooter extends SubsystemBase {
     // *Checks if the shooter is within a certain RPM threshold of the target RPM based on current distance to target.
     public boolean atCorrectRPS() {
         double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
-        double targetRPS = this.rpsFromDistanceRegression(vision.getDistanceToTarget(VisionConstants.getHubPose())); 
+        double targetRPS = this.rpsFromDistanceRegression(vision.getDistanceToTarget(vision.cachedHubPose)); 
 
         Logger.recordOutput("Shooter/atCurrentRPS/Current RPS", currentRPS);
         Logger.recordOutput("Shooter/atCurrentRPS/Target RPS", targetRPS);
@@ -164,7 +163,7 @@ public class Shooter extends SubsystemBase {
         return Math.abs(currentRPS - targetRPS) < 5.0;
     }
 
-    /** Stops all motors */
+    // *Stops all motors
     public void stop() {
         shooterMotor1.stopMotor();
         kicker1.stopMotor();

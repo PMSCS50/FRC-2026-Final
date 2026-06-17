@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -27,6 +28,7 @@ public class PV_Sim extends VisionGeneral {
     private final AprilTagFieldLayout aprilTagLayout;
     private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
+    public Pose2d cachedHubPose = null;
 
     private Matrix<N3, N1> visionStdDevs = VecBuilder.fill(
         Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
@@ -40,7 +42,7 @@ public class PV_Sim extends VisionGeneral {
 
     @Override
     public void periodic() {
-
+        refreshAllianceCache();
         // --- 1. Seed MegaTag2 / sim pose -------------------------------------
         double currentYawDeg = drivetrain.getState().Pose.getRotation().getDegrees();
 
@@ -295,6 +297,12 @@ public class PV_Sim extends VisionGeneral {
             if (inputs.visibleTagIds[i] == id) return i;
         }
         return -1;
+    }
+
+    private void refreshAllianceCache() {
+        if (cachedHubPose != null) return;
+        if (DriverStation.getAlliance().isEmpty()) return;
+        cachedHubPose = VisionConstants.getHubPose();
     }
 
     public double getDistanceToTarget(Pose2d targetPose) {

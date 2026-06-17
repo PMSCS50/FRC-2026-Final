@@ -47,9 +47,6 @@ public class PV_Align extends Command {
         rotController.setTolerance(Math.toRadians(5));
 
         addRequirements(drivetrain, vision);
-       
-        
-
     }
 
     @Override
@@ -57,6 +54,9 @@ public class PV_Align extends Command {
         xController.reset();
         yController.reset();
         rotController.reset();
+        
+        settleTimer = new Timer();
+        settleTimer.start();
     }
 
     @Override

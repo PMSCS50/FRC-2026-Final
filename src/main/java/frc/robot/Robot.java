@@ -10,7 +10,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.hal.AllianceStationID;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -84,14 +83,16 @@ public class Robot extends LoggedRobot {
 
   // *Set gyro yaw and Limelight fiducial filters based on alliance color
   private void applyAllianceConfig() {
-      if (allianceConfigApplied) return;
-      
-      Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-      boolean red = alliance == Alliance.Red;
+    if (allianceConfigApplied) return;
 
-      m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-      //m_robotContainer.vision.setFiducialIDFiltersOverrideAll(red ? redTags : blueTags);
-      allianceConfigApplied = true;
+    var allianceOpt = DriverStation.getAlliance();
+    if (allianceOpt.isEmpty()) return;  // DS not connected yet — don't lock the flag
+
+    Alliance alliance = allianceOpt.get();
+    boolean red = alliance == Alliance.Red;
+
+    m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
+    allianceConfigApplied = true;       // only set true when we got a real value
   }
 
   private void setOrchestraTrack(String audioPath) {
@@ -110,6 +111,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
+    applyAllianceConfig();
     CommandScheduler.getInstance().run();
     m_robotContainer.monkeyDLuffy.log();
 
@@ -172,8 +174,6 @@ public class Robot extends LoggedRobot {
   // *Autonomous mode
   @Override
   public void autonomousInit() {
-    applyAllianceConfig();
-
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
@@ -189,10 +189,7 @@ public class Robot extends LoggedRobot {
   // *Teleop mode
   @Override
   public void teleopInit() {
-
     //applyAllianceDirFlip();
-    applyAllianceConfig();
-
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }

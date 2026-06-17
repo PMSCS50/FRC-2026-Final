@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Arrays;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -177,23 +179,25 @@ public final class Constants {
 
     // |Aimpose for testing setpoint pathing to shootinng
     // ?Facing toward blue hub at (4.611624, 4.024) from (2, 2)
-    // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°
-    public static Pose2d shootingSetpoint1 = facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
-    public static Pose2d shootingSetpoint2 = facePose(new Pose2d(2, 2, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
-    public static Pose2d shootingSetpoint3 = facePose(new Pose2d(1.6, 4, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
-    public static Pose2d shootingSetpoint4 = facePose(new Pose2d(2, 6, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
-    public static Pose2d shootingSetpoint5 = facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue));
-    
-    public static Pose2d[] shootingSetpoints = {
-      shootingSetpoint1,
-      shootingSetpoint2,
-      shootingSetpoint3,
-      shootingSetpoint4,
-      shootingSetpoint5
-    };
+    // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°    
+    public static final Pose2d[] shootingSetpoints = {
+      facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      facePose(new Pose2d(2,    2,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      facePose(new Pose2d(1.6,  4,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      facePose(new Pose2d(2,    6,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+    };  
+
+    private static Pose2d[] cachedAllianceSetpoints = null;
 
     public static Pose2d getShootingSetpoint(int num) {
-      return AllianceRelativePose(shootingSetpoints[num - 1]);
+        if (cachedAllianceSetpoints == null && DriverStation.getAlliance().isPresent()) {
+            cachedAllianceSetpoints = Arrays.stream(shootingSetpoints)
+                .map(p -> AllianceRelativePose(p))
+                .toArray(Pose2d[]::new);
+        }
+        if (cachedAllianceSetpoints != null) return cachedAllianceSetpoints[num - 1];
+        return AllianceRelativePose(shootingSetpoints[num - 1]);  // fallback if DS not ready
     }
   }
 

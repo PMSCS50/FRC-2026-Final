@@ -13,8 +13,10 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 
 import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
@@ -39,8 +41,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
     private double omegaRps;
+    private double headingDeg;
+    public Pose2d cachedHubPose = null;
+    private SwerveDrivetrain.SwerveDriveState driveState;
 
-    // *Pose of the robot, wrapped in latestEstimate
+    // *Pose of the robot, wrapped in latestEstimate, as well as other logged variables
     private Pose2d estimatedRobotPose;
     private PoseEstimate latestEstimate;
     private double totalTimestamp;
@@ -61,7 +66,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private static final double FIELD_MAX_Y          = Constants.FIELD_MAX_Y;
 
     private Matrix<N3, N1> stdDevs = VecBuilder.fill(9999.0, 9999.0, 9999.0);
-    private final List<Pose2d> cameraEstimates = new ArrayList<>();
+    private int contributingCameras = 0;
 
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
@@ -84,12 +89,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     // *Periodic
     @Override
     public void periodic() {
+        refreshAllianceCache();
         Logger.recordOutput("Vision/PeriodicRunning", true);
         Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
 
-        var driveState = drivetrain.getState();
-        double headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
-
+        driveState = drivetrain.getState();
+        headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
         estimatedRobotPose = null;
@@ -104,135 +109,84 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         allCameraRawFiducials.clear();
         tagtransforms.clear();
         tagambiguities.clear();
-        cameraEstimates.clear();
 
         // *For vision estimation and logging
         for (String cam : llCameras) {
             LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
             PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
+            boolean camValid = isEstimateValid(llMeasurement, headingDeg);
+
 
             if (llMeasurement == null) {
                 Logger.recordOutput("Vision/" + cam + "/Valid", false);
-                Logger.recordOutput("Vision/" + cam + "/Estimate", new Pose2d());
+                Logger.recordOutput("Vision/" + cam + "/RawPose", new Pose2d());
                 Logger.recordOutput("Vision/" + cam + "/TagIds", new int[0]);
                 Logger.recordOutput("Vision/" + cam + "/TagPoses", new Pose2d[0]);
                 continue;
             }
 
+            Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
             Logger.recordOutput("Vision/" + cam + "/RawPose", llMeasurement.pose);
-            cameraEstimates.add(llMeasurement.pose);
 
             RawFiducial[] fiducials = llMeasurement.rawFiducials != null
                 ? llMeasurement.rawFiducials
                 : new RawFiducial[0];
-
-            boolean camValid = isEstimateValid(llMeasurement);
-            Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
-            Logger.recordOutput("Vision/" + cam + "/Estimate", llMeasurement.pose);
 
             int[] tagIds = Arrays.stream(fiducials)
                 .mapToInt(f -> f.id)
                 .toArray();
             Logger.recordOutput("Vision/" + cam + "/TagIds", tagIds);
 
-            Pose2d[] tagPoses = Arrays.stream(fiducials)
-                .map(f -> tagtransforms.getOrDefault(f.id, Transform2d.kZero))
-                .map(t -> new Pose2d(t.getX(), t.getY(), t.getRotation()))
-                .toArray(Pose2d[]::new);
-            Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
-
             // !New version (faster since it pulls directly from RawFiducial)
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
                 Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
-                if (camStdDevs != null) {
-                    drivetrain.addVisionMeasurement(
-                        llMeasurement.pose,
-                        Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
-                        camStdDevs
-                    );
+                drivetrain.addVisionMeasurement(
+                    llMeasurement.pose,
+                    Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
+                    camStdDevs
+                );
 
-                    totalTimestamp += llMeasurement.timestampSeconds;
-                    totalLatency   += Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds) - Utils.fpgaToCurrentTime(0);
-                    totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.tagSpan : 0.0;
-                    totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
-                    totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
-                    allCameraRawFiducials.add(fiducials);
+                contributingCameras++;
+                totalTimestamp += llMeasurement.timestampSeconds;
+                totalLatency   += Timer.getFPGATimestamp() - llMeasurement.timestampSeconds;
+                totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.tagSpan : 0.0;
+                totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
+                totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
+                allCameraRawFiducials.add(fiducials);
 
-                    // Replace entire getLatestResults block with this:
-                    for (RawFiducial f : fiducials) {
-                        double x = f.distToRobot * Math.cos(Math.toRadians(f.txnc));
-                        double y = f.distToRobot * Math.sin(Math.toRadians(f.txnc));
+                for (RawFiducial f : fiducials) {
+                    double x = f.distToRobot * Math.cos(Math.toRadians(f.txnc));
+                    double y = f.distToRobot * Math.sin(Math.toRadians(f.txnc));
 
-                        if (!tagambiguities.containsKey(f.id) || f.ambiguity < tagambiguities.get(f.id)) {
-                            tagambiguities.put(f.id, f.ambiguity);
-                            tagtransforms.put(f.id, new Transform2d(x, y, new Rotation2d(Math.toRadians(f.txnc))));
-                        }
+                    if (!tagambiguities.containsKey(f.id) || f.ambiguity < tagambiguities.get(f.id)) {
+                        tagambiguities.put(f.id, f.ambiguity);
+                        tagtransforms.put(f.id, new Transform2d(x, y, new Rotation2d(Math.toRadians(f.txnc))));
                     }
                 }
             }
 
-            // *Fuse vision pose estimates to drivetrain pose estimate
-            //! Old version (deprecated since it is slower and unreliable)
-            // if (camValid) {
-            //     Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
-            //     if (camStdDevs != null) {
-            //         drivetrain.addVisionMeasurement(
-            //             llMeasurement.pose,
-            //             Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
-            //             camStdDevs
-            //         );
-
-            //         totalTimestamp += llMeasurement.timestampSeconds;
-            //         totalLatency   += Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds) - Utils.fpgaToCurrentTime(0);
-            //         totalTagSpan   += llMeasurement.tagCount > 0 ? llMeasurement.tagSpan : 0.0;
-            //         totalTagDist   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagDist : 0.0;
-            //         totalTagArea   += llMeasurement.tagCount > 0 ? llMeasurement.avgTagArea : 0.0;
-            //         allCameraRawFiducials.add(fiducials);
-
-            //         // *Merge tag transforms from all cameras
-            //         // |Currently same tags are overwritten; if you want to change this to get the best estimate or fuse estimates you can but personally there's little to gain
-            //         var results = LimelightHelpers.getLatestResults(cam);
-            //         LimelightTarget_Fiducial[] allTags = (results != null && results.targets_Fiducials != null)
-            ///            ? results.targets_Fiducials
-            //             : new LimelightTarget_Fiducial[0];
-
-            //         for (LimelightTarget_Fiducial fiducial : allTags) {
-            //             Pose2d pose = fiducial.getRobotPose_TargetSpace2D();
-            //             int id = (int) fiducial.fiducialID;
-
-            //             // *Find ambiguity for this fiducial from rawFiducials
-            //             double ambiguity = 1.0; // default high
-            //             for (RawFiducial f : fiducials) {
-            //                 if (f.id == id) {
-            //                     ambiguity = f.ambiguity;
-            //                     break;
-            //                 }
-            //             }
-
-            //             // *Only update if this camera sees it with lower ambiguity than what's stored
-            //             if (!tagambiguities.containsKey(id) || ambiguity < tagambiguities.get(id)) {
-            //                 tagambiguities.put(id, ambiguity);
-            //                 tagtransforms.put(id, new Transform2d(pose.getX(), pose.getY(), pose.getRotation()));
-            //             }
-            //         }
-            //     }
-            // }
+            // *Tag positions
+            Pose2d[] tagPoses = Arrays.stream(fiducials)
+                .filter(f -> tagtransforms.containsKey(f.id))
+                .map(f -> { Transform2d t = tagtransforms.get(f.id); return new Pose2d(t.getX(), t.getY(), t.getRotation()); })
+                .toArray(Pose2d[]::new);
+            Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
         }
 
-        estimatedRobotPose = drivetrain.getState().Pose;
+        estimatedRobotPose = driveState.Pose;
         RawFiducial[] tagsUsed = totalTagsUsed(allCameraRawFiducials);
         totalTags = tagsUsed.length;
 
         latestEstimate = new PoseEstimate(
             estimatedRobotPose,
-            totalTags > 0 ? totalTimestamp / cameraEstimates.size() : 0.0,
-            totalTags > 0 ? totalLatency / cameraEstimates.size() : 0.0,
+            contributingCameras > 0 ? totalTimestamp / contributingCameras : 0.0,
+            contributingCameras > 0 ? totalLatency   / contributingCameras : 0.0,
             totalTags,
-            totalTags > 0 ? totalTagSpan / cameraEstimates.size() : 0.0,
-            totalTags > 0 ? totalTagDist / cameraEstimates.size() : 0.0,
-            totalTags > 0 ? totalTagArea / cameraEstimates.size() : 0.0,
-            tagsUsed, 
+            contributingCameras > 0 ? totalTagSpan   / contributingCameras : 0.0,
+            contributingCameras > 0 ? totalTagDist   / contributingCameras : 0.0,
+            contributingCameras > 0 ? totalTagArea   / contributingCameras : 0.0,
+            tagsUsed,
             true
         );
 
@@ -245,7 +199,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     }
 
     // *Validation
-    private boolean isEstimateValid(PoseEstimate estimate) {
+    private boolean isEstimateValid(PoseEstimate estimate, double heading) {
         if (estimate == null || estimate.tagCount == 0) return false;
 
         double ageSeconds = Timer.getFPGATimestamp() - estimate.timestampSeconds;
@@ -256,13 +210,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         if (pose.getX() < 0 || pose.getX() > FIELD_MAX_X) return false;
         if (pose.getY() < 0 || pose.getY() > FIELD_MAX_Y) return false;
 
+        double visionHeading = estimate.pose.getRotation().getDegrees();
+        double headingError = Math.abs(MathUtil.inputModulus(visionHeading - heading, -180, 180));
+        if (headingError > 90) return false;
+
         return true;
     }
-
-    //| Always returns true for debugging
-    // private boolean isEstimateValid(PoseEstimate estimate) {
-    //     return true;
-    // }
 
     // *Vision STDs
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
@@ -285,19 +238,19 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
     }
 
-    //| Always returns true for debugging
-    // private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
-    //     return VecBuilder.fill(0.5, 0.5, 9999.0);
-    // }
-
-    private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {    
-        RawFiducial[] tagsUsed = allTags.stream()
-                                .filter(tags -> tags != null)
-                                .flatMap(tags -> Arrays.stream(tags))
-                                .distinct()
-                                .toArray(RawFiducial[]::new);
-
-        return tagsUsed;
+    // *Gets the total amount of tags used in vision pose estimate. Tags seen more times = lower ambiguity
+    private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {
+        return allTags.stream()
+            .filter(tags -> tags != null)
+            .flatMap(Arrays::stream)
+            .collect(java.util.stream.Collectors.toMap(
+                f -> f.id,
+                f -> f,
+                (a, b) -> a.ambiguity <= b.ambiguity ? a : b  // keep lower ambiguity when same tag seen by multiple cameras
+            ))
+            .values()
+            .stream()
+            .toArray(RawFiducial[]::new);
     }
 
     // *Getters for overall info
@@ -344,10 +297,13 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     }
 
     public double getYawToTarget(Pose2d targetPose) {
-        if (!hasTargets()) return -1.0;
-        return estimatedRobotPose.minus(targetPose).getRotation().getRadians();
+        if (estimatedRobotPose == null) return 0.0;
+        return Math.atan2(
+            targetPose.getY() - estimatedRobotPose.getY(),
+            targetPose.getX() - estimatedRobotPose.getX()
+        );
     }
-
+    
     public double getDistanceToTag(int tagId) {
         if (latestEstimate == null || latestEstimate.rawFiducials == null) return -1.0;
         for (RawFiducial fiducial : latestEstimate.rawFiducials) {
@@ -384,28 +340,32 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public double getBestDistanceToHub() {
         double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
         if (tagDist > 0) return tagDist;
-        return getDistanceToTarget(VisionConstants.getHubPose());
+        return getDistanceToTarget(cachedHubPose);
     }
 
     // *Returns true if both the vision pose and drivetrain pose agree that we're within the HUB_ALIGN_TOLERANCE_DEG of facing the hub, and that the two methods agree with each other (to avoid trusting a potentially bad vision estimate that just happens to be aligned)
     public boolean isAlignedToHub() {
-        Pose2d hubPose   = VisionConstants.getHubPose();
-        Pose2d robotPose = drivetrain.getState().Pose;
+        if (cachedHubPose == null) return false;
+        Pose2d robotPose = driveState.Pose;  // use the already-fetched driveState (see fix below)
 
-        // |Bearing from robot toward hub
         double angleToHub = Math.toDegrees(Math.atan2(
-            hubPose.getY() - robotPose.getY(),
-            hubPose.getX() - robotPose.getX()
+            cachedHubPose.getY() - robotPose.getY(),
+            cachedHubPose.getX() - robotPose.getX()
         ));
 
-        // |Error between robot heading and direction to hub
         double yawError = MathUtil.inputModulus(
             angleToHub - robotPose.getRotation().getDegrees(),
             -180, 180
         );
 
-        boolean aligned = Math.abs(yawError) <= VisionConstants.HUB_ALIGN_TOLERANCE_DEG;
-        return alignDebouncer.calculate(aligned);
+        return alignDebouncer.calculate(Math.abs(yawError) <= VisionConstants.HUB_ALIGN_TOLERANCE_DEG);
+    }
+
+    // *Refreshes cached hub pose until the alliance isn't null
+    private void refreshAllianceCache() {
+        if (cachedHubPose != null) return;
+        if (DriverStation.getAlliance().isEmpty()) return;
+        cachedHubPose = VisionConstants.getHubPose();
     }
     
     // *VisionIO implementation

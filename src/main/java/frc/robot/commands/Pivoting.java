@@ -37,6 +37,6 @@ public class Pivoting extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        pivot.goToPositionMAXMotion(targetSetpoint); 
+            if (interrupted) pivot.stopPivot(); // if not interrupted, position is already reached
     }
 }

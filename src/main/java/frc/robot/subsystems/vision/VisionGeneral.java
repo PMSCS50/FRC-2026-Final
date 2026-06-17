@@ -9,6 +9,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  * // |There is definitely a better way to switch between different vision subsystems than instanceof checks, but this will do for now.
  */
 public abstract class VisionGeneral extends SubsystemBase {
+    public Pose2d cachedHubPose;
+
     // *Whether any valid targets are currently detected.
     public abstract boolean hasTargets();
     public abstract boolean hasTarget(int i);

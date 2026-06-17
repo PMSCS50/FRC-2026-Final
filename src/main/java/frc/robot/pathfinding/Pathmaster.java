@@ -10,8 +10,6 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -109,8 +107,6 @@ public class Pathmaster {
         return new IdealStartingState(Math.hypot(vx, vy), rot);
     }
 
-
-
     private void createLoggingCallbacks() {
         PathPlannerLogging.setLogCurrentPoseCallback((pose) -> {
             PPLogger.logCurrentPose(pose);
@@ -154,15 +150,23 @@ public class Pathmaster {
     public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
         ZoneManager.addZone(new RotationZone(name, min, max, rotation), active);
         
-        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("Rotation Zone " + name, Pose2d.struct).publish();
+        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        // .getStructArrayTopic("Rotation Zone " + name, Pose2d.struct).publish();
     
-        rectPublisher.set(new Pose2d[] {
+        // rectPublisher.set(new Pose2d[] {
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        // });
+
+        Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), max.getY(), new Rotation2d()),
             new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
         });
     }
 
@@ -171,15 +175,23 @@ public class Pathmaster {
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
         ZoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
 
-        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("Orientation Zone " + name, Pose2d.struct).publish();
+        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        // .getStructArrayTopic("Orientation Zone " + name, Pose2d.struct).publish();
     
-        rectPublisher.set(new Pose2d[] {
+        // rectPublisher.set(new Pose2d[] {
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        // });
+
+        Logger.recordOutput("Pathmaster/Orientation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), max.getY(), new Rotation2d()),
             new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
         });
     }
 
@@ -188,15 +200,23 @@ public class Pathmaster {
     public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {
         ZoneManager.addZone(new ConstraintZone(name, min, max, constraints), active);
 
-        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("Constraint Zone " + name, Pose2d.struct).publish();
+        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        // .getStructArrayTopic("Constraint Zone " + name, Pose2d.struct).publish();
     
-        rectPublisher.set(new Pose2d[] {
+        // rectPublisher.set(new Pose2d[] {
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        // });
+
+        Logger.recordOutput("Pathmaster/Constraint Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), max.getY(), new Rotation2d()),
             new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
         });
     }
 
@@ -205,15 +225,23 @@ public class Pathmaster {
     public void addEventZone(String name, Translation2d min, Translation2d max, Command command, boolean active) {
         ZoneManager.addZone(new EventZone(name, min, max, command), active);
 
-        StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("Event Zone " + name, Pose2d.struct).publish();
+        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
+        // .getStructArrayTopic("Event Zone " + name, Pose2d.struct).publish();
     
-        rectPublisher.set(new Pose2d[] {
+        // rectPublisher.set(new Pose2d[] {
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+        // });
+
+        Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), max.getY(), new Rotation2d()),
             new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
         });
     }
 
@@ -265,25 +293,28 @@ public class Pathmaster {
     // *Pathfind to a registered waypoint
     // ?Waypoints are defined in Robot.java and updated with alliance-relative poses in robotPeriodic()
     public Command gotoWaypoint(String name) {
-        if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name))
-            return Commands.none();
+        if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name)) return Commands.none();
+        pathing = true;
         return Commands.defer(
             () -> AutoBuilder.pathfindToPose(waypoints.get(name), constraints),
             Set.of(drivetrain)
-        ).withName("goToWaypoint");
+        )
+        .finallyDo(() -> pathing = false)
+        .withName("goToWaypoint");
     }
 
     // *Pathfind to waypoint corresponding with selectedWaypointIndex
     public Command goToSelectedWaypoint() {
-        if (!AutoBuilder.isConfigured())
-            return Commands.none();
+        if (!AutoBuilder.isConfigured()) return Commands.none();
+        pathing = true;
         return Commands.defer(
             () -> {
-                String selectedWaypoint = new ArrayList<>(waypoints.keySet()).get(selectedWaypointIndex);
-                return AutoBuilder.pathfindToPose(waypoints.get(selectedWaypoint), constraints);
+                return AutoBuilder.pathfindToPose(waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints);
                 },
             Set.of(drivetrain)
-        ).withName("goToSelectedWaypoint");
+        )
+        .finallyDo(() -> pathing = false)
+        .withName("goToSelectedWaypoint");
     }
 
     // *Intended alignment pipeline.
@@ -293,12 +324,16 @@ public class Pathmaster {
     public Command pathfindToPath(String pathName) {
         if (!AutoBuilder.isConfigured()) return Commands.none();
         try {
+            pathing = true;
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
             return Commands.defer(
                 () -> AutoBuilder.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
-            ).withName("pathfindToPath");
+            )
+            .finallyDo(() -> pathing = false)
+            .withName("pathfindToPath");
         } catch (Exception e) {
+            pathing = false;
             DriverStation.reportError(
                 "[Pathmaster] Path not found: " + pathName, true);
             return Commands.none();
@@ -309,21 +344,29 @@ public class Pathmaster {
     // ?Copied from Spartronics.
     public Command pathToNearestPose(List<Pose2d> candidates) {
         if (candidates.isEmpty()) return Commands.none();
-        return Commands.defer(() -> {
-            Pose2d nearest = candidates.stream()
-                .min(Comparator.comparingDouble(
-                    p -> p.getTranslation()
-                           .getDistance(robotPose.get().getTranslation())
-                ))
-                .orElseThrow();
-            return AutoBuilder.pathfindToPose(nearest, constraints);
-        }, Set.of(drivetrain)).withName("pathToNearestPose");
+        pathing = true;
+        return Commands.defer(
+            () -> {
+                Pose2d nearest = candidates.stream()
+                    .min(Comparator.comparingDouble(
+                        p -> p.getTranslation()
+                            .getDistance(robotPose.get().getTranslation())
+                    ))
+                    .orElseThrow();
+                return AutoBuilder.pathfindToPose(nearest, constraints);
+            }, Set.of(drivetrain)
+        )
+        .finallyDo(() -> pathing = false)
+        .withName("pathToNearestPose");
     }
 
     // *Pathfinds to the nearest registered waypoint.
     public Command pathToNearestWaypoint() {
         if (waypoints.isEmpty()) return Commands.none();
-        return pathToNearestPose(waypoints.values().stream().toList()).withName("pathToNearestWaypoint");
+        pathing = true;
+        return pathToNearestPose(waypoints.values().stream().toList())
+        .finallyDo(() -> pathing = false)
+        .withName("pathToNearestWaypoint");
     }
 
 
@@ -331,12 +374,16 @@ public class Pathmaster {
      * *Pathfinds to a destination while arriving faced toward a separate target.
      */
     public Command pathfindFaceTargetPose(Pose2d destination, Pose2d faceTarget) {
-
-        return Commands.defer(() -> {
-            Rotation2d facing = getRotationToPose(destination, faceTarget);
-            Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
-            return AutoBuilder.pathfindToPose(oriented, constraints);
-        }, Set.of(drivetrain)).withName("pathfindFaceTargetPose");
+        pathing = true;
+        return Commands.defer(
+            () -> {
+                Rotation2d facing = getRotationToPose(destination, faceTarget);
+                Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
+                return AutoBuilder.pathfindToPose(oriented, constraints);
+            }, Set.of(drivetrain)
+        )
+        .finallyDo(() -> pathing = false)
+        .withName("pathfindFaceTargetPose");
     }
 
     /**
