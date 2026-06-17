@@ -81,18 +81,18 @@ public class Robot extends LoggedRobot {
     });
   }
 
-  // *Set gyro yaw and Limelight fiducial filters based on alliance color
+  // *Set gyro yaw based on alliance color
   private void applyAllianceConfig() {
     if (allianceConfigApplied) return;
 
     var allianceOpt = DriverStation.getAlliance();
-    if (allianceOpt.isEmpty()) return;  // DS not connected yet — don't lock the flag
+    if (allianceOpt.isEmpty()) return; // DS not connected yet; don't lock the flag
 
     Alliance alliance = allianceOpt.get();
     boolean red = alliance == Alliance.Red;
 
     m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-    allianceConfigApplied = true;       // only set true when we got a real value
+    allianceConfigApplied = true; // only set true when we got a real value
   }
 
   private void setOrchestraTrack(String audioPath) {

@@ -38,7 +38,6 @@ import frc.robot.commands.Intaking;
 import frc.robot.commands.PostPathPreciseAlignment;
 
 import frc.robot.subsystems.Intake;
-//import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.vision.*;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
@@ -74,21 +73,14 @@ public class RobotContainer {
 
     //! ACTUAL IMPORTANT STUFF (initiallize subsystems and the like)
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    
     public final VisionGeneral vision;
-    //private final LLSubsystem oldVision;
-    //private final VisionSimSystem vision;
-    //private final LLSubsystem LLVision = new LLSubsystem(drivetrain, "limelight", "pppr");
+    public final Pathmaster monkeyDLuffy;
+    private final Shooter shooter;
+    private final Intake intake = new Intake();
+    private final Pivot pivot = new Pivot();
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     public static final CommandXboxController subjoystick = new CommandXboxController(1);
-
-    private final Shooter shooter;
-    private final Intake intake = new Intake();
-    //private final Climb climb = new Climb();
-    private final Pivot pivot = new Pivot();
-
-    public final Pathmaster monkeyDLuffy;
 
     // Path follower
     private SendableChooser<Command> autoChooser;
@@ -165,14 +157,16 @@ public class RobotContainer {
             })
         );
 
-
         //! SUBJOYSTICK
         // *Triggers and Bumpers
+        // subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
+        // subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
+        //     .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        // subjoystick.leftBumper().and(subjoystick.leftTrigger())
+        //     .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+
         subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
-            .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        subjoystick.leftBumper().and(subjoystick.leftTrigger())
-            .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
 
         subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
         subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
@@ -191,8 +185,6 @@ public class RobotContainer {
         subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
         subjoystick.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
         subjoystick.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-        
-
 
         //! JOYSTICK 
         // *Triggers and Bumpers
@@ -202,19 +194,38 @@ public class RobotContainer {
                 new RunCommand(() -> shooter.spinKickersSpecified(-.6), shooter)
             )
         );
+        
         joystick.leftTrigger().onFalse(
             Commands.parallel(
                 new RunCommand(() -> intake.stopIntake(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
         ));
+
+        joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
+
+        joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
+        joystick.rightTrigger().and(joystick.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection()));
+
         //joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
         //joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
-        joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
+        // *Letters
+        // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
-        // *May be unnecessary; we shall see at TRI or later testing
-        joystick.rightTrigger().and(joystick.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection(directionFlipper == 1.0 ? -1.0 : 1.0)));
+        if (vision instanceof LLSubsystemMany) {
+            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
+        }
+
+        joystick.b().whileTrue(
+            Commands.defer(
+                () -> monkeyDLuffy.goToSelectedWaypoint()
+                    .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
+                Set.of(drivetrain)
+            )
+        );
+
+        joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+        joystick.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
         // *POV Controls
         // joystick.povUp()
@@ -227,28 +238,6 @@ public class RobotContainer {
         // joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         // joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
-        // *Letters
-        // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
-        
-        if (vision instanceof LLSubsystemMany) {
-            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
-        }
-        
-        // joystick.b().whileTrue(new RunCommand(() -> this.flipDirection(1.0)));
-        // joystick.x().whileTrue(new PV_Align(drivetrain, vision, VisionConstants.getMiddleTagId(), 1.5, 0, 0));
-        joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-        // joystick.y().whileTrue(new RunCommand(() -> this.flipDirection(-1.0)));
-
-        // *Pathfinding
-        joystick.b().whileTrue(
-            Commands.defer(
-                () -> monkeyDLuffy.goToSelectedWaypoint()
-                    .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
-                Set.of(drivetrain)
-            )
-        );
-
-        joystick.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
         
     }
 
@@ -273,8 +262,8 @@ public class RobotContainer {
     }
 
     // *flipping direction for driver orientation
-    public void flipDirection(double newDir){
-        this.directionFlipper = newDir;
+    public void flipDirection(){
+        directionFlipper = directionFlipper * -1;
     }
     
 
@@ -284,7 +273,6 @@ public class RobotContainer {
     public Command getAutonomousCommand() { return autoChooser.getSelected(); }
 
     public Intake getIntake() { return intake; }
-    //public Climb getClimb() { return climb; }
     public Shooter getShooter() { return shooter; }
     public Pivot getPivot() { return pivot; }
 }

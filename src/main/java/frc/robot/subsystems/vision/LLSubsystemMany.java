@@ -79,7 +79,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         for (String cam : llCameras) {
             LimelightHelpers.setPipelineIndex(cam, 9);
-            //No native IMU usage, only use Pigeon2 heading
             LimelightHelpers.SetIMUMode(cam, 0);
 
             //LimelightHelpers.SetFiducialIDFiltersOverride(cam, new int[]{});
