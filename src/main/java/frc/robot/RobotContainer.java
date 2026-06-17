@@ -45,7 +45,6 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 import frc.robot.generated.TunerConstants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.pathfinding.Pathmaster;
 
