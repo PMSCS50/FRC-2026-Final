@@ -65,8 +65,8 @@ public final class Constants {
             .withDriveRequestType(DriveRequestType.Velocity);
 
     // !High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
-    public static final double pathMaxLinearAcceleration = 13.67; // m/s^2
-    public static final double pathMaxAngularAcceleration = 12; // rad/s^2
+    public static final double pathMaxLinearAcceleration =  5; // m/s^2
+    public static final double pathMaxAngularAcceleration = 5; // rad/s^2
   }
 
   // *Constants for vision processing and AprilTag field layout
@@ -94,9 +94,12 @@ public final class Constants {
     }
 
     public static double getDirectionFlipper() {
-      return DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red ? 1 : -1;
-    }
+      if (DriverStation.getAlliance().isEmpty()) {
+        return 0;
+      }
 
+      return DriverStation.getAlliance().get() == DriverStation.Alliance.Red ? 1 : -1;
+    }
 
     public static AprilTagFieldLayout aprilTagLayoutWelded = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     public static AprilTagFieldLayout aprilTagLayoutAndymark = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
