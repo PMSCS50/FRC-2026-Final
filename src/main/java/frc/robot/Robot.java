@@ -56,7 +56,7 @@ public class Robot extends LoggedRobot {
 
     for (int i = 0; i < 4; i++) {
       m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(),0);
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(),0);
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(),1);
     }
   }
 
