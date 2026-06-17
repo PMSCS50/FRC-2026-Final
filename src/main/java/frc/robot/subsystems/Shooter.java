@@ -82,6 +82,8 @@ public class Shooter extends SubsystemBase {
     private void configureShooterMotor(TalonFXConfiguration config) {
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
+        config.Audio.AllowMusicDurDisable = true;
+
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40.0;
@@ -175,5 +177,13 @@ public class Shooter extends SubsystemBase {
 
     public double getVelocity() {
         return shooterMotor1.getVelocity().getValueAsDouble();
+    }
+
+    public TalonFX getShooterMotor1() {
+        return shooterMotor1;
+    }
+
+    public TalonFX getShooterMotor2() {
+        return shooterMotor2;
     }
 }

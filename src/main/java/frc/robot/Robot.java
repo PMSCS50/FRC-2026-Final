@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.ctre.phoenix6.Orchestra;
 
+import frc.robot.Constants.VisionConstants;
 import frc.robot.pathfinding.Pathmaster;
 
 public class Robot extends LoggedRobot {
@@ -29,9 +30,10 @@ public class Robot extends LoggedRobot {
 
   private final RobotContainer m_robotContainer;
   private boolean allianceConfigApplied = false;
+  private String allianceColor = "Unknown";
 
   private boolean allowOrchestra = true; // Orchestra currently disabled.
-  private final Orchestra m_orchestra = new Orchestra();
+  private final Orchestra m_orchestra = new Orchestra("audio/Symphony_FTNW_movt_4.chrp");
 
   int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
@@ -54,10 +56,15 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.monkeyDLuffy.startWarmupCommand();
 
+    //Add all orchestra instruments
     for (int i = 0; i < 4; i++) {
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(),0);
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(),0);
+      //Drivetrain
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor());
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor());
     }
+    //Shooter
+    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor1());
+    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor2());
   }
 
   @Override
@@ -91,13 +98,9 @@ public class Robot extends LoggedRobot {
     Alliance alliance = allianceOpt.get();
     boolean red = alliance == Alliance.Red;
 
+    allianceColor = red ? "Red" : "Blue";
     m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
     allianceConfigApplied = true; // only set true when we got a real value
-  }
-
-  private void setOrchestraTrack(String audioPath) {
-    m_orchestra.stop();
-    m_orchestra.loadMusic(audioPath);
   }
 
   // // *Flip robot direction based on alliance color (if needed) for driver control
@@ -112,6 +115,9 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     applyAllianceConfig();
+    if (m_robotContainer.directionFlipper == 0) {
+      m_robotContainer.directionFlipper = VisionConstants.getDirectionFlipper();
+    }
     CommandScheduler.getInstance().run();
     m_robotContainer.monkeyDLuffy.log();
 
@@ -131,15 +137,11 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
     Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
-    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
-    // if (allowOrchestra){
-    //   if (!m_orchestra.isPlaying() && m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
-    //   m_orchestra.play();
+    Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
+    Logger.recordOutput("Field/UsedAlliance", allianceColor);
+    Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
 
-    //   } else if (m_orchestra.isPlaying() && !m_robotContainer.drivetrain.getSpeeds().equals(new ChassisSpeeds())) {
-    //     m_orchestra.stop();
-    //   }
-    // }
+    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     
   }
 
@@ -154,12 +156,9 @@ public class Robot extends LoggedRobot {
       DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
     }
 
-    if (!m_orchestra.isPlaying()) {
-      setOrchestraTrack("audio/LR_PHY_SSJ2_Gohan_Active_Skill.chrp");
+    if (!m_orchestra.isPlaying() && allowOrchestra) {
       m_orchestra.play();
     }
-
-    //applyAllianceConfig();
 
     //double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
     // m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
@@ -168,7 +167,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledExit() {
-    m_orchestra.stop();
+      if (m_orchestra.isPlaying()) {
+        m_orchestra.stop();
+      }
   }
 
   // *Autonomous mode
