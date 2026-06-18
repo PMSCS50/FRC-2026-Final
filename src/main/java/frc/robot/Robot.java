@@ -14,6 +14,7 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -35,8 +36,8 @@ public class Robot extends LoggedRobot {
   private boolean allowOrchestra = true; // Orchestra currently disabled.
   private final Orchestra m_orchestra = new Orchestra("audio/Symphony_FTNW_movt_4.chrp");
 
-  int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-  int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
+  // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+  // int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Orion (Pissbot)");
@@ -56,17 +57,19 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.monkeyDLuffy.startWarmupCommand();
 
-    //Add all orchestra instruments
+    // *Add all orchestra instruments
+    // |Drivetrain
     for (int i = 0; i < 4; i++) {
-      //Drivetrain
       m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor());
       m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor());
     }
-    //Shooter
+    
+    // |Shooter
     m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor1());
     m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor2());
   }
 
+  // !CODE FOR ROBOT STATES
   @Override
   public void robotInit() {
     applyAllianceConfig();
@@ -88,36 +91,14 @@ public class Robot extends LoggedRobot {
     });
   }
 
-  // *Set gyro yaw based on alliance color
-  private void applyAllianceConfig() {
-    if (allianceConfigApplied) return;
-
-    var allianceOpt = DriverStation.getAlliance();
-    if (allianceOpt.isEmpty()) return; // DS not connected yet; don't lock the flag
-
-    Alliance alliance = allianceOpt.get();
-    boolean red = alliance == Alliance.Red;
-
-    allianceColor = red ? "Red" : "Blue";
-    m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-    allianceConfigApplied = true; // only set true when we got a real value
-  }
-
-  // // *Flip robot direction based on alliance color (if needed) for driver control
-  // // |not currently used since we are using field-oriented control, but can be useful if we switch to robot-oriented control for teleop
-  // private void applyAllianceDirFlip() {
-  //   Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-  //   boolean red = alliance == Alliance.Red;
-
-  //   m_robotContainer.flipDirection(red ? -1 : 1); 
-  // }
-
   @Override
   public void robotPeriodic() {
     applyAllianceConfig();
+
     if (m_robotContainer.directionFlipper == 0) {
       m_robotContainer.directionFlipper = VisionConstants.getDirectionFlipper();
     }
+
     CommandScheduler.getInstance().run();
     m_robotContainer.monkeyDLuffy.log();
 
@@ -130,8 +111,8 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
     Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
     Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
-
     
+    // |Miscellaneous
     Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
     Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
     Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
@@ -147,11 +128,14 @@ public class Robot extends LoggedRobot {
 
   // *Disabled mode
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    rumbleControllers(0);
+  }
 
   @Override
   public void disabledPeriodic() {
-    //DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+    rumbleControllers(0);
+
     if (Constants.currentMode == Constants.simMode) {
       DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
     }
@@ -160,7 +144,6 @@ public class Robot extends LoggedRobot {
       m_orchestra.play();
     }
 
-    //double robotYaw = m_robotContainer.drivetrain.getPigeon2().getYaw().getValueAsDouble();
     // m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
     //m_robotContainer.vision.setIMUModeAll(1);
   }
@@ -197,7 +180,13 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (m_robotContainer.vision.isAlignedToHub()) {
+      rumbleControllers(0);
+    } else {
+      rumbleControllers(0);
+    }
+  }
 
   @Override
   public void teleopExit() {}
@@ -224,4 +213,36 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {
     m_robotContainer.drivetrain.updateSimState(0.02, RobotController.getBatteryVoltage());
   }
+
+  // !HELPERS
+    // *Set gyro yaw based on alliance color
+  private void applyAllianceConfig() {
+    if (allianceConfigApplied) return;
+
+    var allianceOpt = DriverStation.getAlliance();
+    if (allianceOpt.isEmpty()) return; // DS not connected yet; don't lock the flag
+
+    Alliance alliance = allianceOpt.get();
+    boolean red = alliance == Alliance.Red;
+
+    allianceColor = red ? "Red" : "Blue";
+    m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
+    allianceConfigApplied = true; // only set true when we got a real value
+  }
+
+  private void rumbleControllers(double force) {
+    RobotContainer.driverController.setRumble(RumbleType.kLeftRumble, force);
+    RobotContainer.driverController.setRumble(RumbleType.kRightRumble, force);
+    RobotContainer.operatorController.setRumble(RumbleType.kLeftRumble, force);
+    RobotContainer.operatorController.setRumble(RumbleType.kRightRumble, force);
+  }
+
+  // // *Flip robot direction based on alliance color (if needed) for driver control
+  // // |not currently used since we are using field-oriented control, but can be useful if we switch to robot-oriented control for teleop
+  // private void applyAllianceDirFlip() {
+  //   Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+  //   boolean red = alliance == Alliance.Red;
+
+  //   m_robotContainer.flipDirection(red ? -1 : 1); 
+  // }
 }

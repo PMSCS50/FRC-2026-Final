@@ -21,6 +21,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -78,8 +79,8 @@ public class RobotContainer {
     private final Intake intake = new Intake();
     private final Pivot pivot = new Pivot();
 
-    private final CommandXboxController joystick = new CommandXboxController(0);
-    public static final CommandXboxController subjoystick = new CommandXboxController(1);
+    public static final CommandXboxController driverController = new CommandXboxController(0);
+    public static final CommandXboxController operatorController = new CommandXboxController(1);
 
     // Path follower
     private SendableChooser<Command> autoChooser;
@@ -106,9 +107,10 @@ public class RobotContainer {
         }
         
         shooter = new Shooter(vision);
-        
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * 0.15, pathMaxLinearAcceleration, MaxAngularRate * 0.15, pathMaxAngularAcceleration);
         
+        // *Shooting
+        NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
         NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
 
         // *Intaking
@@ -122,14 +124,12 @@ public class RobotContainer {
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
-        NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
-
         // *Five shooting setpoints that form a semicircle around the hub
-
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
             monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
         }
 
+        // *Rotation Zones (trenches)
         monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
         monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
         monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
@@ -144,11 +144,13 @@ public class RobotContainer {
 
     // *Configure Bindings
     private void configureBindings() {
+        // !Driver
+        // *Driving joysticks
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
-                double forward =  joystick.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;
-                double translation = joystick.getLeftX() * MaxSpeed * directionFlipper * speedLimiter;
-                double turn = joystick.getRightX() * MaxAngularRate * speedLimiter* -1;
+                double forward = driverController.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;
+                double translation = driverController.getLeftX() * MaxSpeed * directionFlipper * speedLimiter;
+                double turn = driverController.getRightX() * MaxAngularRate * speedLimiter* -1;
                 return drive
                     .withVelocityX(forward)
                     .withVelocityY(translation)
@@ -156,37 +158,36 @@ public class RobotContainer {
             })
         );
 
-        //! JOYSTICK 
         // *Triggers and Bumpers
-        joystick.leftTrigger().whileTrue(
+       driverController.leftTrigger().whileTrue(
             Commands.parallel(
                 new RunCommand(() -> intake.spinIntakePID(1), intake),
                 new RunCommand(() -> shooter.spinKickersSpecified(-.6), shooter)
             )
         );
         
-        joystick.leftTrigger().onFalse(
+       driverController.leftTrigger().onFalse(
             Commands.parallel(
                 new RunCommand(() -> intake.stopIntake(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
         ));
 
-        joystick.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
+       driverController.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
 
-        joystick.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
-        joystick.rightTrigger().and(joystick.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection()));
+       driverController.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
+       driverController.rightTrigger().and(driverController.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection()));
 
         //joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
         //joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
         // *Letters
-        // joystick.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
+        //driverController.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
         if (vision instanceof LLSubsystemMany) {
-            joystick.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
+           driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
 
-        joystick.b().whileTrue(
+       driverController.b().whileTrue(
             Commands.defer(
                 () -> monkeyDLuffy.goToSelectedWaypoint()
                     .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
@@ -194,48 +195,48 @@ public class RobotContainer {
             )
         );
 
-        joystick.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-        joystick.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
+       driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+       driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
         // *POV Controls
-        // joystick.povUp()
-        // joystick.povRight()
-        // joystick.povLeft()
-        // joystick.povUp()
+        //driverController.povUp()
+        //driverController.povRight()
+        //driverController.povLeft()
+        //driverController.povUp()
 
-        // joystick.povUp().whileTrue(new RunCommand(() -> this.setSpeed(1.0)));
-        // joystick.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.500)));
-        // joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
-        // joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
+        //driverController.povUp().whileTrue(new RunCommand(() -> this.setSpeed(1.0)));
+        //driverController.povRight().whileTrue(new RunCommand(() -> this.setSpeed(0.500)));
+        //driverController.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
+        //driverController.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
-        //! SUBJOYSTICK
+        //! Operator
         // *Triggers and Bumpers
-        // subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        // subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
+        // operatorController.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
+        // operatorController.leftBumper().and(operatorController.leftTrigger().negate())
         //     .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        // subjoystick.leftBumper().and(subjoystick.leftTrigger())
+        // operatorController.leftBumper().and(operatorController.leftTrigger())
         //     .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        operatorController.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
+        operatorController.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
 
-        subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
-        subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
+        operatorController.rightTrigger().whileTrue(new Pivoting(pivot, true));
+        operatorController.rightBumper().whileTrue(new Pivoting(pivot, false));
 
         // *POV Controls
-        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
-        subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
+        operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
+        operatorController.povDown().or(operatorController.povDownLeft()).or(operatorController.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
 
-        // subjoystick.povLeft()
-        // subjoystick.povRight()
+        // operatorController.povLeft()
+        // operatorController.povRight()
 
         // *Letters
-        subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
-        subjoystick.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
-        subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
-        subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-        subjoystick.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
-        subjoystick.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));        
+        operatorController.a().whileTrue(new FixedPIDShooting(shooter, 5));
+        operatorController.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
+        operatorController.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
+        operatorController.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
+        operatorController.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
+        operatorController.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));        
     }
 
     // *changing drivetrain speed: crawl, low, mid, high
@@ -248,7 +249,7 @@ public class RobotContainer {
             turningSpeed = .25;
             Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
         } else {
-            turningSpeed = joystick.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
+            turningSpeed =driverController.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
 
             if (speed <= 0.3) Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
             else if (speed <= 0.5) Logger.recordOutput("Drivetrain/Swerve Speed", "MID");
