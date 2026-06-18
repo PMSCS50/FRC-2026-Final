@@ -158,7 +158,7 @@ public final class Constants {
     public static final double kMaxPivotAcceleration = 1.0; // rotations per second^2, tune as needed
 
     public static final double kPivotSetpointA = 0.0;  
-    public static final double kPivotSetpointB = 16; 
+    public static final double kPivotSetpointB = 17; 
     
     public static final double pivotUpPosition   = 0/* rotations */;
     public static final double pivotDownPosition = 0.5;

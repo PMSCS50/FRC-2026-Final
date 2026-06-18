@@ -7,6 +7,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -28,11 +29,12 @@ public class Pivot extends SubsystemBase {
     private final SparkMax pivotMotor = new SparkMax(IntakeConstants.pivotMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
 
-    private double outputMin = -0.3, outputMax = 0.3;
+    private double outputMin = -1, outputMax = 1;
+    private double targetPosition = 0;
 
     // *MAXMotion profile constraints.
-    private static final double kMaxMotionMaxVelocityRpm        = 1702.8;
-    private static final double kMaxMotionMaxAccelerationRpmSec = 1000;
+    private static final double kMaxMotionMaxVelocity = 1702.8;
+    private static final double kMaxMotionMaxAcceleration = 5000;
     private static final double kMaxMotionAllowedErrorRotations = 0.05;
 
     private final Debouncer stallDebouncer = new Debouncer(0.1, DebounceType.kRising);
@@ -57,15 +59,15 @@ public class Pivot extends SubsystemBase {
 
         pivotMotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(.05, 0, 0)
+                .pid(3, 0, 0)
                 .outputRange(outputMin, outputMax)
                 .positionWrappingEnabled(false);
 
         // *MaxMotion config
         pivotMotorConfig.closedLoop.maxMotion
                 .positionMode(MAXMotionPositionMode.kMAXMotionTrapezoidal)
-                .cruiseVelocity(kMaxMotionMaxVelocityRpm)
-                .maxAcceleration(kMaxMotionMaxAccelerationRpmSec)
+                .cruiseVelocity(kMaxMotionMaxVelocity)
+                .maxAcceleration(kMaxMotionMaxAcceleration)
                 .allowedProfileError(kMaxMotionAllowedErrorRotations);
 
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -86,6 +88,11 @@ public class Pivot extends SubsystemBase {
         Logger.recordOutput("Pivot/Amperage (amps)", getPivotAmps());
         Logger.recordOutput("Pivot/Pivot Amount (rotations)", getPivotEncoder().getPosition());
         Logger.recordOutput("Pivot/Is Stalled", pivotStalled);
+
+        Logger.recordOutput("Pivot/TargetPosition", targetPosition);
+        Logger.recordOutput("Pivot/PositionError", targetPosition - getPivotPosition());
+        Logger.recordOutput("Pivot/AppliedOutput", pivotMotor.getAppliedOutput());
+        Logger.recordOutput("Pivot/Velocity", getPivotVelocity());
     }
 
     public double getPivotAmps() {
@@ -155,7 +162,12 @@ public class Pivot extends SubsystemBase {
 
     // *MAXMotion position control — trapezoidal profile, use this for deployment
     public void goToPositionMAXMotion(double targetRotations) {
-        pivotClosedLoopController.setSetpoint(targetRotations, ControlType.kMAXMotionPositionControl);
+        targetPosition = targetRotations;
+
+        pivotClosedLoopController.setSetpoint(
+            targetRotations,
+            ControlType.kMAXMotionPositionControl
+        );
     }
 
     // *MAXMotion with stall guard

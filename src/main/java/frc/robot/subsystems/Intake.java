@@ -25,6 +25,7 @@ public class Intake extends SubsystemBase {
     private final SparkMaxConfig intakeMotorConfig = new SparkMaxConfig();
     private final SparkMax intakeMotor = new SparkMax(IntakeConstants.intakeMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder intakeEncoder = intakeMotor.getEncoder();
+    private double targetRPM = 0;
 
     // *calculations for freespinning neo
     public static final class NeoMotorConstants {
@@ -58,6 +59,8 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         Logger.recordOutput("Intake/Amperage (amps)", intakeMotor.getOutputCurrent());
         Logger.recordOutput("Intake/Velocity (rpm)", intakeEncoder.getVelocity());
+        Logger.recordOutput("Intake/TargetRPM", targetRPM);
+        Logger.recordOutput("Intake/AppliedOutput", intakeMotor.getAppliedOutput());
 
         //SmartDashboard.putNumber("Intake/Amps", intakeMotor.getOutputCurrent());
     }
@@ -67,7 +70,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void spinIntakePID(double percent) {
-        double targetRPM = 5676 * percent;
+        targetRPM = 5676 * percent;
         intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);
     }
 

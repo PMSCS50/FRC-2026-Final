@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -33,8 +34,8 @@ public class Robot extends LoggedRobot {
   private boolean allianceConfigApplied = false;
   private String allianceColor = "Unknown";
 
-  private boolean allowOrchestra = true; // Orchestra currently disabled.
-  private final Orchestra m_orchestra = new Orchestra("audio/Symphony_FTNW_movt_4.chrp");
+  private boolean allowOrchestra = false; // Orchestra currently disabled.
+  private final Orchestra m_orchestra = new Orchestra("audio/LR_PHY_SSJ2_Gohan_Active_Skill.chrp");
 
   // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   // int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
@@ -60,13 +61,13 @@ public class Robot extends LoggedRobot {
     // *Add all orchestra instruments
     // |Drivetrain
     for (int i = 0; i < 4; i++) {
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor());
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor());
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(), 0);
+      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(), 1);
     }
     
     // |Shooter
-    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor1());
-    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor2());
+    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor1(), 0);
+    m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor2(), 0);
   }
 
   // !CODE FOR ROBOT STATES
@@ -130,6 +131,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     rumbleControllers(0);
+    setLimelightThrottle(200);
   }
 
   @Override
@@ -162,6 +164,7 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
+    setLimelightThrottle(0);
   }
 
   @Override
@@ -177,12 +180,13 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+    setLimelightThrottle(0);
   }
 
   @Override
   public void teleopPeriodic() {
     if (m_robotContainer.vision.isAlignedToHub()) {
-      rumbleControllers(0);
+      rumbleControllers(1);
     } else {
       rumbleControllers(0);
     }
@@ -195,6 +199,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
+    setLimelightThrottle(0);
   }
 
   @Override
@@ -235,6 +240,13 @@ public class Robot extends LoggedRobot {
     RobotContainer.driverController.setRumble(RumbleType.kRightRumble, force);
     RobotContainer.operatorController.setRumble(RumbleType.kLeftRumble, force);
     RobotContainer.operatorController.setRumble(RumbleType.kRightRumble, force);
+  }
+
+  private void setLimelightThrottle(int value) {
+    NetworkTableInstance.getDefault()
+        .getTable("limelight")
+        .getEntry("throttle_set")
+        .setNumber(value);
   }
 
   // // *Flip robot direction based on alliance color (if needed) for driver control

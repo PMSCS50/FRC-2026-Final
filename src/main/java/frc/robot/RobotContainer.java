@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.cameraserver.CameraServer;
 
@@ -45,6 +46,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 import frc.robot.generated.TunerConstants;
+import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.pathfinding.Pathmaster;
 
@@ -217,11 +219,34 @@ public class RobotContainer {
         // operatorController.leftBumper().and(operatorController.leftTrigger())
         //     .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        operatorController.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        operatorController.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        operatorController.leftTrigger().whileTrue(
+            new StartEndCommand(
+                () -> intake.spinIntakePID(1),
+                () -> intake.stopIntake(),
+                intake
+            )
+        );
+        operatorController.leftBumper().whileTrue(
+            new StartEndCommand(
+                () -> intake.spinIntakePID(-1),
+                () -> intake.stopIntake(),
+                intake
+            )
+        );
 
-        operatorController.rightTrigger().whileTrue(new Pivoting(pivot, true));
-        operatorController.rightBumper().whileTrue(new Pivoting(pivot, false));
+        operatorController.rightTrigger().onTrue(
+            new InstantCommand(
+                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointB),
+                pivot
+            )
+        );
+
+        operatorController.rightBumper().onTrue(
+            new InstantCommand(
+                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointA),
+                pivot
+            )
+        );
 
         // *POV Controls
         operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
@@ -233,9 +258,9 @@ public class RobotContainer {
         // *Letters
         operatorController.a().whileTrue(new FixedPIDShooting(shooter, 5));
         operatorController.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
-        operatorController.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
+        operatorController.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.1), pivot));
         operatorController.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-        operatorController.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
+        operatorController.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.1), pivot));
         operatorController.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));        
     }
 
