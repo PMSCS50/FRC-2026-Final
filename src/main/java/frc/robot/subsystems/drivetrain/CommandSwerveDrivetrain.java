@@ -224,10 +224,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         configureAutoBuilder();
     }
 
+    // *Configure the Autobuilder for auton paths and stuff
     private void configureAutoBuilder() {
         try {
             var config = RobotConfig.fromGUISettings();
-
             m_setpointGenerator = new SwerveSetpointGenerator(
                 config,
                 RotationsPerSecond.of(3).in(RadiansPerSecond) // max rotational velocity in rad/s
@@ -280,7 +280,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this // Subsystem for requirements
             );
         } catch (Exception ex) {
-            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.getStackTrace());
+            DriverStation.reportError(
+                "Failed to load PathPlanner config and configure AutoBuilder: " + ex.getMessage(),
+                ex.getStackTrace()
+            );
+            throw new RuntimeException("RobotConfig load failed — deploy may be missing deploy/pathplanner/settings.json", ex);
         }
     }
 

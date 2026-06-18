@@ -156,35 +156,6 @@ public class RobotContainer {
             })
         );
 
-        //! SUBJOYSTICK
-        // *Triggers and Bumpers
-        // subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        // subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
-        //     .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-        // subjoystick.leftBumper().and(subjoystick.leftTrigger())
-        //     .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
-
-        subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
-        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
-
-        subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
-        subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
-
-        // *POV Controls
-        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
-        subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
-
-        // subjoystick.povLeft()
-        // subjoystick.povRight()
-
-        // *Letters
-        subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
-        subjoystick.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
-        subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
-        subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-        subjoystick.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
-        subjoystick.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-
         //! JOYSTICK 
         // *Triggers and Bumpers
         joystick.leftTrigger().whileTrue(
@@ -237,7 +208,34 @@ public class RobotContainer {
         // joystick.povLeft().whileTrue(new RunCommand(() -> this.setSpeed(0.200)));
         // joystick.povDown().whileTrue(new RunCommand(() -> this.setSpeed(0.1)));
 
-        
+        //! SUBJOYSTICK
+        // *Triggers and Bumpers
+        // subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
+        // subjoystick.leftBumper().and(subjoystick.leftTrigger().negate())
+        //     .whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+        // subjoystick.leftBumper().and(subjoystick.leftTrigger())
+        //     .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
+
+        subjoystick.leftTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(1), intake));
+        subjoystick.leftBumper().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
+
+        subjoystick.rightTrigger().whileTrue(new Pivoting(pivot, true));
+        subjoystick.rightBumper().whileTrue(new Pivoting(pivot, false));
+
+        // *POV Controls
+        subjoystick.povUp().or(subjoystick.povUpLeft()).or(subjoystick.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
+        subjoystick.povDown().or(subjoystick.povDownLeft()).or(subjoystick.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
+
+        // subjoystick.povLeft()
+        // subjoystick.povRight()
+
+        // *Letters
+        subjoystick.a().whileTrue(new FixedPIDShooting(shooter, 5));
+        subjoystick.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
+        subjoystick.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
+        subjoystick.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
+        subjoystick.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
+        subjoystick.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));        
     }
 
     // *changing drivetrain speed: crawl, low, mid, high
