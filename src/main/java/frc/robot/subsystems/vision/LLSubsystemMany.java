@@ -33,7 +33,7 @@ import java.util.List;
 
 public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
-
+    // *Initialize variables
     private final CommandSwerveDrivetrain drivetrain;
 
     private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
@@ -42,8 +42,9 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     private double omegaRps;
     private double headingDeg;
-    public Pose2d cachedHubPose = null;
     private SwerveDrivetrain.SwerveDriveState driveState;
+    private boolean hasSeededPose = false;
+    public Pose2d cachedHubPose = null;
 
     // *Pose of the robot, wrapped in latestEstimate, as well as other logged variables
     private Pose2d estimatedRobotPose;
@@ -140,6 +141,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
                 Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
+
+                if (!hasSeededPose) {
+                    drivetrain.resetPose(llMeasurement.pose);
+                    hasSeededPose = true;
+                }
+
                 drivetrain.addVisionMeasurement(
                     llMeasurement.pose,
                     Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
