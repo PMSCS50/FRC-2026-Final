@@ -163,7 +163,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
         configureAutoBuilder();
-        configureSignalLogging();
+
+        //| Probably not needed since we are doing the same in Advantagecope
+        //configureSignalLogging();
     }
 
     /**
@@ -355,19 +357,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Pigeon2 pigeon = getPigeon2();
         // |Orientation
         Logger.recordOutput("Gyro/RawYaw",   pigeon.getYaw().getValueAsDouble());
-        Logger.recordOutput("Gyro/Pitch",    pigeon.getPitch().getValueAsDouble());
-        Logger.recordOutput("Gyro/Roll",     pigeon.getRoll().getValueAsDouble());
+        // Logger.recordOutput("Gyro/Pitch",    pigeon.getPitch().getValueAsDouble());
+        // Logger.recordOutput("Gyro/Roll",     pigeon.getRoll().getValueAsDouble());
 
         // |Angular rates — useful for catching MT2 rejections and tip-over events
         Logger.recordOutput("Gyro/YawRate",   pigeon.getAngularVelocityZWorld().getValueAsDouble());
-        Logger.recordOutput("Gyro/PitchRate", pigeon.getAngularVelocityYWorld().getValueAsDouble());
-        Logger.recordOutput("Gyro/RollRate",  pigeon.getAngularVelocityXWorld().getValueAsDouble());
+        // Logger.recordOutput("Gyro/PitchRate", pigeon.getAngularVelocityYWorld().getValueAsDouble());
+        // Logger.recordOutput("Gyro/RollRate",  pigeon.getAngularVelocityXWorld().getValueAsDouble());
 
         // |Health — tells you immediately if it browned out or rebooted mid-match
         Logger.recordOutput("Gyro/IsConnected",           pigeon.isConnected());
-        Logger.recordOutput("Gyro/FaultHardware",         pigeon.getFault_Hardware().getValue());
-        Logger.recordOutput("Gyro/FaultUndervoltage",     pigeon.getFault_Undervoltage().getValue());
-        Logger.recordOutput("Gyro/FaultBootDuringEnable", pigeon.getFault_BootDuringEnable().getValue());
+        // Logger.recordOutput("Gyro/FaultHardware",         pigeon.getFault_Hardware().getValue());
+        // Logger.recordOutput("Gyro/FaultUndervoltage",     pigeon.getFault_Undervoltage().getValue());
+        // Logger.recordOutput("Gyro/FaultBootDuringEnable", pigeon.getFault_BootDuringEnable().getValue());
 
         if (Utils.isSimulation()) {
             if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
@@ -423,7 +425,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         inputs.robotChassisSpeeds = state.Speeds;
         inputs.robotHeading = state.Pose.getRotation().getRadians();
-        inputs.robotPose = state.Pose;
+        //inputs.robotPose = state.Pose;
         
         // *For this example, we'll just set this to false. Implementing field-oriented control is left as an exercise to the user.
         inputs.isFieldOriented = false;

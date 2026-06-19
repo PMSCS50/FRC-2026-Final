@@ -66,7 +66,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private static final double FIELD_MAX_X          = Constants.FIELD_MAX_X;
     private static final double FIELD_MAX_Y          = Constants.FIELD_MAX_Y;
 
-    private Matrix<N3, N1> stdDevs = VecBuilder.fill(9999.0, 9999.0, 9999.0);
+    //private Matrix<N3, N1> stdDevs = VecBuilder.fill(9999.0, 9999.0, 9999.0);
     private int contributingCameras = 0;
 
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
@@ -90,16 +90,17 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     @Override
     public void periodic() {
         refreshAllianceCache();
-        Logger.recordOutput("Vision/PeriodicRunning", true);
-        Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
+        // Logger.recordOutput("Vision/PeriodicRunning", true);
+        // Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
 
         driveState = drivetrain.getState();
         headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
+        contributingCameras = 0;
 
         estimatedRobotPose = null;
         latestEstimate     = null;
-        stdDevs            = VecBuilder.fill(9999.0, 9999.0, 9999.0);
+        //stdDevs            = VecBuilder.fill(9999.0, 9999.0, 9999.0);
         totalTimestamp     = 0.0;
         totalLatency       = 0.0;
         totalTags          = 0;
@@ -118,24 +119,24 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
 
             if (llMeasurement == null) {
-                Logger.recordOutput("Vision/" + cam + "/Valid", false);
-                Logger.recordOutput("Vision/" + cam + "/RawPose", new Pose2d());
-                Logger.recordOutput("Vision/" + cam + "/TagIds", new int[0]);
-                Logger.recordOutput("Vision/" + cam + "/TagPoses", new Pose2d[0]);
+                // Logger.recordOutput("Vision/" + cam + "/Valid", false);
+                // Logger.recordOutput("Vision/" + cam + "/RawPose", new Pose2d());
+                // Logger.recordOutput("Vision/" + cam + "/TagIds", new int[0]);
+                // Logger.recordOutput("Vision/" + cam + "/TagPoses", new Pose2d[0]);
                 continue;
             }
 
-            Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
-            Logger.recordOutput("Vision/" + cam + "/RawPose", llMeasurement.pose);
+            //Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
+            //Logger.recordOutput("Vision/" + cam + "/RawPose", llMeasurement.pose);
 
             RawFiducial[] fiducials = llMeasurement.rawFiducials != null
                 ? llMeasurement.rawFiducials
                 : new RawFiducial[0];
 
-            int[] tagIds = Arrays.stream(fiducials)
-                .mapToInt(f -> f.id)
-                .toArray();
-            Logger.recordOutput("Vision/" + cam + "/TagIds", tagIds);
+            // int[] tagIds = Arrays.stream(fiducials)
+            //     .mapToInt(f -> f.id)
+            //     .toArray();
+            //Logger.recordOutput("Vision/" + cam + "/TagIds", tagIds);
 
             // !New version (faster since it pulls directly from RawFiducial)
             // *Fuse vision pose estimates to drivetrain pose estimate
@@ -173,11 +174,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             }
 
             // *Tag positions
-            Pose2d[] tagPoses = Arrays.stream(fiducials)
-                .filter(f -> tagtransforms.containsKey(f.id))
-                .map(f -> { Transform2d t = tagtransforms.get(f.id); return new Pose2d(t.getX(), t.getY(), t.getRotation()); })
-                .toArray(Pose2d[]::new);
-            Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
+            // Pose2d[] tagPoses = Arrays.stream(fiducials)
+            //     .filter(f -> tagtransforms.containsKey(f.id))
+            //     .map(f -> { Transform2d t = tagtransforms.get(f.id); return new Pose2d(t.getX(), t.getY(), t.getRotation()); })
+            //     .toArray(Pose2d[]::new);
+            //Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
         }
 
         estimatedRobotPose = driveState.Pose;
@@ -409,8 +410,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
         inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
 
-        Matrix<N3, N1> stdDevMatrix = stdDevs;
-        inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
+        // Matrix<N3, N1> stdDevMatrix = stdDevs;
+        // inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
     }
 }
 

@@ -212,20 +212,20 @@ public class VisionIOSim implements VisionIO {
             inputs.numTagsUsed      = numTags;
             inputs.avgTagDistMeters = avgDist;
 
-            // *Match VisionIOReal std-dev logic exactly (MegaTag2 style: pin yaw)
-            if (numTags >= 2) {
-                inputs.visionStdDevs = new double[] {
-                    0.5 * avgDist,
-                    0.5 * avgDist,
-                    9999.0
-                };
-            } else {
-                inputs.visionStdDevs = new double[] {
-                    1.0 * avgDist,
-                    1.0 * avgDist,
-                    9999.0
-                };
-            }
+            // // *Match VisionIOReal std-dev logic exactly (MegaTag2 style: pin yaw)
+            // if (numTags >= 2) {
+            //     inputs.visionStdDevs = new double[] {
+            //         0.5 * avgDist,
+            //         0.5 * avgDist,
+            //         9999.0
+            //     };
+            // } else {
+            //     inputs.visionStdDevs = new double[] {
+            //         1.0 * avgDist,
+            //         1.0 * avgDist,
+            //         9999.0
+            //     };
+            // }
         } else {
             inputs.hasEstimatedPose = false;
             inputs.visionStdDevs = new double[] {

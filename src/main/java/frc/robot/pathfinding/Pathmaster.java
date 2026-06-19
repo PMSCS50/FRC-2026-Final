@@ -431,11 +431,7 @@ public class Pathmaster {
 
     // !I SURE DO WONDER WHAT THIS DOES
     // |This logs stuff to AdvantageKit, which is really useful for debugging pathfinding issues and analyzing pathing performance after matches.
-    public void log() {
-        Logger.recordOutput("Pathmaster/pathing", isPathing());
-        Logger.recordOutput("Pathmaster/warmup", warmedUp());
-        Logger.recordOutput("Pathmaster/AutoBuilderConfigured", AutoBuilderConfigured());
-        Logger.recordOutput("Pathmaster/AutoBuilderPathFindingConfigured", AutoBuilderPathFindingConfigured());
+    public void logWaypoint() {
         Logger.recordOutput("Pathmaster/Selected Waypoint", selectedWaypoint());
         Logger.recordOutput("Pathmaster/Selected Waypoint Pose", selectedWaypointPose());
     }

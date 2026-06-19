@@ -30,7 +30,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.cameraserver.CameraServer;
 
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
@@ -140,7 +139,6 @@ public class RobotContainer {
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Tests");
         SmartDashboard.putData("Auto Mode", autoChooser);
-        CameraServer.startAutomaticCapture();
         configureBindings();
     }
 

@@ -101,27 +101,27 @@ public class Robot extends LoggedRobot {
     }
 
     CommandScheduler.getInstance().run();
-    m_robotContainer.monkeyDLuffy.log();
+    m_robotContainer.monkeyDLuffy.logWaypoint();
 
     // |RoboRIO voltage and current monitoring
     Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
     Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
-    Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
-    Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
-    Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
-    Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
-    Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
-    Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
+    // Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
+    // Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
+    // Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
+    // Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
+    // Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
+    // Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
     
-    // |Miscellaneous
-    Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
-    Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
-    Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
-    Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
+    // |Field (using Advantagescope for now)
+    // Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
+    // Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
+    // Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
+    // Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
-    Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
-    Logger.recordOutput("Field/UsedAlliance", allianceColor);
-    Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
+    // Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
+    // Logger.recordOutput("Field/UsedAlliance", allianceColor);
+    // Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     

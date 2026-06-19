@@ -131,9 +131,9 @@ public class VisionIOReal implements VisionIO {
 
         if (!LimelightHelpers.validPoseEstimate(pe)) {
             inputs.hasEstimatedPose = false;
-            inputs.visionStdDevs = new double[] {
-                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
-            };
+            // inputs.visionStdDevs = new double[] {
+            //     Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            // };
             return;
         }
 

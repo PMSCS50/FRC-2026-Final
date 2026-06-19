@@ -7,7 +7,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+//import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -90,8 +90,8 @@ public class Pivot extends SubsystemBase {
         Logger.recordOutput("Pivot/Is Stalled", pivotStalled);
 
         Logger.recordOutput("Pivot/TargetPosition", targetPosition);
-        Logger.recordOutput("Pivot/PositionError", targetPosition - getPivotPosition());
-        Logger.recordOutput("Pivot/AppliedOutput", pivotMotor.getAppliedOutput());
+        // Logger.recordOutput("Pivot/PositionError", targetPosition - getPivotPosition());
+        // Logger.recordOutput("Pivot/AppliedOutput", pivotMotor.getAppliedOutput());
         Logger.recordOutput("Pivot/Velocity", getPivotVelocity());
     }
 

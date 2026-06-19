@@ -88,17 +88,17 @@ public class PV_Sim extends VisionGeneral {
         Logger.processInputs("LoggedVision", inputs);
 
         // --- 4. Rebuild std-dev matrix ---------------------------------------
-        if (inputs.visionStdDevs != null && inputs.visionStdDevs.length >= 3) {
-            visionStdDevs = VecBuilder.fill(
-                inputs.visionStdDevs[0],
-                inputs.visionStdDevs[1],
-                inputs.visionStdDevs[2]
-            );
-        } else {
-            visionStdDevs = VecBuilder.fill(
-                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
-            );
-        }
+        // if (inputs.visionStdDevs != null && inputs.visionStdDevs.length >= 3) {
+        //     visionStdDevs = VecBuilder.fill(
+        //         inputs.visionStdDevs[0],
+        //         inputs.visionStdDevs[1],
+        //         inputs.visionStdDevs[2]
+        //     );
+        // } else {
+        //     visionStdDevs = VecBuilder.fill(
+        //         Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+        //     );
+        // }
 
         // --- 5. Feed pose estimate into drivetrain ---------------------------
         if (inputs.hasEstimatedPose) {

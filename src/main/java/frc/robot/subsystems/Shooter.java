@@ -40,10 +40,10 @@ public class Shooter extends SubsystemBase {
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
 
     // !SHOOTER PHYSICS CONSTANTS
-    private double velocity = 0.0;
-    private final double shooterAngle = 70.0;                  // degrees
-    private final double phi = Math.toRadians(shooterAngle);   // radians
-    private final double shooterHeight = 0.508;                // meters from ground
+    // private double velocity = 0.0;
+    // private final double shooterAngle = 70.0;                  // degrees
+    // private final double phi = Math.toRadians(shooterAngle);   // radians
+    // private final double shooterHeight = 0.508;                // meters from ground
     
     // !CONSTRUCTOR
     public Shooter(VisionGeneral vision) {
@@ -133,6 +133,7 @@ public class Shooter extends SubsystemBase {
         // SmartDashboard.putNumber("Target RPM", rpm);
         Logger.recordOutput("Shooter/rpsControl/Target RPS", rps);
         Logger.recordOutput("Shooter/rpsControl/Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Shooter/rpsControl/RPS Difference", rps - shooterMotor1.getVelocity().getValueAsDouble());
     }
 
     // *Runs the kicker motors at full power to feed balls into the shooter.
@@ -150,11 +151,9 @@ public class Shooter extends SubsystemBase {
         double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
         double targetRPS = this.rpsFromDistanceRegression(vision.getDistanceToTarget(vision.cachedHubPose)); 
 
-        Logger.recordOutput("Shooter/atCurrentRPS/Current RPS", currentRPS);
-        Logger.recordOutput("Shooter/atCurrentRPS/Target RPS", targetRPS);
-        Logger.recordOutput("Shooter/atCurrentRPS/RPS Difference", Math.abs(currentRPS - targetRPS));
-
-        return Math.abs(currentRPS - targetRPS) < 5.0;
+        boolean atCorrectRPS = Math.abs(currentRPS - targetRPS) < 5.0;
+        Logger.recordOutput("Shooter/rpsControl/atCorrectRPS", atCorrectRPS);
+        return atCorrectRPS;
     }
 
     // *Same as atCorrectRPM but with a tighter threshold for more precise shooting.

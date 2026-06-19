@@ -2,7 +2,7 @@ package frc.robot.subsystems.drivetrain;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Pose2d;
+//import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
@@ -23,7 +23,7 @@ public interface DriveIO {
         // *Robot heading, linear & angular speeds, and pose
         public double robotHeading = 0.0; // [rad]
         public ChassisSpeeds robotChassisSpeeds = new ChassisSpeeds(); // [m/s], robot-relative
-        public Pose2d robotPose = new Pose2d(); // [m], field-relative
+        //public Pose2d robotPose = new Pose2d(); // [m], field-relative
 
         // *Total current and voltage of the drivetrain
         public double totalCurrent = 0.0;
