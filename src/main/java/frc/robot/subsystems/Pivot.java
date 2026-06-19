@@ -61,7 +61,12 @@ public class Pivot extends SubsystemBase {
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(3, 0, 0)
                 .outputRange(outputMin, outputMax)
-                .positionWrappingEnabled(false);
+                .positionWrappingEnabled(false)
+                .feedForward         
+                .kS(0.0)
+                .kCos(0.2)
+                .kCosRatio(0.375 / 17);
+;
 
         // *MaxMotion config
         pivotMotorConfig.closedLoop.maxMotion

@@ -36,7 +36,7 @@ public class PivotV1Diagnostic extends Command {
 
     @Override
     public boolean isFinished() {
-        return V1.get() != 0;
+        return V1.get() <= 0;
     }
 
 }
