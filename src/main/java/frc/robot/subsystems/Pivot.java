@@ -9,6 +9,7 @@ import com.revrobotics.spark.SparkMax;
 import org.littletonrobotics.junction.Logger;
 //import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
+import com.ctre.phoenix6.swerve.utility.WheelForceCalculator.Feedforwards;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -16,6 +17,7 @@ import com.revrobotics.spark.config.MAXMotionConfig.MAXMotionPositionMode;
 import frc.robot.Constants.IntakeConstants;
 
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.FeedForwardConfigAccessor;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.filter.Debouncer;
@@ -61,7 +63,10 @@ public class Pivot extends SubsystemBase {
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(3, 0, 0)
                 .outputRange(outputMin, outputMax)
-                .positionWrappingEnabled(false);
+                .positionWrappingEnabled(false)
+                .feedForward
+                    .kS(0.0)
+                    .kCos(0.0);
 
         // *MaxMotion config
         pivotMotorConfig.closedLoop.maxMotion
