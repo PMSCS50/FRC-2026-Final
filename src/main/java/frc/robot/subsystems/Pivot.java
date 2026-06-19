@@ -9,6 +9,7 @@ import com.revrobotics.spark.SparkMax;
 import org.littletonrobotics.junction.Logger;
 //import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
+import com.ctre.phoenix6.swerve.utility.WheelForceCalculator.Feedforwards;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -16,6 +17,7 @@ import com.revrobotics.spark.config.MAXMotionConfig.MAXMotionPositionMode;
 import frc.robot.Constants.IntakeConstants;
 
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.FeedForwardConfigAccessor;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.filter.Debouncer;
@@ -80,7 +82,8 @@ public class Pivot extends SubsystemBase {
 
     @Override
     public void periodic() {
-        boolean overcurrent = getPivotAmps() > IntakeConstants.kPivotStallCurrent;
+        double pivotAmps = getPivotAmps();
+        boolean overcurrent = pivotAmps > IntakeConstants.kPivotStallCurrent;
         boolean stalledRising = stallDebouncer.calculate(overcurrent);
 
         if (stalledRising) {
@@ -90,7 +93,7 @@ public class Pivot extends SubsystemBase {
             pivotStalled = false;
         }
         
-        Logger.recordOutput("Pivot/Amperage (amps)", getPivotAmps());
+        Logger.recordOutput("Pivot/Amperage (amps)", pivotAmps);
         Logger.recordOutput("Pivot/Pivot Amount (rotations)", getPivotEncoder().getPosition());
         Logger.recordOutput("Pivot/Is Stalled", pivotStalled);
 
