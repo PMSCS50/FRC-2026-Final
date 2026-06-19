@@ -49,6 +49,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
+    private int loggingLoopCounter = 0;
+    private static final int LOG_EVERY_N_LOOPS = 5; // 5 loops = about 100ms
+
     //* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
 
@@ -341,36 +344,40 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         updateInputs(m_inputs);
         Logger.processInputs("LoggedDrivetrain", m_inputs);  // also needed for AdvantageKit to log it
 
-        // |Swerve module states and motor outputs
-        for (int i = 0; i < 4; i++) {
-            SwerveModule<?, ?, ?> module = getModule(i);
-            Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getDriveMotor().getMotorVoltage().getValueAsDouble());
-            Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/SupplyCurrent", module.getDriveMotor().getSupplyCurrent().getValueAsDouble());
-            Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/StatorCurrent", module.getDriveMotor().getStatorCurrent().getValueAsDouble());
+        boolean shouldLogSlowSignals = (++loggingLoopCounter % LOG_EVERY_N_LOOPS) == 0;
 
-            Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/Voltage", module.getSteerMotor().getMotorVoltage().getValueAsDouble());
-            Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/SupplyCurrent", module.getSteerMotor().getSupplyCurrent().getValueAsDouble());
-            Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/StatorCurrent", module.getSteerMotor().getStatorCurrent().getValueAsDouble());
+        // |Swerve module states and motor outputs
+        if (shouldLogSlowSignals) {
+            for (int i = 0; i < 4; i++) {
+                SwerveModule<?, ?, ?> module = getModule(i);
+
+                Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getDriveMotor().getMotorVoltage().getValueAsDouble());
+                Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/SupplyCurrent", module.getDriveMotor().getSupplyCurrent().getValueAsDouble());
+                Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/StatorCurrent", module.getDriveMotor().getStatorCurrent().getValueAsDouble());
+
+                Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/Voltage", module.getSteerMotor().getMotorVoltage().getValueAsDouble());
+                Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/SupplyCurrent", module.getSteerMotor().getSupplyCurrent().getValueAsDouble());
+                Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/StatorCurrent", module.getSteerMotor().getStatorCurrent().getValueAsDouble());
+            }
+
+            // |Raw Pigeon2 gyro logging
+            Pigeon2 pigeon = getPigeon2();
+            Logger.recordOutput("Gyro/RawYaw", pigeon.getYaw().getValueAsDouble());
+            Logger.recordOutput("Gyro/YawRate", pigeon.getAngularVelocityZWorld().getValueAsDouble());
+            Logger.recordOutput("Gyro/IsConnected", pigeon.isConnected());
+
+            // Logger.recordOutput("Gyro/Pitch",    pigeon.getPitch().getValueAsDouble());
+            // Logger.recordOutput("Gyro/Roll",     pigeon.getRoll().getValueAsDouble());
+
+            // Logger.recordOutput("Gyro/PitchRate", pigeon.getAngularVelocityYWorld().getValueAsDouble());
+            // Logger.recordOutput("Gyro/RollRate",  pigeon.getAngularVelocityXWorld().getValueAsDouble());
+
+            // Logger.recordOutput("Gyro/FaultHardware",         pigeon.getFault_Hardware().getValue());
+            // Logger.recordOutput("Gyro/FaultUndervoltage",     pigeon.getFault_Undervoltage().getValue());
+            // Logger.recordOutput("Gyro/FaultBootDuringEnable", pigeon.getFault_BootDuringEnable().getValue());
         }
 
-        // *Raw Pigeon2 Gyro Logging and Config
-        Pigeon2 pigeon = getPigeon2();
-        // |Orientation
-        Logger.recordOutput("Gyro/RawYaw",   pigeon.getYaw().getValueAsDouble());
-        // Logger.recordOutput("Gyro/Pitch",    pigeon.getPitch().getValueAsDouble());
-        // Logger.recordOutput("Gyro/Roll",     pigeon.getRoll().getValueAsDouble());
-
-        // |Angular rates — useful for catching MT2 rejections and tip-over events
-        Logger.recordOutput("Gyro/YawRate",   pigeon.getAngularVelocityZWorld().getValueAsDouble());
-        // Logger.recordOutput("Gyro/PitchRate", pigeon.getAngularVelocityYWorld().getValueAsDouble());
-        // Logger.recordOutput("Gyro/RollRate",  pigeon.getAngularVelocityXWorld().getValueAsDouble());
-
-        // |Health — tells you immediately if it browned out or rebooted mid-match
-        Logger.recordOutput("Gyro/IsConnected",           pigeon.isConnected());
-        // Logger.recordOutput("Gyro/FaultHardware",         pigeon.getFault_Hardware().getValue());
-        // Logger.recordOutput("Gyro/FaultUndervoltage",     pigeon.getFault_Undervoltage().getValue());
-        // Logger.recordOutput("Gyro/FaultBootDuringEnable", pigeon.getFault_BootDuringEnable().getValue());
-
+        // |Sim alliance perspective config
         if (Utils.isSimulation()) {
             if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
                 DriverStation.getAlliance().ifPresent(allianceColor -> {

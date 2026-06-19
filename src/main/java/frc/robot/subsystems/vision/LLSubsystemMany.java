@@ -39,9 +39,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private final HashMap<Integer, Double> tagambiguities = new HashMap<>();
     private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
+    // |Reset at top of periodic
+    private volatile double yawDeg;
+    private volatile double yawRateDegPerSec;
     private double omegaRps;
-    private double headingDeg;
     private SwerveDrivetrain.SwerveDriveState driveState;
+
     private boolean hasSeededPose = false;
     public Pose2d cachedHubPose = null;
 
@@ -92,7 +95,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 PoseEstimate[] fresh = new PoseEstimate[llCameras.length];
                 for (int i = 0; i < llCameras.length; i++) {
                     String cam = llCameras[i];
-                    LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
+                    LimelightHelpers.SetRobotOrientation_NoFlush(cam, yawDeg, yawRateDegPerSec, i, i, i, i);
                     fresh[i] = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
                 }
                 synchronized (measurementLock) {
@@ -131,8 +134,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         // Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
 
         driveState = drivetrain.getState();
-        headingDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
+
+        yawDeg = driveState.Pose.getRotation().getDegrees();
+        yawRateDegPerSec = Math.toDegrees(driveState.Speeds.omegaRadiansPerSecond);
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
+
         contributingCameras = 0;
 
         estimatedRobotPose = null;
@@ -156,12 +162,12 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         if (measurements == null) return;
 
         for (int i = 0; i < llCameras.length; i++) {
-            String cam = llCameras[i];
-            LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
+            //String cam = llCameras[i];
+            //LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
             PoseEstimate llMeasurement = measurements[i];
 
             //PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
-            boolean camValid = isEstimateValid(llMeasurement, headingDeg);
+            boolean camValid = isEstimateValid(llMeasurement, yawDeg);
 
 
             if (llMeasurement == null) {
