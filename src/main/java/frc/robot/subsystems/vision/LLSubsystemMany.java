@@ -26,7 +26,6 @@ import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -67,13 +66,17 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private static final double FIELD_MAX_Y          = Constants.FIELD_MAX_Y;
 
     //private Matrix<N3, N1> stdDevs = VecBuilder.fill(9999.0, 9999.0, 9999.0);
+
+    // *Miscellaneous
     private int contributingCameras = 0;
-
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
-
     private final String[] llCameras;
 
-    // *Constructor
+    // |Trying to reduce the time it takes to run
+    private volatile PoseEstimate[] latestMeasurements;
+    private final Object measurementLock = new Object();
+
+    // !In constructor, start a background thread
     public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
         this.drivetrain = drivetrain;
         this.llCameras  = llCameras;
@@ -81,10 +84,44 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         for (String cam : llCameras) {
             LimelightHelpers.setPipelineIndex(cam, 9);
             LimelightHelpers.SetIMUMode(cam, 0);
-
-            //LimelightHelpers.SetFiducialIDFiltersOverride(cam, new int[]{});
         }
+
+        // *Start background polling thread
+        Thread pollingThread = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                PoseEstimate[] fresh = new PoseEstimate[llCameras.length];
+                for (int i = 0; i < llCameras.length; i++) {
+                    String cam = llCameras[i];
+                    LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
+                    fresh[i] = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
+                }
+                synchronized (measurementLock) {
+                    latestMeasurements = fresh;
+                }
+                try {
+                    Thread.sleep(20); // poll at ~50Hz
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        pollingThread.setDaemon(true);
+        pollingThread.setName("LimelightPollingThread");
+        pollingThread.start();
     }
+
+    // !Old constructor, without background thread (keep around for testing and fallback)
+    // public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
+    //     this.drivetrain = drivetrain;
+    //     this.llCameras  = llCameras;
+
+    //     for (String cam : llCameras) {
+    //         LimelightHelpers.setPipelineIndex(cam, 9);
+    //         LimelightHelpers.SetIMUMode(cam, 0);
+
+    //         //LimelightHelpers.SetFiducialIDFiltersOverride(cam, new int[]{});
+    //     }
+    // }
 
     // *Periodic
     @Override
@@ -110,11 +147,20 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         allCameraRawFiducials.clear();
         tagtransforms.clear();
         tagambiguities.clear();
+        
+        PoseEstimate[] measurements;
+        synchronized (measurementLock) {
+            measurements = latestMeasurements;
+        }
+        
+        if (measurements == null) return;
 
-        // *For vision estimation and logging
-        for (String cam : llCameras) {
+        for (int i = 0; i < llCameras.length; i++) {
+            String cam = llCameras[i];
             LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
-            PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
+            PoseEstimate llMeasurement = measurements[i];
+
+            //PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
             boolean camValid = isEstimateValid(llMeasurement, headingDeg);
 
 
@@ -247,17 +293,17 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     // *Gets the total amount of tags used in vision pose estimate. Tags seen more times = lower ambiguity
     private RawFiducial[] totalTagsUsed(List<RawFiducial[]> allTags) {
-        return allTags.stream()
-            .filter(tags -> tags != null)
-            .flatMap(Arrays::stream)
-            .collect(java.util.stream.Collectors.toMap(
-                f -> f.id,
-                f -> f,
-                (a, b) -> a.ambiguity <= b.ambiguity ? a : b  // keep lower ambiguity when same tag seen by multiple cameras
-            ))
-            .values()
-            .stream()
-            .toArray(RawFiducial[]::new);
+        HashMap<Integer, RawFiducial> best = new HashMap<>();
+        for (RawFiducial[] arr : allTags) {
+            if (arr == null) continue;
+            for (RawFiducial f : arr) {
+                RawFiducial existing = best.get(f.id);
+                if (existing == null || f.ambiguity < existing.ambiguity) {
+                    best.put(f.id, f);
+                }
+            }
+        }
+        return best.values().toArray(new RawFiducial[0]);
     }
 
     // *Getters for overall info
@@ -379,30 +425,37 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         inputs.hasTarget = hasTargets();
-        inputs.targetId = tagambiguities.entrySet().stream()
-                            .min(Map.Entry.comparingByValue())
-                            .map(Map.Entry::getKey)
-                            .orElse(-1);
+        inputs.targetId = tagambiguities.isEmpty() ? -1 :
+            tagambiguities.entrySet().stream()
+                .min(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(-1);
 
         inputs.hasTagTransform = inputs.hasTarget;
-
         inputs.tagToRobotX    = inputs.hasTagTransform ? getX(inputs.targetId) : 0.0;
         inputs.tagToRobotY    = inputs.hasTagTransform ? getY(inputs.targetId) : 0.0;
         inputs.tagToRobotZ    = 0.0;
         inputs.tagToRobotRotZ = inputs.hasTagTransform ? getYawRad(inputs.targetId) : 0.0;
 
-        inputs.visibleTagIds   = tagtransforms.keySet().stream().mapToInt(Integer::intValue).toArray();
-        inputs.visibleTagPoses = Arrays.stream(inputs.visibleTagIds)
-                                       .mapToObj(id -> new Pose2d(getX(id), getY(id), new Rotation2d(getYawRad(id))))
-                                       .toArray(Pose2d[]::new);
+        // *Build tag arrays once, reuse
+        int[] ids = tagtransforms.keySet().stream().mapToInt(Integer::intValue).toArray();
+        inputs.visibleTagIds   = ids;
+        inputs.visibleTagPoses = new Pose2d[ids.length];
+        inputs.allTagToRobotX    = new double[ids.length];
+        inputs.allTagToRobotY    = new double[ids.length];
+        inputs.allTagToRobotZ    = new double[ids.length];
+        inputs.allTagToRobotRotZ = new double[ids.length];
+
+        for (int i = 0; i < ids.length; i++) {
+            int id = ids[i];
+            inputs.visibleTagPoses[i]  = new Pose2d(getX(id), getY(id), new Rotation2d(getYawRad(id)));
+            inputs.allTagToRobotX[i]   = getX(id);
+            inputs.allTagToRobotY[i]   = getY(id);
+            inputs.allTagToRobotRotZ[i] = getYawRad(id);
+        }
 
         Logger.recordOutput("Vision/VisibleTagIds",   inputs.visibleTagIds);
         Logger.recordOutput("Vision/VisibleTagPoses", inputs.visibleTagPoses);
-
-        inputs.allTagToRobotX    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getX).toArray();
-        inputs.allTagToRobotY    = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getY).toArray();
-        inputs.allTagToRobotZ    = new double[inputs.visibleTagIds.length];
-        inputs.allTagToRobotRotZ = Arrays.stream(inputs.visibleTagIds).mapToDouble(this::getYawRad).toArray();
 
         inputs.hasEstimatedPose       = estimatedRobotPose != null;
         inputs.estimatedPose          = estimatedRobotPose != null ? estimatedRobotPose : new Pose2d();
@@ -410,8 +463,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
         inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
 
-        // Matrix<N3, N1> stdDevMatrix = stdDevs;
-        // inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
+        //Matrix<N3, N1> stdDevMatrix = stdDevs;
+        //inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
     }
 }
 

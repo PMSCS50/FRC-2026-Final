@@ -14,7 +14,7 @@ public class DistanceBasedShooting extends Command {
         this.shooter = shooter;
         this.vision = vision;
         addRequirements(shooter);
-        addRequirements(vision);
+        //addRequirements(vision);
     }
 
     @Override
