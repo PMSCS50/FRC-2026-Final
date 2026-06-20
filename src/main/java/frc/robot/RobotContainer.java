@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
+import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
 import frc.robot.commands.PostPathPreciseAlignment;
@@ -247,7 +248,7 @@ public class RobotContainer {
         );
 
         // *POV Controls
-        operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(new FixedPIDShooting(shooter,1.4));
+        operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(new FixedWaypointShooting(shooter,monkeyDLuffy.selectedWaypoint()));
         operatorController.povDown().or(operatorController.povDownLeft()).or(operatorController.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
 
         // operatorController.povLeft()
