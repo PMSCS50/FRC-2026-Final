@@ -126,9 +126,9 @@ public class RobotContainer {
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
         // *Five shooting setpoints that form a semicircle around the hub
-        for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
-            monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
-        }
+        // for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
+        //     monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
+        // }
 
         // *Rotation Zones (trenches)
         monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
@@ -286,6 +286,12 @@ public class RobotContainer {
     public void flipDirection(){
         directionFlipper = directionFlipper * -1;
     }
+
+    public void loadAllianceWaypoints() {
+    for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
+        monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
+    }
+}
     
 
     // *Getters for subsystems and commands

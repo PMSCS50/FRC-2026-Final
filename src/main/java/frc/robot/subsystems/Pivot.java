@@ -59,16 +59,14 @@ public class Pivot extends SubsystemBase {
                 .secondaryCurrentLimit(60)
                 .closedLoopRampRate(1);
 
+    // Default to slot 0 values (can be switched at runtime)
         pivotMotorConfig.closedLoop
-                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(3, 0, 0)
-                .outputRange(outputMin, outputMax)
-                .positionWrappingEnabled(false)
-                .feedForward         
-                .kS(0.0)
-                .kCos(0.2)
-                .kCosRatio(0.375 / 17);
-;
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .pid(2.0, 0, 0)
+            //.outputRange(outputMin, outputMax)
+            .positionWrappingEnabled(false)
+            .feedForward.kS(0.1)
+            .kCosRatio(0.375 / IntakeConstants.kPivotSetpointB);
 
         // *MaxMotion config
         pivotMotorConfig.closedLoop.maxMotion
@@ -79,6 +77,40 @@ public class Pivot extends SubsystemBase {
 
         pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
+
+    /**
+     * Switch pivot motor closed-loop tuning between two configurable "slots".
+     * This updates the in-memory SparkMaxConfig and re-applies it to the motor.
+     *
+     * Slot 0: pid = (2.0, 0, 0), kS = 0.10
+     * Slot 1: pid = (3.0, 0, 0), kS = 0.15
+     *
+     * Note: the underlying SparkMax hardware also supports hardware slots; this
+     * implementation simply mutates the configured SparkMaxConfig and reconfigures
+     * the motor at runtime which has the same practical effect for our use.
+     */
+    public void setPivotControlSlot(int slot) {
+        switch (slot) {
+            case 0:
+                pivotMotorConfig.closedLoop.pid(1.0, 0, 0.02).outputRange(-0.15, 0.15);
+                pivotMotorConfig.closedLoop.feedForward.kS(0.0).kCos(0.4);
+                break;
+            case 1:
+                pivotMotorConfig.closedLoop.pid(3.0, 0, 0).outputRange(-1.0, 1.0);
+                pivotMotorConfig.closedLoop.feedForward.kS(0.15).kCos(0.4);
+                break;
+            default:
+                // leave unchanged for unknown slots
+                return;
+        }
+
+        // Re-apply configuration to the motor so the changes take effect immediately
+        pivotMotor.configure(pivotMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        Logger.recordOutput("Pivot/ControlSlot", slot);
+    }
+
+    public void setPivotControlSlot0() { setPivotControlSlot(0); }
+    public void setPivotControlSlot1() { setPivotControlSlot(1); }
 
     @Override
     public void periodic() {

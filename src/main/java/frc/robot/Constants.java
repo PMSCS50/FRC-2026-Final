@@ -193,6 +193,10 @@ public final class Constants {
 
     private static Pose2d[] cachedAllianceSetpoints = null;
 
+    public static void clearAllianceCache() {
+        cachedAllianceSetpoints = null;
+    }
+
     public static Pose2d getShootingSetpoint(int num) {
         if (cachedAllianceSetpoints == null && DriverStation.getAlliance().isPresent()) {
             cachedAllianceSetpoints = Arrays.stream(shootingSetpoints)

@@ -24,18 +24,20 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.ctre.phoenix6.Orchestra;
 
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.pathfinding.Pathmaster;
+import frc.robot.subsystems.vision.LLSubsystemMany;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
-  private boolean allianceConfigApplied = false;
+  //private boolean allianceConfigApplied = false;
   private String allianceColor = "Unknown";
 
   private boolean allowOrchestra = true; // Orchestra currently disabled.
-  private final Orchestra m_orchestra = new Orchestra("audio/LR_PHY_SSJ2_Gohan_Active_Skill.chrp");
+  private final Orchestra m_orchestra = new Orchestra("audio/HK_TBaH.chrp");
 
   // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   // int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
@@ -117,12 +119,13 @@ public class Robot extends LoggedRobot {
     // Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
     // Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
     // Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
-    // Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
+    //Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
-    // Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
-    // Logger.recordOutput("Field/UsedAlliance", allianceColor);
-    // Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
-
+    Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
+    Logger.recordOutput("Field/UsedAlliance", allianceColor);
+    Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
+    Logger.recordOutput("distanceToHub", m_robotContainer.vision.getDistanceToTarget(m_robotContainer.vision.cachedHubPose));
+    
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     
   }
@@ -160,6 +163,7 @@ public class Robot extends LoggedRobot {
   // *Autonomous mode
   @Override
   public void autonomousInit() {
+    applyAllianceConfig();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
@@ -177,6 +181,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     //applyAllianceDirFlip();
+    applyAllianceConfig();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -221,18 +226,31 @@ public class Robot extends LoggedRobot {
 
   // !HELPERS
     // *Set gyro yaw based on alliance color
-  private void applyAllianceConfig() {
-    if (allianceConfigApplied) return;
+  private Alliance lastAppliedAlliance = null;
 
+  private void applyAllianceConfig() {
     var allianceOpt = DriverStation.getAlliance();
-    if (allianceOpt.isEmpty()) return; // DS not connected yet; don't lock the flag
+    if (allianceOpt.isEmpty()) return;
 
     Alliance alliance = allianceOpt.get();
-    boolean red = alliance == Alliance.Red;
+    if (alliance == lastAppliedAlliance) return;
 
+    boolean red = alliance == Alliance.Red;
     allianceColor = red ? "Red" : "Blue";
     m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-    allianceConfigApplied = true; // only set true when we got a real value
+
+    // *Clear caches first so getShootingSetpoint() recomputes with new alliance
+    ShooterConstants.clearAllianceCache();
+
+    // *Re-add waypoints with correct alliance-relative poses
+    m_robotContainer.loadAllianceWaypoints();
+
+    if (m_robotContainer.vision instanceof LLSubsystemMany ll) {
+      ll.cachedHubPose = null;
+      ll.hasSeededPose = false;
+    }
+
+    lastAppliedAlliance = alliance;
   }
 
   private void rumbleControllers(double force) {

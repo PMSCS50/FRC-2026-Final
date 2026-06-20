@@ -15,6 +15,8 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 
@@ -45,7 +47,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private double omegaRps;
     private SwerveDrivetrain.SwerveDriveState driveState;
 
-    private boolean hasSeededPose = false;
+    public boolean hubPassed = false; // whether we've ever seen the hub (used to determine whether we should trust the alliance color and cached hub pose)
+    public boolean hasSeededPose = false;
     public Pose2d cachedHubPose = null;
 
     // *Pose of the robot, wrapped in latestEstimate, as well as other logged variables
@@ -95,7 +98,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 PoseEstimate[] fresh = new PoseEstimate[llCameras.length];
                 for (int i = 0; i < llCameras.length; i++) {
                     String cam = llCameras[i];
-                    LimelightHelpers.SetRobotOrientation_NoFlush(cam, yawDeg, yawRateDegPerSec, i, i, i, i);
+                    LimelightHelpers.SetRobotOrientation_NoFlush(cam, yawDeg, yawRateDegPerSec, 0, 0, 0, 0);
                     fresh[i] = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
                 }
                 synchronized (measurementLock) {
@@ -130,12 +133,14 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     @Override
     public void periodic() {
         refreshAllianceCache();
+        Logger.recordOutput("HubPassed", hubPassed);
+        Logger.recordOutput("CachedHubPose", cachedHubPose);
         // Logger.recordOutput("Vision/PeriodicRunning", true);
         // Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
 
         driveState = drivetrain.getState();
 
-        yawDeg = driveState.Pose.getRotation().getDegrees();
+        yawDeg = drivetrain.getPigeon2().getYaw().getValueAsDouble();
         yawRateDegPerSec = Math.toDegrees(driveState.Speeds.omegaRadiansPerSecond);
         omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
@@ -322,6 +327,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public double  getAvgTagDist()                  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()                  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
     public boolean hasTargets()                     { return !tagtransforms.isEmpty(); }
+    public Pose2d getCachedHubPose()                { return cachedHubPose; }
 
     // *Getters for specific tags
     // !These return 0 or false if the tag isn't currently visible, so be sure to check hasTarget() first if you want to avoid ambiguity with a real measurement of 0!
@@ -351,8 +357,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     // *Distance utilities
     public double getDistanceToTarget(Pose2d targetPose) {
-        if (!hasTargets()) return -1.0;
-        return estimatedRobotPose.getTranslation().getDistance(targetPose.getTranslation());
+        if (targetPose == null) return -1.0;
+
+        return estimatedRobotPose
+            .getTranslation()
+            .getDistance(targetPose.getTranslation());
     }
 
     public double getYawToTarget(Pose2d targetPose) {
@@ -397,8 +406,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     // *Returns the best available distance to the hub
     public double getBestDistanceToHub() {
+        if (cachedHubPose == null) return -1.0;
+
         double tagDist = getDistanceToTag(VisionConstants.getMiddleTagId());
         if (tagDist > 0) return tagDist;
+
         return getDistanceToTarget(cachedHubPose);
     }
 
@@ -424,7 +436,11 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private void refreshAllianceCache() {
         if (cachedHubPose != null) return;
         if (DriverStation.getAlliance().isEmpty()) return;
-        cachedHubPose = VisionConstants.getHubPose();
+        hubPassed = true;
+
+        DriverStation.getAlliance().ifPresent(alliance -> {
+            cachedHubPose = VisionConstants.getHubPose(alliance);
+        });
     }
     
     // *VisionIO implementation
@@ -468,6 +484,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         inputs.estimatedPoseTimestamp = latestEstimate != null ? latestEstimate.timestampSeconds : 0.0;
         inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
         inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
+        inputs.distanceToHub = getBestDistanceToHub();
 
         //Matrix<N3, N1> stdDevMatrix = stdDevs;
         //inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
@@ -683,4 +700,4 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 // .:::   =  ..:::===          :. .   ::: -  .                       .  .     =  .              -       : : -:--. .:..:-  ==.:      :::#=:=::.-%=#* -#=-===*:= -: =:::--=+:*%=**+=-::       =                                                                   . ::::.:..::.....:=::::::---=-:.             :.:....::.                                   :=+=:::...   .    .:.::.. ....::...::.::::::. .   ......:
 // =-..: %.   .:-=++      .. .   ..:       .                 ::               *       .        .          .:.:== . :.. ::  :..:.  :+=.   .:. : :::  :-==+=**  ::-:...:-===*-*#***+=--=                                   :                    . :. :   :- .- .:::-.:::::::..:::...=--:::=+::.::.             ::=-:=+*==*-     =-                      *-*+-+:::::  ...      ...     ...::..:..:::::.    ...........
 //   .  %*:  .:-+=*-=-:      :::+: :             .:       .=:             =                    .          .::=-..:-:- . -      ::=. =-:::-=   .-= =:*=====+++==+=- --===+**++*=.**++#*     .  .                                            .: :::::=*@#. :+=.:-..-:....:::..:...::=::-:::*=:::...               :::::            +-                 .:=::::::::::.     . ..... . ...:..:..:.....=.    ... ..      .
-// :=-:@==. :-:::::--=+..     .=   *: .     :           : .             .  .   =:   :.       +   .  :.    :.::=.::.--:-==     -:::.-:::::==:=:+-::-::===-+:===*===-:.:-:-+=+=:-=:=***-      :       .                                     :=-: -:=-::-==+-:=*+:-::::...::...::.:=+::-:::..:...   .. .          .::..:...:  ....   +#:              ..:::-::....:.   . .:::...:...:....... .:.   .  ...... . ..:.::.
+// :=-:@==. :-:::::--=+..     .=   *: .     :           : .             .  .   =:   :.       +   .  :.    :.::=.::.--:-==     -:::.-:::::==:=:+-::-::===-+:===*===-:.:-:-+=+=:-=:=***-      :       .                                     :=-: -:=-::-==+-:=*+:-::::...::...::.:=+::-:::..:...   .. .          .::..:...:  ....   +#:              ..:::-::....:.   . .:::...:...:....... .:.   .  ...... . ..:.::.=:-=:=***-      :       .                                     :=-: -:=-::-==+-:=*+:-::::...::...::.:=+::-:::..:...   .. .          .::..:...:  ....   +#:              ..:::-::....:.   . .:::...:...:....... .:.   .  ...... . ..:.::.

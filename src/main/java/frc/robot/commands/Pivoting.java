@@ -18,6 +18,12 @@ public class Pivoting extends Command {
         this.pivot = pivot;
         this.targetSetpoint = forward ? SETPOINT_B : SETPOINT_A;
         addRequirements(pivot);
+
+        if (targetSetpoint == SETPOINT_A) {
+            pivot.setPivotControlSlot1();
+        } else {
+            pivot.setPivotControlSlot0();
+        }
     }
 
     @Override
