@@ -121,10 +121,10 @@ public class Robot extends LoggedRobot {
     // Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
     //Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
-    Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
-    Logger.recordOutput("Field/UsedAlliance", allianceColor);
-    Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
-    Logger.recordOutput("distanceToHub", m_robotContainer.vision.getDistanceToTarget(m_robotContainer.vision.cachedHubPose));
+    //Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
+    //Logger.recordOutput("Field/UsedAlliance", allianceColor);
+    //Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
+    //Logger.recordOutput("distanceToHub", m_robotContainer.vision.getDistanceToTarget(m_robotContainer.vision.cachedHubPose));
     
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     
