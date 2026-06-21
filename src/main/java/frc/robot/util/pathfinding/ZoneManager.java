@@ -1,8 +1,6 @@
 package frc.robot.util.pathfinding;
 
-//import frc.robot.pathfinding.PathZone;
-import edu.wpi.first.wpilibj.DriverStation;
-
+import frc.robot.util.Elastic;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +47,8 @@ public class ZoneManager {
                 return;
             }
         }
-        DriverStation.reportWarning(
-            "[ZoneManager] Zone '" + zoneName + "' not found", false);
+        Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "ZoneManager Error", "Zone " + zoneName + " is not defined"));
+
     }
     
     /**

@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.PPLogger;
 
 /**
@@ -289,10 +290,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this // Subsystem for requirements
             );
         } catch (Exception ex) {
-            DriverStation.reportError(
-                "Failed to load PathPlanner config and configure AutoBuilder: " + ex.getMessage(),
-                ex.getStackTrace()
-            );
+            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "AutoBuilder Config Error", "AutoBuilder failed to configure properly."));
+            
             throw new RuntimeException("RobotConfig load failed — deploy may be missing deploy/pathplanner/settings.json", ex);
         }
     }

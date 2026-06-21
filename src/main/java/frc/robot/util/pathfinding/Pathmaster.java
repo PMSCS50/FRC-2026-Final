@@ -10,11 +10,11 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+import frc.robot.util.Elastic;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -334,8 +334,8 @@ public class Pathmaster {
             .withName("pathfindToPath");
         } catch (Exception e) {
             pathing = false;
-            DriverStation.reportError(
-                "[Pathmaster] Path not found: " + pathName, true);
+            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "Pathmaster Error", "Path " + pathName + " is not defined"));
+
             return Commands.none();
         }
     }

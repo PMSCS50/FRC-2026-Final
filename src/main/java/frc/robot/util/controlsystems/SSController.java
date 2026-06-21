@@ -10,7 +10,7 @@ import edu.wpi.first.math.estimator.KalmanFilter;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
-import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.util.Elastic;
 
 // !Generic state space controller.
 // *Given the system, handles the full LQR + Kalman + feedforward loop for any single-input mechanism.
@@ -193,7 +193,8 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      */
     public double calculate(Matrix<Outputs, N1> currentOutputs) {
         if (setpoint == null) {
-            DriverStation.reportError("[SSController] setpoint not set.", false);
+            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "SSController: No setpoint", "SSController does not have a setpoint to target"));
+
             return 0.0;
         }
 

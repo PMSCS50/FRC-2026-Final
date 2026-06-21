@@ -20,8 +20,6 @@ import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -41,6 +39,7 @@ import frc.robot.commands.PostPathPreciseAlignment;
 
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.vision.*;
+import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
@@ -95,7 +94,7 @@ public class RobotContainer {
         try {
             robotConfig = RobotConfig.fromGUISettings();
         } catch (Exception e) {
-            DriverStation.reportError("Failed to load RobotConfig: " + e.getMessage(), true);
+            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "RobotConfig Not initialized", "Could not properly load RobotConfig"));
         }
     }
     
