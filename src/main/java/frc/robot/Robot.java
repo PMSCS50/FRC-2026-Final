@@ -163,6 +163,7 @@ public class Robot extends LoggedRobot {
   // *Autonomous mode
   @Override
   public void autonomousInit() {
+    Elastic.selectTab("autonomous");
     applyAllianceConfig();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
@@ -180,7 +181,7 @@ public class Robot extends LoggedRobot {
   // *Teleop mode
   @Override
   public void teleopInit() {
-    //applyAllianceDirFlip();
+    Elastic.selectTab("teleop");
     applyAllianceConfig();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
