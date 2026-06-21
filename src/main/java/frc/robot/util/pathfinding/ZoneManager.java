@@ -47,7 +47,11 @@ public class ZoneManager {
                 return;
             }
         }
-        Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "ZoneManager Error", "Zone " + zoneName + " is not defined"));
+        Elastic.sendNotification(
+            new Elastic.Notification()
+            .withLevel(Elastic.NotificationLevel.ERROR)
+            .withTitle("Zone Mismatch")
+            .withDescription("Zone " + zoneName + " is not defined"));
 
     }
     

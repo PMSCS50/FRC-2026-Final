@@ -334,7 +334,11 @@ public class Pathmaster {
             .withName("pathfindToPath");
         } catch (Exception e) {
             pathing = false;
-            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "Pathmaster Error", "Path " + pathName + " is not defined"));
+            Elastic.sendNotification(
+                new Elastic.Notification().
+                withLevel(Elastic.NotificationLevel.ERROR)
+                .withTitle("Pathmaster Error")
+                .withDescription( "Path " + pathName + " is not defined"));
 
             return Commands.none();
         }

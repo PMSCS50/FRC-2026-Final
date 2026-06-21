@@ -193,7 +193,11 @@ public class SSController<States extends Num, Inputs extends Num, Outputs extend
      */
     public double calculate(Matrix<Outputs, N1> currentOutputs) {
         if (setpoint == null) {
-            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "SSController: No setpoint", "SSController does not have a setpoint to target"));
+            Elastic.sendNotification(
+                new Elastic.Notification()
+                .withLevel(Elastic.NotificationLevel.ERROR)
+                .withTitle( "SSController: No setpoint")
+                .withDescription("SSController does not have a setpoint to target"));
 
             return 0.0;
         }

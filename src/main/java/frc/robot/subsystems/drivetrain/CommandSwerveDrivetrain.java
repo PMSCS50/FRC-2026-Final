@@ -290,7 +290,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this // Subsystem for requirements
             );
         } catch (Exception ex) {
-            Elastic.sendNotification(new Elastic.Notification(Elastic.NotificationLevel.ERROR, "AutoBuilder Config Error", "AutoBuilder failed to configure properly."));
+            Elastic.sendNotification(
+                new Elastic.Notification()
+                .withLevel(Elastic.NotificationLevel.ERROR)
+                .withTitle("AutoBuilder Config Error") 
+                .withDescription("AutoBuilder failed to configure properly."));
             
             throw new RuntimeException("RobotConfig load failed — deploy may be missing deploy/pathplanner/settings.json", ex);
         }
