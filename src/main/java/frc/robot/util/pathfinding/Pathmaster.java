@@ -34,9 +34,9 @@ public class Pathmaster {
     private Supplier<Pose2d> robotPose;
     private Supplier<ChassisSpeeds> robotSpeeds;
     private static RoronoaZoroAK zoro;
+    private static boolean warmup = false;
     private final LinkedHashMap<String, Pose2d> waypoints = new LinkedHashMap<>();
     private boolean pathing = false;
-    private boolean warmup = false;
     private int selectedWaypointIndex;
 
     // *Used to prevent cancelPathing() from canceling other drivetrain commands.
@@ -94,7 +94,7 @@ public class Pathmaster {
     }
 
     // *Call in Robot.java as the last line in Robot contructor
-    public void startWarmupCommand() {
+    public static void startWarmupCommand() {
         CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
         warmup = true;
     }

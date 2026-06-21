@@ -59,7 +59,7 @@ public class Robot extends LoggedRobot {
     Pathmaster.initializePathfinder();
 
     m_robotContainer = new RobotContainer();
-    m_robotContainer.monkeyDLuffy.startWarmupCommand();
+    Pathmaster.startWarmupCommand();
 
     // *Add all orchestra instruments
     // |Drivetrain
