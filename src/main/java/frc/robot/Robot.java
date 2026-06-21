@@ -26,8 +26,9 @@ import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.pathfinding.Pathmaster;
 import frc.robot.subsystems.vision.LLSubsystemMany;
+import frc.robot.util.Elastic;
+import frc.robot.util.pathfinding.Pathmaster;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;

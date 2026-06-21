@@ -1,4 +1,4 @@
-package frc.robot.pathfinding;
+package frc.robot.util.pathfinding;
 
 // import edu.wpi.first.math.geometry.Pose2d;
 import com.pathplanner.lib.path.PathConstraints;

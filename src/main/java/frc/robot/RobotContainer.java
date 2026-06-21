@@ -41,6 +41,7 @@ import frc.robot.commands.PostPathPreciseAlignment;
 
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.vision.*;
+import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
@@ -48,7 +49,6 @@ import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.generated.TunerConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.pathfinding.Pathmaster;
 
 public class RobotContainer {
     // *DRIVETRAIN CONSTANTS

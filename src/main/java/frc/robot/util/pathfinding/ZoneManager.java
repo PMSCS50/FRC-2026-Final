@@ -1,154 +1,139 @@
-package frc.robot.pathfinding;
+package frc.robot.util.pathfinding;
 
-// import com.pathplanner.lib.path.PathPlannerPath;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import org.littletonrobotics.junction.Logger;
+//import frc.robot.pathfinding.PathZone;
+import edu.wpi.first.wpilibj.DriverStation;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * *PPLogger - Pathmaster Telemetry to AdvantageKit
- * ?Provides helper methods to be called in PathPlannerLogging
+ * !Static class that manages rotation and orientation zones for the pathfinding system.
+ * ?Provides thread-safe zone registration and state management.
+ * ?Zones define regions on the field where the robot should:
+ * 
+ * * RotationZone: Hold a fixed heading
+ * * OrientationZone: Orient to a specific target pose
+ * * ConstraintZone: Adjust path constraints
+ * * EventZones: Activate a specific command
+ * 
+ * ?This class maintains a concurrent map of zones and their active states,
+ * ?accessible to the RoronoaZoro pathfinder.
  */
-public class PPLogger {
-  private static final boolean PUBLISH_RAW_NT = false;
-
-  // !Raw NT4 publishers (split so Elastic can graph each series separately)
-  private static final DoublePublisher actualVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/actual")
-          .publish();
-
-  private static final DoublePublisher commandedVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/commanded")
-          .publish();
-
-  private static final DoublePublisher actualAngVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/actualAngular")
-          .publish();
-
-  private static final DoublePublisher commandedAngVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/commandedAngular")
-          .publish();
-
-  private static final DoublePublisher transInnacuracyPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/PathfindingInnacuracy/translationInaccuracy")
-          .publish();
-
-  private static final DoublePublisher rotInnacuracyPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/PathfindingInnacuracy/rotationalInaccuracy")
-          .publish();
-
-  // !Internal state for loggable stuff
-  private static Pose2d lastCurrentPose  = new Pose2d();
-  private static Pose2d lastTargetPose   = new Pose2d();
-  private static Pose2d[] posesArray     = new Pose2d[0];
-
-  // !Public setters
-
-  /**
-   * *Publish actual and commanded velocities.
-   * Called in COmmandSwerveDriveTrain in path-following command, as well as PostPathPreciseAlignment
-   *
-   * @param actualVel       Actual chassis speed in m/s
-   * @param commandedVel    Commanded chassis speed in m/s
-   * @param actualAngVel    Actual angular velocity in rad/s
-   * @param commandedAngVel Commanded angular velocity in rad/s
-   */
-  public static void logVelocities(
-      double actualVel,
-      double commandedVel,
-      double actualAngVel,
-      double commandedAngVel) {
-
-    // *AdvantageKit — logged to .wpilog AND re-published to NT4 automatically
-    Logger.recordOutput("Pathmaster/Velocity/actual",          actualVel);
-    Logger.recordOutput("Pathmaster/Velocity/commanded",       commandedVel);
-    Logger.recordOutput("Pathmaster/Velocity/actualAngular",   actualAngVel);
-    Logger.recordOutput("Pathmaster/Velocity/commandedAngular",commandedAngVel);
-
-    // *Raw NT4 publishers so Elastic line graphs see individual series
-    if (PUBLISH_RAW_NT) {
-      actualVelPub.set(actualVel);
-      commandedVelPub.set(commandedVel);
-      actualAngVelPub.set(actualAngVel);
-      commandedAngVelPub.set(commandedAngVel);
+public class ZoneManager {
+    
+    /** Thread-safe storage of zones and their active states */
+    private static final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();
+    
+    /**
+     * *Registers a zone in the zone manager.
+     * 
+     * @param zone The PathZone to add (RotationZone or OrientationZone)
+     * @param active Whether the zone should be active by default
+     */
+    public static void addZone(PathZone zone, boolean active) {
+        zones.put(zone, active);
     }
-  }
-
-  /**
-   * // *Publish the robot's current pose.
-   *
-   * @param pose Current robot pose from odometry / vision estimator
-   */
-  public static void logCurrentPose(Pose2d pose) {
-    lastCurrentPose = pose;
-
-    Logger.recordOutput("Pathmaster/currentPose", pose);
-
-    updatePathInnacuracy();
-  }
-
-  /**
-   * // *Publish the active path being followed and created a getter for said path so it can be used in Elastic for path visualization.
-   * // ?Also updates the path progress metric.
-   *
-   * @param path The PathPlannerPath currently being executed
-   */
-  public static void logActivePath(List<Pose2d> path) {
-    posesArray = path.toArray(new Pose2d[0]);
-    Logger.recordOutput("Pathmaster/activePath", posesArray);
-  }
-
-  public static Pose2d[] getActivePath() {
-    return posesArray;
-  }
-
-  /**
-   * // *Publish the immediate target pose on the path (the lookahead / setpoint).
-   *
-   * @param targetPose Target pose from the path follower controller
-   */
-  public static void logTargetPose(Pose2d targetPose) {
-    lastTargetPose = targetPose;
-
-    Logger.recordOutput("Pathmaster/targetPose", targetPose);
-
-    updatePathInnacuracy();
-  }
-
-
-  /**
-   * // *Recomputes path inaccuracy (distance between current and target pose).
-   * // ?Called automatically whenever current or target pose is updated.
-   */
-  private static void updatePathInnacuracy() {
-    double translationInaccuracy = lastCurrentPose
-        .getTranslation()
-        .getDistance(lastTargetPose.getTranslation());
-
-    double rotationalInaccuracy = Math.abs(lastCurrentPose
-        .getRotation()
-        .minus(lastTargetPose.getRotation())
-        .getRadians());
-
-    Logger.recordOutput("Pathmaster/PathfindingInnacuracy/translationInaccuracy", translationInaccuracy);
-    Logger.recordOutput("Pathmaster/PathfindingInnacuracy/rotationalInaccuracy", rotationalInaccuracy);
-
-    if (PUBLISH_RAW_NT) {
-      transInnacuracyPub.set(translationInaccuracy);
-      rotInnacuracyPub.set(rotationalInaccuracy);
+    
+    /**
+     * *Sets the active state of a named zone.
+     * 
+     * @param zoneName The name of the zone to modify
+     * @param newState The new active state (true = active, false = inactive)
+     */
+    public static void setZoneState(String zoneName, boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                zones.put(entry.getKey(), newState);
+                return;
+            }
+        }
+        DriverStation.reportWarning(
+            "[ZoneManager] Zone '" + zoneName + "' not found", false);
     }
-  }
+    
+    /**
+     * *Sets all zones to the same active state.
+     * 
+     * @param newState The new active state for all zones
+     */
+    public static void setAllZones(boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            zones.put(entry.getKey(), newState);
+        }
+    }
+    
+    /**
+     * *Gets a list of currently active zones.
+     * ?Returns a snapshot copy to prevent concurrent modification issues.
+     * 
+     * @return List of active PathZone objects
+     */
+    public static List<PathZone> getActiveZones() {
+        List<PathZone> activeZones = new ArrayList<>();
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getValue()) {
+                activeZones.add(entry.getKey());
+            }
+        }
+        return activeZones;
+    }
+    
+    /**
+     * *Gets all registered zones regardless of active state.
+     * 
+     * @return List of all registered PathZone objects
+     */
+    public static List<PathZone> getAllZones() {
+        return new ArrayList<>(zones.keySet());
+    }
+    
+    /**
+     * *Checks if a zone is currently active.
+     * 
+     * @param zoneName The name of the zone to check
+     * @return true if the zone is registered and active, false otherwise
+     */
+    public static boolean isZoneActive(String zoneName) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                return entry.getValue();
+            }
+        }
+        return false;
+    }
 
+    /**
+     * *Deletes the given zone. Highly unlikely we will use this
+     */
+    public static boolean deleteZone(String zoneName) {
+        for (PathZone zone : zones.keySet()) {
+            if (zone.name.equals(zoneName)) {
+                return zones.remove(zone);
+            }
+        }
+
+        return false;
+    }
+    
+    /**
+     * *Clears all registered zones. Useful for resetting state or testing.
+     */
+    public static void clearAllZones() {
+        zones.clear();
+    }
+    
+    /**
+     * *Gets the total number of registered zones.
+     * 
+     * @return Number of zones currently registered
+     */
+    public static int getZoneCount() {
+        return zones.size();
+    }
 }
+
 
 /*
 

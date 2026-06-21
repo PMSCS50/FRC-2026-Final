@@ -1,4 +1,4 @@
-package frc.robot.pathfinding;
+package frc.robot.util.pathfinding;
 
 // import org.littletonrobotics.junction.Logger;
 

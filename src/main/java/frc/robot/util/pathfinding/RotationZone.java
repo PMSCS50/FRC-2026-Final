@@ -1,4 +1,4 @@
-package frc.robot.pathfinding;
+package frc.robot.util.pathfinding;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
