@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -13,7 +14,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -51,6 +51,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private int loggingLoopCounter = 0;
     private static final int LOG_EVERY_N_LOOPS = 5; // 5 loops = about 100ms
+    private final BaseStatusSignal[] m_logSignals;
 
     //* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -162,6 +163,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, modules);
+        m_logSignals = cacheLogSignals();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -190,6 +192,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
+        m_logSignals = cacheLogSignals();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -223,6 +226,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
+        m_logSignals = cacheLogSignals();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -348,6 +352,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         // |Swerve module states and motor outputs
         if (shouldLogSlowSignals) {
+            BaseStatusSignal.refreshAll(m_logSignals);
             for (int i = 0; i < 4; i++) {
                 SwerveModule<?, ?, ?> module = getModule(i);
 
@@ -422,6 +427,47 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SignalLogger.start(); // starts .hoot logging
     }
 
+    private BaseStatusSignal[] cacheLogSignals() {
+        BaseStatusSignal[] signals = new BaseStatusSignal[] {
+            getModule(0).getDriveMotor().getMotorVoltage(),
+            getModule(0).getDriveMotor().getSupplyCurrent(),
+            getModule(0).getDriveMotor().getStatorCurrent(),
+            getModule(0).getSteerMotor().getMotorVoltage(),
+            getModule(0).getSteerMotor().getSupplyCurrent(),
+            getModule(0).getSteerMotor().getStatorCurrent(),
+
+            getModule(1).getDriveMotor().getMotorVoltage(),
+            getModule(1).getDriveMotor().getSupplyCurrent(),
+            getModule(1).getDriveMotor().getStatorCurrent(),
+            getModule(1).getSteerMotor().getMotorVoltage(),
+            getModule(1).getSteerMotor().getSupplyCurrent(),
+            getModule(1).getSteerMotor().getStatorCurrent(),
+
+            getModule(2).getDriveMotor().getMotorVoltage(),
+            getModule(2).getDriveMotor().getSupplyCurrent(),
+            getModule(2).getDriveMotor().getStatorCurrent(),
+            getModule(2).getSteerMotor().getMotorVoltage(),
+            getModule(2).getSteerMotor().getSupplyCurrent(),
+            getModule(2).getSteerMotor().getStatorCurrent(),
+
+            getModule(3).getDriveMotor().getMotorVoltage(),
+            getModule(3).getDriveMotor().getSupplyCurrent(),
+            getModule(3).getDriveMotor().getStatorCurrent(),
+            getModule(3).getSteerMotor().getMotorVoltage(),
+            getModule(3).getSteerMotor().getSupplyCurrent(),
+            getModule(3).getSteerMotor().getStatorCurrent(),
+
+            getPigeon2().getYaw(),
+            getPigeon2().getAngularVelocityZWorld()
+        };
+
+        for (BaseStatusSignal signal : signals) {
+            signal.setUpdateFrequency(50);
+        }
+
+        return signals;
+    }
+
     @Override
     public void updateInputs(DriveIOInputs inputs) {
         var state = getState();
@@ -434,7 +480,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         inputs.robotHeading = state.Pose.getRotation().getRadians();
         //inputs.robotPose = state.Pose;
         
-        // *For this example, we'll just set this to false. Implementing field-oriented control is left as an exercise to the user.
         inputs.isFieldOriented = false;
         inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
     }
