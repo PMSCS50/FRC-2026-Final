@@ -49,6 +49,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public boolean hubPassed = false; // whether we've ever seen the hub (used to determine whether we should trust the alliance color and cached hub pose)
     public boolean hasSeededPose = false;
     public Pose2d cachedHubPose = null;
+    public boolean hubLogged = false;
 
     // *Pose of the robot, wrapped in latestEstimate, as well as other logged variables
     private Pose2d estimatedRobotPose;
@@ -133,8 +134,13 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     @Override
     public void periodic() {
         refreshAllianceCache();
-        Logger.recordOutput("HubPassed", hubPassed);
-        Logger.recordOutput("CachedHubPose", cachedHubPose);
+
+        //Stop logging when the hubpose is seeded
+        if (!hubLogged) {
+            Logger.recordOutput("HubPassed", hubPassed);
+            Logger.recordOutput("CachedHubPose", cachedHubPose);
+            hubLogged = hubPassed;
+        }
         // Logger.recordOutput("Vision/PeriodicRunning", true);
         // Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
 
@@ -177,7 +183,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
             if (llMeasurement == null) {
                 // Logger.recordOutput("Vision/" + cam + "/Valid", false);
-                // Logger.recordOutput("Vision/" + cam + "/RawPose", new Pose2d());
+                // Logger.recordOutput("Vision/" + cam + "/RawPose", Pose2d.kZero);
                 // Logger.recordOutput("Vision/" + cam + "/TagIds", new int[0]);
                 // Logger.recordOutput("Vision/" + cam + "/TagPoses", new Pose2d[0]);
                 continue;
@@ -460,38 +466,39 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         inputs.targetId = bestId;
 
         inputs.hasTagTransform = inputs.hasTarget;
-        inputs.tagToRobotX    = inputs.hasTagTransform ? getX(inputs.targetId) : 0.0;
-        inputs.tagToRobotY    = inputs.hasTagTransform ? getY(inputs.targetId) : 0.0;
-        inputs.tagToRobotZ    = 0.0;
-        inputs.tagToRobotRotZ = inputs.hasTagTransform ? getYawRad(inputs.targetId) : 0.0;
+        // inputs.tagToRobotX    = inputs.hasTagTransform ? getX(bestId) : 0.0;
+        // inputs.tagToRobotY    = inputs.hasTagTransform ? getY(bestId) : 0.0;
+        // inputs.tagToRobotZ    = 0.0;
+        // inputs.tagToRobotRotZ = inputs.hasTagTransform ? getYawRad(bestId) : 0.0;
 
-        // *Build tag arrays once, reuse
+        // *Dont use streams, they are quite resource heavy.
         int[] ids = new int[tagposes.size()];
         int it = 0;
         for (Integer fiducial : tagposes.keySet()) {
             ids[it] = fiducial;
             it++;
         }
-        inputs.visibleTagIds   = ids;
-        inputs.visibleTagPoses   = tagposes.values().toArray(Pose2d[]::new);
-        inputs.allTagToRobotX    = new double[ids.length];
-        inputs.allTagToRobotY    = new double[ids.length];
-        inputs.allTagToRobotZ    = new double[ids.length];
-        inputs.allTagToRobotRotZ = new double[ids.length];
 
-        for (int i = 0; i < ids.length; i++) {
-            int id = ids[i];
-            inputs.allTagToRobotX[i]   = getX(id);
-            inputs.allTagToRobotY[i]   = getY(id);
-            inputs.allTagToRobotRotZ[i] = getYawRad(id);
-        }
+        inputs.visibleTagIds   = ids;
+        inputs.visibleTagPoses = tagposes.values().toArray(Pose2d[]::new);
+        // inputs.allTagToRobotX    = new double[ids.length];
+        // inputs.allTagToRobotY    = new double[ids.length];
+        // inputs.allTagToRobotZ    = new double[ids.length];
+        // inputs.allTagToRobotRotZ = new double[ids.length];
+
+        // for (int i = 0; i < ids.length; i++) {
+        //     int id = ids[i];
+        //     inputs.allTagToRobotX[i]    = getX(id);
+        //     inputs.allTagToRobotY[i]    = getY(id);
+        //     inputs.allTagToRobotRotZ[i] = getYawRad(id);
+        // }
 
 
         inputs.hasEstimatedPose       = estimatedRobotPose != null;
-        inputs.estimatedPose          = estimatedRobotPose != null ? estimatedRobotPose : new Pose2d();
-        inputs.estimatedPoseTimestamp = latestEstimate != null ? latestEstimate.timestampSeconds : 0.0;
-        inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
-        inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
+        inputs.estimatedPose          = estimatedRobotPose != null ? estimatedRobotPose : Pose2d.kZero;
+        // inputs.estimatedPoseTimestamp = latestEstimate != null ? latestEstimate.timestampSeconds : 0.0;
+        // inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
+        // inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
         inputs.distanceToHub = getBestDistanceToHub();
 
         //Matrix<N3, N1> stdDevMatrix = stdDevs;
