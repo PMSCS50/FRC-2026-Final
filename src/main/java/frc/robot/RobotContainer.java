@@ -16,6 +16,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.config.RobotConfig;
+import com.revrobotics.spark.ClosedLoopSlot;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -248,14 +249,14 @@ public class RobotContainer {
 
         operatorController.rightTrigger().onTrue(
             new InstantCommand(
-                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointB),
+                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointB, ClosedLoopSlot.kSlot0),
                 pivot
             )
         );
 
         operatorController.rightBumper().onTrue(
             new InstantCommand(
-                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointA),
+                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointA, ClosedLoopSlot.kSlot1),
                 pivot
             )
         );

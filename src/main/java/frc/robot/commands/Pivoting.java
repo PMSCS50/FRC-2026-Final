@@ -5,6 +5,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.subsystems.Pivot;
 
+import com.revrobotics.spark.ClosedLoopSlot;
+
 public class Pivoting extends Command {
 
     private static final double SETPOINT_A = IntakeConstants.kPivotSetpointA; // 0.0 (up)
@@ -14,21 +16,18 @@ public class Pivoting extends Command {
     private final Pivot pivot;
     private final double targetSetpoint;
 
+    private ClosedLoopSlot slot;
+
     public Pivoting(Pivot pivot, boolean forward) {
         this.pivot = pivot;
         this.targetSetpoint = forward ? SETPOINT_B : SETPOINT_A;
+        slot = forward ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
         addRequirements(pivot);
-
-        if (targetSetpoint == SETPOINT_A) {
-            pivot.setPivotControlSlot1();
-        } else {
-            pivot.setPivotControlSlot0();
-        }
     }
 
     @Override
     public void initialize() {
-        pivot.goToPositionMAXMotion(targetSetpoint);
+        pivot.goToPositionMAXMotion(targetSetpoint, slot);
     }
 
     @Override
