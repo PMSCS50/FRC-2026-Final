@@ -93,6 +93,9 @@ public class Robot extends LoggedRobot {
         builder.addDoubleProperty("Robot Angle",          () -> m_robotContainer.drivetrain.getState().Pose.getRotation().getRadians(), null);
       }
     });
+    //We should only be logging this once anyway
+    Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
+
   }
 
   @Override
@@ -108,7 +111,6 @@ public class Robot extends LoggedRobot {
 
     // |RoboRIO voltage and current monitoring
     Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
-    Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
     // Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
     // Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
     // Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());

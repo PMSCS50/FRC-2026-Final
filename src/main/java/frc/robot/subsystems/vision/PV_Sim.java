@@ -76,6 +76,7 @@ public class PV_Sim extends VisionGeneral {
         Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
         Logger.recordOutput("Vision/TargetId", inputs.targetId);
         Logger.recordOutput("Vision/IsAlignedToHub", isAlignedToHub());
+        Logger.recordOutput("Vision/PoseEstimate", drivetrain.getState().Pose);
         //Logger.recordOutput("Vision/HubPose", VisionConstants.getHubPose());
 
         if (aprilTagLayout != null && inputs.hasTarget) {

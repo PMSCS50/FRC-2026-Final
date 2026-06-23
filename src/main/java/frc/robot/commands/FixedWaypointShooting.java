@@ -3,6 +3,7 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Shooter;
 import java.util.Map;
+import java.util.Optional;
 
 public class FixedWaypointShooting extends Command {
 
@@ -20,7 +21,8 @@ public class FixedWaypointShooting extends Command {
 
     public FixedWaypointShooting(Shooter shooter, String waypointName) {
         this.shooter = shooter;
-        this.distance = distances.get(waypointName);
+        // Use ofNullable to avoid NPE when waypointName is not in the map
+        this.distance = Optional.ofNullable(distances.get(waypointName)).orElse(3.5);
         addRequirements(shooter);
     }
 

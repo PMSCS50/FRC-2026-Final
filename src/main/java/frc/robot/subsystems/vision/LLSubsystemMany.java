@@ -15,7 +15,6 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -105,7 +104,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     latestMeasurements = fresh;
                 }
                 try {
-                    Thread.sleep(20); // poll at ~50Hz
+                    Thread.sleep(50); // poll at ~20Hz
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
