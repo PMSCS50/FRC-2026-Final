@@ -36,7 +36,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     // *Initialize variables
     private final CommandSwerveDrivetrain drivetrain;
 
-    private final HashMap<Integer, Transform2d> tagtransforms = new HashMap<>();
+    private final HashMap<Integer, Pose2d> tagposes = new HashMap<>();
     private final HashMap<Integer, Double> tagambiguities = new HashMap<>();
     private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
@@ -80,6 +80,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     // |Trying to reduce the time it takes to run
     private volatile PoseEstimate[] latestMeasurements;
     private final Object measurementLock = new Object();
+
 
     // !In constructor, start a background thread
     public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
@@ -155,7 +156,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         totalTagDist       = 0.0;
         totalTagArea       = 0.0;
         allCameraRawFiducials.clear();
-        tagtransforms.clear();
+        tagposes.clear();
         tagambiguities.clear();
         
         PoseEstimate[] measurements;
@@ -219,20 +220,20 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 allCameraRawFiducials.add(fiducials);
 
                 for (RawFiducial f : fiducials) {
-                    double x = f.distToRobot * Math.cos(Math.toRadians(f.txnc));
-                    double y = f.distToRobot * Math.sin(Math.toRadians(f.txnc));
+                    double x = f.distToRobot * Math.cos(Math.toRadians(f.txnc)) * Math.cos(Math.toRadians(f.tync));
+                    double y = f.distToRobot * Math.sin(Math.toRadians(f.txnc)) * Math.cos(Math.toRadians(f.tync));
 
                     if (!tagambiguities.containsKey(f.id) || f.ambiguity < tagambiguities.get(f.id)) {
                         tagambiguities.put(f.id, f.ambiguity);
-                        tagtransforms.put(f.id, new Transform2d(x, y, new Rotation2d(Math.toRadians(f.txnc))));
+                        tagposes.put(f.id, new Pose2d(x, y, new Rotation2d(Math.toRadians(f.txnc))));
                     }
                 }
             }
 
             // *Tag positions
             // Pose2d[] tagPoses = Arrays.stream(fiducials)
-            //     .filter(f -> tagtransforms.containsKey(f.id))
-            //     .map(f -> { Transform2d t = tagtransforms.get(f.id); return new Pose2d(t.getX(), t.getY(), t.getRotation()); })
+            //     .filter(f -> tagposes.containsKey(f.id))
+            //     .map(f -> { Transform2d t = tagposes.get(f.id); return new Pose2d(t.getX(), t.getY(), t.getRotation()); })
             //     .toArray(Pose2d[]::new);
             //Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
         }
@@ -325,17 +326,17 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     public int     getTagCount()                    { return latestEstimate != null ? latestEstimate.tagCount : 0; }
     public double  getAvgTagDist()                  { return latestEstimate != null ? latestEstimate.avgTagDist : 0.0; }
     public double  getAvgTagArea()                  { return latestEstimate != null ? latestEstimate.avgTagArea : 0.0; }
-    public boolean hasTargets()                     { return !tagtransforms.isEmpty(); }
+    public boolean hasTargets()                     { return !tagposes.isEmpty(); }
     public Pose2d getCachedHubPose()                { return cachedHubPose; }
 
     // *Getters for specific tags
     // !These return 0 or false if the tag isn't currently visible, so be sure to check hasTarget() first if you want to avoid ambiguity with a real measurement of 0!
-    public boolean hasTarget(int id)                { return tagtransforms.containsKey(id); }
-    public double getX(int id)                      { return hasTarget(id) ? tagtransforms.get(id).getX() : 0.0; }
-    public double getY(int id)                      { return hasTarget(id) ? tagtransforms.get(id).getY() : 0.0; }
-    public double getYawDeg(int id)                 { return hasTarget(id) ? tagtransforms.get(id).getRotation().getDegrees() : 0.0; }
-    public double getYawRad(int id)                 { return hasTarget(id) ? tagtransforms.get(id).getRotation().getRadians() : 0.0; }
-    public Transform2d getTransformToTag(int id)    { return hasTarget(id) ? tagtransforms.get(id) : Transform2d.kZero; }
+    public boolean hasTarget(int id)                { return tagposes.containsKey(id); }
+    public double getX(int id)                      { return hasTarget(id) ? tagposes.get(id).getX() : 0.0; }
+    public double getY(int id)                      { return hasTarget(id) ? tagposes.get(id).getY() : 0.0; }
+    public double getYawDeg(int id)                 { return hasTarget(id) ? tagposes.get(id).getRotation().getDegrees() : 0.0; }
+    public double getYawRad(int id)                 { return hasTarget(id) ? tagposes.get(id).getRotation().getRadians() : 0.0; }
+    public Transform2d getTransformToTag(int id)    { return hasTarget(id) ? tagposes.get(id).minus(Pose2d.kZero) : Transform2d.kZero; }
 
     // *Setters (for all cams)
     public void setPipelineAll(int pipeline) {
@@ -446,11 +447,17 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         inputs.hasTarget = hasTargets();
-        inputs.targetId = tagambiguities.isEmpty() ? -1 :
-            tagambiguities.entrySet().stream()
-                .min(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(-1);
+        int bestId = -1;
+        double leastAmbiguity = Double.POSITIVE_INFINITY;
+
+        for (Map.Entry<Integer, Double> fiducial : tagambiguities.entrySet()) {
+            if (fiducial.getValue() < leastAmbiguity) {
+                leastAmbiguity = fiducial.getValue();
+                bestId = fiducial.getKey();
+            }
+        }
+
+        inputs.targetId = bestId;
 
         inputs.hasTagTransform = inputs.hasTarget;
         inputs.tagToRobotX    = inputs.hasTagTransform ? getX(inputs.targetId) : 0.0;
@@ -459,9 +466,14 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         inputs.tagToRobotRotZ = inputs.hasTagTransform ? getYawRad(inputs.targetId) : 0.0;
 
         // *Build tag arrays once, reuse
-        int[] ids = tagtransforms.keySet().stream().mapToInt(Integer::intValue).toArray();
+        int[] ids = new int[tagposes.size()];
+        int it = 0;
+        for (Integer fiducial : tagposes.keySet()) {
+            ids[it] = fiducial;
+            it++;
+        }
         inputs.visibleTagIds   = ids;
-        inputs.visibleTagPoses = new Pose2d[ids.length];
+        inputs.visibleTagPoses   = tagposes.values().toArray(Pose2d[]::new);
         inputs.allTagToRobotX    = new double[ids.length];
         inputs.allTagToRobotY    = new double[ids.length];
         inputs.allTagToRobotZ    = new double[ids.length];
@@ -469,7 +481,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         for (int i = 0; i < ids.length; i++) {
             int id = ids[i];
-            inputs.visibleTagPoses[i]  = new Pose2d(getX(id), getY(id), new Rotation2d(getYawRad(id)));
             inputs.allTagToRobotX[i]   = getX(id);
             inputs.allTagToRobotY[i]   = getY(id);
             inputs.allTagToRobotRotZ[i] = getYawRad(id);
