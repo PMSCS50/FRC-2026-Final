@@ -43,6 +43,9 @@ public class Robot extends LoggedRobot {
   // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   // int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
+  private double batteryVoltage;
+  private int batterytimer = 0;
+
   public Robot() {
     Logger.recordMetadata("ProjectName", "Orion (Pissbot)");
 
@@ -110,7 +113,19 @@ public class Robot extends LoggedRobot {
     m_robotContainer.monkeyDLuffy.logWaypoint();
 
     // |RoboRIO voltage and current monitoring
-    Logger.recordOutput("RoboRIO/Battery Voltage", RobotController.getBatteryVoltage());
+    batteryVoltage = RobotController.getBatteryVoltage();
+    Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
+
+    if (batteryVoltage <= 9.0 && batterytimer >= 10000) {
+      Elastic.sendNotification(
+        new Elastic.Notification(
+          Elastic.NotificationLevel.WARNING,
+          "Battery Warning",
+          "Battery voltage is low, at only " + batteryVoltage + " volts"
+        )
+      );
+      batterytimer = 0;
+    }
     // Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
     // Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
     // Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
@@ -131,6 +146,7 @@ public class Robot extends LoggedRobot {
     
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     
+    batterytimer += 20;
   }
 
   // *Disabled mode
