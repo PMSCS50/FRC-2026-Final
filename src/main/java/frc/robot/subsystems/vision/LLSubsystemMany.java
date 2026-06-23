@@ -486,8 +486,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             inputs.allTagToRobotRotZ[i] = getYawRad(id);
         }
 
-        Logger.recordOutput("Vision/VisibleTagIds",   inputs.visibleTagIds);
-        Logger.recordOutput("Vision/VisibleTagPoses", inputs.visibleTagPoses);
 
         inputs.hasEstimatedPose       = estimatedRobotPose != null;
         inputs.estimatedPose          = estimatedRobotPose != null ? estimatedRobotPose : new Pose2d();
