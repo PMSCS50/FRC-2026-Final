@@ -116,7 +116,7 @@ public class Robot extends LoggedRobot {
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
 
-    if (batteryVoltage <= 9.0 && batterytimer >= 10000) {
+    if (batteryVoltage <= 8.5 && batterytimer >= 5000) {
       Elastic.sendNotification(
         new Elastic.Notification(
           Elastic.NotificationLevel.WARNING,
@@ -139,11 +139,6 @@ public class Robot extends LoggedRobot {
     // Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
     //Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
-    //Logger.recordOutput("Field/ExpectedAlliance", DriverStation.getAlliance().map(Object::toString).orElse("Unknown"));
-    //Logger.recordOutput("Field/UsedAlliance", allianceColor);
-    //Logger.recordOutput("Field/AllianceFlipper", m_robotContainer.directionFlipper);
-    //Logger.recordOutput("distanceToHub", m_robotContainer.vision.getDistanceToTarget(m_robotContainer.vision.cachedHubPose));
-    
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     
     batterytimer += 20;
@@ -167,9 +162,6 @@ public class Robot extends LoggedRobot {
     if (!m_orchestra.isPlaying() && allowOrchestra) {
       m_orchestra.play();
     }
-
-    // m_robotContainer.vision.setRobotOrientationAll(robotYaw, 0, 0, 0, 0, 0);
-    //m_robotContainer.vision.setIMUModeAll(1);
   }
 
   @Override
@@ -182,7 +174,7 @@ public class Robot extends LoggedRobot {
   // *Autonomous mode
   @Override
   public void autonomousInit() {
-    Elastic.selectTab("autonomous");
+    Elastic.selectTab("Auto");
     applyAllianceConfig();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
@@ -200,7 +192,7 @@ public class Robot extends LoggedRobot {
   // *Teleop mode
   @Override
   public void teleopInit() {
-    Elastic.selectTab("teleop");
+    Elastic.selectTab("Teleoperated");
     applyAllianceConfig();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
