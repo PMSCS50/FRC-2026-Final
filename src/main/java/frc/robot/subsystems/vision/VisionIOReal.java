@@ -66,20 +66,20 @@ public class VisionIOReal implements VisionIO {
         if (!inputs.hasTarget) {
             inputs.targetId        = -1;
             inputs.hasTagTransform = false;
-            inputs.tagToRobotX     = 0.0;
-            inputs.tagToRobotY     = 0.0;
-            inputs.tagToRobotZ     = 0.0;
-            inputs.tagToRobotRotZ  = 0.0;
+            // inputs.tagToRobotX     = 0.0;
+            // inputs.tagToRobotY     = 0.0;
+            // inputs.tagToRobotZ     = 0.0;
+            // inputs.tagToRobotRotZ  = 0.0;
             inputs.visibleTagIds       = new int[0];
-            inputs.allTagToRobotX      = new double[0];
-            inputs.allTagToRobotY      = new double[0];
-            inputs.allTagToRobotZ      = new double[0];
-            inputs.allTagToRobotRotZ   = new double[0];
+            // inputs.allTagToRobotX      = new double[0];
+            // inputs.allTagToRobotY      = new double[0];
+            // inputs.allTagToRobotZ      = new double[0];
+            // inputs.allTagToRobotRotZ   = new double[0];
             inputs.hasEstimatedPose    = false;
-            inputs.distanceToHub       = 0.0;
-            inputs.visionStdDevs = new double[] {
-                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
-            };
+            //inputs.distanceToHub       = 0.0;
+            // inputs.visionStdDevs = new double[] {
+            //     Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            // };
             return;
         }
 
@@ -89,10 +89,10 @@ public class VisionIOReal implements VisionIO {
         // ?botpose_targetspace = robot's pose in the primary tag's frame = tagToRobot
         Pose3d primaryTagToRobot = LimelightHelpers.getBotPose3d_TargetSpace(llName);
         inputs.hasTagTransform = true;
-        inputs.tagToRobotX    = primaryTagToRobot.getX();
-        inputs.tagToRobotY    = primaryTagToRobot.getY();
-        inputs.tagToRobotZ    = primaryTagToRobot.getZ();
-        inputs.tagToRobotRotZ = primaryTagToRobot.getRotation().getZ();
+        // inputs.tagToRobotX    = primaryTagToRobot.getX();
+        // inputs.tagToRobotY    = primaryTagToRobot.getY();
+        // inputs.tagToRobotZ    = primaryTagToRobot.getZ();
+        // inputs.tagToRobotRotZ = primaryTagToRobot.getRotation().getZ();
 
         // *--- Per-tag HashMap → parallel arrays --------------------------------
         // ?getLatestResults() parses full JSON; each fiducial exposes 
@@ -117,10 +117,10 @@ public class VisionIOReal implements VisionIO {
         }
 
         inputs.visibleTagIds     = ids;
-        inputs.allTagToRobotX    = txArr;
-        inputs.allTagToRobotY    = tyArr;
-        inputs.allTagToRobotZ    = tzArr;
-        inputs.allTagToRobotRotZ = trArr;
+        // inputs.allTagToRobotX    = txArr;
+        // inputs.allTagToRobotY    = tyArr;
+        // inputs.allTagToRobotZ    = tzArr;
+        // inputs.allTagToRobotRotZ = trArr;
 
         // *--- Hub distance (tag-space geometry) --------------------------------
         //inputs.distanceToHub = computeHubDistance(inputs);
@@ -140,21 +140,21 @@ public class VisionIOReal implements VisionIO {
         inputs.estimatedPose          = pe.pose;
         inputs.estimatedPoseTimestamp = pe.timestampSeconds;
         inputs.numTagsUsed            = pe.tagCount;
-        inputs.avgTagDistMeters       = pe.avgTagDist;
+        //inputs.avgTagDistMeters       = pe.avgTagDist;
 
         // *MegaTag2 std-devs
-        if (pe.tagCount >= 2) {
-            inputs.visionStdDevs = new double[] {
-                0.5 * pe.avgTagDist,
-                0.5 * pe.avgTagDist,
-                Math.toRadians(5) // 5 degrees in radians
-            };
-        } else {
-            inputs.visionStdDevs = new double[] {
-                1.0 * pe.avgTagDist,
-                1.0 * pe.avgTagDist,
-                Math.toRadians(10) // 10 degrees in radians
-            };
-        }
+        // if (pe.tagCount >= 2) {
+        //     inputs.visionStdDevs = new double[] {
+        //         0.5 * pe.avgTagDist,
+        //         0.5 * pe.avgTagDist,
+        //         Math.toRadians(5) // 5 degrees in radians
+        //     };
+        // } else {
+        //     inputs.visionStdDevs = new double[] {
+        //         1.0 * pe.avgTagDist,
+        //         1.0 * pe.avgTagDist,
+        //         Math.toRadians(10) // 10 degrees in radians
+        //     };
+        // }
     }
 }

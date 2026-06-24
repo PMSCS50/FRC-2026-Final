@@ -72,7 +72,7 @@ public class PV_Sim extends VisionGeneral {
         //Logger.recordOutput("Vision/VisibleTagPoses", visibleTagPoses.toArray(new Pose2d[0]));
         //Logger.recordOutput("Vision/PathfindToPose", VisionConstants.getCenter());
         Logger.recordOutput("Vision/AimPose", VisionConstants.getAimPose());
-        Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
+        //Logger.recordOutput("Vision/DistanceToHub", inputs.distanceToHub);
         Logger.recordOutput("Vision/HasTarget", inputs.hasTarget);
         Logger.recordOutput("Vision/TargetId", inputs.targetId);
         Logger.recordOutput("Vision/IsAlignedToHub", isAlignedToHub());
@@ -146,28 +146,24 @@ public class PV_Sim extends VisionGeneral {
 
     /** Forward/back distance robot → primary tag face (meters). */
     public double getX() {
-        return inputs.hasTagTransform ? inputs.tagToRobotX : 0.0;
+        return inputs.hasTagTransform ? getX(inputs.targetId) : 0.0;
     }
 
     /** Left/right distance robot → primary tag face (meters). */
     public double getY() {
-        return inputs.hasTagTransform ? inputs.tagToRobotY : 0.0;
+        return inputs.hasTagTransform ? getY(inputs.targetId) : 0.0;
     }
 
-    /** Vertical distance robot → primary tag (meters). */
-    public double getZ() {
-        return inputs.hasTagTransform ? inputs.tagToRobotZ : 0.0;
-    }
 
     /** Robot yaw relative to primary tag (radians). */
     public double getYawRad() {
-        return inputs.hasTagTransform ? inputs.tagToRobotRotZ : 0.0;
+        return inputs.hasTagTransform ? getYawRad(inputs.targetId) : 0.0;
     }
 
     /** Straight-line XY distance to primary tag (meters). */
     public double getDistance() {
         return inputs.hasTagTransform
-            ? Math.hypot(inputs.tagToRobotX, inputs.tagToRobotY)
+            ? Math.hypot(getX(), getY())
             : 0.0;
     }
 
@@ -176,37 +172,29 @@ public class PV_Sim extends VisionGeneral {
     /** Forward/back distance to a specific tag by ID (meters), or 0 if not visible. */
     public double getX(int id) {
         int idx = indexOfTag(id);
-        return idx >= 0 ? inputs.allTagToRobotX[idx] : 0.0;
+        return idx >= 0 ? inputs.visibleTagPoses[idx].getX() : 0.0;
     }
 
     /** Left/right distance to a specific tag by ID (meters), or 0 if not visible. */
     public double getY(int id) {
         int idx = indexOfTag(id);
-        return idx >= 0 ? inputs.allTagToRobotY[idx] : 0.0;
-    }
-
-    /** Vertical distance to a specific tag by ID (meters), or 0 if not visible. */
-    public double getZ(int id) {
-        int idx = indexOfTag(id);
-        return idx >= 0 ? inputs.allTagToRobotZ[idx] : 0.0;
+        return idx >= 0 ? inputs.visibleTagPoses[idx].getY() : 0.0;
     }
 
     /** Robot yaw relative to a specific tag (radians), or 0 if not visible. */
     public double getYawRad(int id) {
         int idx = indexOfTag(id);
-        return idx >= 0 ? inputs.allTagToRobotRotZ[idx] : 0.0;
+        return idx >= 0 ? getYawRad(id) : 0.0;
     }
 
     public double getYawDeg(int id) {
         int idx = indexOfTag(id);
-        return idx >= 0 ? Math.toDegrees(inputs.allTagToRobotRotZ[idx]) : 0.0;
+        return idx >= 0 ? inputs.visibleTagPoses[idx].getRotation().getDegrees() : 0.0;
     }
 
     /** Straight-line XY distance to a specific tag (meters), or 0 if not visible. */
     public double getDistance(int id) {
-        int idx = indexOfTag(id);
-        if (idx < 0) return 0.0;
-        return Math.hypot(inputs.allTagToRobotX[idx], inputs.allTagToRobotY[idx]);
+        return Math.hypot(getX(id), getY(id));
     }
 
     // =========================================================================
@@ -260,10 +248,6 @@ public class PV_Sim extends VisionGeneral {
     private final double shooterHeight = 0.508;
     private final double phi           = Math.toRadians(70);
 
-    /** Distance from robot to hub using logged tag-space geometry (meters). */
-    public double getDistanceToHub() {
-        return inputs.distanceToHub;
-    }
 
     public double getShooterVelocity(double distance) {
         double y = 1.8288 - shooterHeight;

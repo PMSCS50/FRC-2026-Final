@@ -370,7 +370,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
             // |Raw Pigeon2 gyro logging
             Pigeon2 pigeon = getPigeon2();
-            Logger.recordOutput("Gyro/RawYaw", pigeon.getYaw().getValueAsDouble());
+            //Yaw from -180 to 180 degrees
+            Logger.recordOutput("Gyro/ModYaw", pigeon.getYaw().getValueAsDouble() % 360 - 180);
             Logger.recordOutput("Gyro/YawRate", pigeon.getAngularVelocityZWorld().getValueAsDouble());
             Logger.recordOutput("Gyro/IsConnected", pigeon.isConnected());
 

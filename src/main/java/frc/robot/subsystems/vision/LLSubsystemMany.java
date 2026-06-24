@@ -499,7 +499,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         // inputs.estimatedPoseTimestamp = latestEstimate != null ? latestEstimate.timestampSeconds : 0.0;
         // inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
         // inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
-        inputs.distanceToHub = getBestDistanceToHub();
+        //inputs.distanceToHub = getBestDistanceToHub();
 
         //Matrix<N3, N1> stdDevMatrix = stdDevs;
         //inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};

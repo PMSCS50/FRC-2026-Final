@@ -92,16 +92,16 @@ public class VisionIOSim implements VisionIO {
             inputs.hasTarget       = false;
             inputs.targetId        = -1;
             inputs.hasTagTransform = false;
-            inputs.tagToRobotX     = 0.0;
-            inputs.tagToRobotY     = 0.0;
-            inputs.tagToRobotZ     = 0.0;
-            inputs.tagToRobotRotZ  = 0.0;
+            // inputs.tagToRobotX     = 0.0;
+            // inputs.tagToRobotY     = 0.0;
+            // inputs.tagToRobotZ     = 0.0;
+            // inputs.tagToRobotRotZ  = 0.0;
             inputs.visibleTagIds     = new int[0];
-            inputs.allTagToRobotX    = new double[0];
-            inputs.allTagToRobotY    = new double[0];
-            inputs.allTagToRobotZ    = new double[0];
-            inputs.allTagToRobotRotZ = new double[0];
-            inputs.distanceToHub     = 0.0;
+            // inputs.allTagToRobotX    = new double[0];
+            // inputs.allTagToRobotY    = new double[0];
+            // inputs.allTagToRobotZ    = new double[0];
+            // inputs.allTagToRobotRotZ = new double[0];
+            // inputs.distanceToHub     = 0.0;
         } else {
             PhotonPipelineResult result = results.get(results.size() - 1); // single declaration
 
@@ -112,15 +112,15 @@ public class VisionIOSim implements VisionIO {
                 inputs.targetId  = best.getFiducialId();
 
                 // *Primary tagToRobot (mirrors VisionIOReal: botpose_targetspace)
-                Transform3d cameraToTag = best.getBestCameraToTarget();
-                Transform3d robotToTag  = ROBOT_TO_CAMERA.plus(cameraToTag);
-                Transform3d tagToRobot  = robotToTag.inverse();
+                // Transform3d cameraToTag = best.getBestCameraToTarget();
+                // Transform3d robotToTag  = ROBOT_TO_CAMERA.plus(cameraToTag);
+                // Transform3d tagToRobot  = robotToTag.inverse();
 
                 inputs.hasTagTransform = true;
-                inputs.tagToRobotX    = tagToRobot.getX();
-                inputs.tagToRobotY    = tagToRobot.getY();
-                inputs.tagToRobotZ    = tagToRobot.getZ();
-                inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
+                // inputs.tagToRobotX    = tagToRobot.getX();
+                // inputs.tagToRobotY    = tagToRobot.getY();
+                // inputs.tagToRobotZ    = tagToRobot.getZ();
+                //inputs.tagToRobotRotZ = tagToRobot.getRotation().getZ();
 
                 // *Per-tag parallel arrays (mirrors VisionIOReal's JSON loop)
                 List<PhotonTrackedTarget> allTargets = result.getTargets();
@@ -156,24 +156,24 @@ public class VisionIOSim implements VisionIO {
                     inputs.visibleTagPoses = tagPoses.toArray(new Pose2d[0]);
                 }
 
-                inputs.allTagToRobotX    = txArr;
-                inputs.allTagToRobotY    = tyArr;
-                inputs.allTagToRobotZ    = tzArr;
-                inputs.allTagToRobotRotZ = trArr;
+                // inputs.allTagToRobotX    = txArr;
+                // inputs.allTagToRobotY    = tyArr;
+                // inputs.allTagToRobotZ    = tzArr;
+                // inputs.allTagToRobotRotZ = trArr;
             } else {
                 inputs.hasTarget       = false;
                 inputs.targetId        = -1;
                 inputs.hasTagTransform = false;
-                inputs.tagToRobotX     = 0.0;
-                inputs.tagToRobotY     = 0.0;
-                inputs.tagToRobotZ     = 0.0;
-                inputs.tagToRobotRotZ  = 0.0;
+                // inputs.tagToRobotX     = 0.0;
+                // inputs.tagToRobotY     = 0.0;
+                // inputs.tagToRobotZ     = 0.0;
+                // inputs.tagToRobotRotZ  = 0.0;
                 inputs.visibleTagIds     = new int[0];
-                inputs.allTagToRobotX    = new double[0];
-                inputs.allTagToRobotY    = new double[0];
-                inputs.allTagToRobotZ    = new double[0];
-                inputs.allTagToRobotRotZ = new double[0];
-                inputs.distanceToHub     = 0.0;
+                // inputs.allTagToRobotX    = new double[0];
+                // inputs.allTagToRobotY    = new double[0];
+                // inputs.allTagToRobotZ    = new double[0];
+                // inputs.allTagToRobotRotZ = new double[0];
+                // inputs.distanceToHub     = 0.0;
             }
 
             // *--- Pose estimation
@@ -189,9 +189,9 @@ public class VisionIOSim implements VisionIO {
         // *--- Pose estimation --------------------------------------------------
         if (photonPoseEstimator == null) {
             inputs.hasEstimatedPose = false;
-            inputs.visionStdDevs = new double[] {
-                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
-            };
+            // inputs.visionStdDevs = new double[] {
+            //     Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            // };
             return;
         }
 
@@ -199,7 +199,7 @@ public class VisionIOSim implements VisionIO {
             EstimatedRobotPose est = latestEst.get();
             inputs.hasEstimatedPose       = true;
             inputs.estimatedPose          = est.estimatedPose.toPose2d();
-            inputs.distanceToHub          = inputs.estimatedPose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
+            //inputs.distanceToHub          = inputs.estimatedPose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
             inputs.estimatedPoseTimestamp = est.timestampSeconds;
 
             int    numTags = latestTargets.size();
@@ -210,7 +210,7 @@ public class VisionIOSim implements VisionIO {
             avgDist = numTags > 0 ? avgDist / numTags : 0.0;
 
             inputs.numTagsUsed      = numTags;
-            inputs.avgTagDistMeters = avgDist;
+            //inputs.avgTagDistMeters = avgDist;
 
             // // *Match VisionIOReal std-dev logic exactly (MegaTag2 style: pin yaw)
             // if (numTags >= 2) {
@@ -228,9 +228,9 @@ public class VisionIOSim implements VisionIO {
             // }
         } else {
             inputs.hasEstimatedPose = false;
-            inputs.visionStdDevs = new double[] {
-                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
-            };
+            // inputs.visionStdDevs = new double[] {
+            //     Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
+            // };
         }
     }
 
