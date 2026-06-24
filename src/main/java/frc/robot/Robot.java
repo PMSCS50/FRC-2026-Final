@@ -192,7 +192,7 @@ public class Robot extends LoggedRobot {
   // *Teleop mode
   @Override
   public void teleopInit() {
-    Elastic.selectTab("Teleoperated");
+    Elastic.selectTab("Teleop");
     applyAllianceConfig();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();

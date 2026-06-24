@@ -113,23 +113,11 @@ public class RobotContainer {
         }
         
         shooter = new Shooter(vision);
-
-        double pathSpeedLimiter = (Constants.currentMode == Constants.Mode.REAL) ? 0.15 : 1.0;
-
-        //Pathmaster for teleoperated pathfinding
-        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * pathSpeedLimiter, pathMaxLinearAcceleration, MaxAngularRate * pathSpeedLimiter, pathMaxAngularAcceleration);
-        
-        //Loads all alliance waypoints
-        loadAllianceWaypoints();
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * 0.15, pathMaxLinearAcceleration, MaxAngularRate * 0.15, pathMaxAngularAcceleration);
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
         NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
-        // Additional named shooting variants used by autos
-        NamedCommands.registerCommand("T-26 Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
-        NamedCommands.registerCommand("T-2 Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
-        NamedCommands.registerCommand("4 sec Middle Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
-        NamedCommands.registerCommand("Fixed Shooting Left Shoot", new FixedWaypointShooting(shooter, monkeyDLuffy.selectedWaypoint()));
 
         // *Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
@@ -141,10 +129,11 @@ public class RobotContainer {
         NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
-        // Aliases used in path files
-        NamedCommands.registerCommand("Forward Pivoting", new Pivoting(pivot, true));
-        NamedCommands.registerCommand("Backward Pivoting 10%", new Pivoting(pivot, false).withTimeout(1.5));
 
+        // *Five shooting setpoints that form a semicircle around the hub
+        for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
+            monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
+        }
 
         // *Rotation Zones (trenches)
         monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
@@ -263,8 +252,7 @@ public class RobotContainer {
         );
 
         // *POV Controls
-        operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(
-            Commands.defer(() -> new FixedWaypointShooting(shooter, monkeyDLuffy.selectedWaypoint()), Set.of(shooter)));
+        operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(new FixedWaypointShooting(shooter,monkeyDLuffy.selectedWaypoint()));
         operatorController.povDown().or(operatorController.povDownLeft()).or(operatorController.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
 
         // operatorController.povLeft()
@@ -305,10 +293,10 @@ public class RobotContainer {
     }
 
     public void loadAllianceWaypoints() {
-        for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
-            monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
-        }
+    for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
+        monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
     }
+}
     
 
     // *Getters for subsystems and commands
