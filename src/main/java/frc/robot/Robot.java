@@ -37,7 +37,7 @@ public class Robot extends LoggedRobot {
   //private boolean allianceConfigApplied = false;
   private String allianceColor = "Unknown";
 
-  private boolean allowOrchestra = true; // Orchestra currently disabled.
+  private boolean allowOrchestra = false; // Orchestra currently disabled.
   private final Orchestra m_orchestra = new Orchestra("audio/HK_TBaH.chrp");
 
   // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};

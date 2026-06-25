@@ -16,6 +16,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.revrobotics.spark.ClosedLoopSlot;
 
 import edu.wpi.first.math.util.Units;
@@ -142,7 +143,7 @@ public class RobotContainer {
         monkeyDLuffy.addRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
 
         // *Configuring
-        autoChooser = AutoBuilder.buildAutoChooser("Tests");
+        autoChooser = AutoBuilder.buildAutoChooser("TestingAuto");
         SmartDashboard.putData("Auto Mode", autoChooser);
         configureBindings();
     }
@@ -302,7 +303,9 @@ public class RobotContainer {
     // *Getters for subsystems and commands
 
     // !Run the path selected from the auto chooser
-    public Command getAutonomousCommand() { return autoChooser.getSelected(); }
+    public Command getAutonomousCommand() { 
+        return autoChooser.getSelected(); 
+    }
 
     public Intake getIntake() { return intake; }
     public Shooter getShooter() { return shooter; }
