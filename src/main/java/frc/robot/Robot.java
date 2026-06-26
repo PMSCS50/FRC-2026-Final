@@ -203,7 +203,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopPeriodic() {
     if (m_robotContainer.vision.isAlignedToHub()) {
-      rumbleControllers(1);
+      rumbleControllers(0);
     } else {
       rumbleControllers(0);
     }
