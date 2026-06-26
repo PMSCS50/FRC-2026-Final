@@ -138,9 +138,9 @@ public class RobotContainer {
         }
 
         // *Rotation Zones (trenches)
-        monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.k180deg, true);
         monkeyDLuffy.addRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
-        monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.kZero, true);
+        monkeyDLuffy.addRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.k180deg, true);
         monkeyDLuffy.addRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, true);
 
         // *Configuring
@@ -182,6 +182,7 @@ public class RobotContainer {
        driverController.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
 
        driverController.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
+
        driverController.rightTrigger().and(driverController.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection()));
 
         //joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
@@ -242,14 +243,14 @@ public class RobotContainer {
 
         operatorController.rightTrigger().onTrue(
             new InstantCommand(
-                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointB, ClosedLoopSlot.kSlot0),
+                () -> pivot.goToPosition(IntakeConstants.kPivotSetpointB),
                 pivot
             )
         );
 
         operatorController.rightBumper().onTrue(
             new InstantCommand(
-                () -> pivot.goToPositionMAXMotion(IntakeConstants.kPivotSetpointA, ClosedLoopSlot.kSlot1),
+                () -> pivot.goToPosition(IntakeConstants.kPivotSetpointA),
                 pivot
             )
         );
@@ -258,8 +259,12 @@ public class RobotContainer {
         operatorController.povUp()
             .or(operatorController.povUpLeft())
             .or(operatorController.povUpRight())
-            .whileTrue(new FixedWaypointShooting(shooter,monkeyDLuffy.selectedWaypoint()));
-            
+            .whileTrue(Commands.defer(
+                () -> {
+                    return new FixedWaypointShooting(shooter, monkeyDLuffy.selectedWaypoint());
+                }, Set.of(shooter))
+                );
+                               
         operatorController.povDown()
             .or(operatorController.povDownLeft())
             .or(operatorController.povDownRight())
@@ -271,9 +276,9 @@ public class RobotContainer {
         // *Letters
         operatorController.a().whileTrue(new FixedPIDShooting(shooter, 5));
         operatorController.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
-        operatorController.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.1), pivot));
+        operatorController.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
         operatorController.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-        operatorController.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.1), pivot));
+        operatorController.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
         operatorController.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));        
     }
 

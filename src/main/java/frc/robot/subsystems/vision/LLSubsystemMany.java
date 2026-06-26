@@ -106,7 +106,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                     latestMeasurements = fresh;
                 }
                 try {
-                    Thread.sleep(50); // poll at ~20Hz
+                    Thread.sleep(20); // poll at ~20Hz
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }

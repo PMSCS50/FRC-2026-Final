@@ -16,18 +16,18 @@ public class Pivoting extends Command {
     private final Pivot pivot;
     private final double targetSetpoint;
 
-    private ClosedLoopSlot slot;
+    //private ClosedLoopSlot slot;
 
     public Pivoting(Pivot pivot, boolean forward) {
         this.pivot = pivot;
         this.targetSetpoint = forward ? SETPOINT_B : SETPOINT_A;
-        slot = forward ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
+        //slot = forward ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
         addRequirements(pivot);
     }
 
     @Override
     public void initialize() {
-        pivot.goToPositionMAXMotion(targetSetpoint, slot);
+        pivot.goToPosition(targetSetpoint);
     }
 
     @Override

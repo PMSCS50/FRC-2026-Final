@@ -35,7 +35,7 @@ public class Robot extends LoggedRobot {
 
   private final RobotContainer m_robotContainer;
   //private boolean allianceConfigApplied = false;
-  private String allianceColor = "Unknown";
+  //private String allianceColor = "Unknown";
 
   //Disables orchestra if false
   private boolean allowOrchestra = false;
@@ -251,8 +251,9 @@ public class Robot extends LoggedRobot {
     if (alliance == lastAppliedAlliance) return;
 
     boolean red = alliance == Alliance.Red;
-    allianceColor = red ? "Red" : "Blue";
+    //allianceColor = red ? "Red" : "Blue";
     m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
+    m_robotContainer.directionFlipper = red ? 1 : -1;
 
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();
