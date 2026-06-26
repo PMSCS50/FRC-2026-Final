@@ -114,11 +114,12 @@ public class RobotContainer {
         }
         
         shooter = new Shooter(vision);
-        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * 0.15, pathMaxLinearAcceleration, MaxAngularRate * 0.15, pathMaxAngularAcceleration);
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate * speedLimiter, pathMaxAngularAcceleration);
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
-        NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
+        //NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
+        NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision, drivetrain).withTimeout(4));
 
         // *Intaking
         NamedCommands.registerCommand("3.5 sec Intaking", new Intaking(intake).withTimeout(3.5));
@@ -127,9 +128,9 @@ public class RobotContainer {
 
         // *Pivoting
         NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
-        NamedCommands.registerCommand("Pivoting Back 30%" , new Pivoting(pivot, false).withTimeout(.5));
+        NamedCommands.registerCommand("Backward Pivoting 30%" , new Pivoting(pivot, false).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
-        NamedCommands.registerCommand("Pivoting Back 10%" , new Pivoting(pivot, false).withTimeout(1.5));
+        NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
 
         // *Five shooting setpoints that form a semicircle around the hub
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
@@ -230,6 +231,7 @@ public class RobotContainer {
                 intake
             )
         );
+
         operatorController.leftBumper().whileTrue(
             new StartEndCommand(
                 () -> intake.spinIntakePID(-1),
@@ -253,8 +255,15 @@ public class RobotContainer {
         );
 
         // *POV Controls
-        operatorController.povUp().or(operatorController.povUpLeft()).or(operatorController.povUpRight()).whileTrue(new FixedWaypointShooting(shooter,monkeyDLuffy.selectedWaypoint()));
-        operatorController.povDown().or(operatorController.povDownLeft()).or(operatorController.povDownRight()).whileTrue(new DistanceBasedShooting(shooter,vision));
+        operatorController.povUp()
+            .or(operatorController.povUpLeft())
+            .or(operatorController.povUpRight())
+            .whileTrue(new FixedWaypointShooting(shooter,monkeyDLuffy.selectedWaypoint()));
+            
+        operatorController.povDown()
+            .or(operatorController.povDownLeft())
+            .or(operatorController.povDownRight())
+            .whileTrue(new DistanceBasedShooting(shooter, vision, drivetrain));
 
         // operatorController.povLeft()
         // operatorController.povRight()
@@ -278,7 +287,7 @@ public class RobotContainer {
             turningSpeed = .25;
             Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
         } else {
-            turningSpeed =driverController.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
+            turningSpeed = driverController.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
 
             if (speed <= 0.3) Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
             else if (speed <= 0.5) Logger.recordOutput("Drivetrain/Swerve Speed", "MID");
@@ -289,15 +298,15 @@ public class RobotContainer {
     }
 
     // *flipping direction for driver orientation
-    public void flipDirection(){
+    public void flipDirection() {
         directionFlipper = directionFlipper * -1;
     }
 
     public void loadAllianceWaypoints() {
-    for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
-        monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
+        for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
+            monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
+        }
     }
-}
     
 
     // *Getters for subsystems and commands

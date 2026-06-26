@@ -61,14 +61,13 @@ public class Pivot extends SubsystemBase {
         //SLOT 1: Pivot intaking position -> resting position
         pivotMotorConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(1.0, 0.0, 0.02, ClosedLoopSlot.kSlot0)
-            .pid(3.0, 0.0, 0.0, ClosedLoopSlot.kSlot1)
-            .outputRange(-0.15, 0.15, ClosedLoopSlot.kSlot0)
-            .outputRange(-1, 1, ClosedLoopSlot.kSlot1)
+            .pid(3.0, 0.0, 0.0, ClosedLoopSlot.kSlot0)
+            .pid(4.0, 0.0, 0.0, ClosedLoopSlot.kSlot1)
+            .outputRange(-1, 1)
             .positionWrappingEnabled(false)
             .feedForward
-                .kS(0.0, ClosedLoopSlot.kSlot0)
-                .kS(0.15, ClosedLoopSlot.kSlot1)
+                .kS(0.15, ClosedLoopSlot.kSlot0)
+                .kS(0.25, ClosedLoopSlot.kSlot1)
                 .kCos(0.4)
                 .kCosRatio(0.375 / IntakeConstants.kPivotSetpointB);
 

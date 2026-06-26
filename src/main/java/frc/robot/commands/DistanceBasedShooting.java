@@ -1,8 +1,10 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.geometry.Pose2d;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.vision.LLSubsystemMany;
 import frc.robot.subsystems.vision.VisionGeneral;
 //import frc.robot.subsystems.vision.VisionSubsystem;
@@ -11,25 +13,24 @@ public class DistanceBasedShooting extends Command {
 
     private final Shooter shooter;
     private final VisionGeneral vision;
-    
-    public DistanceBasedShooting(Shooter shooter, VisionGeneral vision) {
+    private final CommandSwerveDrivetrain drivetrain;
+    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
+    public DistanceBasedShooting(Shooter shooter, VisionGeneral vision, CommandSwerveDrivetrain drivetrain) {
         this.shooter = shooter;
         this.vision = vision;
-        addRequirements(shooter);
-        addRequirements(vision);
+        this.drivetrain = drivetrain;
+        addRequirements(shooter, drivetrain);
     }
 
     @Override
-    public void initialize() {
-    }
-    
-    @Override
     public void execute() {
+        drivetrain.applyRequest(() -> brake).schedule();
+
         double distance;
         if (vision instanceof LLSubsystemMany ll) {
             distance = vision.getDistanceToTarget(ll.getCachedHubPose());
             if (distance < 0) {
-                System.out.println("Using best distance to hub");
                 distance = ll.getBestDistanceToHub();
             }
         } else {
