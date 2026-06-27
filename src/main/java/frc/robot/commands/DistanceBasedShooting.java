@@ -30,7 +30,7 @@ public class DistanceBasedShooting extends Command {
 
     @Override
     public void execute() {
-        drivetrain.setControl(brake); // hold position, no scheduling
+        //drivetrain.setControl(brake); // hold position, no scheduling
 
         double distance;
         if (vision instanceof LLSubsystemMany ll) {
@@ -44,9 +44,9 @@ public class DistanceBasedShooting extends Command {
 
         if (distance > 0) {
             shooter.rpsControl(distance);
-            if (shooter.atCorrectRPS()) {
+            //if (shooter.atCorrectRPS()) {
                 shooter.spinKickersMax();
-            }
+            //}
         }
     }
     @Override
