@@ -108,10 +108,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     applyAllianceConfig();
 
-    if (m_robotContainer.directionFlipper == 0) {
-      m_robotContainer.directionFlipper = VisionConstants.getDirectionFlipper();
-    }
-
     CommandScheduler.getInstance().run();
     m_robotContainer.monkeyDLuffy.logWaypoint();
 
@@ -129,6 +125,18 @@ public class Robot extends LoggedRobot {
       );
       batterytimer = 0;
     }
+
+    CommandScheduler scheduler = CommandScheduler.getInstance();
+    Command cmd = scheduler.requiring(m_robotContainer.drivetrain);
+
+    Logger.recordOutput(
+        "Debug/DrivetrainOwner",
+        cmd == null ? "None" : cmd.getName());
+
+    Logger.recordOutput(
+        "Debug/DrivetrainOwnerClass",
+        cmd == null ? "None" : cmd.getClass().getSimpleName());
+
     // Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
     // Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
     // Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
@@ -253,7 +261,6 @@ public class Robot extends LoggedRobot {
     boolean red = alliance == Alliance.Red;
     //allianceColor = red ? "Red" : "Blue";
     m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
-    m_robotContainer.directionFlipper = red ? 1 : -1;
 
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();

@@ -8,45 +8,31 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 
 import frc.robot.Constants;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.generated.TunerConstants;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.2;
-  private static final double ANGLE_KP = 7.0;
-  private static final double ANGLE_KD = 0.4;
-  private static final double ANGLE_MAX_VELOCITY = DriveConstants.MaxAngularRate;
-  private static final double ANGLE_MAX_ACCELERATION = DriveConstants.pathMaxAngularAcceleration;
-  private static final double FF_START_DELAY = 2.0; // Secs
-  private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
-  private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
-  private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+  // private static final double ANGLE_KP = 7.0;
+  // private static final double ANGLE_KD = 0.4;
+  // private static final double ANGLE_MAX_VELOCITY = DriveConstants.MaxAngularRate;
+  // private static final double ANGLE_MAX_ACCELERATION = DriveConstants.pathMaxAngularAcceleration;
+  // private static final double FF_START_DELAY = 2.0; // Secs
+  // private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
+  // private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
+  // private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
   private DriveCommands() {}
 
@@ -288,10 +274,4 @@ public class DriveCommands {
   //                             + " inches");
   //                   })));
   // }
-
-  private static class WheelRadiusCharacterizationState {
-    double[] positions = new double[4];
-    Rotation2d lastAngle = Rotation2d.kZero;
-    double gyroDelta = 0.0;
-  }
 }

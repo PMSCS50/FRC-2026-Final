@@ -20,6 +20,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.revrobotics.spark.ClosedLoopSlot;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -56,8 +57,9 @@ public class RobotContainer {
     // *DRIVETRAIN CONSTANTS
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-    private double speedLimiter = 0.5;
-    public double directionFlipper;
+
+    private double speedLimiter = 0.7;
+    private static final double SPEED_STEP = 0.15;
 
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
@@ -88,9 +90,6 @@ public class RobotContainer {
 
     // Path follower
     private SendableChooser<Command> autoChooser;
-
-    // |we arent even using ts, ill decide if we should remove it when we test next next week
-    public double turningSpeed = 0; // for speed scaling
 
     public static RobotConfig robotConfig = null;
     static {
@@ -156,11 +155,13 @@ public class RobotContainer {
         // !Driver
         // *Driving joysticks
         drivetrain.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drivetrain,
-            () -> -driverController.getLeftY() * MaxSpeed * speedLimiter * .2,
-            () -> -driverController.getLeftX() * MaxSpeed * speedLimiter * .2,
-            () -> -driverController.getRightX()));
+            DriveCommands.joystickDrive(
+                drivetrain,
+                () -> -driverController.getLeftY() * speedLimiter,
+                () -> -driverController.getLeftX() * speedLimiter,
+                () -> -driverController.getRightX() * speedLimiter
+            )
+        );
             
         // drivetrain.setDefaultCommand(
         //     drivetrain.applyRequest(() -> {
@@ -188,11 +189,8 @@ public class RobotContainer {
                 new RunCommand(() -> shooter.stopKicker(), shooter)
         ));
 
-       driverController.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter-.1)));
-
-       driverController.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter+.1)));
-
-       driverController.rightTrigger().and(driverController.povDownLeft()).onTrue(new InstantCommand(() -> this.flipDirection()));
+        driverController.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter - 0.15)));
+        driverController.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter + 0.15)));
 
         //joystick.rightTrigger().whileTrue(new RunCommand(() -> intake.spinIntakePID(-1), intake));
         //joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
@@ -293,27 +291,14 @@ public class RobotContainer {
 
     // *changing drivetrain speed: crawl, low, mid, high
     public void setSpeed(double speed) {
-        if (speed < 0.1) {
-            speed = 0.1;
-            Logger.recordOutput("Drivetrain/Swerve Speed", "CRAWL");
-        }
-        if(speed <= .25) {
-            turningSpeed = .25;
+        speedLimiter = MathUtil.clamp(speed, 0.1, 1.0);
+
+        if (speedLimiter <= 0.3)
             Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
-        } else {
-            turningSpeed = driverController.getRightX() * MaxAngularRate * speedLimiter * directionFlipper;
-
-            if (speed <= 0.3) Logger.recordOutput("Drivetrain/Swerve Speed", "LOW");
-            else if (speed <= 0.5) Logger.recordOutput("Drivetrain/Swerve Speed", "MID");
-            else Logger.recordOutput("Drivetrain/Swerve Speed", "HIGH");
-        }
-        speedLimiter = speed;
-        
-    }
-
-    // *flipping direction for driver orientation
-    public void flipDirection() {
-        directionFlipper = directionFlipper * -1;
+        else if (speedLimiter <= 0.5)
+            Logger.recordOutput("Drivetrain/Swerve Speed", "MID");
+        else
+            Logger.recordOutput("Drivetrain/Swerve Speed", "HIGH");
     }
 
     public void loadAllianceWaypoints() {

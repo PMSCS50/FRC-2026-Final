@@ -24,8 +24,13 @@ public class DistanceBasedShooting extends Command {
     }
 
     @Override
+    public void initialize() {
+        drivetrain.applyRequest(() -> brake);
+    }
+
+    @Override
     public void execute() {
-        //drivetrain.applyRequest(() -> brake).schedule();
+        drivetrain.setControl(brake); // hold position, no scheduling
 
         double distance;
         if (vision instanceof LLSubsystemMany ll) {
@@ -44,7 +49,6 @@ public class DistanceBasedShooting extends Command {
             }
         }
     }
-
     @Override
     public void end(boolean interrupted) {
         shooter.stop();

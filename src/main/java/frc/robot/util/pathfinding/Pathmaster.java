@@ -307,11 +307,8 @@ public class Pathmaster {
     public Command goToSelectedWaypoint() {
         if (!AutoBuilder.isConfigured()) return Commands.none();
         pathing = true;
-        return Commands.defer(
-            () -> {
-                return AutoBuilder.pathfindToPose(waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints);
-                },
-            Set.of(drivetrain)
+        return AutoBuilder.pathfindToPose(
+            waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints
         )
         .finallyDo(() -> pathing = false)
         .withName("goToSelectedWaypoint");
