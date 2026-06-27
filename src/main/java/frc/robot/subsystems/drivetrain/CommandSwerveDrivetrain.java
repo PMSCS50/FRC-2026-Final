@@ -27,16 +27,20 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.Constants.VisionConstants;
+import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.PPLogger;
@@ -486,5 +490,26 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         
         inputs.isFieldOriented = false;
         inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
+    }
+
+    public Rotation2d getRotation() {
+        return getPose().getRotation();
+    }
+
+
+    public void runVelocity(ChassisSpeeds speeds) {
+    //   // Calculate module setpoints
+    //   ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
+    //   SwerveModuleState[] setpointStates = getKinematics().toSwerveModuleStates(discreteSpeeds);
+    //   SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
+
+    //   // Send setpoints to modules
+    //   for (int i = 0; i < 4; i++) {
+    //     getModule(i).apply(setpointStates[i].speedMetersPerSecond / Units.inchesToMeters(2), setpointStates[i].angle);
+    //   }
+        
+        setControl(
+            m_pathApplyRobotSpeeds.withSpeeds(speeds)
+        );
     }
 }

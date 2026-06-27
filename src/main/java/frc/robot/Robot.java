@@ -151,7 +151,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     rumbleControllers(0);
-    setLimelightThrottle(200);
+    setLimelightThrottle(0);
   }
 
   @Override

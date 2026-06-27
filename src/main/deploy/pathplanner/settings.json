@@ -3,12 +3,13 @@
   "robotLength": 0.858,
   "holonomicMode": true,
   "pathFolders": [
-    "C2 Left",
     "C1 Left",
     "C1 Middle",
+    "C1 Right",
+    "C2 Left",
     "C2 Middle",
     "C2 Right",
-    "C1 Right",
+    "New Folder",
     "mEOW"
   ],
   "autoFolders": [

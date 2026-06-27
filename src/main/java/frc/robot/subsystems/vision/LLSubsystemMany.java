@@ -41,8 +41,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
     // |Reset at top of periodic
-    private volatile double yawDeg;
-    private volatile double yawRateDegPerSec;
+    private double yawDeg;
+    private double yawRateDegPerSec;
     private double omegaRps;
     private SwerveDrivetrain.SwerveDriveState driveState;
 
@@ -78,11 +78,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
     private final String[] llCameras;
 
-    // |Trying to reduce the time it takes to run
-    private volatile PoseEstimate[] latestMeasurements;
-    private final Object measurementLock = new Object();
-
-
     // !In constructor, start a background thread
     public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
         this.drivetrain = drivetrain;
@@ -93,28 +88,28 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             LimelightHelpers.SetIMUMode(cam, 0);
         }
 
-        // *Start background polling thread
-        Thread pollingThread = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                PoseEstimate[] fresh = new PoseEstimate[llCameras.length];
-                for (int i = 0; i < llCameras.length; i++) {
-                    String cam = llCameras[i];
-                    LimelightHelpers.SetRobotOrientation_NoFlush(cam, yawDeg, yawRateDegPerSec, 0, 0, 0, 0);
-                    fresh[i] = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
-                }
-                synchronized (measurementLock) {
-                    latestMeasurements = fresh;
-                }
-                try {
-                    Thread.sleep(20); // poll at ~20Hz
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        });
-        pollingThread.setDaemon(true);
-        pollingThread.setName("LimelightPollingThread");
-        pollingThread.start();
+        // // *Start background polling thread
+        // Thread pollingThread = new Thread(() -> {
+        //     while (!Thread.interrupted()) {
+        //         PoseEstimate[] fresh = new PoseEstimate[llCameras.length];
+        //         for (int i = 0; i < llCameras.length; i++) {
+        //             String cam = llCameras[i];
+        //             LimelightHelpers.SetRobotOrientation_NoFlush(cam, yawDeg, yawRateDegPerSec, 0, 0, 0, 0);
+        //             fresh[i] = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
+        //         }
+        //         synchronized (measurementLock) {
+        //             latestMeasurements = fresh;
+        //         }
+        //         try {
+        //             Thread.sleep(50); // poll at ~20Hz
+        //         } catch (InterruptedException e) {
+        //             Thread.currentThread().interrupt();
+        //         }
+        //     }
+        // });
+        // pollingThread.setDaemon(true);
+        // pollingThread.setName("LimelightPollingThread");
+        // pollingThread.start();
     }
 
     // !Old constructor, without background thread (keep around for testing and fallback)
@@ -164,20 +159,13 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         allCameraRawFiducials.clear();
         tagposes.clear();
         tagambiguities.clear();
-        
-        PoseEstimate[] measurements;
-        synchronized (measurementLock) {
-            measurements = latestMeasurements;
-        }
-        
-        if (measurements == null) return;
+
 
         for (int i = 0; i < llCameras.length; i++) {
-            //String cam = llCameras[i];
-            //LimelightHelpers.SetRobotOrientation(cam, headingDeg, 0, 0, 0, 0, 0);
-            PoseEstimate llMeasurement = measurements[i];
+            String cam = llCameras[i];
+            LimelightHelpers.SetRobotOrientation(cam, yawDeg, yawRateDegPerSec, 0, 0, 0, 0);
+            PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
 
-            //PoseEstimate llMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
             boolean camValid = isEstimateValid(llMeasurement, yawDeg);
 
 
@@ -204,7 +192,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             // !New version (faster since it pulls directly from RawFiducial)
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
-                Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
+                Matrix<N3, N1> camStdDevs = VecBuilder.fill(1, 1, 9999.0);
+                //calculateStdDevs(llMeasurement);
 
                 if (!hasSeededPose) {
                     drivetrain.resetPose(llMeasurement.pose);

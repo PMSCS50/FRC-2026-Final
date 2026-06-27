@@ -53,7 +53,7 @@ public final class Constants {
   public static class DriveConstants {
 
     public static final double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    public static final double MaxAngularRate = RotationsPerSecond.of(3).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    public static final double MaxAngularRate = RotationsPerSecond.of(.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
 
     public static final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()

@@ -17,6 +17,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.ShooterConstants;
@@ -118,6 +119,7 @@ public class Shooter extends SubsystemBase {
 
     // *Regression model by Kevin
     public double rpsFromDistanceRegression(double distance) {
+        distance -= Units.inchesToMeters(24);
         double rps = 0.1322042143 * Math.pow(distance, 4)
                    - 1.110063156  * Math.pow(distance, 3)
                    + 3.621489461  * Math.pow(distance, 2)

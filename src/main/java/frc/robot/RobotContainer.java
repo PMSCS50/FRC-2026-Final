@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
+import frc.robot.commands.DriveCommands;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
@@ -131,6 +132,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("Backward Pivoting 30%" , new Pivoting(pivot, false).withTimeout(.5));
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
+        NamedCommands.registerCommand("Auton Fixed Shooting", new FixedPIDShooting(shooter, 1.366));
 
         // *Five shooting setpoints that form a semicircle around the hub
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
@@ -154,16 +156,23 @@ public class RobotContainer {
         // !Driver
         // *Driving joysticks
         drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() -> {
-                double forward = driverController.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;
-                double translation = driverController.getLeftX() * MaxSpeed * directionFlipper * speedLimiter;
-                double turn = driverController.getRightX() * MaxAngularRate * speedLimiter* -1;
-                return drive
-                    .withVelocityX(forward)
-                    .withVelocityY(translation)
-                    .withRotationalRate(turn);
-            })
-        );
+        DriveCommands.joystickDrive(
+            drivetrain,
+            () -> -driverController.getLeftY() * MaxSpeed * speedLimiter * .2,
+            () -> -driverController.getLeftX() * MaxSpeed * speedLimiter * .2,
+            () -> -driverController.getRightX()));
+            
+        // drivetrain.setDefaultCommand(
+        //     drivetrain.applyRequest(() -> {
+        //         double forward = driverController.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;
+        //         double translation = driverController.getLeftX() * MaxSpeed * directionFlipper * speedLimiter;
+        //         double turn = driverController.getRightX() * MaxAngularRate * speedLimiter* -1;
+        //         return drive
+        //             .withVelocityX(forward)
+        //             .withVelocityY(translation)
+        //             .withRotationalRate(turn);
+        //     })
+        // );
 
         // *Triggers and Bumpers
        driverController.leftTrigger().whileTrue(
