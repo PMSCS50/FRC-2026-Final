@@ -99,6 +99,7 @@ public class Robot extends LoggedRobot {
         builder.addDoubleProperty("Robot Angle",          () -> m_robotContainer.drivetrain.getState().Pose.getRotation().getRadians(), null);
       }
     });
+
     //We should only be logging this once anyway
     Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
 
@@ -114,6 +115,7 @@ public class Robot extends LoggedRobot {
     // |RoboRIO voltage and current monitoring
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
+    Logger.recordOutput("Drive State", m_robotContainer.drivetrain.getState().ModuleStates);
 
     if (batteryVoltage <= 8.5 && batterytimer >= 5000) {
       Elastic.sendNotification(
@@ -170,16 +172,16 @@ public class Robot extends LoggedRobot {
       DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
     }
 
-    if (!m_orchestra.isPlaying() && allowOrchestra) {
-      m_orchestra.play();
-    }
+    // if (!m_orchestra.isPlaying() && allowOrchestra) {
+    //   m_orchestra.play();
+    // }
   }
 
   @Override
   public void disabledExit() {
-      if (m_orchestra.isPlaying()) {
-        m_orchestra.stop();
-      }
+      // if (m_orchestra.isPlaying()) {
+      //   m_orchestra.stop();
+      // }
   }
 
   // *Autonomous mode
