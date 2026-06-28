@@ -117,8 +117,8 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
 
     // |Drivetrain state logging
-    Logger.recordOutput("Real Chassis Module States", m_robotContainer.drivetrain.getState().ModuleStates);
-    Logger.recordOutput("Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
+    Logger.recordOutput("Drivetrain/Real Chassis Module States", m_robotContainer.drivetrain.getState().ModuleStates);
+    Logger.recordOutput("Drivetrain/Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
 
     // |Debugging code to make sure that nothing is stealing drivetrain
     CommandScheduler scheduler = CommandScheduler.getInstance();
