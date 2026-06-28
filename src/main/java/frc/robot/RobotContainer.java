@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
+import frc.robot.commands.DriveCommands;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
@@ -47,6 +48,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 import frc.robot.generated.TunerConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
 
@@ -55,20 +57,17 @@ public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-    private double speedLimiter = 0.5;
+    private double speedLimiter = 0.7;
     //private static final double SPEED_STEP = 0.15;
 
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
     // *EXTRA SETUP - I GOT NO CLUE
-    // *Setting up bindings for necessary control of the swerve drive platform
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 2% deadband
-            .withDriveRequestType(DriveRequestType.Velocity); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
-    // private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-    // private final SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric()
-    //         .withDriveRequestType(DriveRequestType.Velocity);
+
+    // *SwerveRequests. Huh ig it was a good idea to put these in DriveConstants
+    private final SwerveRequest.FieldCentric drive = DriveConstants.driveRequest;
+    private final SwerveRequest.SwerveDriveBrake xBrake = DriveConstants.xBrake;
+
     
 
     //private final Telemetry logger = new Telemetry(MaxSpeed);
@@ -159,26 +158,15 @@ public class RobotContainer {
         //     )
         // );
 
-            
+        
         drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() -> {
-                //Squaring joystick inputs for smoother robot control.
-                double x = -driverController.getLeftY();
-                double y = -driverController.getLeftX();
-                double omega = -driverController.getRightX();
-
-                x = Math.copySign(x * x, x);
-                y = Math.copySign(y * y, y);
-                omega = Math.copySign(omega * omega, omega);
-
-                double forward = x * MaxSpeed * speedLimiter;
-                double translation = y * MaxSpeed * speedLimiter;
-                double turn = omega * MaxAngularRate * speedLimiter;
-                return drive
-                    .withVelocityX(forward)
-                    .withVelocityY(translation)
-                    .withRotationalRate(turn);
-            })
+            drivetrain.applyRequest(() ->
+                DriveCommands.joystickDriveRequest(
+                    () -> -driverController.getLeftY() * speedLimiter,
+                    () -> -driverController.getLeftX() * speedLimiter,
+                    () -> -driverController.getRightX() * speedLimiter
+                )
+            )
         );
 
         // *Triggers and Bumpers
@@ -208,8 +196,12 @@ public class RobotContainer {
            driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
 
-        driverController.b().whileTrue(Commands.defer(() -> monkeyDLuffy.goToSelectedWaypoint()
-            .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)), Set.of(drivetrain)));
+       driverController.b().whileTrue(
+        Commands.defer(
+            () -> monkeyDLuffy.goToSelectedWaypoint()
+                .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
+            Set.of(drivetrain)
+        ));
 
        driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
        driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));

@@ -21,7 +21,10 @@ import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import frc.robot.Constants;
+import frc.robot.Constants.DriveConstants;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.2;
@@ -54,7 +57,7 @@ public class DriveCommands {
    * Field relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickDrive(
-      CommandSwerveDrivetrain drive,
+      CommandSwerveDrivetrain drivetrain,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
@@ -79,15 +82,41 @@ public class DriveCommands {
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
                   && DriverStation.getAlliance().get() == Alliance.Red;
-          drive.runVelocity(
+          drivetrain.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
                   isFlipped
-                      ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                      : drive.getRotation()));
+                      ? drivetrain.getRotation().plus(new Rotation2d(Math.PI))
+                      : drivetrain.getRotation()));
         },
-        drive);
+        drivetrain);
   }
+
+  public static SwerveRequest.FieldCentric joystickDriveRequest(
+        DoubleSupplier xSupplier,
+        DoubleSupplier ySupplier,
+        DoubleSupplier omegaSupplier
+    ) {
+    
+    double x = xSupplier.getAsDouble();
+    double y = ySupplier.getAsDouble();
+    double omega = omegaSupplier.getAsDouble();
+
+    x = Math.copySign(x * x, x);
+    y = Math.copySign(y * y, y);
+    omega = Math.copySign(omega * omega, omega);
+
+    double forward = x * DriveConstants.MaxSpeed;
+    double translation = y * DriveConstants.MaxSpeed;
+    double turn = omega * DriveConstants.MaxAngularRate;
+
+    return  DriveConstants.driveRequest
+            .withVelocityX(forward)
+            .withVelocityY(translation)
+            .withRotationalRate(turn);
+  }
+
+
 
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
