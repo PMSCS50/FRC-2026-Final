@@ -100,7 +100,7 @@ public class Robot extends LoggedRobot {
       }
     });
 
-    //We should only be logging this once anyway
+    // *We should only be logging this once anyway
     Logger.recordOutput("RoboRIO/Brownout Voltage", RobotController.getBrownoutVoltage());
 
   }
@@ -115,10 +115,18 @@ public class Robot extends LoggedRobot {
     // |RoboRIO voltage and current monitoring
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
-    Logger.recordOutput("Drive State", m_robotContainer.drivetrain.getState().ModuleStates);
-    Logger.recordOutput("Drive Targets", m_robotContainer.drivetrain.getState().ModuleTargets);
 
+    // |Drivetrain state logging
+    Logger.recordOutput("Real Chassis Module States", m_robotContainer.drivetrain.getState().ModuleStates);
+    Logger.recordOutput("Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
 
+    // |Debugging code to make sure that nothing is stealing drivetrain
+    CommandScheduler scheduler = CommandScheduler.getInstance();
+    Command cmd = scheduler.requiring(m_robotContainer.drivetrain);
+    Logger.recordOutput("Debug/DrivetrainOwner", cmd == null ? "None" : cmd.getName());
+    Logger.recordOutput("Debug/DrivetrainOwnerClass", cmd == null ? "None" : cmd.getClass().getSimpleName());
+
+    // |Battery voltage error messages
     if (batteryVoltage <= 8.5 && batterytimer >= 5000) {
       Elastic.sendNotification(
         new Elastic.Notification(
@@ -129,17 +137,6 @@ public class Robot extends LoggedRobot {
       );
       batterytimer = 0;
     }
-
-    CommandScheduler scheduler = CommandScheduler.getInstance();
-    Command cmd = scheduler.requiring(m_robotContainer.drivetrain);
-
-    Logger.recordOutput(
-        "Debug/DrivetrainOwner",
-        cmd == null ? "None" : cmd.getName());
-
-    Logger.recordOutput(
-        "Debug/DrivetrainOwnerClass",
-        cmd == null ? "None" : cmd.getClass().getSimpleName());
 
     // Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
     // Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
