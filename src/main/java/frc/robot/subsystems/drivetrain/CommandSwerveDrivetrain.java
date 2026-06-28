@@ -74,6 +74,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     */
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
+    // *Separate request object for runVelocity (teleop/default command).
+    // *MUST NOT be the same instance as m_pathApplyRobotSpeeds: the path follower
+    // *mutates m_pathApplyRobotSpeeds with .withWheelForceFeedforwardsX/Y at every
+    // *step. Those feedforward forces persist on the shared object even after the path
+    // *ends. runVelocity() only calls .withSpeeds() and never clears the feedforwards,
+    // *so the stale path-end forces keep the drive motors spinning at cruise speed
+    // *regardless of what velocity is commanded — causing the observed drift.
+    private final SwerveRequest.ApplyRobotSpeeds m_teleopApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
     //**Setpoint generator to optimize traversal through paths, made by FRC team 254.*/
     private SwerveSetpointGenerator m_setpointGenerator;
 
@@ -259,6 +268,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 () -> getState().Speeds, // Supplier of current robot speeds
 
                 (speeds, feedforwards) -> {
+
+                    // Reset the setpoint generator state when the path commands zero
+                    // speed (e.g. between segments or at path end). Without this, the
+                    // SwerveSetpointGenerator carries over cruise-speed feedforwards into
+                    // the next loop iteration, keeping the drive motors spinning even
+                    // when the path has ended and is no longer calling this callback.
+                    if (Math.abs(speeds.vxMetersPerSecond) < 0.01
+                            && Math.abs(speeds.vyMetersPerSecond) < 0.01
+                            && Math.abs(speeds.omegaRadiansPerSecond) < 0.01) {
+                        m_previousSetpoint = new SwerveSetpoint(
+                            new ChassisSpeeds(),
+                            getState().ModuleStates,
+                            DriveFeedforwards.zeros(config.numModules)
+                        );
+                    }
 
                     // *Generate next setpoint. Thanks Cheesy Poofs.
                     m_previousSetpoint = m_setpointGenerator.generateSetpoint(
@@ -498,18 +522,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
 
     public void runVelocity(ChassisSpeeds speeds) {
-    //   // Calculate module setpoints
-    //   ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
-    //   SwerveModuleState[] setpointStates = getKinematics().toSwerveModuleStates(discreteSpeeds);
-    //   SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, TunerConstants.kSpeedAt12Volts);
+        // discretize corrects for the robot rotating during the 20ms loop:
+        // without it, translating + rotating simultaneously causes lateral drift
+        // because the robot-relative velocity direction becomes stale mid-loop.
+        ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 
-    //   // Send setpoints to modules
-    //   for (int i = 0; i < 4; i++) {
-    //     getModule(i).apply(setpointStates[i].speedMetersPerSecond / Units.inchesToMeters(2), setpointStates[i].angle);
-    //   }
-        
+        // Use m_teleopApplyRobotSpeeds, NOT m_pathApplyRobotSpeeds.
+        // The path follower leaves stale wheel-force feedforwards on m_pathApplyRobotSpeeds
+        // after every path step. Those forces persist and override the velocity PID,
+        // causing the robot to keep driving at path cruise speed even when commanded zero.
         setControl(
-            m_pathApplyRobotSpeeds.withSpeeds(speeds)
+            m_teleopApplyRobotSpeeds.withSpeeds(discreteSpeeds)
         );
     }
 }
