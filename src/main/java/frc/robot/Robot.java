@@ -184,11 +184,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     Elastic.selectTab("Auto");
-    m_robotContainer.drivetrain.seedFieldCentric(
-            new Rotation2d(
-                DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red ? Math.PI : 0
-            )
-        );
     applyAllianceConfig();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
@@ -262,7 +257,13 @@ public class Robot extends LoggedRobot {
     if (alliance == lastAppliedAlliance) return;
 
     boolean red = alliance == Alliance.Red;
-    //allianceColor = red ? "Red" : "Blue";
+
+    m_robotContainer.drivetrain.seedFieldCentric(
+      new Rotation2d(
+        red ? Math.PI : 0
+      )
+    );
+    
     m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
 
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
