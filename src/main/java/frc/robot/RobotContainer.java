@@ -16,13 +16,12 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.revrobotics.spark.ClosedLoopSlot;
-
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,13 +33,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
-import frc.robot.commands.DriveCommands;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
-import frc.robot.commands.PostPathPreciseAlignment;
-
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.Elastic;
@@ -58,8 +54,8 @@ public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-    private double speedLimiter = 0.7;
-    private static final double SPEED_STEP = 0.15;
+    private double speedLimiter = 0.5;
+    //private static final double SPEED_STEP = 0.15;
 
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
@@ -153,26 +149,45 @@ public class RobotContainer {
     private void configureBindings() {
         // !Driver
         // *Driving joysticks
-        drivetrain.setDefaultCommand(
-            DriveCommands.joystickDrive(
-                drivetrain,
-                () -> -driverController.getLeftY() * speedLimiter,
-                () -> -driverController.getLeftX() * speedLimiter,
-                () -> -driverController.getRightX() * speedLimiter
+        // drivetrain.setDefaultCommand(
+        //     DriveCommands.joystickDrive(
+        //         drivetrain,
+        //         () -> -driverController.getLeftY() * speedLimiter,
+        //         () -> -driverController.getLeftX() * speedLimiter,
+        //         () -> -driverController.getRightX() * speedLimiter
+        //     )
+        // );
+
+
+        //This is the builtin replacement for directionFlipper.
+        //If the bottom default command gets commented out, comment this out too bc joystickDrive()
+        //flips by itself
+        drivetrain.seedFieldCentric(
+            new Rotation2d(
+                DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red ? Math.PI : 0
             )
         );
             
-        // drivetrain.setDefaultCommand(
-        //     drivetrain.applyRequest(() -> {
-        //         double forward = driverController.getLeftY() * MaxSpeed * directionFlipper * speedLimiter;
-        //         double translation = driverController.getLeftX() * MaxSpeed * directionFlipper * speedLimiter;
-        //         double turn = driverController.getRightX() * MaxAngularRate * speedLimiter* -1;
-        //         return drive
-        //             .withVelocityX(forward)
-        //             .withVelocityY(translation)
-        //             .withRotationalRate(turn);
-        //     })
-        // );
+        drivetrain.setDefaultCommand(
+            drivetrain.applyRequest(() -> {
+                //Squaring joystick inputs for smoother robot control.
+                double x = -driverController.getLeftY();
+                double y = -driverController.getLeftX();
+                double omega = -driverController.getRightX();
+
+                x = Math.copySign(x * x, x);
+                y = Math.copySign(y * y, y);
+                omega = Math.copySign(omega * omega, omega);
+
+                double forward = x * MaxSpeed * speedLimiter;
+                double translation = y * MaxSpeed * speedLimiter;
+                double turn = omega * MaxAngularRate * speedLimiter;
+                return drive
+                    .withVelocityX(forward)
+                    .withVelocityY(translation)
+                    .withRotationalRate(turn);
+            })
+        );
 
         // *Triggers and Bumpers
        driverController.leftTrigger().whileTrue(

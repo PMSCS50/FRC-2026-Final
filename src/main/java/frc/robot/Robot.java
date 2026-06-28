@@ -116,6 +116,7 @@ public class Robot extends LoggedRobot {
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
     Logger.recordOutput("Drive State", m_robotContainer.drivetrain.getState().ModuleStates);
+    Logger.recordOutput("Drive Targets", m_robotContainer.drivetrain.getState().ModuleTargets);
 
     if (batteryVoltage <= 8.5 && batterytimer >= 5000) {
       Elastic.sendNotification(
