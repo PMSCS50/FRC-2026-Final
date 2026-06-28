@@ -158,15 +158,6 @@ public class RobotContainer {
         //     )
         // );
 
-
-        //This is the builtin replacement for directionFlipper.
-        //If the bottom default command gets commented out, comment this out too bc joystickDrive()
-        //flips by itself
-        drivetrain.seedFieldCentric(
-            new Rotation2d(
-                DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red ? Math.PI : 0
-            )
-        );
             
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() -> {
