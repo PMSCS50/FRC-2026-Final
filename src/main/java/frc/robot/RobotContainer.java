@@ -36,6 +36,7 @@ import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
+import frc.robot.commands.PostPathPreciseAlignment;
 import frc.robot.commands.Intaking;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.vision.*;
@@ -207,12 +208,13 @@ public class RobotContainer {
            driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
 
-       driverController.b().whileTrue(Commands.defer(() -> monkeyDLuffy.goToSelectedWaypoint(), Set.of(drivetrain)));
+        driverController.b().whileTrue(Commands.defer(() -> monkeyDLuffy.goToSelectedWaypoint()
+            .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)), Set.of(drivetrain)));
 
        driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
        driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
-        // *POV Controls
+        // *POV Controlss
         //driverController.povUp()
         //driverController.povRight()
         //driverController.povLeft()

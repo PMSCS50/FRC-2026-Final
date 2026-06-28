@@ -192,8 +192,7 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             // !New version (faster since it pulls directly from RawFiducial)
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
-                Matrix<N3, N1> camStdDevs = VecBuilder.fill(1, 1, 9999.0);
-                //calculateStdDevs(llMeasurement);
+                Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement); //VecBuilder.fill(1, 1, 9999.0);
 
                 if (!hasSeededPose) {
                     drivetrain.resetPose(llMeasurement.pose);
