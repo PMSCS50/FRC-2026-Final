@@ -18,7 +18,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
@@ -27,20 +26,16 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.Constants.VisionConstants;
-import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.PPLogger;
@@ -241,17 +236,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     // *Configure the Autobuilder for auton paths and stuff
     private void configureAutoBuilder() {
         try {
-            var config = RobotConfig.fromGUISettings();
-            m_setpointGenerator = new SwerveSetpointGenerator(
-                config,
-                RotationsPerSecond.of(0.75).in(RadiansPerSecond) // max rotational velocity in rad/s
-            );
+            RobotConfig config = RobotConfig.fromGUISettings();
+            
+            // *Not using 254 setpoint generator anymore, bc that may be causing drifting.
 
-            m_previousSetpoint = new SwerveSetpoint(
-                getState().Speeds,
-                getState().ModuleStates,
-                DriveFeedforwards.zeros(config.numModules)
-            );
+            // m_setpointGenerator = new SwerveSetpointGenerator(
+            //     config,
+            //     RotationsPerSecond.of(0.75).in(RadiansPerSecond) // max rotational velocity in rad/s
+            // );
+
+            // m_previousSetpoint = new SwerveSetpoint(
+            //     getState().Speeds,
+            //     getState().ModuleStates,
+            //     DriveFeedforwards.zeros(config.numModules)
+            // );
 
             AutoBuilder.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
@@ -259,29 +257,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 () -> getState().Speeds, // Supplier of current robot speeds
 
                 (speeds, feedforwards) -> {
-
-                    // *Generate next setpoint. Thanks Cheesy Poofs.
-                    m_previousSetpoint = m_setpointGenerator.generateSetpoint(
-                        m_previousSetpoint,
-                        speeds,
-                        0.02
+                    setControl(
+                        m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     );
 
                     PPLogger.logVelocities(
                         Math.hypot(getState().Speeds.vxMetersPerSecond, getState().Speeds.vyMetersPerSecond),
-                        Math.hypot(m_previousSetpoint.robotRelativeSpeeds().vxMetersPerSecond, m_previousSetpoint.robotRelativeSpeeds().vyMetersPerSecond),
+                        Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond),
                         getState().Speeds.omegaRadiansPerSecond,
-                        m_previousSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond
-                    );
-
-                    // *Apply generated module states
-                    setControl(
-                        m_pathApplyRobotSpeeds
-                            .withSpeeds(m_previousSetpoint.robotRelativeSpeeds())
-                            .withWheelForceFeedforwardsX(m_previousSetpoint.feedforwards().robotRelativeForcesXNewtons())
-                            .withWheelForceFeedforwardsY(m_previousSetpoint.feedforwards().robotRelativeForcesYNewtons())
+                        speeds.omegaRadiansPerSecond
                     );
                 },
+
                 new PPHolonomicDriveController(
                     // *PID constants for translation
                     new PIDConstants(8, 0, 0),
