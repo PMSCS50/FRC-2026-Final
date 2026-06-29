@@ -33,7 +33,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
-import frc.robot.commands.DriveCommands;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
@@ -46,7 +45,7 @@ import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-
+import frc.robot.subsystems.drivetrain.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
