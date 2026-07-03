@@ -116,12 +116,10 @@ public class Robot extends LoggedRobot {
     // |RoboRIO voltage and current monitoring
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
-    Logger.recordOutput("Drive State", m_robotContainer.drivetrain.getState().ModuleStates);
-    Logger.recordOutput("Drive Targets", m_robotContainer.drivetrain.getState().ModuleTargets);
 
     // |Drivetrain state logging
-    Logger.recordOutput("Real Chassis Module States", m_robotContainer.drivetrain.getState().ModuleStates);
-    Logger.recordOutput("Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
+    Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.drivetrain.getState().ModuleStates);
+    Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
 
     // |Battery voltage error messages
     if (batteryVoltage <= 8.5 && batterytimer >= 5000) {
