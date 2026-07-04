@@ -91,6 +91,8 @@ public class DriveCommands {
         drivetrain);
   }
 
+  //Like joystickDrive but acually made for use with CTRE Swerve. 
+  //Heavily reduces the math done because most of it is abstracted in our SwerveRequest.FieldCentric
   public static SwerveRequest.FieldCentric joystickDriveRequest(
         DoubleSupplier xSupplier,
         DoubleSupplier ySupplier,
@@ -122,6 +124,8 @@ public class DriveCommands {
    * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
    * absolute rotation with a joystick.
    */
+
+  // *Useless for us because of the existenceof multiple SwerveRequests
   // public static Command joystickDriveAtAngle(
   //     CommandSwerveDrivetrain drive,
   //     DoubleSupplier xSupplier,
@@ -176,6 +180,8 @@ public class DriveCommands {
    *
    * <p>This command should only be used in voltage control mode.
    */
+
+  // *Again, also useless for us since we use Velocity control mode
   // public static Command feedforwardCharacterization(CommandSwerveDrivetrain drive) {
   //   List<Double> velocitySamples = new LinkedList<>();
   //   List<Double> voltageSamples = new LinkedList<>();
@@ -233,7 +239,8 @@ public class DriveCommands {
   //                 System.out.println("\tkV: " + formatter.format(kV));
   //               }));
   // }
-
+  
+  // *We already know our wheel radius, so this is again useless.
   // /** Measures the robot's wheel radius by spinning in a circle. */
   // public static Command wheelRadiusCharacterization(Drive drive) {
   //   SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);

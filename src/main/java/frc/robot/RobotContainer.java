@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -20,8 +19,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -169,14 +166,14 @@ public class RobotContainer {
         );
 
         // *Triggers and Bumpers
-       driverController.leftTrigger().whileTrue(
+        driverController.leftTrigger().whileTrue(
             Commands.parallel(
                 new RunCommand(() -> intake.spinIntakePID(1), intake),
                 new RunCommand(() -> shooter.spinKickersSpecified(-.6), shooter)
             )
         );
         
-       driverController.leftTrigger().onFalse(
+        driverController.leftTrigger().onFalse(
             Commands.parallel(
                 new RunCommand(() -> intake.stopIntake(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
@@ -195,7 +192,7 @@ public class RobotContainer {
            driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
 
-       driverController.b().whileTrue(
+        driverController.b().whileTrue(
         Commands.defer(
             () -> monkeyDLuffy.goToSelectedWaypoint()
                 .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),

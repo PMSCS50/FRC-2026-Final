@@ -112,19 +112,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         // pollingThread.start();
     }
 
-    // !Old constructor, without background thread (keep around for testing and fallback)
-    // public LLSubsystemMany(CommandSwerveDrivetrain drivetrain, String... llCameras) {
-    //     this.drivetrain = drivetrain;
-    //     this.llCameras  = llCameras;
-
-    //     for (String cam : llCameras) {
-    //         LimelightHelpers.setPipelineIndex(cam, 9);
-    //         LimelightHelpers.SetIMUMode(cam, 0);
-
-    //         //LimelightHelpers.SetFiducialIDFiltersOverride(cam, new int[]{});
-    //     }
-    // }
-
     // *Periodic
     @Override
     public void periodic() {

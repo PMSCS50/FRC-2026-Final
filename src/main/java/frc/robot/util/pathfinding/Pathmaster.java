@@ -149,17 +149,6 @@ public class Pathmaster {
     // ?When the robot paths through it, it will rotate to and hold the given heading.
     public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
         ZoneManager.addZone(new RotationZone(name, min, max, rotation), active);
-        
-        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        // .getStructArrayTopic("Rotation Zone " + name, Pose2d.struct).publish();
-    
-        // rectPublisher.set(new Pose2d[] {
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
-        // });
 
         Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
@@ -175,17 +164,6 @@ public class Pathmaster {
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
         ZoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
 
-        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        // .getStructArrayTopic("Orientation Zone " + name, Pose2d.struct).publish();
-    
-        // rectPublisher.set(new Pose2d[] {
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
-        // });
-
         Logger.recordOutput("Pathmaster/Orientation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
@@ -200,17 +178,6 @@ public class Pathmaster {
     public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {
         ZoneManager.addZone(new ConstraintZone(name, min, max, constraints), active);
 
-        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        // .getStructArrayTopic("Constraint Zone " + name, Pose2d.struct).publish();
-    
-        // rectPublisher.set(new Pose2d[] {
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
-        // });
-
         Logger.recordOutput("Pathmaster/Constraint Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
@@ -224,17 +191,6 @@ public class Pathmaster {
      // ?When the robot paths through it, it will schedule the given command.
     public void addEventZone(String name, Translation2d min, Translation2d max, Command command, boolean active) {
         ZoneManager.addZone(new EventZone(name, min, max, command), active);
-
-        // StructArrayPublisher<Pose2d> rectPublisher = NetworkTableInstance.getDefault()
-        // .getStructArrayTopic("Event Zone " + name, Pose2d.struct).publish();
-    
-        // rectPublisher.set(new Pose2d[] {
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-        //     new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-        //     new Pose2d(min.getX(), min.getY(), new Rotation2d()) // close the loop
-        // });
 
         Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
