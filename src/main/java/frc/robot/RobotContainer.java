@@ -104,7 +104,7 @@ public class RobotContainer {
             vision = new LLSubsystemMany(drivetrain, "");
         }
         
-        shooter = new Shooter(vision);
+        shooter = new Shooter();
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate * speedLimiter, pathMaxAngularAcceleration);
         
         // *Shooting

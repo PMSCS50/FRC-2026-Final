@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
@@ -18,6 +19,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.ShooterConstants;
@@ -31,26 +33,16 @@ public class Shooter extends SubsystemBase {
     private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
     private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
 
-    private final VisionGeneral vision;
-
-    // !MOTOR CONTROLS
-    // *DutyCycleOut: simple 0-1 power control, used by setShooterSpeed()
-    private final DutyCycleOut motorControl = new DutyCycleOut(0.0);
-
     // *VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
 
-    // !SHOOTER PHYSICS CONSTANTS
-    // private double velocity = 0.0;
-    // private final double shooterAngle = 70.0;                  // degrees
-    // private final double phi = Math.toRadians(shooterAngle);   // radians
-    // private final double shooterHeight = 0.508;                // meters from ground
+    private final StatusSignal<AngularVelocity> shooterMotorVelocity;
     
     // !CONSTRUCTOR
-    public Shooter(VisionGeneral vision) {
-        this.vision = vision;
+    public Shooter() {
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
+        shooterMotorVelocity = shooterMotor1.getVelocity();
 
         TalonFXConfiguration shooterConfig = new TalonFXConfiguration();
         configureShooterMotor(shooterConfig);
@@ -100,21 +92,10 @@ public class Shooter extends SubsystemBase {
 
     // !PERIODIC
     @Override
-    public void periodic()   
-    {
-        // SmartDashboard.putNumber("Shooter RPM", shooterMotor1.getVelocity().getValueAsDouble() * 60.0);
+    public void periodic() {
+        shooterMotorVelocity.refresh();
         Logger.recordOutput("Shooter/Amperage (amps)",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
         Logger.recordOutput("Shooter/Velocity (rps)", shooterMotor1.getVelocity().getValueAsDouble());
-    }
-
-    // !SHOOTING METHODS
-    //*Simple duty cycle control (0.0 to 1.0).
-    // ?Used for manual testing from RobotContainer buttons. Also runs kickers at full power.
-    public void setShooterSpeed(double speed) {
-        shooterMotor1.setControl(motorControl.withOutput(speed));
-        kicker1.set(1);
-        // SmartDashboard.putNumber("Actual RPS", shooterMotor1.getVelocity().getValueAsDouble());
-        // SmartDashboard.putNumber("Motor Output", shooterMotor1.getMotorVoltage().getValueAsDouble());
     }
 
     // *Regression model by Kevin
@@ -149,10 +130,9 @@ public class Shooter extends SubsystemBase {
     }
 
     // *Checks if the shooter is within a certain RPM threshold of the target RPM based on current distance to target.
-    public boolean atCorrectRPS() {
+    public boolean atCorrectRPS(double distance) {
         double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
-        double targetRPS = this.rpsFromDistanceRegression(vision.getDistanceToTarget(vision.cachedHubPose)); 
-
+        double targetRPS = this.rpsFromDistanceRegression(distance);
         boolean atCorrectRPS = Math.abs(currentRPS - targetRPS) < 5.0;
         Logger.recordOutput("Shooter/rpsControl/atCorrectRPS", atCorrectRPS);
         return atCorrectRPS;
@@ -161,7 +141,7 @@ public class Shooter extends SubsystemBase {
     // *Same as atCorrectRPM but with a tighter threshold for more precise shooting.
     // ?Useful for testing and tuning the regression model and PID gains.
     public boolean atCorrectRPSFixed(double distance) {
-        double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
+        double currentRPS = shooterMotorVelocity.getValueAsDouble();
         double targetRPS = this.rpsFromDistanceRegression(distance);
         return Math.abs(currentRPS - targetRPS) < 5.0;
     }
@@ -177,7 +157,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public double getVelocity() {
-        return shooterMotor1.getVelocity().getValueAsDouble();
+        return shooterMotorVelocity.getValueAsDouble();
     }
 
     public TalonFX getShooterMotor1() {

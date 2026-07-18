@@ -21,7 +21,6 @@ public class FixedWaypointShooting extends Command {
 
     public FixedWaypointShooting(Shooter shooter, String waypointName) {
         this.shooter = shooter;
-        // Use ofNullable to avoid NPE when waypointName is not in the map
         this.distance = Optional.ofNullable(distances.get(waypointName)).orElse(3.5);
         addRequirements(shooter);
     }

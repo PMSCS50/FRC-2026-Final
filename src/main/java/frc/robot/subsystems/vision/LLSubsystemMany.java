@@ -68,7 +68,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     // *Vision standard deviations
     private static final double BASE_XY_STD_DEV     = 0.25;
     private static final double THETA_STD_DEV        = Double.MAX_VALUE;
-    private static final double MAX_AMBIGUITY        = 0.9;
     private static final double MAX_LATENCY_SECONDS  = 0.25;
     private static final double MAX_OMEGA_RPS        = 2.0;
     private static final double FIELD_MAX_X          = Constants.FIELD_MAX_X;
@@ -90,29 +89,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             LimelightHelpers.setPipelineIndex(cam, 9);
             LimelightHelpers.SetIMUMode(cam, 0);
         }
-
-        // // *Start background polling thread
-        // Thread pollingThread = new Thread(() -> {
-        //     while (!Thread.interrupted()) {
-        //         PoseEstimate[] fresh = new PoseEstimate[llCameras.length];
-        //         for (int i = 0; i < llCameras.length; i++) {
-        //             String cam = llCameras[i];
-        //             LimelightHelpers.SetRobotOrientation_NoFlush(cam, yawDeg, yawRateDegPerSec, 0, 0, 0, 0);
-        //             fresh[i] = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cam);
-        //         }
-        //         synchronized (measurementLock) {
-        //             latestMeasurements = fresh;
-        //         }
-        //         try {
-        //             Thread.sleep(50); // poll at ~20Hz
-        //         } catch (InterruptedException e) {
-        //             Thread.currentThread().interrupt();
-        //         }
-        //     }
-        // });
-        // pollingThread.setDaemon(true);
-        // pollingThread.setName("LimelightPollingThread");
-        // pollingThread.start();
     }
 
     // *Periodic
@@ -139,7 +115,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         estimatedRobotPose = null;
         latestEstimate     = null;
-        //stdDevs            = VecBuilder.fill(9999.0, 9999.0, 9999.0);
         totalTimestamp     = 0.0;
         totalLatency       = 0.0;
         totalTags          = 0;

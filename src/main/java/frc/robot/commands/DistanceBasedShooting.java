@@ -44,7 +44,7 @@ public class DistanceBasedShooting extends Command {
 
         if (distance > 0) {
             shooter.rpsControl(distance);
-            if (shooter.atCorrectRPS()) {
+            if (shooter.atCorrectRPS(distance)) {
                 shooter.spinKickersMax();
             }
         }
