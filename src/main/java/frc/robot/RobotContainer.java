@@ -193,11 +193,12 @@ public class RobotContainer {
         }
 
         driverController.b().whileTrue(
-        Commands.defer(
-            () -> monkeyDLuffy.goToSelectedWaypoint()
-                .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
-            Set.of(drivetrain)
-        ));
+            Commands.defer(
+                () -> monkeyDLuffy.goToSelectedWaypoint()
+                    .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
+                Set.of(drivetrain)
+            )
+        );
 
        driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
        driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));

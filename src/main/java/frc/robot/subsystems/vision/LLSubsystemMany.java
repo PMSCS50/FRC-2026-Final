@@ -14,6 +14,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.Timer;
 
 import com.ctre.phoenix6.Utils;
@@ -27,8 +28,10 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.List;
 
 public class LLSubsystemMany extends VisionGeneral implements VisionIO {
@@ -63,8 +66,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
     private List<RawFiducial[]> allCameraRawFiducials = new ArrayList<>();
 
     // *Vision standard deviations
-    private static final double BASE_XY_STD_DEV     = 0.5;
-    private static final double THETA_STD_DEV        = 9999.0;
+    private static final double BASE_XY_STD_DEV     = 0.25;
+    private static final double THETA_STD_DEV        = Double.MAX_VALUE;
     private static final double MAX_AMBIGUITY        = 0.9;
     private static final double MAX_LATENCY_SECONDS  = 0.25;
     private static final double MAX_OMEGA_RPS        = 2.0;
@@ -155,32 +158,15 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
             boolean camValid = isEstimateValid(llMeasurement, yawDeg);
 
-
-            if (llMeasurement == null) {
-                // Logger.recordOutput("Vision/" + cam + "/Valid", false);
-                // Logger.recordOutput("Vision/" + cam + "/RawPose", Pose2d.kZero);
-                // Logger.recordOutput("Vision/" + cam + "/TagIds", new int[0]);
-                // Logger.recordOutput("Vision/" + cam + "/TagPoses", new Pose2d[0]);
-                continue;
-            }
-
-            //Logger.recordOutput("Vision/" + cam + "/Valid", camValid);
-            //Logger.recordOutput("Vision/" + cam + "/RawPose", llMeasurement.pose);
-
             RawFiducial[] fiducials = llMeasurement.rawFiducials != null
                 ? llMeasurement.rawFiducials
                 : new RawFiducial[0];
 
-            // int[] tagIds = Arrays.stream(fiducials)
-            //     .mapToInt(f -> f.id)
-            //     .toArray();
-            //Logger.recordOutput("Vision/" + cam + "/TagIds", tagIds);
 
             // !New version (faster since it pulls directly from RawFiducial)
             // *Fuse vision pose estimates to drivetrain pose estimate
             if (camValid) {
-                //Matrix<N3, N1> camStdDevs = VecBuilder.fill(1, 1, 9999.0);
-                //calculateStdDevs(llMeasurement);
+                Matrix<N3, N1> camStdDevs = calculateStdDevs(llMeasurement);
 
                 if (!hasSeededPose) {
                     drivetrain.resetPose(llMeasurement.pose);
@@ -189,8 +175,8 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
                 drivetrain.addVisionMeasurement(
                     llMeasurement.pose,
-                    Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds)
-                    //camStdDevs
+                    Utils.fpgaToCurrentTime(llMeasurement.timestampSeconds),
+                    camStdDevs
                 );
 
                 contributingCameras++;
@@ -265,23 +251,21 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
     // *Vision STDs
     private Matrix<N3, N1> calculateStdDevs(PoseEstimate estimate) {
-        if (estimate == null || estimate.tagCount == 0) return VecBuilder.fill(9999.0, 9999.0, 9999.0);
+        OptionalDouble optStdDev =
+            Arrays.stream(estimate.rawFiducials).mapToDouble(fiducial -> fiducial.distToCamera).min();
+        double stdDev = optStdDev.isPresent() ? optStdDev.getAsDouble() : Double.MAX_VALUE;
 
-        double xyStdDev = BASE_XY_STD_DEV;
-
-        xyStdDev /= (0.35 * estimate.tagCount + 0.65 * estimate.avgTagDist);
-        xyStdDev *= Math.pow(estimate.avgTagDist, 2);
-
-        if (estimate.rawFiducials != null) {
-            double maxAmbiguity = 0;
-            for (RawFiducial tag : estimate.rawFiducials) {
-                maxAmbiguity = Math.max(maxAmbiguity, tag.ambiguity);
-            }
-            if (maxAmbiguity > MAX_AMBIGUITY) return VecBuilder.fill(9999.0, 9999.0, 9999.0);
-            xyStdDev *= (1.0 + maxAmbiguity * 2.0);
+        double closestTagDist = Double.MAX_VALUE;
+        for (RawFiducial fiducial : estimate.rawFiducials) {
+        if (fiducial.distToCamera < closestTagDist) {
+            closestTagDist = fiducial.distToCamera;
         }
+        }
+        if (closestTagDist < 1) closestTagDist = 1;
 
-        return VecBuilder.fill(xyStdDev, xyStdDev, THETA_STD_DEV);
+        stdDev = 0.04 * Math.pow(closestTagDist, 2) / estimate.tagCount + BASE_XY_STD_DEV;
+
+        return VecBuilder.fill(stdDev, stdDev, THETA_STD_DEV);
     }
 
     // *Gets the total amount of tags used in vision pose estimate. Tags seen more times = lower ambiguity
