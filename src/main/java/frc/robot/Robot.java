@@ -163,7 +163,7 @@ public class Robot extends LoggedRobot {
     rumbleControllers(0);
 
     if (Constants.currentMode == Constants.simMode) {
-      DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+      DriverStationSim.setAllianceStationId(AllianceStationID.Red2);
     }
 
     // if (!m_orchestra.isPlaying() && allowOrchestra) {
@@ -235,7 +235,7 @@ public class Robot extends LoggedRobot {
   // *Simulation mode
   @Override
   public void simulationInit() {
-    DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+    DriverStationSim.setAllianceStationId(AllianceStationID.Red2);
   }
 
   @Override
