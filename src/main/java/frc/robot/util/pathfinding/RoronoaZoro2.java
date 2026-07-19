@@ -20,19 +20,15 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**
- * // !Custom pathfinder extending AD* with support for many different Zones, as well as chaining pathfinding
- * 
- * // ?Zones are areas on the field that trigger certain behaviors when the robot is inside them.
- * // ?Zones can be toggled active/inactive at runtime.
- * 
- * // *There are 4 types of zones:
- * // *1. RotationZone: When the robot enters this zone, it starts rotating towards a specified angle
- * // *2. OrientationZone: When the robot enters this zone, it starts orienting towards a specified target
- * // *3. ConstraintZone: When the robot enters this zone, certain path constraints are applied
- * // *4. EventZone: When the robot enters this zone, a specified command is triggered
- * 
- * // ?LocalADStar couldnt create paths from a->b->c smoothly, so this pathfinder also can do that.
- * // ?This is the power of boredom
+ * Custom pathfinder extending AD* with support for many different Zones, as well as chaining pathfinding.
+ * * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
+ * Zones can be toggled active/inactive at runtime.
+ * * There are 4 types of zones:
+ * 1. RotationZone: When the robot enters this zone, it starts rotating towards a specified angle
+ * 2. OrientationZone: When the robot enters this zone, it starts orienting towards a specified target
+ * 3. ConstraintZone: When the robot enters this zone, certain path constraints are applied
+ * 4. EventZone: When the robot enters this zone, a specified command is triggered
+ * * LocalADStar couldn't create paths from a->b->c smoothly, so this pathfinder also handles chaining.
  */
 public class RoronoaZoro2 implements Pathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
@@ -46,11 +42,6 @@ public class RoronoaZoro2 implements Pathfinder {
   private int nodesX = (int) Math.ceil(fieldLength / nodeSize);
   private int nodesY = (int) Math.ceil(fieldWidth / nodeSize);
 
-  private final HashMap<GridPosition, Double> g = new HashMap<>();
-  private final HashMap<GridPosition, Double> rhs = new HashMap<>();
-  private final HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
-  private final HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
-  private final Set<GridPosition> closed = new HashSet<>();
   private final Set<GridPosition> staticObstacles = new HashSet<>();
   private final Set<GridPosition> dynamicObstacles = new HashSet<>();
   private final Set<GridPosition> requestObstacles = new HashSet<>();
@@ -59,10 +50,11 @@ public class RoronoaZoro2 implements Pathfinder {
   private Translation2d requestRealStartPos;
   private GridPosition requestGoal;
   private Translation2d requestRealGoalPos;
-  private List<GridPosition> requestStops;
-  private List<Translation2d> requestRealStopPoses;
+  private final List<GridPosition> requestStops = new ArrayList<>();
+  private final List<Translation2d> requestRealStopPoses = new ArrayList<>();
 
-  private double eps;
+  // Track the primary active state chain for multi-segment pathing
+  private final List<ADStarState> activeStates = new ArrayList<>();
 
   private final Thread planningThread;
   private boolean requestMinor = true;
@@ -89,8 +81,8 @@ public class RoronoaZoro2 implements Pathfinder {
     requestRealStartPos = Translation2d.kZero;
     requestGoal = new GridPosition(0, 0);
     requestRealGoalPos = Translation2d.kZero;
-    requestStops = new ArrayList<>();
-    requestRealStopPoses = new ArrayList<>();
+    requestStops.clear();
+    requestRealStopPoses.clear();
 
     staticObstacles.clear();
     dynamicObstacles.clear();
@@ -185,7 +177,7 @@ public class RoronoaZoro2 implements Pathfinder {
    * Set the start position to pathfind from
    *
    * @param startPosition Start position on the field. If this is within an obstacle it will be
-   *     moved to the nearest non-obstacle node.
+   * moved to the nearest non-obstacle node.
    */
   @Override
   public void setStartPosition(Translation2d startPosition) {
@@ -205,8 +197,8 @@ public class RoronoaZoro2 implements Pathfinder {
   /**
    * Set the goal position to pathfind to
    *
-   * @param goalPosition Goal position on the field. f this is within an obstacle it will be moved
-   *     to the nearest non-obstacle node.
+   * @param goalPosition Goal position on the field. If this is within an obstacle it will be moved
+   * to the nearest non-obstacle node.
    */
   @Override
   public void setGoalPosition(Translation2d goalPosition) {
@@ -214,8 +206,8 @@ public class RoronoaZoro2 implements Pathfinder {
 
     if (gridPos != null) {
       requestLock.writeLock().lock();
-      requestStops.add(gridPos);
-      requestRealStopPoses.add(goalPosition);
+      requestGoal = gridPos;
+      requestRealGoalPos = goalPosition;
 
       requestMinor = true;
       requestMajor = true;
@@ -229,9 +221,9 @@ public class RoronoaZoro2 implements Pathfinder {
    * Set the dynamic obstacles that should be avoided while pathfinding.
    *
    * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
-   *     opposite corners of a bounding box.
+   * opposite corners of a bounding box.
    * @param currentRobotPos The current position of the robot. This is needed to change the start
-   *     position of the path if the robot is now within an obstacle.
+   * position of the path if the robot is now within an obstacle.
    */
   @Override
   public void setDynamicObstacles(
@@ -291,6 +283,7 @@ public class RoronoaZoro2 implements Pathfinder {
         Translation2d realStart = requestRealStartPos;
         GridPosition goal = requestGoal;
         Translation2d realGoal = requestRealGoalPos;
+        List<GridPosition> stops = new ArrayList<>(requestStops);
         Set<GridPosition> obstacles = new HashSet<>(requestObstacles);
 
         // Change the request booleans based on what will be done this loop
@@ -298,15 +291,24 @@ public class RoronoaZoro2 implements Pathfinder {
           requestReset = false;
         }
 
+        boolean done = true;
+
+        for (ADStarState s : activeStates) {
+            if (s.eps > 1.0) {
+                done = false;
+                break;
+            }
+        }
+
         if (minor) {
           requestMinor = false;
-        } else if (major && (eps - 0.5) <= 1.0) {
+        } else if (major && done) {
           requestMajor = false;
         }
         requestLock.readLock().unlock();
 
         if (reset || minor || major) {
-          doWork(new PathRequest(reset, minor, major, start, goal, realStart, realGoal, obstacles));
+          doWork(new PathRequest(reset, minor, major, start, stops, goal, realStart, realGoal, obstacles));
         } else {
           try {
             Thread.sleep(10);
@@ -324,13 +326,35 @@ public class RoronoaZoro2 implements Pathfinder {
   }
 
   private void doWork(PathRequest pathReq) {
+    List<GridPosition> stops = new ArrayList<>(pathReq.sStops());
+    stops.add(pathReq.sGoal());
+
     if (pathReq.needsReset()) {
-      reset(pathReq.sStart(), pathReq.sGoal());
+      activeStates.clear();
+      GridPosition currentStart = pathReq.sStart();
+      for (GridPosition nextStop : stops) {
+        ADStarState stateSegment = new ADStarState(currentStart, nextStop);
+        reset(stateSegment);
+        activeStates.add(stateSegment);
+        currentStart = nextStop;
+      }
     }
 
     if (pathReq.doMinor()) {
-      computeOrImprovePath(pathReq.sStart(), pathReq.sGoal(), pathReq.obstacles());
-      List<GridPosition> pathPositions = extractPath(pathReq.sStart(), pathReq.sGoal(), pathReq.obstacles());
+      List<GridPosition> pathPositions = new ArrayList<>();
+
+      for (int i = 0; i < activeStates.size(); i++) {
+        ADStarState state = activeStates.get(i);
+        computeOrImprovePath(state, pathReq.obstacles());
+        List<GridPosition> extractedPath = extractPath(state, pathReq.obstacles());
+        
+        // Strip overlapping duplicates between segments
+        if (i > 0 && !extractedPath.isEmpty()) {
+          extractedPath.remove(0);
+        }
+        pathPositions.addAll(extractedPath);
+      }
+
       List<Waypoint> waypoints =
           createWaypoints(pathPositions, pathReq.realStartPos(), pathReq.realGoalPos(), pathReq.obstacles());
 
@@ -341,15 +365,32 @@ public class RoronoaZoro2 implements Pathfinder {
 
       newPathAvailable = true;
     } else if (pathReq.doMajor()) {
-      if (eps > 1.0) {
-        eps -= 0.5;
-        open.putAll(incons);
+      boolean updatedAny = false;
 
-        open.replaceAll((s, v) -> key(s, pathReq.sStart()));
-        closed.clear();
-        computeOrImprovePath(pathReq.sStart(), pathReq.sGoal(), pathReq.obstacles());
+      for (ADStarState state : activeStates) {
+        if (state.eps > 1.0) {
+          state.eps -= 0.5;
+          state.open.putAll(state.incons);
 
-        List<GridPosition> pathPositions = extractPath(pathReq.sStart(), pathReq.sGoal(), pathReq.obstacles());
+          state.open.replaceAll((s, v) -> key(s, state));
+          state.closed.clear();
+
+          computeOrImprovePath(state, pathReq.obstacles());
+          updatedAny = true;
+        }
+      }
+
+      if (updatedAny) {
+        List<GridPosition> pathPositions = new ArrayList<>();
+        for (int i = 0; i < activeStates.size(); i++) {
+          ADStarState state = activeStates.get(i);
+          List<GridPosition> extractedPath = extractPath(state, pathReq.obstacles());
+          if (i > 0 && !extractedPath.isEmpty()) {
+            extractedPath.remove(0);
+          }
+          pathPositions.addAll(extractedPath);
+        }
+
         List<Waypoint> waypoints =
             createWaypoints(pathPositions, pathReq.realStartPos(), pathReq.realGoalPos(), pathReq.obstacles());
 
@@ -363,25 +404,24 @@ public class RoronoaZoro2 implements Pathfinder {
     }
   }
 
-  private List<GridPosition> extractPath(
-      GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
-    if (sGoal.equals(sStart)) {
+  private List<GridPosition> extractPath(ADStarState state, Set<GridPosition> obstacles) {
+    if (state.goal.equals(state.start)) {
       return new ArrayList<>();
     }
 
     List<GridPosition> path = new ArrayList<>();
-    path.add(sStart);
+    path.add(state.start);
 
-    var s = sStart;
+    var s = state.start;
 
     for (int k = 0; k < 200; k++) {
       HashMap<GridPosition, Double> gList = new HashMap<>();
 
       for (GridPosition x : getOpenNeighbors(s, obstacles)) {
-        gList.put(x, g.get(x));
+        gList.put(x, state.g.getOrDefault(x, Double.POSITIVE_INFINITY));
       }
 
-      Map.Entry<GridPosition, Double> min = Map.entry(sGoal, Double.POSITIVE_INFINITY);
+      Map.Entry<GridPosition, Double> min = Map.entry(state.goal, Double.POSITIVE_INFINITY);
       for (var entry : gList.entrySet()) {
         if (entry.getValue() < min.getValue()) {
           min = entry;
@@ -390,7 +430,7 @@ public class RoronoaZoro2 implements Pathfinder {
       s = min.getKey();
 
       path.add(s);
-      if (s.equals(sGoal)) {
+      if (s.equals(state.goal)) {
         break;
       }
     }
@@ -462,7 +502,6 @@ public class RoronoaZoro2 implements Pathfinder {
     }
 
     Set<GridPosition> visited = new HashSet<>();
-
     Queue<GridPosition> queue = new LinkedList<>(getAllNeighbors(pos));
 
     while (!queue.isEmpty()) {
@@ -521,87 +560,97 @@ public class RoronoaZoro2 implements Pathfinder {
     return true;
   }
 
-  private void reset(GridPosition sStart, GridPosition sGoal) {
-    g.clear();
-    rhs.clear();
-    open.clear();
-    incons.clear();
-    closed.clear();
+  private void reset(ADStarState state) {
+    state.g.clear();
+    state.rhs.clear();
+    state.open.clear();
+    state.incons.clear();
+    state.closed.clear();
 
     for (int x = 0; x < nodesX; x++) {
       for (int y = 0; y < nodesY; y++) {
-        g.put(new GridPosition(x, y), Double.POSITIVE_INFINITY);
-        rhs.put(new GridPosition(x, y), Double.POSITIVE_INFINITY);
+        state.g.put(new GridPosition(x, y), Double.POSITIVE_INFINITY);
+        state.rhs.put(new GridPosition(x, y), Double.POSITIVE_INFINITY);
       }
     }
 
-    rhs.put(sGoal, 0.0);
+    state.rhs.put(state.goal, 0.0);
+    state.eps = EPS;
 
-    eps = EPS;
-
-    open.put(sGoal, key(sGoal, sStart));
+    state.open.put(state.goal, key(state.goal, state));
   }
 
-  private void computeOrImprovePath(
-      GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
+  private void computeOrImprovePath(ADStarState state, Set<GridPosition> obstacles) {
     while (true) {
-      var sv = topKey();
+      var sv = topKey(state);
       if (sv == null) {
         break;
       }
       var s = sv.getFirst();
       var v = sv.getSecond();
 
-      if (comparePair(v, key(sStart, sStart)) >= 0 && rhs.get(sStart).equals(g.get(sStart))) {
+      Pair<Double, Double> startKey = key(state.start, state);
+      double startRhs = state.rhs.getOrDefault(state.start, Double.POSITIVE_INFINITY);
+      double startG = state.g.getOrDefault(state.start, Double.POSITIVE_INFINITY);
+
+      if (comparePair(v, startKey) >= 0 && Double.compare(startRhs, startG) == 0) {
         break;
       }
 
-      open.remove(s);
+      state.open.remove(s);
 
-      if (g.get(s) > rhs.get(s)) {
-        g.put(s, rhs.get(s));
-        closed.add(s);
+      double gVal = state.g.getOrDefault(s, Double.POSITIVE_INFINITY);
+      double rhsVal = state.rhs.getOrDefault(s, Double.POSITIVE_INFINITY);
+
+      if (gVal > rhsVal) {
+        state.g.put(s, rhsVal);
+        state.closed.add(s);
 
         for (GridPosition sn : getOpenNeighbors(s, obstacles)) {
-          updateState(sn, sStart, sGoal, obstacles);
+          updateState(sn, state, obstacles);
         }
       } else {
-        g.put(s, Double.POSITIVE_INFINITY);
+        state.g.put(s, Double.POSITIVE_INFINITY);
         for (GridPosition sn : getOpenNeighbors(s, obstacles)) {
-          updateState(sn, sStart, sGoal, obstacles);
+          updateState(sn, state, obstacles);
         }
-        updateState(s, sStart, sGoal, obstacles);
+        updateState(s, state, obstacles);
       }
     }
   }
 
-  private void updateState(
-      GridPosition s, GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
-    if (!s.equals(sGoal)) {
-      rhs.put(s, Double.POSITIVE_INFINITY);
+  private void updateState(GridPosition s, ADStarState state, Set<GridPosition> obstacles) {
+    if (!s.equals(state.goal)) {
+      state.rhs.put(s, Double.POSITIVE_INFINITY);
 
+      double minRhs = Double.POSITIVE_INFINITY;
       for (GridPosition x : getOpenNeighbors(s, obstacles)) {
-        rhs.put(s, Math.min(rhs.get(s), g.get(x) + cost(s, x, obstacles)));
+        double gVal = state.g.getOrDefault(x, Double.POSITIVE_INFINITY);
+        double costVal = cost(s, x, obstacles);
+        minRhs = Math.min(minRhs, gVal + costVal);
       }
+      state.rhs.put(s, minRhs);
     }
 
-    open.remove(s);
+    state.open.remove(s);
 
-    if (!g.get(s).equals(rhs.get(s))) {
-      if (!closed.contains(s)) {
-        open.put(s, key(s, sStart));
+    double gVal = state.g.getOrDefault(s, Double.POSITIVE_INFINITY);
+    double rhsVal = state.rhs.getOrDefault(s, Double.POSITIVE_INFINITY);
+
+    if (Double.compare(gVal, rhsVal) != 0) {
+      if (!state.closed.contains(s)) {
+        state.open.put(s, key(s, state));
       } else {
-        incons.put(s, Pair.of(0.0, 0.0));
+        state.incons.put(s, Pair.of(0.0, 0.0));
       }
     }
   }
 
-  private double cost(GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
-    if (isCollision(sStart, sGoal, obstacles)) {
+  private double cost(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
+    if (isCollision(sStart, sEnd, obstacles)) {
       return Double.POSITIVE_INFINITY;
     }
-
-    return heuristic(sStart, sGoal);
+    return heuristic(sStart, sEnd);
   }
 
   private boolean isCollision(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
@@ -659,17 +708,19 @@ public class RoronoaZoro2 implements Pathfinder {
     return ret;
   }
 
-  private Pair<Double, Double> key(GridPosition s, GridPosition sStart) {
-    if (g.get(s) > rhs.get(s)) {
-      return Pair.of(rhs.get(s) + eps * heuristic(sStart, s), rhs.get(s));
+  private Pair<Double, Double> key(GridPosition s, ADStarState state) {
+    double gVal = state.g.getOrDefault(s, Double.POSITIVE_INFINITY);
+    double rhsVal = state.rhs.getOrDefault(s, Double.POSITIVE_INFINITY);
+    if (gVal > rhsVal) {
+      return Pair.of(rhsVal + state.eps * heuristic(state.start, s), rhsVal);
     } else {
-      return Pair.of(g.get(s) + heuristic(sStart, s), g.get(s));
+      return Pair.of(gVal + heuristic(state.start, s), gVal);
     }
   }
 
-  private Pair<GridPosition, Pair<Double, Double>> topKey() {
+  private Pair<GridPosition, Pair<Double, Double>> topKey(ADStarState state) {
     Map.Entry<GridPosition, Pair<Double, Double>> min = null;
-    for (var entry : open.entrySet()) {
+    for (var entry : state.open.entrySet()) {
       if (min == null || comparePair(entry.getValue(), min.getValue()) < 0) {
         min = entry;
       }
@@ -682,8 +733,8 @@ public class RoronoaZoro2 implements Pathfinder {
     return Pair.of(min.getKey(), min.getValue());
   }
 
-  private double heuristic(GridPosition sStart, GridPosition sGoal) {
-    return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
+  private double heuristic(GridPosition a, GridPosition b) {
+    return Math.hypot(b.x - a.x, b.y - a.y);
   }
 
   private int comparePair(Pair<Double, Double> a, Pair<Double, Double> b) {
@@ -708,86 +759,76 @@ public class RoronoaZoro2 implements Pathfinder {
   }
 
   private PathPlannerPath fillZones(PathPlannerPath basePath) {
-    // *reset these guys
-        rotationTargets.clear();
-        pointTowardsZones.clear();
-        constraintZones.clear();
-        eventMarkers.clear();
+    // Reset lists
+    rotationTargets.clear();
+    pointTowardsZones.clear();
+    constraintZones.clear();
+    eventMarkers.clear();
 
-        // *Path waypoints
-        List<Waypoint> waypoints = basePath.getWaypoints();
-        if (waypoints.size() < 2) return null;
+    // Path waypoints
+    List<Waypoint> waypoints = basePath.getWaypoints();
+    if (waypoints.size() < 2) return null;
 
-        // *Loop through all pathpoints. If it enters or exits a zone, get waypoint relative position
-        List<PathPoint> points = basePath.getAllPathPoints();
-        List<PathZone> activeZones = ZoneManager.getActiveZones();
+    // Loop through all pathpoints. If it enters or exits a zone, get waypoint relative position
+    List<PathPoint> points = basePath.getAllPathPoints();
+    List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-        for (PathZone zone : activeZones) {
+    for (PathZone zone : activeZones) {
+      int entryIndex = -1;
+      int exitIndex  = -1;
 
-            int entryIndex = -1;
-            int exitIndex  = -1;
-
-            for (int i = 0; i < points.size(); i++) {
-                if (zone.containsPoint(points.get(i).position)) {
-                    if (entryIndex < 0) entryIndex = i;
-                    exitIndex = i;
-                }
-            }
-
-            if (entryIndex < 0) continue;
-
-            double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
-            double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
-
-            if (zone instanceof OrientationZone oz) {
-                // *Turns OZ into a PointTowardsZone
-                pointTowardsZones.add(new PointTowardsZone(
-                    zone.name, 
-                    oz.getTarget().getTranslation(), 
-                    entryWaypointIndex, 
-                    exitWaypointIndex));
-            
-            } else if (zone instanceof RotationZone rz) {
-                // *Turns RZ into 2 rotation targets to force fixed heading throughout
-                rotationTargets.add(new RotationTarget(
-                    entryWaypointIndex, 
-                    rz.getRotation()));
-
-                rotationTargets.add(new RotationTarget(
-                    exitWaypointIndex,   rz.getRotation()));
-
-            } else if (zone instanceof ConstraintZone cz) {
-                // *Turns CZ into a ConstraintsZone
-                constraintZones.add(new ConstraintsZone(
-                    entryWaypointIndex,
-                    exitWaypointIndex,
-                    cz.getConstraints()));
-
-            } else if (zone instanceof EventZone ez) {
-                // *Turns EZ into an EventMarker
-                eventMarkers.add(new EventMarker(
-                    zone.name, 
-                    entryWaypointIndex, 
-                    exitWaypointIndex, 
-                    ez.getEvent()));
-            }
-
+      for (int i = 0; i < points.size(); i++) {
+        if (zone.containsPoint(points.get(i).position)) {
+          if (entryIndex < 0) entryIndex = i;
+          exitIndex = i;
         }
+      }
 
-        // *Fill up currentPath with everything
-        basePath = new PathPlannerPath(
-            waypoints,                                              // waypoints
-            new ArrayList<>(rotationTargets),                       // rotation zones    (copy)
-            new ArrayList<>(pointTowardsZones),                     // orientation zones (copy)
-            new ArrayList<>(constraintZones),                       // constraint zones  (copy)
-            new ArrayList<>(eventMarkers),                          // event zones       (copy)
-            basePath.getGlobalConstraints(),                        // global path constraints
-            null,                               // use current velocity + heading
-            basePath.getGoalEndState(),                              // goal end state
-            false                                          // don't flip for red alliance
-        );
+      if (entryIndex < 0) continue;
 
-        return basePath;
+      double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
+      double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
+
+      if (zone instanceof OrientationZone oz) {
+        pointTowardsZones.add(new PointTowardsZone(
+            zone.name, 
+            oz.getTarget().getTranslation(), 
+            entryWaypointIndex, 
+            exitWaypointIndex));
+      } else if (zone instanceof RotationZone rz) {
+        rotationTargets.add(new RotationTarget(
+            entryWaypointIndex, 
+            rz.getRotation()));
+
+        rotationTargets.add(new RotationTarget(
+            exitWaypointIndex, rz.getRotation()));
+      } else if (zone instanceof ConstraintZone cz) {
+        constraintZones.add(new ConstraintsZone(
+            entryWaypointIndex,
+            exitWaypointIndex,
+            cz.getConstraints()));
+      } else if (zone instanceof EventZone ez) {
+        eventMarkers.add(new EventMarker(
+            zone.name, 
+            entryWaypointIndex, 
+            exitWaypointIndex, 
+            ez.getEvent()));
+      }
+    }
+
+    basePath = new PathPlannerPath(
+        waypoints,                                              
+        new ArrayList<>(rotationTargets),                       
+        new ArrayList<>(pointTowardsZones),                     
+        new ArrayList<>(constraintZones),                       
+        new ArrayList<>(eventMarkers),                          
+        basePath.getGlobalConstraints(),                        
+        null,                               
+        basePath.getGoalEndState(),                              
+        false                                          
+    );
+
+    return basePath;
   }
 
   /**
@@ -807,43 +848,65 @@ public class RoronoaZoro2 implements Pathfinder {
     }
   }
 
-  public record PathRequest(
-        boolean needsReset,
-        boolean doMinor,
-        boolean doMajor,
-        GridPosition sStart,
-        List<GridPosition> sStops,
-        GridPosition sGoal,
-        Translation2d realStartPos,
-        List<Translation2d> realStopPoses,
-        Translation2d realGoalPos,
-        Set<GridPosition> obstacles
-    ) {
+  private record PathRequest(
+      boolean needsReset,
+      boolean doMinor,
+      boolean doMajor,
+      GridPosition sStart,
+      List<GridPosition> sStops,
+      GridPosition sGoal,
+      Translation2d realStartPos,
+      Translation2d realGoalPos,
+      Set<GridPosition> obstacles
+  ) {
+      public PathRequest(
+          boolean needsReset,
+          boolean doMinor,
+          boolean doMajor,
+          GridPosition sStart,
+          GridPosition sGoal,
+          Translation2d realStartPos,
+          Translation2d realGoalPos,
+          Set<GridPosition> obstacles) {
 
-        /**
-         * Convenience constructor for a single-goal request.
-         */
-        public PathRequest(
-            boolean needsReset,
-            boolean doMinor,
-            boolean doMajor,
-            GridPosition sStart,
-            GridPosition sGoal,
-            Translation2d realStartPos,
-            Translation2d realGoalPos,
-            Set<GridPosition> obstacles) {
+          this(
+              needsReset,
+              doMinor,
+              doMajor,
+              sStart,
+              List.of(),
+              sGoal,
+              realStartPos,
+              realGoalPos,
+              obstacles
+          );
+      }
+  }
 
-            this(
-            needsReset,
-            doMinor,
-            doMajor,
-            sStart,
-            List.of(),
-            sGoal,
-            realStartPos,
-            List.of(),
-            realGoalPos,
-            obstacles);
-        }
+  private static class ADStarState {
+    GridPosition start;
+    GridPosition goal;
+
+    HashMap<GridPosition, Double> g = new HashMap<>();
+    HashMap<GridPosition, Double> rhs = new HashMap<>();
+    HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
+    HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
+    Set<GridPosition> closed = new HashSet<>();
+
+    double eps = EPS;
+
+    ADStarState(GridPosition start, GridPosition goal) {
+        this.start = start;
+        this.goal = goal;
     }
+
+    void clear() {
+        g.clear();
+        rhs.clear();
+        open.clear();
+        incons.clear();
+        closed.clear();
+        eps = EPS;
+    }
+  }
 }
