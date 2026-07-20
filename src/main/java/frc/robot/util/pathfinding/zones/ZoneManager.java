@@ -1,141 +1,141 @@
-package frc.robot.util.pathfinding;
+package frc.robot.util.pathfinding.zones;
 
-import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.Pathfinder;
-
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.Translation2d;
-
-import org.littletonrobotics.junction.LogTable;
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.inputs.LoggableInputs;
-
+import frc.robot.util.Elastic;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * // *AdvantageKit-compatible wrapper around RoronoaZoro.
- * // ?Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
+ * !Static class that manages rotation and orientation zones for the pathfinding system.
+ * ?Provides thread-safe zone registration and state management.
+ * ?Zones define regions on the field where the robot should:
+ * 
+ * * RotationZone: Hold a fixed heading
+ * * OrientationZone: Orient to a specific target pose
+ * * ConstraintZone: Adjust path constraints
+ * * EventZones: Activate a specific command
+ * 
+ * ?This class maintains a concurrent map of zones and their active states,
+ * ?accessible to the RoronoaZoro pathfinder.
  */
-public class RoronoaZoroAK implements Pathfinder {
-
-    private final ZoroIO io = new ZoroIO();
-
-    public RoronoaZoroAK() {
-        // *RoronoaZoro instantiated inside ZoroIO
+public class ZoneManager {
+    
+    /** Thread-safe storage of zones and their active states */
+    private static final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();
+    
+    /**
+     * *Registers a zone in the zone manager.
+     * 
+     * @param zone The PathZone to add (RotationZone or OrientationZone)
+     * @param active Whether the zone should be active by default
+     */
+    public static void addZone(PathZone zone, boolean active) {
+        zones.put(zone, active);
     }
-
-
-
-    // !Pathfinder interface
-    @Override
-    public boolean isNewPathAvailable() {
-        if (!Logger.hasReplaySource()) {
-            io.updateIsNewPathAvailable();
-        }
-        Logger.processInputs("RoronoaZoroAK", io);
-        return io.isNewPathAvailable;
-    }
-
-    @Override
-    public PathPlannerPath getCurrentPath(
-            PathConstraints constraints, GoalEndState goalEndState) {
-        if (!Logger.hasReplaySource()) {
-            io.updateCurrentPath(constraints, goalEndState);
-        }
-        Logger.processInputs("RoronoaZoroAK", io);
-
-        return io.currentPath;
-    }
-
-    @Override
-    public void setStartPosition(Translation2d startPosition) {
-        if (!Logger.hasReplaySource()) {
-            io.zoro.setStartPosition(startPosition);
-        }
-    }
-
-    public void setStops(List<Translation2d> stops) {
-        if (!Logger.hasReplaySource()) {
-            io.zoro.setStops(stops);
-        }
-    }
-
-    @Override
-    public void setGoalPosition(Translation2d goalPosition) {
-        if (!Logger.hasReplaySource()) {
-            io.zoro.setGoalPosition(goalPosition);
-        }
-    }
-
-    @Override
-    public void setDynamicObstacles(
-            List<Pair<Translation2d, Translation2d>> obs,
-            Translation2d currentRobotPos) {
-        if (!Logger.hasReplaySource()) {
-            io.zoro.setDynamicObstacles(obs, currentRobotPos);
-        }
-    }
-
-    // !AK IO layer
-    private static class ZoroIO implements LoggableInputs {
-
-        public final RoronoaZoro zoro = new RoronoaZoro();
-
-        public boolean isNewPathAvailable = false;
-        public PathPlannerPath currentPath = null;
-        public List<PathPoint> currentPathPoints = Collections.emptyList();
-
-        @Override
-        public void toLog(LogTable table) {
-            table.put("IsNewPathAvailable", isNewPathAvailable);
-
-            // *Log path points for replay
-            double[] pointsLogged = new double[currentPathPoints.size() * 2];
-            int idx = 0;
-            for (PathPoint point : currentPathPoints) {
-                pointsLogged[idx]     = point.position.getX();
-                pointsLogged[idx + 1] = point.position.getY();
-                idx += 2;
-            }
-            table.put("CurrentPathPoints", pointsLogged);
-        }
-
-        @Override
-        public void fromLog(LogTable table) {
-            isNewPathAvailable = table.get("IsNewPathAvailable", false);
-
-            // *Reconstruct path points from logged data during replay
-            double[] pointsLogged = table.get("CurrentPathPoints", new double[0]);
-            List<PathPoint> pathPoints = new ArrayList<>();
-            for (int i = 0; i < pointsLogged.length; i += 2) {
-                pathPoints.add(new PathPoint(
-                    new Translation2d(pointsLogged[i], pointsLogged[i + 1]),
-                    null
-                ));
-            }
-            currentPathPoints = pathPoints;
-        }
-
-        public void updateIsNewPathAvailable() {
-            isNewPathAvailable = zoro.isNewPathAvailable();
-        }
-
-        public void updateCurrentPath(
-                PathConstraints constraints, GoalEndState goalEndState) {
-            PathPlannerPath path = zoro.getCurrentPath(constraints, goalEndState);
-            this.currentPath = path;
-            
-            // *Also cache path points for logging
-            if (path != null) {
-                currentPathPoints = path.getAllPathPoints();
-            } else {
-                currentPathPoints = Collections.emptyList();
+    
+    /**
+     * *Sets the active state of a named zone.
+     * 
+     * @param zoneName The name of the zone to modify
+     * @param newState The new active state (true = active, false = inactive)
+     */
+    public static void setZoneState(String zoneName, boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                zones.put(entry.getKey(), newState);
+                return;
             }
         }
+        Elastic.sendNotification(
+            new Elastic.Notification()
+            .withLevel(Elastic.NotificationLevel.ERROR)
+            .withTitle("Zone Mismatch")
+            .withDescription("Zone " + zoneName + " is not defined"));
+
+    }
+    
+    /**
+     * *Sets all zones to the same active state.
+     * 
+     * @param newState The new active state for all zones
+     */
+    public static void setAllZones(boolean newState) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            zones.put(entry.getKey(), newState);
+        }
+    }
+    
+    /**
+     * *Gets a list of currently active zones.
+     * ?Returns a snapshot copy to prevent concurrent modification issues.
+     * 
+     * @return List of active PathZone objects
+     */
+    public static List<PathZone> getActiveZones() {
+        List<PathZone> activeZones = new ArrayList<>();
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getValue()) {
+                activeZones.add(entry.getKey());
+            }
+        }
+        return activeZones;
+    }
+    
+    /**
+     * *Gets all registered zones regardless of active state.
+     * 
+     * @return List of all registered PathZone objects
+     */
+    public static List<PathZone> getAllZones() {
+        return new ArrayList<>(zones.keySet());
+    }
+    
+    /**
+     * *Checks if a zone is currently active.
+     * 
+     * @param zoneName The name of the zone to check
+     * @return true if the zone is registered and active, false otherwise
+     */
+    public static boolean isZoneActive(String zoneName) {
+        for (Map.Entry<PathZone, Boolean> entry : zones.entrySet()) {
+            if (entry.getKey().name.equals(zoneName)) {
+                return entry.getValue();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * *Deletes the given zone. Highly unlikely we will use this
+     */
+    public static boolean deleteZone(String zoneName) {
+        for (PathZone zone : zones.keySet()) {
+            if (zone.name.equals(zoneName)) {
+                return zones.remove(zone);
+            }
+        }
+
+        return false;
+    }
+    
+    /**
+     * *Clears all registered zones. Useful for resetting state or testing.
+     */
+    public static void clearAllZones() {
+        zones.clear();
+    }
+    
+    /**
+     * *Gets the total number of registered zones.
+     * 
+     * @return Number of zones currently registered
+     */
+    public static int getZoneCount() {
+        return zones.size();
     }
 }
+
 
 /*
 

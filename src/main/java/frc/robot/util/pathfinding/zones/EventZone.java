@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding;
+package frc.robot.util.pathfinding.zones;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.geometry.Translation2d;

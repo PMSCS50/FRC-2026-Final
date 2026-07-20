@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding;
+package frc.robot.util.pathfinding.commands;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.util.pathfinding.Pathmaster;
 
 import java.util.List;
 import java.util.function.BiConsumer;

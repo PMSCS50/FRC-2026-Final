@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding;
+package frc.robot.util.pathfinding.commands;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
@@ -9,24 +9,16 @@ import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
-import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-/** Utility class used to build auto routines */
+/** GoingMerry is what actually builds the pathfinding commands. Made to interact with ShinPathfindingCommand */
 public class GoingMerry {
   private static Globals globals = new Globals();
 

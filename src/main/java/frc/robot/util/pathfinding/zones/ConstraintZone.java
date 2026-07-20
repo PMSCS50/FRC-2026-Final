@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding;
+package frc.robot.util.pathfinding.zones;
 
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Translation2d;

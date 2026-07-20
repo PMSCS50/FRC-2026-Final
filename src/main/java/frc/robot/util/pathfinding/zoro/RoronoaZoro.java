@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding;
+package frc.robot.util.pathfinding.zoro;
 
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinder;
@@ -8,6 +8,13 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
+import frc.robot.util.pathfinding.zones.ConstraintZone;
+import frc.robot.util.pathfinding.zones.EventZone;
+import frc.robot.util.pathfinding.zones.OrientationZone;
+import frc.robot.util.pathfinding.zones.PathZone;
+import frc.robot.util.pathfinding.zones.RotationZone;
+import frc.robot.util.pathfinding.zones.ZoneManager;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
