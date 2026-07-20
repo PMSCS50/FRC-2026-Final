@@ -31,6 +31,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.littletonrobotics.junction.Logger;
+
 /** PathfindingCommand class does not let us do path chaining so this bad boy will be our replacement */
 /** ShinPathfidingCommand lets us include pathing through multiple stops to get to a goal */
 /** Also, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand if given a PathPlannerPath in the constructor*/
@@ -445,6 +447,7 @@ public class ShinPathfindingCommand extends Command {
     //Folow targetPath if we are done pathfinding to there
     if (targetPath != null && !followingTargetPath && currentTrajectory != null
     && timer.hasElapsed(currentTrajectory.getTotalTimeSeconds() - timeOffset)) {
+        Logger.recordOutput("Pathmaster/Joining .path", true);
         followingTargetPath = true;
         currentPath = shouldFlipPath.getAsBoolean()
                 ? targetPath.flipPath()
@@ -563,21 +566,8 @@ public class ShinPathfindingCommand extends Command {
     if (finish) {
       return true;
     }
-    if (!followingTargetPath) {
-        if (targetPath != null && !targetPath.isChoreoPath()) {
-        Pose2d currentPose = poseSupplier.get();
-        ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-        double currentVel =
-            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-        double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMPSSq());
-
-        return currentPose.getTranslation().getDistance(targetPose.getTranslation())
-            <= stoppingDistance;
-        }
-    }
-
-    if (currentTrajectory != null) {
+    if (currentTrajectory != null && (followingTargetPath == (targetPath != null))) {
       return timer.hasElapsed(currentTrajectory.getTotalTimeSeconds() - timeOffset);
     }
 

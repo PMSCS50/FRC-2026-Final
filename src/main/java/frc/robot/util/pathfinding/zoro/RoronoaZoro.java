@@ -338,7 +338,7 @@ public class RoronoaZoro implements Pathfinder {
 
         if (minor) {
           requestMinor = false;
-        } else if (major && activeStates.stream().allMatch(s -> s.eps <= 1.0)) {
+        } else if (major && activeStates.stream().allMatch(s -> (s.eps - 0.5) <= 1.0)) {
           requestMajor = false;
         }
         requestLock.readLock().unlock();
