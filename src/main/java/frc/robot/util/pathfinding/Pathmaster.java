@@ -93,18 +93,14 @@ public class Pathmaster {
         Pathfinding.setPathfinder(Pathmaster.zoro);
     }
 
+    public static RoronoaZoroAK getPathfinderInstance() {
+        return Pathmaster.zoro;
+    }
+
     // *Call in Robot.java as the last line in Robot contructor
     public static void startWarmupCommand() {
         CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
         warmup = true;
-    }
-
-    public IdealStartingState getIdealStartingState() {
-        ChassisSpeeds speeds = robotSpeeds.get();
-        double vx = speeds.vxMetersPerSecond;
-        double vy = speeds.vyMetersPerSecond;
-        Rotation2d rot = robotPose.get().getRotation();
-        return new IdealStartingState(Math.hypot(vx, vy), rot);
     }
 
     private void createLoggingCallbacks() {

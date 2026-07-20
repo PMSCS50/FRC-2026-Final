@@ -56,6 +56,12 @@ public class RoronoaZoroAK implements Pathfinder {
         }
     }
 
+    public void setStops(List<Translation2d> stops) {
+        if (!Logger.hasReplaySource()) {
+            io.zoro.setStops(stops);
+        }
+    }
+
     @Override
     public void setGoalPosition(Translation2d goalPosition) {
         if (!Logger.hasReplaySource()) {
