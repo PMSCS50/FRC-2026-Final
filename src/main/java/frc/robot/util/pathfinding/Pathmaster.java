@@ -2,7 +2,6 @@ package frc.robot.util.pathfinding;
 
 // import org.littletonrobotics.junction.Logger;
 
-import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
@@ -232,10 +231,22 @@ public class Pathmaster {
     // !Pathfinding Commands
     // *Pathfind to any field pose with obstacle avoidance
     public Command makePathTo(Pose2d destination) {
-        if (!AutoBuilder.isConfigured()) return Commands.none();
+        if (!GoingMerry.isConfigured()) return Commands.none();
         pathing = true;
         return Commands.defer(
-            () -> AutoBuilder.pathfindToPose(destination, constraints),
+            () -> GoingMerry.pathfindToPose(destination, constraints),
+            Set.of(drivetrain)
+        )
+        .finallyDo(() -> pathing = false)
+        .withName("makePathTo");
+    }
+
+    // *Pathfind to any field pose with obstacle avoidance
+    public Command makePathTo(Pose2d destination, List<Pose2d> stops) {
+        if (!GoingMerry.isConfigured()) return Commands.none();
+        pathing = true;
+        return Commands.defer(
+            () -> GoingMerry.pathfindToPose(destination, stops, constraints),
             Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false)
@@ -245,10 +256,10 @@ public class Pathmaster {
     // *Pathfind to a registered waypoint
     // ?Waypoints are defined in Robot.java and updated with alliance-relative poses in robotPeriodic()
     public Command gotoWaypoint(String name) {
-        if (!AutoBuilder.isConfigured() || !waypoints.containsKey(name)) return Commands.none();
+        if (!GoingMerry.isConfigured() || !waypoints.containsKey(name)) return Commands.none();
         pathing = true;
         return Commands.defer(
-            () -> AutoBuilder.pathfindToPose(waypoints.get(name), constraints),
+            () -> GoingMerry.pathfindToPose(waypoints.get(name), constraints),
             Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false)
@@ -257,9 +268,9 @@ public class Pathmaster {
 
     // *Pathfind to waypoint corresponding with selectedWaypointIndex
     public Command goToSelectedWaypoint() {
-        if (!AutoBuilder.isConfigured()) return Commands.none();
+        if (!GoingMerry.isConfigured()) return Commands.none();
         pathing = true;
-        return AutoBuilder.pathfindToPose(
+        return GoingMerry.pathfindToPose(
             waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints
         )
         .finallyDo(() -> pathing = false)
@@ -271,12 +282,12 @@ public class Pathmaster {
     // ?A predetermined .path file has much less error, around <1cm.
     // ?This pathfinds to the start of the .path, then follows it precisely to the end.
     public Command pathfindToPath(String pathName) {
-        if (!AutoBuilder.isConfigured()) return Commands.none();
+        if (!GoingMerry.isConfigured()) return Commands.none();
         try {
             pathing = true;
             PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
             return Commands.defer(
-                () -> AutoBuilder.pathfindThenFollowPath(path, constraints),
+                () -> GoingMerry.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
             )
             .finallyDo(() -> pathing = false)
@@ -306,7 +317,7 @@ public class Pathmaster {
                             .getDistance(robotPose.get().getTranslation())
                     ))
                     .orElseThrow();
-                return AutoBuilder.pathfindToPose(nearest, constraints);
+                return GoingMerry.pathfindToPose(nearest, constraints);
             }, Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false)
@@ -332,7 +343,7 @@ public class Pathmaster {
             () -> {
                 Rotation2d facing = getRotationToPose(destination, faceTarget);
                 Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
-                return AutoBuilder.pathfindToPose(oriented, constraints);
+                return GoingMerry.pathfindToPose(oriented, constraints);
             }, Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false)
@@ -370,12 +381,12 @@ public class Pathmaster {
         return warmup;
     }
     
-    public boolean AutoBuilderPathFindingConfigured() {
-        return AutoBuilder.isPathfindingConfigured();
+    public boolean GoingMerryPathFindingConfigured() {
+        return GoingMerry.isPathfindingConfigured();
     }
 
-    public boolean AutoBuilderConfigured() {
-        return AutoBuilder.isConfigured();
+    public boolean GoingMerryConfigured() {
+        return GoingMerry.isConfigured();
     }
 
     public Pose2d[] getActivePath() {

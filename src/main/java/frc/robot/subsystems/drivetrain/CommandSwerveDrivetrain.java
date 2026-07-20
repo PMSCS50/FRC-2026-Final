@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
+import frc.robot.util.pathfinding.GoingMerry;
 import frc.robot.util.pathfinding.PPLogger;
 
 /**
@@ -246,21 +247,43 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private void configureAutoBuilder() {
         try {
             RobotConfig config = RobotConfig.fromGUISettings();
-            
-            // *Not using 254 setpoint generator anymore, bc that may be causing drifting.
 
-            // m_setpointGenerator = new SwerveSetpointGenerator(
-            //     config,
-            //     RotationsPerSecond.of(0.75).in(RadiansPerSecond) // max rotational velocity in rad/s
-            // );
-
-            // m_previousSetpoint = new SwerveSetpoint(
-            //     getState().Speeds,
-            //     getState().ModuleStates,
-            //     DriveFeedforwards.zeros(config.numModules)
-            // );
-
+            //Configure AutoBuilder
             AutoBuilder.configure(
+                () -> getState().Pose,   // Supplier of current robot pose
+                this::resetPose,         // Consumer for seeding pose against auto
+                () -> getState().Speeds, // Supplier of current robot speeds
+
+                (speeds, feedforwards) -> {
+                    setControl(
+                        m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                    );
+
+                    PPLogger.logVelocities(
+                        Math.hypot(getState().Speeds.vxMetersPerSecond, getState().Speeds.vyMetersPerSecond),
+                        Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond),
+                        getState().Speeds.omegaRadiansPerSecond,
+                        speeds.omegaRadiansPerSecond
+                    );
+                },
+
+                new PPHolonomicDriveController(
+                    // *PID constants for translation
+                    new PIDConstants(8, 0, 0),
+                    // *PID constants for rotation
+                    new PIDConstants(4, 0, 0)
+                ),
+                config,
+                // *Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                this // Subsystem for requirements
+            );
+
+            //GoingMerry is an AutoBuilder completely optimized for the type of pathfinding we are doing.
+            //Unfortunately I cant copy the AutoBuilder configs so Im stuck with this.
+            GoingMerry.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
                 this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds

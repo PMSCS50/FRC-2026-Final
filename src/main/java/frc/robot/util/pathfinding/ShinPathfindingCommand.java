@@ -32,14 +32,15 @@ import java.util.stream.Collectors;
 
 /** PathfindingCommand class does not let us do path chaining so this bad boy will be our replacement */
 /** ShinPathfidingCommand lets us include pathing through multiple stops to get to a goal */
-/** Also, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand */
+/** Also, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand if given a PathPlannerPath in the constructor*/
 public class ShinPathfindingCommand extends Command {
   private static int instances = 0;
 
   private final Timer timer = new Timer();
   private final PathPlannerPath targetPath;
+  private boolean followingTargetPath = false;
   private Pose2d targetPose;
-  private final List<Pose2d> stopPoses;
+  private List<Pose2d> stopPoses;
   private Pose2d originalTargetPose;
   private GoalEndState goalEndState;
   private final PathConstraints constraints;
@@ -389,6 +390,7 @@ public class ShinPathfindingCommand extends Command {
     currentTrajectory = null;
     timeOffset = 0;
     finish = false;
+    followingTargetPath = false;
 
     Pose2d currentPose = poseSupplier.get();
 
@@ -438,6 +440,31 @@ public class ShinPathfindingCommand extends Command {
                     .getTranslation()
                     .getDistance(currentTrajectory.getEndState().pose.getTranslation())
                 < 2.0;
+
+    //Folow targetPath if we are done pathfinding to there
+    if (targetPath != null && !followingTargetPath && currentTrajectory != null
+    && timer.hasElapsed(currentTrajectory.getTotalTimeSeconds() - timeOffset)) {
+        followingTargetPath = true;
+        currentPath = shouldFlipPath.getAsBoolean()
+                ? targetPath.flipPath()
+                : targetPath;
+
+        currentTrajectory =
+                new PathPlannerTrajectory(
+                        currentPath,
+                        speedsSupplier.get(),
+                        poseSupplier.get().getRotation(),
+                        robotConfig);
+
+        controller.reset(poseSupplier.get(), speedsSupplier.get());
+
+        timer.reset();
+        timer.start();
+        timeOffset = 0;
+
+        PathPlannerLogging.logActivePath(currentPath);
+        PPLibTelemetry.setCurrentPath(currentPath);
+    }
 
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
@@ -535,17 +562,18 @@ public class ShinPathfindingCommand extends Command {
     if (finish) {
       return true;
     }
+    if (!followingTargetPath) {
+        if (targetPath != null && !targetPath.isChoreoPath()) {
+        Pose2d currentPose = poseSupplier.get();
+        ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    if (targetPath != null && !targetPath.isChoreoPath()) {
-      Pose2d currentPose = poseSupplier.get();
-      ChassisSpeeds currentSpeeds = speedsSupplier.get();
+        double currentVel =
+            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+        double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMPSSq());
 
-      double currentVel =
-          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-      double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMPSSq());
-
-      return currentPose.getTranslation().getDistance(targetPose.getTranslation())
-          <= stoppingDistance;
+        return currentPose.getTranslation().getDistance(targetPose.getTranslation())
+            <= stoppingDistance;
+        }
     }
 
     if (currentTrajectory != null) {
