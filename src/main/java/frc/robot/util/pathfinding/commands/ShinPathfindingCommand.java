@@ -471,7 +471,7 @@ public class ShinPathfindingCommand extends Command {
     if (finish) {
       return;
     }
-
+    
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
@@ -489,7 +489,6 @@ public class ShinPathfindingCommand extends Command {
     //Folow targetPath if we are done pathfinding to there
     if (targetPath != null && !followingTargetPath && currentTrajectory != null
     && timer.hasElapsed(currentTrajectory.getTotalTimeSeconds() - timeOffset)) {
-        Logger.recordOutput("Pathmaster/Joining .path", true);
         followingTargetPath = true;
         currentPath = shouldFlipPath.getAsBoolean()
                 ? targetPath.flipPath()
@@ -637,6 +636,7 @@ public class ShinPathfindingCommand extends Command {
   public static Command warmupCommand() {
     return new ShinPathfindingCommand(
             new Pose2d(15.0, 4.0, Rotation2d.k180deg),
+            List.of(Pose2d.kZero),
             new PathConstraints(4, 3, 4, 4),
             () -> new Pose2d(1.5, 4, Rotation2d.kZero),
             ChassisSpeeds::new,
