@@ -1,5 +1,7 @@
 package frc.robot.util.pathfinding;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
+
 // import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.commands.PathfindingCommand;
@@ -15,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.commands.GoingMerry;
+import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.zones.ConstraintZone;
 import frc.robot.util.pathfinding.zones.EventZone;
 import frc.robot.util.pathfinding.zones.OrientationZone;
@@ -105,7 +108,7 @@ public class Pathmaster {
 
     // *Call in Robot.java as the last line in Robot contructor
     public static void startWarmupCommand() {
-        CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
+        CommandScheduler.getInstance().schedule(ShinPathfindingCommand.warmupCommand());
         warmup = true;
     }
 
