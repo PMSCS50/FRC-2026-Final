@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.List;
 import java.util.function.*;
 
-/** GoingMerry is what actually builds the pathfinding commands. Made to interact with ShinPathfindingCommand */
+/** GoingMerry is what builds the pathfinding commands, so its AutoBuilder Minus. Made to interact with ShinPathfindingCommand */
 public class GoingMerry {
   private static Globals globals = new Globals();
 
@@ -26,7 +26,6 @@ public class GoingMerry {
    * Configures the GoingMerry for using PathPlanner's built-in commands.
    *
    * @param poseSupplier a supplier for the robot's current pose
-   * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
    * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
@@ -42,7 +41,6 @@ public class GoingMerry {
    */
   public static void configure(
       Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
       BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
@@ -66,7 +64,6 @@ public class GoingMerry {
                 shouldFlipPath,
                 driveRequirements);
     globals.poseSupplier = poseSupplier;
-    globals.resetPose = resetPose;
     globals.configured = true;
     globals.shouldFlipPath = shouldFlipPath;
     globals.isHolonomic = robotConfig.isHolonomic;
@@ -111,6 +108,7 @@ public class GoingMerry {
                 shouldFlipPath,
                 driveRequirements);
 
+    // Holy that is a long name
     globals.pathfindThroughStopsThenFollowPathCommandBuilder =
         (path, stops, constraints) ->
             new ShinPathfindingCommand(
@@ -131,7 +129,6 @@ public class GoingMerry {
    * Configures the GoingMerry for using PathPlanner's built-in commands.
    *
    * @param poseSupplier a supplier for the robot's current pose
-   * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
    * @param output Output function that accepts robot-relative ChassisSpeeds.
@@ -143,7 +140,6 @@ public class GoingMerry {
    */
   public static void configure(
       Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
       Consumer<ChassisSpeeds> output,
       PathFollowingController controller,
@@ -152,7 +148,6 @@ public class GoingMerry {
       Subsystem... driveRequirements) {
     configure(
         poseSupplier,
-        resetPose,
         robotRelativeSpeedsSupplier,
         (speeds, feedforwards) -> output.accept(speeds),
         controller,
@@ -172,7 +167,6 @@ public class GoingMerry {
 
     Supplier<Pose2d> poseSupplier;
     Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
-    Consumer<Pose2d> resetPose;
     BooleanSupplier shouldFlipPath;
     boolean isHolonomic;
 
@@ -267,6 +261,16 @@ public class GoingMerry {
     return globals.pathfindToPoseCommandBuilder.apply(pose, constraints, goalEndVelocity);
   }
 
+  /**
+   * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to
+   * @param stops The stops it must pass through before getting to the pose
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @return A command to pathfind to a given pose
+   */
   public static Command pathfindToPose(
       Pose2d pose, List<Pose2d> stops, PathConstraints constraints, double goalEndVelocity) {
     if (!isPathfindingConfigured()) {
@@ -296,6 +300,7 @@ public class GoingMerry {
    * rotation and rotation delay distance will have no effect.
    *
    * @param pose The pose to pathfind to
+   * @param stops The stops it must pass through before getting to the pose
    * @param constraints The constraints to use while pathfinding
    * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
    * @return A command to pathfind to a given pose
@@ -322,6 +327,7 @@ public class GoingMerry {
    * rotation will have no effect.
    *
    * @param pose The pose to pathfind to
+   * @param stops The stops it must pass through before getting to the pose
    * @param constraints The constraints to use while pathfinding
    * @return A command to pathfind to a given pose
    */
@@ -353,6 +359,7 @@ public class GoingMerry {
    * drivetrain, the pose rotation delay distance will have no effect.
    *
    * @param goalPath The path to pathfind to, then follow
+   * @param stops The stops it must pass through before getting to the path
    * @param pathfindingConstraints The constraints to use while pathfinding
    * @return A command to pathfind to a given path, then follow the path
    */

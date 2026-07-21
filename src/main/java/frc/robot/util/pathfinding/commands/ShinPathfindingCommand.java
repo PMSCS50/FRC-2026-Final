@@ -33,10 +33,13 @@ import java.util.stream.Collectors;
 
 import org.littletonrobotics.junction.Logger;
 
-/** PathfindingCommand class does not let us do path chaining so this bad boy will be our replacement */
+/** PathfindingCommand class does not let us do multistop pathfinding so this bad boy will be our replacement */
 /** ShinPathfidingCommand lets us include pathing through multiple stops to get to a goal */
-/** Also, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand if given a PathPlannerPath in the constructor*/
+/** Furthermore, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand if given a PathPlannerPath in the constructor*/
+/** In other words, this is a one-size-fits-all pathfinding command that also allows for multi-stop paths */
+
 public class ShinPathfindingCommand extends Command {
+
   private static int instances = 0;
 
   private final Timer timer = new Timer();
@@ -65,6 +68,7 @@ public class ShinPathfindingCommand extends Command {
    * Constructs a new base pathfinding command that will generate a path towards the given path.
    *
    * @param targetPath the path to pathfind to
+   * @param stopPoses the stops to pathfind through
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param speedsSupplier a supplier for the robot's current robot relative speeds
@@ -128,6 +132,24 @@ public class ShinPathfindingCommand extends Command {
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
   }
 
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given path.
+   *
+   * @param targetPath the path to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
+   * @param requirements the subsystems required by this command
+   */
   public ShinPathfindingCommand(
       PathPlannerPath targetPath,
       PathConstraints constraints,
@@ -153,6 +175,25 @@ public class ShinPathfindingCommand extends Command {
     );
   }
 
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given path.
+   *
+   * @param targetPose the pose to pathfind to
+   * @param stopPoses the stops to pathfind through
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
+   * @param requirements the subsystems required by this command
+   */
   public ShinPathfindingCommand(
       Pose2d targetPose,
       List<Pose2d> stopPoses,
@@ -232,6 +273,7 @@ public class ShinPathfindingCommand extends Command {
    *
    * @param targetPose the pose to pathfind to, the rotation component is only relevant for
    *     holonomic drive trains
+   * @param stopPoses the poses to pathfind through
    * @param constraints the path constraints to use while pathfinding
    * @param goalEndVel The goal end velocity when reaching the target pose
    * @param poseSupplier a supplier for the robot's current pose

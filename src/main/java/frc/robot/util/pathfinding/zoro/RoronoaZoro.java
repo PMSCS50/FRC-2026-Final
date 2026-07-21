@@ -26,7 +26,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**
- * Custom pathfinder extending AD* with support for many different Zones, as well as chaining pathfinding.
+ * Custom pathfinder extending AD* with support for many different Zones, as well as multistop pathfinding.
  * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
  * 
  * Zones can be toggled active/inactive at runtime.
@@ -36,7 +36,8 @@ import org.json.simple.parser.JSONParser;
  * 3. ConstraintZone: When the robot enters this zone, certain path constraints are applied
  * 4. EventZone: When the robot enters this zone, a specified command is triggered
  * 
- * * LocalADStar couldn't create paths from a->b->c smoothly, so this pathfinder also handles chaining.
+ * * LocalADStar couldn't create paths from a->b->c smoothly, so this pathfinder also handles multiple stops.
+ * * Although I am much prouder of this than the zones, i cant really say much more
  */
 public class RoronoaZoro implements Pathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;

@@ -282,10 +282,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             );
 
             //GoingMerry is an AutoBuilder completely optimized for the type of pathfinding we are doing.
-            //Unfortunately I cant copy the AutoBuilder configs so Im stuck with this.
+            //Unfortunately I cant copy the AutoBuilder configs so I'm stuck with this.
+            //Also, since AutoBuilder is still used in the autochooser for auton paths I cant and wont remove it
+            //The constructor is entirely the same except for the lack of a resetPose() parameter
             GoingMerry.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
-                this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
 
                 (speeds, feedforwards) -> {
