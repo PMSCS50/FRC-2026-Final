@@ -366,13 +366,19 @@ public class Pathmaster {
         });
     }
 
+    //Log Stuff
+    public void log() {
+        zoro.log();
+        Logger.recordOutput("Pathmaster/Selected Waypoint", selectedWaypoint());
+        Logger.recordOutput("Pathmaster/Selected Waypoint Pose", selectedWaypointPose());
+    }
+
     // !Helpers
     //* Returns the rotation needed at 'from' to face toward 'target'
     private Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
         Translation2d delta = target.getTranslation().minus(from.getTranslation());
         return new Rotation2d(delta.getX(), delta.getY());
     }
-
 
     public boolean isPathing() {
         return pathing;
@@ -394,12 +400,6 @@ public class Pathmaster {
         return PPLogger.getActivePath();
     }
 
-    // !I SURE DO WONDER WHAT THIS DOES
-    // |This logs stuff to AdvantageKit, which is really useful for debugging pathfinding issues and analyzing pathing performance after matches.
-    public void logWaypoint() {
-        Logger.recordOutput("Pathmaster/Selected Waypoint", selectedWaypoint());
-        Logger.recordOutput("Pathmaster/Selected Waypoint Pose", selectedWaypointPose());
-    }
 }
 
 

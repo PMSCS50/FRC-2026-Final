@@ -7,21 +7,24 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
-import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.inputs.LoggableInputs;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * // *AdvantageKit-compatible wrapper around RoronoaZoro.
  * // ?Wraps all of the new RoronoaZoro functionality with AdvantageKit logging.
  */
-public class RoronoaZoroAK implements Pathfinder {
+public class RoronoaZoroAK implements Pathfinder, ZoroIO {
 
-    private final ZoroIO io = new ZoroIO();
+    private final RoronoaZoro zoro = new RoronoaZoro();
+
+    private final ZoroIOInputsAutoLogged inputs = new ZoroIOInputsAutoLogged();
+
+    private PathPlannerPath currentPath = null;
+
+    //To avoid creating a new one every log cycle i think thats how it works
+    private Pose2d[] emptyPose2dArr = new Pose2d[0];
+
 
     public RoronoaZoroAK() {
         // *RoronoaZoro instantiated inside ZoroIO
@@ -32,41 +35,38 @@ public class RoronoaZoroAK implements Pathfinder {
     // !Pathfinder interface
     @Override
     public boolean isNewPathAvailable() {
-        if (!Logger.hasReplaySource()) {
-            io.updateIsNewPathAvailable();
-        }
-        Logger.processInputs("RoronoaZoroAK", io);
-        return io.isNewPathAvailable;
+        // if (!Logger.hasReplaySource()) {
+        //     io.updateIsNewPathAvailable();
+        // }
+        return zoro.isNewPathAvailable();
     }
 
     @Override
     public PathPlannerPath getCurrentPath(
             PathConstraints constraints, GoalEndState goalEndState) {
-        if (!Logger.hasReplaySource()) {
-            io.updateCurrentPath(constraints, goalEndState);
-        }
-        Logger.processInputs("RoronoaZoroAK", io);
-
-        return io.currentPath;
+        
+        PathPlannerPath currentPath = zoro.getCurrentPath(constraints, goalEndState);
+        this.currentPath = currentPath;
+        return currentPath;
     }
 
     @Override
     public void setStartPosition(Translation2d startPosition) {
         if (!Logger.hasReplaySource()) {
-            io.zoro.setStartPosition(startPosition);
+            zoro.setStartPosition(startPosition);
         }
     }
 
     public void setStops(List<Pose2d> stops) {
         if (!Logger.hasReplaySource()) {
-            io.zoro.setStops(stops);
+            zoro.setStops(stops);
         }
     }
 
     @Override
     public void setGoalPosition(Translation2d goalPosition) {
         if (!Logger.hasReplaySource()) {
-            io.zoro.setGoalPosition(goalPosition);
+            zoro.setGoalPosition(goalPosition);
         }
     }
 
@@ -75,67 +75,25 @@ public class RoronoaZoroAK implements Pathfinder {
             List<Pair<Translation2d, Translation2d>> obs,
             Translation2d currentRobotPos) {
         if (!Logger.hasReplaySource()) {
-            io.zoro.setDynamicObstacles(obs, currentRobotPos);
+            zoro.setDynamicObstacles(obs, currentRobotPos);
         }
     }
 
-    // !AK IO layer
-    private static class ZoroIO implements LoggableInputs {
-
-        public final RoronoaZoro zoro = new RoronoaZoro();
-
-        public boolean isNewPathAvailable = false;
-        public PathPlannerPath currentPath = null;
-        public List<PathPoint> currentPathPoints = Collections.emptyList();
-
-        @Override
-        public void toLog(LogTable table) {
-            table.put("IsNewPathAvailable", isNewPathAvailable);
-
-            // *Log path points for replay
-            double[] pointsLogged = new double[currentPathPoints.size() * 2];
-            int idx = 0;
-            for (PathPoint point : currentPathPoints) {
-                pointsLogged[idx]     = point.position.getX();
-                pointsLogged[idx + 1] = point.position.getY();
-                idx += 2;
-            }
-            table.put("CurrentPathPoints", pointsLogged);
-        }
-
-        @Override
-        public void fromLog(LogTable table) {
-            isNewPathAvailable = table.get("IsNewPathAvailable", false);
-
-            // *Reconstruct path points from logged data during replay
-            double[] pointsLogged = table.get("CurrentPathPoints", new double[0]);
-            List<PathPoint> pathPoints = new ArrayList<>();
-            for (int i = 0; i < pointsLogged.length; i += 2) {
-                pathPoints.add(new PathPoint(
-                    new Translation2d(pointsLogged[i], pointsLogged[i + 1]),
-                    null
-                ));
-            }
-            currentPathPoints = pathPoints;
-        }
-
-        public void updateIsNewPathAvailable() {
-            isNewPathAvailable = zoro.isNewPathAvailable();
-        }
-
-        public void updateCurrentPath(
-                PathConstraints constraints, GoalEndState goalEndState) {
-            PathPlannerPath path = zoro.getCurrentPath(constraints, goalEndState);
-            this.currentPath = path;
-            
-            // *Also cache path points for logging
-            if (path != null) {
-                currentPathPoints = path.getAllPathPoints();
-            } else {
-                currentPathPoints = Collections.emptyList();
-            }
+    @Override
+    public void updateInputs(ZoroIOInputs inputs) {
+        inputs.isNewPathAvailable = isNewPathAvailable();
+        if (currentPath == null) {
+            inputs.currentPathPoints = emptyPose2dArr;
+        } else {
+            inputs.currentPathPoints = currentPath.getPathPoses().toArray(Pose2d[]::new);
         }
     }
+
+    public void log() {
+        updateInputs(inputs);
+        Logger.processInputs("LoggedZoro", inputs);
+    }
+
 }
 
 /*

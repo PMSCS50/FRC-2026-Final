@@ -111,7 +111,7 @@ public class Robot extends LoggedRobot {
     applyAllianceConfig();
 
     CommandScheduler.getInstance().run();
-    m_robotContainer.monkeyDLuffy.logWaypoint();
+    m_robotContainer.monkeyDLuffy.log();
 
     // |RoboRIO voltage and current monitoring
     batteryVoltage = RobotController.getBatteryVoltage();
