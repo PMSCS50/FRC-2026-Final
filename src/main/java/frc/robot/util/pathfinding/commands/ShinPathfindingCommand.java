@@ -23,15 +23,13 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.util.pathfinding.PPLogger;
 import frc.robot.util.pathfinding.Pathmaster;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import org.littletonrobotics.junction.Logger;
 
 /** PathfindingCommand class does not let us do multistop pathfinding so this bad boy will be our replacement */
 /** ShinPathfidingCommand lets us include pathing through multiple stops to get to a goal */
@@ -459,7 +457,9 @@ public class ShinPathfindingCommand extends Command {
       if (stopPoses.isEmpty()) {
         Pathmaster.getPathfinderInstance().setStops(List.of());
       } else {
-        Pathmaster.getPathfinderInstance().setStops(stopPoses.stream().map(p -> p.getTranslation()).collect(Collectors.toList()));
+        //Pathmaster.getPathfinderInstance().setStops(stopPoses.stream().map(p -> p.getTranslation()).collect(Collectors.toList()));
+        Pathmaster.getPathfinderInstance().setStops(stopPoses);
+        PPLogger.logStops(stopPoses);
       }
 
       Pathmaster.getPathfinderInstance().setGoalPosition(targetPose.getTranslation());
@@ -626,6 +626,7 @@ public class ShinPathfindingCommand extends Command {
     }
 
     PathPlannerLogging.logActivePath(null);
+    PPLogger.logStops(List.of());
   }
 
   /**
@@ -636,7 +637,7 @@ public class ShinPathfindingCommand extends Command {
   public static Command warmupCommand() {
     return new ShinPathfindingCommand(
             new Pose2d(15.0, 4.0, Rotation2d.k180deg),
-            List.of(Pose2d.kZero),
+            //List.of(Pose2d.kZero),
             new PathConstraints(4, 3, 4, 4),
             () -> new Pose2d(1.5, 4, Rotation2d.kZero),
             ChassisSpeeds::new,

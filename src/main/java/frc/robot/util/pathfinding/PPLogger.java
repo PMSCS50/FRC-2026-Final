@@ -123,6 +123,11 @@ public class PPLogger {
     updatePathInnacuracy();
   }
 
+  public static void logStops(List<Pose2d> stops) {
+    Pose2d[] stopsArray = stops.toArray(new Pose2d[0]);
+    Logger.recordOutput("Pathmaster/activeStops", stopsArray);
+  }
+
 
   /**
    * // *Recomputes path inaccuracy (distance between current and target pose).

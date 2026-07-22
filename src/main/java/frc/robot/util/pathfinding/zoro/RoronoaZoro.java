@@ -61,6 +61,7 @@ public class RoronoaZoro implements Pathfinder {
   private Translation2d requestRealGoalPos;
   private final List<GridPosition> requestStops = new ArrayList<>();
   private final List<Translation2d> requestRealStopPoses = new ArrayList<>();
+  private final HashMap<Translation2d, Rotation2d> requestRealStopRotations = new HashMap<>();
 
   // Track the primary active state chain for multi-segment pathing
   private final List<ADStarSegment> activeStates = new ArrayList<>();
@@ -213,16 +214,18 @@ public class RoronoaZoro implements Pathfinder {
    *
    * @param stops List of physical coordinate positions representing stops
    */
-  public void setStops(List<Translation2d> stops) {
+  public void setStops(List<Pose2d> stops) {
     requestLock.writeLock().lock();
     requestStops.clear();
     requestRealStopPoses.clear();
 
-    for (Translation2d stop : stops) {
-      GridPosition gridPos = findClosestNonObstacle(getGridPos(stop), requestObstacles);
+
+    for (Pose2d stop : stops) {
+      GridPosition gridPos = findClosestNonObstacle(getGridPos(stop.getTranslation()), requestObstacles);
       if (gridPos != null) {
         requestStops.add(gridPos);
-        requestRealStopPoses.add(stop);
+        requestRealStopPoses.add(stop.getTranslation());
+        requestRealStopRotations.put(stop.getTranslation(), stop.getRotation());
       }
     }
 
@@ -512,10 +515,14 @@ public class RoronoaZoro implements Pathfinder {
     }
 
     List<GridPosition> simplifiedPath = new ArrayList<>();
+    List<Integer> stopIndexes = new ArrayList<>();
     simplifiedPath.add(path.get(0));
     for (int i = 1; i < path.size() - 1; i++) {
       if (!walkable(simplifiedPath.get(simplifiedPath.size() - 1), path.get(i + 1), obstacles) || stops.contains(path.get(i))) {
         simplifiedPath.add(path.get(i));
+        if (stops.contains(path.get(i))) {
+          stopIndexes.add(simplifiedPath.size() - 1);
+        }
       }
     }
     simplifiedPath.add(path.get(path.size() - 1));
@@ -533,13 +540,8 @@ public class RoronoaZoro implements Pathfinder {
     fieldPosPath.set(0, realStartPos);
     fieldPosPath.set(fieldPosPath.size() - 1, realGoalPos);
 
-    GridPosition gridPos;
-
-    for (int i = 0; i < simplifiedPath.size(); i++) {
-      gridPos = simplifiedPath.get(i);
-      if (stops.contains(gridPos)) {
-        fieldPosPath.set(i, realStopPoses.get(stops.indexOf(gridPos)));
-      }
+    for (int i = 0; i < stopIndexes.size(); i++) {
+      fieldPosPath.set(stopIndexes.get(i), realStopPoses.get(i));
     }
 
     List<Pose2d> pathPoses = new ArrayList<>();
@@ -831,6 +833,7 @@ public class RoronoaZoro implements Pathfinder {
         (pos.x * nodeSize) + (nodeSize / 2.0), (pos.y * nodeSize) + (nodeSize / 2.0));
   }
 
+  //Decorates the pathplannerpath with actions based on zones and stop rotations
   private PathPlannerPath fillZones(PathPlannerPath basePath) {
     // Reset lists
     rotationTargets.clear();
@@ -845,6 +848,26 @@ public class RoronoaZoro implements Pathfinder {
     // Loop through all pathpoints. If it enters or exits a zone, get waypoint relative position
     List<PathPoint> points = basePath.getAllPathPoints();
     List<PathZone> activeZones = ZoneManager.getActiveZones();
+
+    //Since the rotation component of the stops was never injected into the path
+    //we have to artificialy create rotation targets at those points.
+    PathPoint closestPoint = points.get(0);
+    double minDist;
+
+    for (Translation2d stop : requestRealStopPoses) {
+      minDist = Double.MAX_VALUE;
+      for (int i = 0; i < points.size(); i++) {
+          if (stop.getDistance(points.get(i).position) < minDist) {
+            minDist = stop.getDistance(points.get(i).position);
+            closestPoint = points.get(i);
+          }
+      }
+      rotationTargets.add(
+        new RotationTarget(closestPoint.waypointRelativePos, requestRealStopRotations.get(stop))
+      );
+    }
+
+    //Actual zone filling in.
 
     for (PathZone zone : activeZones) {
       int entryIndex = -1;

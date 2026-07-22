@@ -4,6 +4,7 @@ import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinder;
 
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 import org.littletonrobotics.junction.LogTable;
@@ -56,7 +57,7 @@ public class RoronoaZoroAK implements Pathfinder {
         }
     }
 
-    public void setStops(List<Translation2d> stops) {
+    public void setStops(List<Pose2d> stops) {
         if (!Logger.hasReplaySource()) {
             io.zoro.setStops(stops);
         }

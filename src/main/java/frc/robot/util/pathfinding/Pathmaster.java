@@ -1,16 +1,10 @@
 package frc.robot.util.pathfinding;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
-
-// import org.littletonrobotics.junction.Logger;
-
-import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -41,7 +35,6 @@ public class Pathmaster {
     private PathConstraints constraints;
     private CommandSwerveDrivetrain drivetrain;
     private Supplier<Pose2d> robotPose;
-    private Supplier<ChassisSpeeds> robotSpeeds;
     private static RoronoaZoroAK zoro;
     private static boolean warmup = false;
     private final LinkedHashMap<String, Pose2d> waypoints = new LinkedHashMap<>();
@@ -69,9 +62,8 @@ public class Pathmaster {
             double alphamax) {
 
         this.drivetrain = drivetrain;
-        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, 12);
+        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.robotPose = () -> drivetrain.getState().Pose;
-        this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
         this.selectedWaypointIndex = 0;
 
@@ -84,12 +76,11 @@ public class Pathmaster {
             double amax, 
             double omegamax, 
             double alphamax,
-            double maxVoltage) {
+            double nominalVoltageVolts) {
 
         this.drivetrain = drivetrain;
-        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, maxVoltage);
+        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, nominalVoltageVolts);
         this.robotPose = () -> drivetrain.getState().Pose;
-        this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
         this.selectedWaypointIndex = 0;
 

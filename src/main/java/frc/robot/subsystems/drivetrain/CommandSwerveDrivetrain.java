@@ -34,7 +34,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
@@ -295,13 +294,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                             .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                             .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     );
-
-                    PPLogger.logVelocities(
-                        Math.hypot(getState().Speeds.vxMetersPerSecond, getState().Speeds.vyMetersPerSecond),
-                        Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond),
-                        getState().Speeds.omegaRadiansPerSecond,
-                        speeds.omegaRadiansPerSecond
-                    );
                 },
 
                 new PPHolonomicDriveController(
@@ -320,9 +312,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 new Elastic.Notification()
                 .withLevel(Elastic.NotificationLevel.ERROR)
                 .withTitle("AutoBuilder Config Error") 
-                .withDescription("AutoBuilder failed to configure properly."));
-            
-            throw new RuntimeException("RobotConfig load failed — deploy may be missing deploy/pathplanner/settings.json", ex);
+                .withDescription("AutoBuilder failed to configure properly. Most likely a RobotConfig error"));
         }
     }
 
