@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.util.pathfinding.PPLogger;
+import frc.robot.util.pathfinding.telemetry.PPLogger;
 import frc.robot.Constants.VisionConstants;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;

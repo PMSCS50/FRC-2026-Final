@@ -12,6 +12,7 @@ import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.commands.GoingMerry;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
+import frc.robot.util.pathfinding.telemetry.PPLogger;
 import frc.robot.util.pathfinding.zones.ConstraintZone;
 import frc.robot.util.pathfinding.zones.EventZone;
 import frc.robot.util.pathfinding.zones.OrientationZone;

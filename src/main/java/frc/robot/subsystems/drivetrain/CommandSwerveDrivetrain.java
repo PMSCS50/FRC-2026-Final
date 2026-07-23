@@ -37,8 +37,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
-import frc.robot.util.pathfinding.PPLogger;
 import frc.robot.util.pathfinding.commands.GoingMerry;
+import frc.robot.util.pathfinding.telemetry.PPLogger;
 
 /**
  *  !Class that extends the Phoenix 6 SwerveDrivetrain class and implements
