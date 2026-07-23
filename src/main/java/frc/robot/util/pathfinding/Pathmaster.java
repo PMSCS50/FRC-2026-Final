@@ -41,18 +41,6 @@ public class Pathmaster {
     private boolean pathing = false;
     private int selectedWaypointIndex;
 
-    // *Used to prevent cancelPathing() from canceling other drivetrain commands.
-    private List<String> commandNames = List.of(
-        "makePathTo",
-        "pathfindToPath",
-        "goToWaypoint",
-        "goToSelectedWaypoint",
-        "pathToNearestPose",
-        "pathToNearestWaypoint",
-        "pathFindToNearestPath",
-        "pathfindFaceTargetPose"
-    );
-
     // *Constructors
     public Pathmaster(
             CommandSwerveDrivetrain drivetrain,
@@ -238,8 +226,7 @@ public class Pathmaster {
             () -> GoingMerry.pathfindToPose(destination, constraints),
             Set.of(drivetrain)
         )
-        .finallyDo(() -> pathing = false)
-        .withName("makePathTo");
+        .finallyDo(() -> pathing = false);
     }
 
     // *Pathfind to any field pose with obstacle avoidance
@@ -250,8 +237,7 @@ public class Pathmaster {
             () -> GoingMerry.pathfindToPose(destination, stops, constraints),
             Set.of(drivetrain)
         )
-        .finallyDo(() -> pathing = false)
-        .withName("makePathTo");
+        .finallyDo(() -> pathing = false);
     }
 
     // *Pathfind to a registered waypoint
@@ -263,8 +249,19 @@ public class Pathmaster {
             () -> GoingMerry.pathfindToPose(waypoints.get(name), constraints),
             Set.of(drivetrain)
         )
-        .finallyDo(() -> pathing = false)
-        .withName("goToWaypoint");
+        .finallyDo(() -> pathing = false);
+    }
+
+    // *Pathfind to a registered waypoint
+    // ?Waypoints are defined in Robot.java and updated with alliance-relative poses in robotPeriodic()
+    public Command gotoWaypoint(String name, List<Pose2d> stops) {
+        if (!GoingMerry.isConfigured() || !waypoints.containsKey(name)) return Commands.none();
+        pathing = true;
+        return Commands.defer(
+            () -> GoingMerry.pathfindToPose(waypoints.get(name), stops, constraints),
+            Set.of(drivetrain)
+        )
+        .finallyDo(() -> pathing = false);
     }
 
     // *Pathfind to waypoint corresponding with selectedWaypointIndex
@@ -274,8 +271,7 @@ public class Pathmaster {
         return GoingMerry.pathfindToPose(
             waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints
         )
-        .finallyDo(() -> pathing = false)
-        .withName("goToSelectedWaypoint");
+        .finallyDo(() -> pathing = false);
     }
 
     // *Intended alignment pipeline.
@@ -291,8 +287,33 @@ public class Pathmaster {
                 () -> GoingMerry.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
             )
-            .finallyDo(() -> pathing = false)
-            .withName("pathfindToPath");
+            .finallyDo(() -> pathing = false);
+        } catch (Exception e) {
+            pathing = false;
+            Elastic.sendNotification(
+                new Elastic.Notification().
+                withLevel(Elastic.NotificationLevel.ERROR)
+                .withTitle("Pathmaster Error")
+                .withDescription( "Path " + pathName + " is not defined"));
+
+            return Commands.none();
+        }
+    }
+
+    // *Intended alignment pipeline.
+    // ?pathfindToPose() has ~5cm error at endpoint.
+    // ?A predetermined .path file has much less error, around <1cm.
+    // ?This pathfinds to the start of the .path, then follows it precisely to the end.
+    public Command pathfindToPath(String pathName, List<Pose2d> stops) {
+        if (!GoingMerry.isConfigured()) return Commands.none();
+        try {
+            pathing = true;
+            PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+            return Commands.defer(
+                () -> GoingMerry.pathfindThenFollowPath(path, stops, constraints),
+                Set.of(drivetrain)
+            )
+            .finallyDo(() -> pathing = false);
         } catch (Exception e) {
             pathing = false;
             Elastic.sendNotification(
@@ -321,8 +342,7 @@ public class Pathmaster {
                 return GoingMerry.pathfindToPose(nearest, constraints);
             }, Set.of(drivetrain)
         )
-        .finallyDo(() -> pathing = false)
-        .withName("pathToNearestPose");
+        .finallyDo(() -> pathing = false);
     }
 
     // *Pathfinds to the nearest registered waypoint.
@@ -330,8 +350,7 @@ public class Pathmaster {
         if (waypoints.isEmpty()) return Commands.none();
         pathing = true;
         return pathToNearestPose(waypoints.values().stream().toList())
-        .finallyDo(() -> pathing = false)
-        .withName("pathToNearestWaypoint");
+        .finallyDo(() -> pathing = false);
     }
 
 
@@ -347,20 +366,34 @@ public class Pathmaster {
                 return GoingMerry.pathfindToPose(oriented, constraints);
             }, Set.of(drivetrain)
         )
-        .finallyDo(() -> pathing = false)
-        .withName("pathfindFaceTargetPose");
+        .finallyDo(() -> pathing = false);
+    }
+
+        /**
+     * *Pathfinds to a destination while arriving faced toward a separate target.
+     */
+    public Command pathfindFaceTargetPose(Pose2d destination, Pose2d faceTarget, List<Pose2d> stops) {
+        pathing = true;
+        return Commands.defer(
+            () -> {
+                Rotation2d facing = getRotationToPose(destination, faceTarget);
+                Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
+                return GoingMerry.pathfindToPose(oriented, stops, constraints);
+            }, Set.of(drivetrain)
+        )
+        .finallyDo(() -> pathing = false);
     }
 
     /**
-     * *Cancels any currently running pathfinding command and immediately stops the drivetrain.
+     * *Cancels any currently running pathfinding command. Not needed for now
      */
     public Command cancelPathing() {
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
             if (current != null) {
-                // *Put inside just to 100% prevent null errors
-                if (commandNames.contains(current.getName())) {
+                if (current instanceof ShinPathfindingCommand) {
                     current.cancel();
+                    pathing = false;
                 }
             }
         });
