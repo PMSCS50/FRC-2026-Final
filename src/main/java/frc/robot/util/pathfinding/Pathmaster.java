@@ -83,7 +83,7 @@ public class Pathmaster {
     }
 
     public static RoronoaZoroAK getPathfinderInstance() {
-        return Pathmaster.zoro;
+        return zoro;
     }
 
     // *Call in Robot.java as the last line in Robot contructor

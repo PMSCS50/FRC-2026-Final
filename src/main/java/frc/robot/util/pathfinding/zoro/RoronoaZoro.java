@@ -558,7 +558,7 @@ public class RoronoaZoro implements Pathfinder {
       Rotation2d heading2 = next.minus(anchor2).getAngle();
 
       pathPoses.add(new Pose2d(anchor1, heading1));
-      if (realStopPoses.contains(current)) {
+      if (stopIndexes.contains(i)) {
         pathPoses.add(new Pose2d(current, heading1));
       }
       pathPoses.add(new Pose2d(anchor2, heading2));
