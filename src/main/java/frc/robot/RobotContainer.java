@@ -197,7 +197,7 @@ public class RobotContainer {
         driverController.b().whileTrue(
             Commands.defer(
                 //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.pathfindToPath("Game-Winning Path")
+                () -> monkeyDLuffy.makePathTo(monkeyDLuffy.selectedWaypointPose(), List.of(VisionConstants.getCenter(), ShooterConstants.getShootingSetpoint(3)))
                     //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 ,Set.of(drivetrain)
             )
