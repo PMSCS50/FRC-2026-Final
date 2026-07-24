@@ -34,12 +34,12 @@ import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
-import frc.robot.commands.PostPathPreciseAlignment;
 import frc.robot.commands.Intaking;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
+import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
@@ -197,7 +197,7 @@ public class RobotContainer {
         driverController.b().whileTrue(
             Commands.defer(
                 //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.makePathTo(monkeyDLuffy.selectedWaypointPose(), List.of(VisionConstants.getCenter(), ShooterConstants.getShootingSetpoint(3)))
+                () -> monkeyDLuffy.pathfindToPath("Game-Winning Path", List.of(ShooterConstants.shootingSetpoints))
                     //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 ,Set.of(drivetrain)
             )

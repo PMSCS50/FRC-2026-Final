@@ -402,9 +402,9 @@ public class Pathmaster {
 
     //Log Stuff
     public void log() {
-        zoro.log();
         Logger.recordOutput("Pathmaster/Selected Waypoint", selectedWaypoint());
         Logger.recordOutput("Pathmaster/Selected Waypoint Pose", selectedWaypointPose());
+        Logger.recordOutput("Pathmaster/pathing", pathing);
     }
 
     // !Helpers

@@ -852,21 +852,18 @@ public class RoronoaZoro implements Pathfinder {
     List<PathPoint> points = basePath.getAllPathPoints();
     List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-    //Since the rotation component of the stops was never injected into the path
-    //we have to artificialy create rotation targets at those points.
-    PathPoint closestPoint = points.get(0);
-    double minDist;
+    // //Since the rotation component of the stops was never injected into the path
+    // //we have to artificialy create rotation targets at those points.
 
+    double waypointNum = 0;
     for (Translation2d stop : requestRealStopPoses) {
-      minDist = Double.MAX_VALUE;
-      for (int i = 0; i < points.size(); i++) {
-          if (stop.getDistance(points.get(i).position) < minDist) {
-            minDist = stop.getDistance(points.get(i).position);
-            closestPoint = points.get(i);
+      for (int i = 0; i < waypoints.size(); i++) {
+          if (waypoints.get(i).anchor().equals(stop)) {
+            waypointNum = i;
           }
       }
       rotationTargets.add(
-        new RotationTarget(closestPoint.waypointRelativePos, requestRealStopRotations.get(stop))
+        new RotationTarget(waypointNum, requestRealStopRotations.get(stop))
       );
     }
 
