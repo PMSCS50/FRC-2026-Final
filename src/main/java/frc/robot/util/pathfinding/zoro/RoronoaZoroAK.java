@@ -19,7 +19,7 @@ public class RoronoaZoroAK implements Pathfinder {
     private final ZoroIOInputsAutoLogged inputs = new ZoroIOInputsAutoLogged();
     private final String logKey = "RoronoaZoroAK";
 
-    private List<EventMarker> events = new ArrayList<>();
+    private List<EventMarker> currentPathEvents = new ArrayList<>();
 
     @Override
     public boolean isNewPathAvailable() {
@@ -37,7 +37,7 @@ public class RoronoaZoroAK implements Pathfinder {
             
             if (currentPath != null) {
                 List<PathPoint> points = currentPath.getAllPathPoints();
-                events = currentPath.getEventMarkers();
+                currentPathEvents = currentPath.getEventMarkers();
                 int size = points.size();
 
                 Pose2d[] pathPoints = new Pose2d[size];
@@ -116,7 +116,7 @@ public class RoronoaZoroAK implements Pathfinder {
         }
 
         PathPlannerPath finalPath = PathPlannerPath.fromPathPoints(reconstructedPoints, constraints, goalEndState);
-        finalPath.getEventMarkers().addAll(events);
+        finalPath.getEventMarkers().addAll(currentPathEvents);
 
         return finalPath;
     }
