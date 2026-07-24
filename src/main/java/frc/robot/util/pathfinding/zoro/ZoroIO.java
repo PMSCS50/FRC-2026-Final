@@ -16,6 +16,9 @@ public interface ZoroIO {
         public boolean[] hasRotationTarget = new boolean[0];
         public double[] waypointRelativePoses = new double[0];
         public double[] allConstraints = new double[0];
+        public String[] eventTriggerNames = new String[0];
+        public double[] eventPositions = new double[0];
+        public double[] eventEndPositions = new double[0];
     }
     
 }

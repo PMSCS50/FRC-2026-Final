@@ -1,5 +1,6 @@
 package frc.robot.util.pathfinding.zoro;
 
+import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinder;
 
@@ -19,8 +20,6 @@ public class RoronoaZoroAK implements Pathfinder {
     private final ZoroIOInputsAutoLogged inputs = new ZoroIOInputsAutoLogged();
     private final String logKey = "RoronoaZoroAK";
 
-    private List<EventMarker> currentPathEvents = new ArrayList<>();
-
     @Override
     public boolean isNewPathAvailable() {
         if (!Logger.hasReplaySource()) {
@@ -34,26 +33,23 @@ public class RoronoaZoroAK implements Pathfinder {
     public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
         if (!Logger.hasReplaySource()) {
             PathPlannerPath currentPath = zoro.getCurrentPath(constraints, goalEndState);
-            
+
             if (currentPath != null) {
+                // --- Extract Path Points ---
                 List<PathPoint> points = currentPath.getAllPathPoints();
-                currentPathEvents = currentPath.getEventMarkers();
-                int size = points.size();
+                int pointSize = points.size();
 
-                Pose2d[] pathPoints = new Pose2d[size];
-                Rotation2d[] rotationTargets = new Rotation2d[size];
-                boolean[] hasRotationTarget = new boolean[size];
-                double[] waypointRelativePoses = new double[size];
-                
-                // Flatten constraints into a 1D array: [maxV, maxAngV, maxA, maxAngA] per point
-                double[] serializedConstraints = new double[size * 4];
+                Pose2d[] pathPoints = new Pose2d[pointSize];
+                Rotation2d[] rotationTargets = new Rotation2d[pointSize];
+                boolean[] hasRotationTarget = new boolean[pointSize];
+                double[] waypointRelativePoses = new double[pointSize];
+                double[] serializedConstraints = new double[pointSize * 4];
 
-                for (int i = 0; i < size; i++) {
+                for (int i = 0; i < pointSize; i++) {
                     PathPoint p = points.get(i);
                     pathPoints[i] = new Pose2d(p.position, new Rotation2d());
                     waypointRelativePoses[i] = p.waypointRelativePos;
 
-                    // Check for null rotation targets to prevent NullPointerException
                     if (p.rotationTarget != null) {
                         hasRotationTarget[i] = true;
                         rotationTargets[i] = p.rotationTarget.rotation();
@@ -75,24 +71,47 @@ public class RoronoaZoroAK implements Pathfinder {
                 inputs.hasRotationTarget = hasRotationTarget;
                 inputs.waypointRelativePoses = waypointRelativePoses;
                 inputs.allConstraints = serializedConstraints;
+
+                // --- Extract Event Markers ---
+                List<EventMarker> markers = currentPath.getEventMarkers();
+                int markerSize = markers.size();
+
+                String[] triggerNames = new String[markerSize];
+                double[] positions = new double[markerSize];
+                double[] endPositions = new double[markerSize];
+
+                for (int i = 0; i < markerSize; i++) {
+                    EventMarker m = markers.get(i);
+                    triggerNames[i] = m.triggerName();
+                    positions[i] = m.position();
+                    endPositions[i] = m.endPosition();
+                }
+
+                inputs.eventTriggerNames = triggerNames;
+                inputs.eventPositions = positions;
+                inputs.eventEndPositions = endPositions;
+
             } else {
-                // Clear inputs if path is null to prevent stale path execution
+                // Clear inputs if path is null
                 inputs.currentPathPoints = new Pose2d[0];
                 inputs.currentRotationTargets = new Rotation2d[0];
                 inputs.hasRotationTarget = new boolean[0];
                 inputs.waypointRelativePoses = new double[0];
                 inputs.allConstraints = new double[0];
+
+                inputs.eventTriggerNames = new String[0];
+                inputs.eventPositions = new double[0];
+                inputs.eventEndPositions = new double[0];
             }
         }
 
-        // On replay, processInputs populates 'inputs' from log file
         Logger.processInputs(logKey, inputs);
 
         if (inputs.currentPathPoints == null || inputs.currentPathPoints.length == 0) {
             return null;
         }
 
-        // Reconstruct PathPlannerPath cleanly for live and replay modes
+        // --- Reconstruct PathPoints ---
         List<PathPoint> reconstructedPoints = new ArrayList<>();
         for (int i = 0; i < inputs.currentPathPoints.length; i++) {
             RotationTarget rotTarget = inputs.hasRotationTarget[i]
@@ -115,10 +134,21 @@ public class RoronoaZoroAK implements Pathfinder {
             );
         }
 
-        PathPlannerPath finalPath = PathPlannerPath.fromPathPoints(reconstructedPoints, constraints, goalEndState);
-        finalPath.getEventMarkers().addAll(currentPathEvents);
+        PathPlannerPath path = PathPlannerPath.fromPathPoints(reconstructedPoints, constraints, goalEndState);
 
-        return finalPath;
+        // --- Reconstruct EventMarkers ---
+        for (int i = 0; i < inputs.eventTriggerNames.length; i++) {
+            path.getEventMarkers().add(
+                new EventMarker(
+                    inputs.eventTriggerNames[i],
+                    inputs.eventPositions[i],
+                    inputs.eventEndPositions[i],
+                    NamedCommands.getCommand(inputs.eventTriggerNames[i] + " Command")
+                )
+            );
+        }
+
+        return path;
     }
 
     @Override
