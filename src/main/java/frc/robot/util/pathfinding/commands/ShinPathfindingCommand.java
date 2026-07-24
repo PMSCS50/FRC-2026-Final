@@ -457,7 +457,6 @@ public class ShinPathfindingCommand extends Command {
       if (stopPoses.isEmpty()) {
         Pathmaster.getPathfinderInstance().setStops(List.of());
       } else {
-        //Pathmaster.getPathfinderInstance().setStops(stopPoses.stream().map(p -> p.getTranslation()).collect(Collectors.toList()));
         Pathmaster.getPathfinderInstance().setStops(stopPoses);
         PPLogger.logStops(stopPoses);
       }

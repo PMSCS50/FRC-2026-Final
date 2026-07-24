@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * *A zone where the robot changes its path constraints
- * ?Example (REBUILT): forcing the robot to slow down on the bump to avoid tipping over.
+ // ?Example (REBUILT): forcing the robot to slow down on the bump to avoid tipping over.
  */
 public class ConstraintZone extends PathZone {
 

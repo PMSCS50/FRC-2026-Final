@@ -187,20 +187,6 @@ public class Pathmaster {
         });
     }
 
-    // *Creates an event zone using a NamedCommand
-     // ?When the robot paths through it, it will schedule the given command.
-    public void addEventZone(String name, Translation2d min, Translation2d max, String NamedCommand, boolean active) {
-        ZoneManager.addZone(new EventZone(name, min, max, NamedCommand), active);
-
-        Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
-    }
-
     // *Activates a single zone
     public void activateZone(String name) {
         ZoneManager.setZoneState(name, true);

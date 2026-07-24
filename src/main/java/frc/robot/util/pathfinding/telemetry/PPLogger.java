@@ -1,49 +1,15 @@
 package frc.robot.util.pathfinding.telemetry;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.List;
 
 /**
  * *PPLogger - Pathmaster Telemetry to AdvantageKit
- * ?Provides helper methods to be called in PathPlannerLogging
+ // ?Provides helper methods to be called in PathPlannerLogging
  */
 public class PPLogger {
-  private static final boolean PUBLISH_RAW_NT = false;
-
-  // !Raw NT4 publishers (split so Elastic can graph each series separately)
-  private static final DoublePublisher actualVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/actual")
-          .publish();
-
-  private static final DoublePublisher commandedVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/commanded")
-          .publish();
-
-  private static final DoublePublisher actualAngVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/actualAngular")
-          .publish();
-
-  private static final DoublePublisher commandedAngVelPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/vel/commandedAngular")
-          .publish();
-
-  private static final DoublePublisher transInnacuracyPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/PathfindingInnacuracy/translationInaccuracy")
-          .publish();
-
-  private static final DoublePublisher rotInnacuracyPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleTopic("/Pathmaster/PathfindingInnacuracy/rotationalInaccuracy")
-          .publish();
 
   // !Internal state for loggable stuff
   private static Pose2d lastCurrentPose  = new Pose2d();
@@ -54,7 +20,7 @@ public class PPLogger {
 
   /**
    * *Publish actual and commanded velocities.
-   * Called in COmmandSwerveDriveTrain in path-following command, as well as PostPathPreciseAlignment
+   * Called in CommandSwerveDriveTrain in path-following command, as well as PostPathPreciseAlignment
    *
    * @param actualVel       Actual chassis speed in m/s
    * @param commandedVel    Commanded chassis speed in m/s
@@ -72,14 +38,6 @@ public class PPLogger {
     Logger.recordOutput("Pathmaster/Velocity/commanded",       commandedVel);
     Logger.recordOutput("Pathmaster/Velocity/actualAngular",   actualAngVel);
     Logger.recordOutput("Pathmaster/Velocity/commandedAngular",commandedAngVel);
-
-    // *Raw NT4 publishers so Elastic line graphs see individual series
-    if (PUBLISH_RAW_NT) {
-      actualVelPub.set(actualVel);
-      commandedVelPub.set(commandedVel);
-      actualAngVelPub.set(actualAngVel);
-      commandedAngVelPub.set(commandedAngVel);
-    }
   }
 
   /**
@@ -145,11 +103,7 @@ public class PPLogger {
 
     Logger.recordOutput("Pathmaster/PathfindingInnacuracy/translationInaccuracy", translationInaccuracy);
     Logger.recordOutput("Pathmaster/PathfindingInnacuracy/rotationalInaccuracy", rotationalInaccuracy);
-
-    if (PUBLISH_RAW_NT) {
-      transInnacuracyPub.set(translationInaccuracy);
-      rotInnacuracyPub.set(rotationalInaccuracy);
-    }
+  
   }
 
 }

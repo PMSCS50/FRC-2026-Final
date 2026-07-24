@@ -8,16 +8,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * !Static class that manages rotation and orientation zones for the pathfinding system.
- * ?Provides thread-safe zone registration and state management.
- * ?Zones define regions on the field where the robot should:
+ // ?Provides thread-safe zone registration and state management.
+ // ?Zones define regions on the field where the robot should:
  * 
  * * RotationZone: Hold a fixed heading
  * * OrientationZone: Orient to a specific target pose
  * * ConstraintZone: Adjust path constraints
  * * EventZones: Activate a specific command
  * 
- * ?This class maintains a concurrent map of zones and their active states,
- * ?accessible to the RoronoaZoro pathfinder.
+ // ?This class maintains a concurrent map of zones and their active states,
+ // ?accessible to the RoronoaZoro pathfinder.
  */
 public class ZoneManager {
     
@@ -68,7 +68,7 @@ public class ZoneManager {
     
     /**
      * *Gets a list of currently active zones.
-     * ?Returns a snapshot copy to prevent concurrent modification issues.
+     // ?Returns a snapshot copy to prevent concurrent modification issues.
      * 
      * @return List of active PathZone objects
      */

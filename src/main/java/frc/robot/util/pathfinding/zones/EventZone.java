@@ -6,18 +6,18 @@ import edu.wpi.first.math.geometry.Translation2d;
 import com.pathplanner.lib.auto.NamedCommands;
 
 /**
- * *A zone where the robot activates a certain NamedCommand
- * ?Example (REBUILT): activating the robot's intake when going to the neutral zone
+ // *A zone where the robot activates a certain NamedCommand
+ // ?Example (REBUILT): activating the robot's intake when going to the neutral zone
  * 
- * !EventZones must use NamedCommands rather than just commands
- * !so that our pathfinder can properly retrieve the event markers during log replay
+ // !EventZones must use NamedCommands rather than just commands
+ // !so that our pathfinder can properly retrieve the event markers during log replay
  */
 public class EventZone extends PathZone {
 
     private final Command command;
 
-    //Create an EventZone with a registered NamedCommand
-    public EventZone(String name, Translation2d min, Translation2d max, String namedCommand) {
+    //Create an EventZone with a registered NamedCommand. 
+    protected EventZone(String name, Translation2d min, Translation2d max, String namedCommand) {
         super(name, min, max);
         this.command = NamedCommands.getCommand(namedCommand);
     }
