@@ -3,6 +3,7 @@ package frc.robot.util.pathfinding.zoro;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinder;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -10,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.util.pathfinding.zones.ConstraintZone;
 import frc.robot.util.pathfinding.zones.EventZone;
+import frc.robot.util.pathfinding.zones.MultiRotationZone;
 import frc.robot.util.pathfinding.zones.OrientationZone;
 import frc.robot.util.pathfinding.zones.PathZone;
 import frc.robot.util.pathfinding.zones.RotationZone;
@@ -57,6 +59,7 @@ public class RoronoaZoro implements Pathfinder {
 
   private GridPosition requestStart;
   private Translation2d requestRealStartPos;
+  private Rotation2d requestRealStartRot;
   private GridPosition requestGoal;
   private Translation2d requestRealGoalPos;
   private final List<GridPosition> requestStops = new ArrayList<>();
@@ -89,6 +92,7 @@ public class RoronoaZoro implements Pathfinder {
 
     requestStart = new GridPosition(0, 0);
     requestRealStartPos = Translation2d.kZero;
+    requestRealStartRot = Rotation2d.kZero;
     requestGoal = new GridPosition(0, 0);
     requestRealGoalPos = Translation2d.kZero;
     requestStops.clear();
@@ -197,6 +201,7 @@ public class RoronoaZoro implements Pathfinder {
       requestLock.writeLock().lock();
       requestStart = startPos;
       requestRealStartPos = startPosition;
+      requestRealStartRot = Rotation2d.kZero;
 
       // Clear previous intermediate stops to prevent memory leakage across paths
       requestStops.clear();
@@ -206,6 +211,10 @@ public class RoronoaZoro implements Pathfinder {
       newPathAvailable = false;
       requestLock.writeLock().unlock();
     }
+  }
+
+  public void setStartRotation(Rotation2d startRotation) {
+    requestRealStartRot = startRotation;
   }
 
   /**
@@ -852,8 +861,8 @@ public class RoronoaZoro implements Pathfinder {
     List<PathPoint> points = basePath.getAllPathPoints();
     List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-    // //Since the rotation component of the stops was never injected into the path
-    // //we have to artificialy create rotation targets at those points.
+    //Since the rotation component of the stops was never injected into the path
+    //we have to artificialy create rotation targets at those points.
 
     double waypointNum = 0;
     for (Translation2d stop : requestRealStopPoses) {
@@ -885,30 +894,40 @@ public class RoronoaZoro implements Pathfinder {
       double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
       double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
 
-      if (zone instanceof OrientationZone oz) {
-        pointTowardsZones.add(new PointTowardsZone(
-            zone.name, 
-            oz.getTarget().getTranslation(), 
-            entryWaypointIndex, 
-            exitWaypointIndex));
-      } else if (zone instanceof RotationZone rz) {
-        rotationTargets.add(new RotationTarget(
-            entryWaypointIndex, 
-            rz.getRotation()));
+      //For MultiRotationZones to calculate closest heading
+      Rotation2d lastRotationTarget;
 
-        rotationTargets.add(new RotationTarget(
-            exitWaypointIndex, rz.getRotation()));
+
+      if (zone instanceof OrientationZone oz) {
+        pointTowardsZones.add(new PointTowardsZone(zone.name, oz.getTarget().getTranslation(), entryWaypointIndex, exitWaypointIndex));
+      } else if (zone instanceof RotationZone rz) {
+        rotationTargets.add(new RotationTarget(entryWaypointIndex, rz.getRotation()));
+        rotationTargets.add(new RotationTarget(exitWaypointIndex, rz.getRotation()));
+      } else if (zone instanceof MultiRotationZone mrz) {
+        //Find most recent rotation target before this rotation zone
+        RotationTarget bestPreviousTarget = null;
+        for (RotationTarget target : rotationTargets) {
+          if (target.position() < entryWaypointIndex) {
+            if (bestPreviousTarget == null || target.position() > bestPreviousTarget.position()) {
+              bestPreviousTarget = target;
+            }
+          }
+        }
+
+        // Fall back to robot's start rotation if no prior target exists
+        lastRotationTarget = (bestPreviousTarget != null) 
+            ? bestPreviousTarget.rotation() 
+            : requestRealStartRot;
+
+        Rotation2d chosenRotation = mrz.getClosestRotation(lastRotationTarget);
+
+        rotationTargets.add(new RotationTarget(entryWaypointIndex, chosenRotation));
+        rotationTargets.add(new RotationTarget(exitWaypointIndex, chosenRotation));
+        
       } else if (zone instanceof ConstraintZone cz) {
-        constraintZones.add(new ConstraintsZone(
-            entryWaypointIndex,
-            exitWaypointIndex,
-            cz.getConstraints()));
+        constraintZones.add(new ConstraintsZone(entryWaypointIndex, exitWaypointIndex, cz.getConstraints()));
       } else if (zone instanceof EventZone ez) {
-        eventMarkers.add(new EventMarker(
-            zone.name, 
-            entryWaypointIndex, 
-            exitWaypointIndex, 
-            ez.getEvent()));
+        eventMarkers.add(new EventMarker(zone.name, entryWaypointIndex, exitWaypointIndex, ez.getEvent()));
       }
     }
 

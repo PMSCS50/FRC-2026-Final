@@ -15,6 +15,7 @@ import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.PPLogger;
 import frc.robot.util.pathfinding.zones.ConstraintZone;
 import frc.robot.util.pathfinding.zones.EventZone;
+import frc.robot.util.pathfinding.zones.MultiRotationZone;
 import frc.robot.util.pathfinding.zones.OrientationZone;
 import frc.robot.util.pathfinding.zones.RotationZone;
 import frc.robot.util.pathfinding.zones.ZoneManager;
@@ -136,6 +137,20 @@ public class Pathmaster {
         ZoneManager.addZone(new RotationZone(name, min, max, rotation), active);
 
         Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
+        });
+    }
+
+    // *Creates a rotation zone.
+    // ?When the robot paths through it, it will rotate to and hold the given heading.
+    public void addMultiRotationZone(String name, Translation2d min, Translation2d max, Rotation2d... rotations) {
+        ZoneManager.addZone(new MultiRotationZone(name, min, max, rotations), true);
+
+        Logger.recordOutput("Pathmaster/Multi-Rotation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), max.getY(), new Rotation2d()),

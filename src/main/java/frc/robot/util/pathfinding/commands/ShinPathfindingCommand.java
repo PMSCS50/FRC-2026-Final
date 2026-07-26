@@ -453,6 +453,7 @@ public class ShinPathfindingCommand extends Command {
       finish = true;
     } else {
       Pathmaster.getPathfinderInstance().setStartPosition(currentPose.getTranslation());
+      Pathmaster.getPathfinderInstance().setStartRotation(currentPose.getRotation());
 
       if (stopPoses.isEmpty()) {
         Pathmaster.getPathfinderInstance().setStops(List.of());

@@ -158,6 +158,12 @@ public class RoronoaZoroAK implements Pathfinder {
         }
     }
 
+    public void setStartRotation(Rotation2d startRotation) {
+        if (!Logger.hasReplaySource()) {
+            zoro.setStartRotation(startRotation);
+        }
+    }
+
     public void setStops(List<Pose2d> stops) {
         if (!Logger.hasReplaySource()) {
             zoro.setStops(stops);
