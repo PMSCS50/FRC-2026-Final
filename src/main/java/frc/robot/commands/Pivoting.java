@@ -5,8 +5,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.subsystems.Pivot;
 
-import com.revrobotics.spark.ClosedLoopSlot;
-
 public class Pivoting extends Command {
 
     private static final double SETPOINT_A = IntakeConstants.kPivotSetpointA; // 0.0 (up)

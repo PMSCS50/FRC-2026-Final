@@ -18,7 +18,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.List;
 import java.util.function.*;
 
-/** GoingMerry is what builds the pathfinding commands, so its AutoBuilder Minus. Made to interact with ShinPathfindingCommand */
+// *GoingMerry is what builds the pathfinding commands, so its AutoBuilder Minus. Made to interact with ShinPathfindingCommand
+
 public class GoingMerry {
   private static Globals globals = new Globals();
 

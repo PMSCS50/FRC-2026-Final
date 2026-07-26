@@ -31,10 +31,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-/** PathfindingCommand class does not let us do multistop pathfinding so this bad boy will be our replacement */
-/** ShinPathfidingCommand lets us include pathing through multiple stops to get to a goal */
-/** Furthermore, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand if given a PathPlannerPath in the constructor*/
-/** In other words, this is a one-size-fits-all pathfinding command that also allows for multi-stop paths */
+// !PathfindingCommand does not let us do multistop pathfinding so this bad boy will be our replacement */
+// *ShinPathfindingCommand lets us include pathing through multiple stops to get to a goal */
+// *Furthermore, a ShinPathfindingCommand will act as a PathfindThenFollowPathCommand if given a PathPlannerPath in the constructor
+// ?In other words, this is a one-size-fits-all pathfinding command that also allows for multi-stop paths */
 
 public class ShinPathfindingCommand extends Command {
 

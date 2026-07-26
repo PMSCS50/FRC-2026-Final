@@ -16,20 +16,11 @@ public class EventZone extends PathZone {
 
     private final Command command;
 
-    //Create an EventZone with a registered NamedCommand. 
-    protected EventZone(String name, Translation2d min, Translation2d max, String namedCommand) {
-        super(name, min, max);
-        this.command = NamedCommands.getCommand(namedCommand);
-    }
-
     //Register a new NamedCommand first then create the EventZone
     public EventZone(String name, Translation2d min, Translation2d max, Command command) {
-        this(name, min, max, registerAndReturnName(name + " Command", command));
-    }
-
-    private static String registerAndReturnName(String commandName, Command command) {
-        NamedCommands.registerCommand(commandName, command);
-        return commandName;
+        super(name, min, max);
+        NamedCommands.registerCommand(name + " Event Command", command);
+        this.command = command;
     }
 
     public Command getEvent() {

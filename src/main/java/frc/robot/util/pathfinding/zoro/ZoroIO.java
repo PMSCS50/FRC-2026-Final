@@ -5,7 +5,8 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
-//Autologs Zoro inputs for compatibility with AdvantageKit log replay
+//Logging the minimal amount of stuff for us to perfectly recreate the original PathPlannerPath taken during log replay
+//This makes sure that when we are replaying a log file, the bot will take the same paths from the match
 public interface ZoroIO {
 
     @AutoLog

@@ -6,8 +6,6 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -16,8 +14,6 @@ import frc.robot.Constants.IntakeConstants;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Pivot extends SubsystemBase {
@@ -26,8 +22,6 @@ public class Pivot extends SubsystemBase {
     private final SparkMaxConfig pivotMotorConfig = new SparkMaxConfig();
     private final SparkMax pivotMotor = new SparkMax(IntakeConstants.pivotMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
-
-    private double outputMin = -0.5, outputMax = 0.5;
 
 
     // calculations for freespinning neo
@@ -152,17 +146,6 @@ public class Pivot extends SubsystemBase {
     public boolean atPosition(double targetRotations, double toleranceRotations) {
         return Math.abs(getPivotPosition() - targetRotations) < toleranceRotations;
 
-    }
-
-    public void setOutputLimits(double speed) {
-        outputMin = -speed;
-        outputMax = speed;
-    }
-    public void setTopLimit(double speed) {
-        outputMax = speed;
-    }
-    public void setBottomLimit(double speed) {
-        outputMin = -speed;
     }
 
 }

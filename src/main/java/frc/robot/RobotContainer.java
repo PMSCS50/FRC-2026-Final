@@ -63,7 +63,6 @@ public class RobotContainer {
     // *EXTRA SETUP - I GOT NO CLUE
 
     // *SwerveRequests. Huh ig it was a good idea to put these in DriveConstants
-    private final SwerveRequest.FieldCentric drive = DriveConstants.driveRequest;
     private final SwerveRequest.SwerveDriveBrake xBrake = DriveConstants.xBrake;
 
     
