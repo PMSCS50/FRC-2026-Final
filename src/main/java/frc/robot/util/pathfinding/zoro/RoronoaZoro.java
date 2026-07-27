@@ -1,9 +1,7 @@
 package frc.robot.util.pathfinding.zoro;
 
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.Pathfinder;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,7 +39,7 @@ import org.json.simple.parser.JSONParser;
  * * LocalADStar couldn't create paths from a->b->c smoothly, so this pathfinder also handles multiple stops.
  * * Although I am much prouder of this than the zones, i cant really say much more
  */
-public class RoronoaZoro implements Pathfinder {
+public class RoronoaZoro implements ShinPathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
   private static final double EPS = 2.5;
 
@@ -213,6 +211,12 @@ public class RoronoaZoro implements Pathfinder {
     }
   }
 
+  /**
+   * Set the starting rotation
+   *
+   * @param startRotation Start rotation on the field.
+   */
+  @Override
   public void setStartRotation(Rotation2d startRotation) {
     requestRealStartRot = startRotation;
   }
@@ -223,6 +227,7 @@ public class RoronoaZoro implements Pathfinder {
    *
    * @param stops List of physical coordinate positions representing stops
    */
+  @Override
   public void setStops(List<Pose2d> stops) {
     requestLock.writeLock().lock();
     requestStops.clear();

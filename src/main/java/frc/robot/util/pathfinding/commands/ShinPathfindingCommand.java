@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import frc.robot.util.pathfinding.Pathmaster;
+import frc.robot.util.pathfinding.zoro.ShinPathfinding;
 import frc.robot.util.pathfinding.telemetry.PPLogger;
 
 import java.util.List;
@@ -452,17 +452,17 @@ public class ShinPathfindingCommand extends Command {
       output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
       finish = true;
     } else {
-      Pathmaster.getPathfinderInstance().setStartPosition(currentPose.getTranslation());
-      Pathmaster.getPathfinderInstance().setStartRotation(currentPose.getRotation());
+      ShinPathfinding.setStartPosition(currentPose.getTranslation());
+      ShinPathfinding.setStartRotation(currentPose.getRotation());
 
       if (stopPoses.isEmpty()) {
-        Pathmaster.getPathfinderInstance().setStops(List.of());
+        ShinPathfinding.setStops(List.of());
       } else {
-        Pathmaster.getPathfinderInstance().setStops(stopPoses);
+        ShinPathfinding.setStops(stopPoses);
         PPLogger.logStops(stopPoses);
       }
 
-      Pathmaster.getPathfinderInstance().setGoalPosition(targetPose.getTranslation());
+      ShinPathfinding.setGoalPosition(targetPose.getTranslation());
     }
   }
 

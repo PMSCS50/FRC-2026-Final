@@ -1,7 +1,6 @@
 package frc.robot.util.pathfinding;
 
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.*;
@@ -13,13 +12,9 @@ import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.commands.GoingMerry;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.PPLogger;
-import frc.robot.util.pathfinding.zones.ConstraintZone;
-import frc.robot.util.pathfinding.zones.EventZone;
-import frc.robot.util.pathfinding.zones.MultiRotationZone;
-import frc.robot.util.pathfinding.zones.OrientationZone;
-import frc.robot.util.pathfinding.zones.RotationZone;
-import frc.robot.util.pathfinding.zones.ZoneManager;
+import frc.robot.util.pathfinding.zones.*;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
+import frc.robot.util.pathfinding.zoro.ShinPathfinding;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -80,13 +75,9 @@ public class Pathmaster {
     // *Call in Robot.java before RobotContainer is initialized.
     public static void initializePathfinder() {
         zoro = new RoronoaZoroAK();
-        Pathfinding.setPathfinder(Pathmaster.zoro);
+        ShinPathfinding.setPathfinder(zoro);
+        ShinPathfinding.ensureInitialized();
     }
-
-    public static RoronoaZoroAK getPathfinderInstance() {
-        return zoro;
-    }
-
     // *Call in Robot.java as the last line in Robot contructor
     public static void startWarmupCommand() {
         CommandScheduler.getInstance().schedule(ShinPathfindingCommand.warmupCommand());

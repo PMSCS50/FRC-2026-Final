@@ -2,7 +2,6 @@ package frc.robot.util.pathfinding.zoro;
 
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.Pathfinder;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -14,7 +13,7 @@ import org.littletonrobotics.junction.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RoronoaZoroAK implements Pathfinder {
+public class RoronoaZoroAK implements ShinPathfinder {
 
     private final RoronoaZoro zoro = new RoronoaZoro();
     private final ZoroIOInputsAutoLogged inputs = new ZoroIOInputsAutoLogged();
@@ -158,12 +157,14 @@ public class RoronoaZoroAK implements Pathfinder {
         }
     }
 
+    @Override
     public void setStartRotation(Rotation2d startRotation) {
         if (!Logger.hasReplaySource()) {
             zoro.setStartRotation(startRotation);
         }
     }
 
+    @Override
     public void setStops(List<Pose2d> stops) {
         if (!Logger.hasReplaySource()) {
             zoro.setStops(stops);
