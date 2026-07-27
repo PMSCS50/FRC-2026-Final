@@ -1,5 +1,7 @@
 package frc.robot.util.pathfinding.zones;
 
+import java.util.List;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -11,9 +13,9 @@ import edu.wpi.first.math.geometry.Translation2d;
  */
 public class MultiRotationZone extends PathZone {
 
-    private final Rotation2d[] rotations;
+    private final List<Rotation2d> rotations;
 
-    public MultiRotationZone(String name, Translation2d min, Translation2d max, Rotation2d... rotations) {
+    public MultiRotationZone(String name, Translation2d min, Translation2d max, List<Rotation2d> rotations) {
         super(name, min, max);
         this.rotations = rotations;
     }

@@ -878,25 +878,106 @@ public class RoronoaZoro implements Pathfinder {
 
     //Actual zone filling in.
 
-    for (PathZone zone : activeZones) {
-      int entryIndex = -1;
-      int exitIndex  = -1;
+    Map<PathZone, Integer> activeZoneEntries = new HashMap<>();
 
-      for (int i = 0; i < points.size(); i++) {
-        if (zone.containsPoint(points.get(i).position)) {
-          if (entryIndex < 0) entryIndex = i;
-          exitIndex = i;
+    for (int i = 0; i < points.size(); i++) {
+      PathPoint currentPoint = points.get(i);
+      boolean isStop = requestRealStopPoses.contains(currentPoint.position);
+
+      for (PathZone zone : activeZones) {
+        boolean isInside = zone.containsPoint(currentPoint.position);
+        boolean isActive = activeZoneEntries.containsKey(zone);
+
+        // Track zone entry
+        if (isInside && !isActive) {
+          activeZoneEntries.put(zone, i);
+        }
+
+        // Process zone exit OR segment split at stop
+        if (isActive && (!isInside || isStop)) {
+          int entryIndex = activeZoneEntries.get(zone);
+          int exitIndex = isInside ? i : i - 1;
+
+          if (exitIndex >= entryIndex) {
+            double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
+            double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
+
+            //For MultiRotationZones to calculate closest heading
+            Rotation2d lastRotationTarget;
+
+            if (zone instanceof OrientationZone oz) {
+              pointTowardsZones.add(
+                new PointTowardsZone(
+                  zone.name,
+                   oz.getTarget().getTranslation(), 
+                   entryWaypointIndex, 
+                   exitWaypointIndex
+                )
+              );
+            } else if (zone instanceof RotationZone rz) {
+
+              rotationTargets.add(new RotationTarget(entryWaypointIndex, rz.getRotation()));
+              rotationTargets.add(new RotationTarget(exitWaypointIndex, rz.getRotation()));
+            
+            } else if (zone instanceof MultiRotationZone mrz) {
+
+              //Find most recent rotation target before this rotation zone
+              RotationTarget bestPreviousTarget = null;
+              for (RotationTarget target : rotationTargets) {
+                if (target.position() < entryWaypointIndex) {
+                  if (bestPreviousTarget == null || target.position() > bestPreviousTarget.position()) {
+                    bestPreviousTarget = target;
+                  }
+                }
+              }
+
+              // Fall back to robot's start rotation if no prior target exists
+              lastRotationTarget = (bestPreviousTarget != null) 
+                  ? bestPreviousTarget.rotation() 
+                  : requestRealStartRot;
+
+              Rotation2d chosenRotation = mrz.getClosestRotation(lastRotationTarget);
+
+              rotationTargets.add(new RotationTarget(entryWaypointIndex, chosenRotation));
+              rotationTargets.add(new RotationTarget(exitWaypointIndex, chosenRotation));
+              
+            } else if (zone instanceof ConstraintZone cz) {
+
+              constraintZones.add(new ConstraintsZone(entryWaypointIndex, exitWaypointIndex, cz.getConstraints()));
+            
+            } else if (zone instanceof EventZone ez) {
+              eventMarkers.add(
+                new EventMarker(
+                  zone.name, 
+                  entryWaypointIndex, 
+                  exitWaypointIndex, 
+                  ez.getEvent()
+                )
+              );
+            }
+          }
+
+          activeZoneEntries.remove(zone);
+
+          // Resume zone tracking immediately after a stop if still inside
+          if (isInside && isStop) {
+            activeZoneEntries.put(zone, i);
+          }
         }
       }
+    }
 
-      if (entryIndex < 0) continue;
+    // Process any zones that remain active at the end of the path
+    for (Map.Entry<PathZone, Integer> entry : activeZoneEntries.entrySet()) {
+      PathZone zone = entry.getKey();
+      int entryIndex = entry.getValue();
+      int exitIndex = points.size() - 1;
 
       double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
       double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
 
       //For MultiRotationZones to calculate closest heading
       Rotation2d lastRotationTarget;
-
 
       if (zone instanceof OrientationZone oz) {
         pointTowardsZones.add(new PointTowardsZone(zone.name, oz.getTarget().getTranslation(), entryWaypointIndex, exitWaypointIndex));

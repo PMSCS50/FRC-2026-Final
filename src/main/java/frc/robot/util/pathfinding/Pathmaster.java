@@ -147,8 +147,8 @@ public class Pathmaster {
 
     // *Creates a rotation zone.
     // ?When the robot paths through it, it will rotate to and hold the given heading.
-    public void addMultiRotationZone(String name, Translation2d min, Translation2d max, Rotation2d... rotations) {
-        ZoneManager.addZone(new MultiRotationZone(name, min, max, rotations), true);
+    public void addMultiRotationZone(String name, Translation2d min, Translation2d max, List<Rotation2d> rotations, boolean active) {
+        ZoneManager.addZone(new MultiRotationZone(name, min, max, rotations), active);
 
         Logger.recordOutput("Pathmaster/Multi-Rotation Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),

@@ -130,11 +130,12 @@ public class RobotContainer {
             monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
         }
 
-        // *Rotation Zones (trenches)
-        monkeyDLuffy.addMultiRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.k180deg, Rotation2d.kZero);
-        monkeyDLuffy.addMultiRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, Rotation2d.kZero);
-        monkeyDLuffy.addMultiRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), Rotation2d.k180deg, Rotation2d.kZero);
-        monkeyDLuffy.addMultiRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), Rotation2d.k180deg, Rotation2d.kZero);
+        // *Multi-Rotation Zones (trenches)
+        monkeyDLuffy.addMultiRotationZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+        monkeyDLuffy.addMultiRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+        monkeyDLuffy.addMultiRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+        monkeyDLuffy.addMultiRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+
 
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("TestingAuto");
