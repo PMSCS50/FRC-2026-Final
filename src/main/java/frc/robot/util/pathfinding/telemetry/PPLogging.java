@@ -1,0 +1,150 @@
+package frc.robot.util.pathfinding.telemetry;
+
+import com.pathplanner.lib.path.PathPlannerPath;
+import edu.wpi.first.math.geometry.Pose2d;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+// *Extension of PPLogging utility class for ShinPathfindingCommand
+public class PPLogging {
+  private static Consumer<Pose2d> logCurrentPose = null;
+  private static Consumer<Pose2d> logTargetPose = null;
+  private static Consumer<List<Pose2d>> logStopPoses = null;
+  private static Consumer<List<Pose2d>> logActivePath = null;
+  private static UnaryQuadConsumer<Double> logVelocities = null;
+
+  /**
+   * Set the logging callback for the current robot pose
+   *
+   * @param logCurrentPose Consumer that accepts the current robot pose. Can be null to disable
+   *     logging this value.
+   */
+  public static void setLogCurrentPoseCallback(Consumer<Pose2d> logCurrentPose) {
+    PPLogging.logCurrentPose = logCurrentPose;
+  }
+
+  /**
+   * Set the logging callback for the target robot pose
+   *
+   * @param logTargetPose Consumer that accepts the target robot pose. Can be null to disable
+   *     logging this value.
+   */
+  public static void setLogTargetPoseCallback(Consumer<Pose2d> logTargetPose) {
+    PPLogging.logTargetPose = logTargetPose;
+  }
+
+  /**
+   * Set the logging callback for the stop poses
+   *
+   * @param logStopPoses Consumer that accepts the stop poses. Can be null to disable
+   *     logging this value.
+   */
+  public static void setLogStopPosesCallback(Consumer<List<Pose2d>> logStopPoses) {
+    PPLogging.logStopPoses = logStopPoses;
+  }
+
+
+  /**
+   * Set the logging callback for the active path
+   *
+   * @param logActivePath Consumer that accepts the active path as a list of poses. Can be null to
+   *     disable logging this value.
+   */
+  public static void setLogActivePathCallback(Consumer<List<Pose2d>> logActivePath) {
+    PPLogging.logActivePath = logActivePath;
+  }
+
+  /**
+   * Set the logging callback for the actual vs commanded velocities
+   *
+   * @param logVelocities Consumer that accepts the velocities. Can be null to
+   *     disable logging this value.
+   */
+  public static void setLogVelocitiesCallback(UnaryQuadConsumer<Double> logVelocities) {
+    PPLogging.logVelocities = logVelocities;
+  }
+
+  /** Disables all logging callbacks registered by this class. */
+  public static void clearLoggingCallbacks() {
+    PPLogging.setLogCurrentPoseCallback(null);
+    PPLogging.setLogTargetPoseCallback(null);
+    PPLogging.setLogStopPosesCallback(null);
+    PPLogging.setLogActivePathCallback(null);
+    PPLogging.setLogVelocitiesCallback(null);
+  }
+
+  /**
+   * Log the current robot pose. This is used internally.
+   *
+   * @param pose The current robot pose
+   */
+  public static void logCurrentPose(Pose2d pose) {
+    if (logCurrentPose != null) {
+      logCurrentPose.accept(pose);
+    }
+  }
+
+  /**
+   * Log the target robot pose. This is used internally.
+   *
+   * @param targetPose The target robot pose
+   */
+  public static void logTargetPose(Pose2d targetPose) {
+    if (logTargetPose != null) {
+      logTargetPose.accept(targetPose);
+    }
+  }
+
+  /**
+   * Log the stop poses. This is used internally.
+   *
+   * @param stopPoses The stop poses
+   */
+  public static void logStopPoses(List<Pose2d> stopPoses) {
+    if (logStopPoses != null) {
+      logStopPoses.accept(stopPoses);
+    }
+  }
+
+  /**
+   * Log the active path. This is used internally.
+   *
+   * @param path The active path
+   */
+  public static void logActivePath(PathPlannerPath path) {
+    if (logActivePath != null) {
+      if (path != null) {
+        logActivePath.accept(path.getPathPoses());
+      } else {
+        logActivePath.accept(new ArrayList<>());
+      }
+    }
+  }
+
+  /**
+   * Log the actual vs commanded velocities. This is used internally.
+   *
+   * @param path The active path
+   */
+  public static void logVelocities(double linAct, double linCom, double angAct, double angCom) {
+    if (logVelocities != null) {
+        logVelocities.accept(linAct, linCom, angAct, angCom);
+    }
+  }
+
+  /** Functional interface for a function that takes 4 inputs of type In */
+  @FunctionalInterface
+  public interface UnaryQuadConsumer<In> {
+    /**
+     * Apply the inputs to this function
+     *
+     * @param in1 Input 1
+     * @param in2 Input 2
+     * @param in3 Input 3
+     * @param in4 Input 4
+     */
+    void accept(In in1, In in2, In in3, In in4);
+  }
+}

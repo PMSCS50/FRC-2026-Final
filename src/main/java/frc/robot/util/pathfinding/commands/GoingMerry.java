@@ -403,7 +403,7 @@ public class GoingMerry {
     Out apply(In1 in1, In2 in2, In3 in3);
   }
 
-  /** Functional interface for a function that takes 3 inputs */
+  /** Functional interface for a function that takes 4 inputs */
   @FunctionalInterface
   public interface QuadFunction<In1, In2, In3, In4, Out> {
     /**

@@ -2,7 +2,6 @@ package frc.robot.util.pathfinding;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -12,7 +11,7 @@ import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.commands.GoingMerry;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
-import frc.robot.util.pathfinding.telemetry.PPLogger;
+import frc.robot.util.pathfinding.telemetry.*;
 import frc.robot.util.pathfinding.zones.*;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;
@@ -86,18 +85,24 @@ public class Pathmaster {
     }
 
     private void createLoggingCallbacks() {
-        PathPlannerLogging.setLogCurrentPoseCallback((pose) -> {
+        PPLogging.setLogCurrentPoseCallback((pose) -> {
             PPLogger.logCurrentPose(pose);
         });
 
-        // *Logging callback for target robot pose
-        PathPlannerLogging.setLogTargetPoseCallback((pose) -> {
+        PPLogging.setLogTargetPoseCallback((pose) -> {
             PPLogger.logTargetPose(pose);
         });
 
-        // *Logging callback for the active path, this is sent as a list of poses
-        PathPlannerLogging.setLogActivePathCallback((poses) -> {
+        PPLogging.setLogStopPosesCallback((poses) -> {
+            PPLogger.logStops(poses);
+        });
+
+        PPLogging.setLogActivePathCallback((poses) -> {
             PPLogger.logActivePath(poses);
+        });
+
+        PPLogging.setLogVelocitiesCallback((linAct, linCom, angAct, angCom) -> {
+            PPLogger.logVelocities(linAct, linCom, angAct, angCom);
         });
     }
 

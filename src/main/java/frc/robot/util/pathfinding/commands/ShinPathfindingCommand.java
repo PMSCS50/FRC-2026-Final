@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;
-import frc.robot.util.pathfinding.telemetry.PPLogger;
+import frc.robot.util.pathfinding.telemetry.PPLogging;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -464,7 +464,7 @@ public class ShinPathfindingCommand extends Command {
         ShinPathfinding.setStops(List.of());
       } else {
         ShinPathfinding.setStops(stopPoses);
-        PPLogger.logStops(stopPoses);
+        PPLogging.logStopPoses(stopPoses);
       }
 
       ShinPathfinding.setGoalPosition(targetPose.getTranslation());
@@ -480,7 +480,7 @@ public class ShinPathfindingCommand extends Command {
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    PathPlannerLogging.logCurrentPose(currentPose);
+    PPLogging.logCurrentPose(currentPose);
     PPLibTelemetry.setCurrentPose(currentPose);
 
     // Skip new paths if we are close to the end
@@ -512,7 +512,7 @@ public class ShinPathfindingCommand extends Command {
         timer.start();
         timeOffset = 0;
 
-        PathPlannerLogging.logActivePath(currentPath);
+        PPLogging.logActivePath(currentPath);
         PPLibTelemetry.setCurrentPath(currentPath);
     }
 
@@ -574,7 +574,7 @@ public class ShinPathfindingCommand extends Command {
           timeOffset = 0.02;
         }
 
-        PathPlannerLogging.logActivePath(currentPath);
+        PPLogging.logActivePath(currentPath);
         PPLibTelemetry.setCurrentPath(currentPath);
       }
 
@@ -592,16 +592,24 @@ public class ShinPathfindingCommand extends Command {
           Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
 
       PPLibTelemetry.setCurrentPose(currentPose);
-      PathPlannerLogging.logCurrentPose(currentPose);
+      PPLogging.logCurrentPose(currentPose);
 
       PPLibTelemetry.setTargetPose(targetState.pose);
-      PathPlannerLogging.logTargetPose(targetState.pose);
+      PPLogging.logTargetPose(targetState.pose);
 
       PPLibTelemetry.setVelocities(
-          currentVel,
-          targetState.linearVelocity,
-          currentSpeeds.omegaRadiansPerSecond,
-          targetSpeeds.omegaRadiansPerSecond);
+        currentVel,
+        targetState.linearVelocity,
+        currentSpeeds.omegaRadiansPerSecond,
+        targetSpeeds.omegaRadiansPerSecond
+      );
+
+      PPLogging.logVelocities(
+        currentVel, 
+        targetState.linearVelocity,
+        currentSpeeds.omegaRadiansPerSecond, 
+        targetSpeeds.omegaRadiansPerSecond
+      );
 
       output.accept(targetSpeeds, targetState.feedforwards);
     }
@@ -630,8 +638,8 @@ public class ShinPathfindingCommand extends Command {
       output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
     }
 
-    PathPlannerLogging.logActivePath(null);
-    PPLogger.logStops(List.of());
+    PPLogging.logActivePath(null);
+    PPLogging.logStopPoses(null);
   }
 
   //If you want to use this as a PathPlannerAuto command for some reason, then go right ahead.
