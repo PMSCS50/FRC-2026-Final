@@ -30,6 +30,8 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.vision.LLSubsystemMany;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
+import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
+import frc.robot.util.pathfinding.zoro.ShinPathfinding;
 
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
@@ -63,7 +65,8 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    Pathmaster.initializePathfinder();
+    //Initialize pathfinder
+    ShinPathfinding.setPathfinder(new RoronoaZoroAK());
 
     m_robotContainer = new RobotContainer();
     Pathmaster.startWarmupCommand();

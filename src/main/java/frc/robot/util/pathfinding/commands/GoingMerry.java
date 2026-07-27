@@ -15,6 +15,8 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.util.pathfinding.PathRequest;
+
 import java.util.List;
 import java.util.function.*;
 
@@ -372,6 +374,37 @@ public class GoingMerry {
     }
 
     return globals.pathfindThroughStopsThenFollowPathCommandBuilder.apply(goalPath, stops, pathfindingConstraints);
+  }
+
+  /**
+   * Submits a {@link PathRequest} to build the corresponding pathfinding or path-following command.
+   *
+   * @param request The path request details containing target pose/path, stops, constraints, etc.
+   * @param defaultConstraints The fallback path constraints to use if none were specified in the request.
+   * @return A command configured to execute the requested path operation.
+   */
+  public static Command buildRequest(PathRequest request, PathConstraints defaultConstraints) {
+    if (!isPathfindingConfigured()) {
+      throw new AutoBuilderException(
+          "Auto builder was used to build a pathfinding command before being configured");
+    }
+
+    // Use requested constraints if present; otherwise fall back to default
+    PathConstraints constraints =
+        request.getConstraints() != null ? request.getConstraints() : defaultConstraints;
+
+    if (request.isPathFindToPath()) {
+      return pathfindThenFollowPath(
+          request.getTargetPath(),
+          request.getStops(),
+          constraints);
+    } else {
+      return pathfindToPose(
+          request.getTargetPose(),
+          request.getStops(),
+          constraints,
+          request.getGoalEndVel());
+    }
   }
   
   /**

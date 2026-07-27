@@ -4,6 +4,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.*;
 
 import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -13,8 +14,6 @@ import frc.robot.util.pathfinding.commands.GoingMerry;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
 import frc.robot.util.pathfinding.zones.*;
-import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
-import frc.robot.util.pathfinding.zoro.ShinPathfinding;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,7 +31,7 @@ public class Pathmaster {
     private PathConstraints constraints;
     private CommandSwerveDrivetrain drivetrain;
     private Supplier<Pose2d> robotPose;
-    private static RoronoaZoroAK zoro;
+    private Supplier<ChassisSpeeds> robotSpeeds;
     private static boolean warmup = false;
     private final LinkedHashMap<String, Pose2d> waypoints = new LinkedHashMap<>();
     private boolean pathing = false;
@@ -49,6 +48,7 @@ public class Pathmaster {
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.robotPose = () -> drivetrain.getState().Pose;
+        this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
         this.selectedWaypointIndex = 0;
 
@@ -66,17 +66,13 @@ public class Pathmaster {
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, nominalVoltageVolts);
         this.robotPose = () -> drivetrain.getState().Pose;
+        this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
         this.selectedWaypointIndex = 0;
 
         createLoggingCallbacks();
     }
 
-    // *Call in Robot.java before RobotContainer is initialized.
-    public static void initializePathfinder() {
-        zoro = new RoronoaZoroAK();
-        ShinPathfinding.setPathfinder(zoro);
-    }
     // *Call in Robot.java as the last line in Robot contructor
     public static void startWarmupCommand() {
         CommandScheduler.getInstance().schedule(ShinPathfindingCommand.warmupCommand());
@@ -397,6 +393,19 @@ public class Pathmaster {
         .finallyDo(() -> pathing = false);
     }
 
+    public Command submitRequest(PathRequest request) {
+        pathing = true;
+        return Commands.defer(() -> {
+            if (request.getActiveZones().length > 0) {
+                activateOnly(request.getActiveZones());
+            }
+            return GoingMerry.buildRequest(request, constraints);
+        }, Set.of(drivetrain))
+        .finallyDo(() -> {
+            pathing = false;
+            ZoneManager.setAllZones(true);
+        });
+    }
     /**
      * *Cancels any currently running pathfinding command. Not needed for now
      */

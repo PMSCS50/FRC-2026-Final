@@ -362,7 +362,7 @@ public class RoronoaZoro implements ShinPathfinder {
         requestLock.readLock().unlock();
 
         if (reset || minor || major) {
-          doWork(new PathRequest(reset, minor, major, start, stops, goal, realStart, realStops, realGoal, obstacles));
+          doWork(reset, minor, major, start, stops, goal, realStart, realStops, realGoal, obstacles);
         } else {
           try {
             Thread.sleep(10);
@@ -379,14 +379,24 @@ public class RoronoaZoro implements ShinPathfinder {
     }
   }
 
-  private void doWork(PathRequest pathReq) {
-    // 1. Reconstruct the sequential path chain: start -> stops -> goal
-    List<GridPosition> stops = new ArrayList<>(pathReq.sStops());
-    stops.add(pathReq.sGoal());
+  private void doWork(boolean needsReset,
+      boolean doMinor,
+      boolean doMajor,
+      GridPosition sStart,
+      List<GridPosition> sStops,
+      GridPosition sGoal,
+      Translation2d realStartPos,
+      List<Translation2d> realStopPoses,
+      Translation2d realGoalPos,
+      Set<GridPosition> obstacles) {
 
-    if (pathReq.needsReset()) {
+    // 1. Reconstruct the sequential path chain: start -> stops -> goal
+    List<GridPosition> stops = new ArrayList<>(sStops);
+    stops.add(sGoal);
+
+    if (needsReset) {
       activeStates.clear();
-      GridPosition currentStart = pathReq.sStart();
+      GridPosition currentStart = sStart;
       for (GridPosition nextStop : stops) {
         ADStarSegment stateSegment = new ADStarSegment(currentStart, nextStop);
         reset(stateSegment);
@@ -395,13 +405,13 @@ public class RoronoaZoro implements ShinPathfinder {
       }
     }
 
-    if (pathReq.doMinor()) {
+    if (doMinor) {
       List<GridPosition> pathPositions = new ArrayList<>();
 
       for (int i = 0; i < activeStates.size(); i++) {
         ADStarSegment state = activeStates.get(i);
-        computeOrImprovePath(state, pathReq.obstacles());
-        List<GridPosition> extractedPath = extractPath(state, pathReq.obstacles());
+        computeOrImprovePath(state, obstacles);
+        List<GridPosition> extractedPath = extractPath(state, obstacles);
         
         // --- STRICT STOP ENFORCEMENT GUARD ---
         // If the path failed to reach the intended stop, force-append the target stop node 
@@ -423,7 +433,7 @@ public class RoronoaZoro implements ShinPathfinder {
       }
 
       List<Waypoint> waypoints =
-          createWaypoints(pathPositions, pathReq.realStartPos(), pathReq.sStops(), pathReq.realStopPoses(), pathReq.realGoalPos(), pathReq.obstacles());
+          createWaypoints(pathPositions, realStartPos, sStops, realStopPoses, realGoalPos, obstacles);
 
       pathLock.writeLock().lock();
       currentPathFull = pathPositions;
@@ -431,7 +441,7 @@ public class RoronoaZoro implements ShinPathfinder {
       pathLock.writeLock().unlock();
 
       newPathAvailable = true;
-    } else if (pathReq.doMajor()) {
+    } else if (doMajor) {
       boolean updatedAny = false;
 
       for (ADStarSegment state : activeStates) {
@@ -442,7 +452,7 @@ public class RoronoaZoro implements ShinPathfinder {
           state.open.replaceAll((s, v) -> key(s, state));
           state.closed.clear();
 
-          computeOrImprovePath(state, pathReq.obstacles());
+          computeOrImprovePath(state, obstacles);
           updatedAny = true;
         }
       }
@@ -451,7 +461,7 @@ public class RoronoaZoro implements ShinPathfinder {
         List<GridPosition> pathPositions = new ArrayList<>();
         for (int i = 0; i < activeStates.size(); i++) {
           ADStarSegment state = activeStates.get(i);
-          List<GridPosition> extractedPath = extractPath(state, pathReq.obstacles());
+          List<GridPosition> extractedPath = extractPath(state, obstacles);
           
           // --- STRICT STOP ENFORCEMENT GUARD ---
           if (extractedPath.isEmpty()) {
@@ -470,7 +480,7 @@ public class RoronoaZoro implements ShinPathfinder {
         }
 
         List<Waypoint> waypoints =
-            createWaypoints(pathPositions, pathReq.realStartPos(), pathReq.sStops(), pathReq.realStopPoses(), pathReq.realGoalPos(), pathReq.obstacles());
+            createWaypoints(pathPositions, realStartPos, sStops, realStopPoses, realGoalPos, obstacles);
 
         pathLock.writeLock().lock();
         currentPathFull = pathPositions;
@@ -1048,19 +1058,6 @@ public class RoronoaZoro implements ShinPathfinder {
       }
     }
   }
-
-  private record PathRequest(
-      boolean needsReset,
-      boolean doMinor,
-      boolean doMajor,
-      GridPosition sStart,
-      List<GridPosition> sStops,
-      GridPosition sGoal,
-      Translation2d realStartPos,
-      List<Translation2d> realStopPoses,
-      Translation2d realGoalPos,
-      Set<GridPosition> obstacles
-  ) {}
 
   private static class ADStarSegment {
     GridPosition start;

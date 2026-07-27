@@ -1,0 +1,97 @@
+package frc.robot.util.pathfinding;
+
+import java.util.List;
+
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+
+import edu.wpi.first.math.geometry.Pose2d;
+
+// *An alternate way of creating pathfinder commands.
+// ?Run PathRequest with Pathmaster.submitRequest()
+// ?Best used for more complex pathfinding operations
+
+public class PathRequest {
+    private Pose2d targetPose;
+
+    private PathPlannerPath targetPath;
+    private boolean pathFindToPath;
+
+    private List<Pose2d> stops = List.of();
+    private PathConstraints constraints = null;
+    private double goalEndVel = 0.0;
+    private String[] activeZones = new String[0];
+
+    private boolean auto = false;
+
+    public PathRequest withGoal(Pose2d targetPose) {
+        this.targetPose = targetPose;
+        pathFindToPath = false;
+        return this;
+    }
+
+    public PathRequest withGoal(PathPlannerPath targetPath) {
+        this.targetPath = targetPath;
+        pathFindToPath = true;
+        return this;
+    }
+
+    public PathRequest withStops(List<Pose2d> stops) {
+        this.stops = stops;
+        return this;
+    }
+
+    public PathRequest withConstraints(PathConstraints constraints) {
+        this.constraints = constraints;
+        return this;
+    }
+
+    public PathRequest withGoalEndVelocity(double goalEndVel) {
+        this.goalEndVel = goalEndVel;
+        return this;
+    }
+
+    public PathRequest withActiveZones(String... activeZones) {
+        this.activeZones = activeZones;
+        return this;
+    }
+
+    public PathRequest runAsAuto(boolean auto) {
+        this.auto = auto;
+        return this;
+    }
+
+    // *Getters
+
+    public Pose2d getTargetPose() {
+        return targetPose;
+    }
+
+    public PathPlannerPath getTargetPath() {
+        return targetPath;
+    }
+
+    public boolean isPathFindToPath() {
+        return pathFindToPath;
+    }
+
+    public List<Pose2d> getStops() {
+        return stops;
+    }
+
+    public PathConstraints getConstraints() {
+        return constraints;
+    }
+
+    public double getGoalEndVel() {
+        return goalEndVel;
+    }
+
+    public String[] getActiveZones() {
+        return activeZones;
+    }
+
+    public boolean getRunAsAuto() {
+        return auto;
+    }
+}
