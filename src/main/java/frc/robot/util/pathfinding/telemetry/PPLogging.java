@@ -2,7 +2,6 @@ package frc.robot.util.pathfinding.telemetry;
 
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
