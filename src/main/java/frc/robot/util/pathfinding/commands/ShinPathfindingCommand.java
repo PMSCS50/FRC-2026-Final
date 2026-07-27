@@ -9,7 +9,6 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.*;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -97,7 +96,7 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
 
-    Pathfinding.ensureInitialized();
+    ShinPathfinding.ensureInitialized();
 
     Rotation2d targetRotation = Rotation2d.kZero;
     double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMPS();
@@ -209,7 +208,7 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
 
-    Pathfinding.ensureInitialized();
+    ShinPathfinding.ensureInitialized();
 
     this.targetPath = null;
     this.targetPose = targetPose;
@@ -516,8 +515,8 @@ public class ShinPathfindingCommand extends Command {
         PPLibTelemetry.setCurrentPath(currentPath);
     }
 
-    if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
-      currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
+    if (!skipUpdates && ShinPathfinding.isNewPathAvailable()) {
+      currentPath = ShinPathfinding.getCurrentPath(constraints, goalEndState);
 
       if (currentPath != null) {
         currentTrajectory =
@@ -639,7 +638,7 @@ public class ShinPathfindingCommand extends Command {
     }
 
     PPLogging.logActivePath(null);
-    PPLogging.logStopPoses(null);
+    PPLogging.logStopPoses(List.of());
   }
 
   //If you want to use this as a PathPlannerAuto command for some reason, then go right ahead.

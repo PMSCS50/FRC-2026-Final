@@ -76,7 +76,6 @@ public class Pathmaster {
     public static void initializePathfinder() {
         zoro = new RoronoaZoroAK();
         ShinPathfinding.setPathfinder(zoro);
-        ShinPathfinding.ensureInitialized();
     }
     // *Call in Robot.java as the last line in Robot contructor
     public static void startWarmupCommand() {
