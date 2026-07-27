@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * Static class for interacting with the chosen pathfinding implementation
- * // !NOT TO BE CONFUSED WITH PATHPLANNER's NATIVE PATHFINDING CLASS
  */
 
 public class ShinPathfinding {

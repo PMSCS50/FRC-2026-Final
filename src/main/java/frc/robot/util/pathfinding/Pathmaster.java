@@ -1,5 +1,6 @@
 package frc.robot.util.pathfinding;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
@@ -399,7 +400,7 @@ public class Pathmaster {
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
             if (current != null) {
-                if (current instanceof ShinPathfindingCommand) {
+                if (current instanceof ShinPathfindingCommand || current instanceof PathPlannerAuto) {
                     current.cancel();
                     pathing = false;
                 }
