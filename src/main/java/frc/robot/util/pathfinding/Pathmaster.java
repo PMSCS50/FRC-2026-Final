@@ -4,7 +4,6 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.*;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -31,7 +30,6 @@ public class Pathmaster {
     private PathConstraints constraints;
     private CommandSwerveDrivetrain drivetrain;
     private Supplier<Pose2d> robotPose;
-    private Supplier<ChassisSpeeds> robotSpeeds;
     private static boolean warmup = false;
     private final LinkedHashMap<String, Pose2d> waypoints = new LinkedHashMap<>();
     private boolean pathing = false;
@@ -48,7 +46,6 @@ public class Pathmaster {
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
         this.robotPose = () -> drivetrain.getState().Pose;
-        this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
         this.selectedWaypointIndex = 0;
 
@@ -66,7 +63,6 @@ public class Pathmaster {
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, nominalVoltageVolts);
         this.robotPose = () -> drivetrain.getState().Pose;
-        this.robotSpeeds = () -> drivetrain.getState().Speeds;
 
         this.selectedWaypointIndex = 0;
 
@@ -393,11 +389,16 @@ public class Pathmaster {
         .finallyDo(() -> pathing = false);
     }
 
+    // *Runs a PathRequest as a ShinPathfindingCommand or a PathPlannerAuto, depending on what you want
+    // *Best for more complex pathfinding routines or if you are stupid enough to use this library for auton routines
     public Command submitRequest(PathRequest request) {
         pathing = true;
         return Commands.defer(() -> {
             if (request.getActiveZones().length > 0) {
                 activateOnly(request.getActiveZones());
+            }
+            if (request.runsAsAuto()) {
+                return new PathPlannerAuto(GoingMerry.buildRequest(request, constraints), robotPose.get());
             }
             return GoingMerry.buildRequest(request, constraints);
         }, Set.of(drivetrain))
@@ -406,6 +407,7 @@ public class Pathmaster {
             ZoneManager.setAllZones(true);
         });
     }
+
     /**
      * *Cancels any currently running pathfinding command. Not needed for now
      */

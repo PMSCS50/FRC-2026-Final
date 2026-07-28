@@ -2,7 +2,6 @@ package frc.robot.util.pathfinding.commands;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -57,8 +56,6 @@ public class ShinPathfindingCommand extends Command {
 
   private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
-
-  private Pose2d startingPose;
 
   private double timeOffset = 0;
 
@@ -123,7 +120,6 @@ public class ShinPathfindingCommand extends Command {
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
-    this.startingPose = poseSupplier.get();
     this.speedsSupplier = speedsSupplier;
     this.output = output;
     this.robotConfig = robotConfig;
@@ -219,7 +215,6 @@ public class ShinPathfindingCommand extends Command {
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
-    this.startingPose = poseSupplier.get();
     this.speedsSupplier = speedsSupplier;
     this.output = output;
     this.robotConfig = robotConfig;
@@ -639,12 +634,6 @@ public class ShinPathfindingCommand extends Command {
 
     PPLogging.logActivePath(null);
     PPLogging.logStopPoses(List.of());
-  }
-
-  //If you want to use this as a PathPlannerAuto command for some reason, then go right ahead.
-  //Only reason you should is if you want to add conditional event triggers and stuff
-  public PathPlannerAuto runAsAuto() {
-    return new PathPlannerAuto(this, startingPose);
   }
 
   /**

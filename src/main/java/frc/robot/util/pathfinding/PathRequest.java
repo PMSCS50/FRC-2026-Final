@@ -91,7 +91,7 @@ public class PathRequest {
         return activeZones;
     }
 
-    public boolean getRunAsAuto() {
+    public boolean runsAsAuto() {
         return auto;
     }
 }
