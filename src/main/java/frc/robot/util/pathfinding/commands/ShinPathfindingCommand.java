@@ -641,12 +641,6 @@ public class ShinPathfindingCommand extends Command {
     PPLogging.logStopPoses(List.of());
   }
 
-  //If you want to use this as a PathPlannerAuto command for some reason, then go right ahead.
-  //Only reason you should is if you want to add conditional event triggers and stuff
-  public PathPlannerAuto runAsAuto() {
-    return new PathPlannerAuto(this, startingPose);
-  }
-
   /**
    * Create a command to warmup the pathfinder and pathfinding command
    *

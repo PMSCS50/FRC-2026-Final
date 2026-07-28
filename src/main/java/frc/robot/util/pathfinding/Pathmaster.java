@@ -399,6 +399,9 @@ public class Pathmaster {
             if (request.getActiveZones().length > 0) {
                 activateOnly(request.getActiveZones());
             }
+            if (request.runsAsAuto()) {
+                return new PathPlannerAuto(GoingMerry.buildRequest(request, constraints), robotPose.get());
+            }
             return GoingMerry.buildRequest(request, constraints);
         }, Set.of(drivetrain))
         .finallyDo(() -> {
