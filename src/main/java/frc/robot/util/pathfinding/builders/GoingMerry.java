@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding.commands;
+package frc.robot.util.pathfinding.builders;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
@@ -15,7 +15,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import frc.robot.util.pathfinding.PathRequest;
+import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 
 import java.util.List;
 import java.util.function.*;
