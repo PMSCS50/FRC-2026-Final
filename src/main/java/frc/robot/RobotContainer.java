@@ -39,6 +39,7 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
+import frc.robot.util.pathfinding.builders.PathRequest;
 import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.Shooter;
@@ -194,10 +195,20 @@ public class RobotContainer {
            driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
 
+        PathRequest request = new PathRequest()
+                            .withGoal("Game-Winning Path")
+                            .withStops(List.of(VisionConstants.getCenter()))
+                            .runAsAuto(true)
+                            .withEventTriggers((auto) -> {
+                                auto.timeElapsed(2.0).whileTrue(Commands.print("dih"));
+                                return auto;
+                            });
+                            
+
         driverController.b().whileTrue(
             Commands.defer(
                 //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.makePathTo(monkeyDLuffy.selectedWaypointPose(), List.of(VisionConstants.getCenter()))
+                () -> monkeyDLuffy.submitRequest(request)
                     //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 ,Set.of(drivetrain)
             )

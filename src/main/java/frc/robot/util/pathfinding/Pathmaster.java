@@ -399,7 +399,10 @@ public class Pathmaster {
                 activateOnly(request.getActiveZones());
             }
             if (request.runsAsAuto()) {
-                return new PathPlannerAuto(GoingMerry.buildRequest(request, constraints), robotPose.get());
+                //Creates a PathPlannerAuto out of the ShinPathfindingCommand, and fills in added event triggers
+                return request.EventTriggerFunction().apply(
+                    new PathPlannerAuto(GoingMerry.buildRequest(request, constraints), robotPose.get())
+                );
             }
             return GoingMerry.buildRequest(request, constraints);
         }, Set.of(drivetrain))

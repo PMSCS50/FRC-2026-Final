@@ -1,11 +1,14 @@
 package frc.robot.util.pathfinding.builders;
 
 import java.util.List;
+import java.util.function.UnaryOperator;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import frc.robot.util.Elastic;
 
 // *An alternate way of creating pathfinder commands.
 // ?Run PathRequest with Pathmaster.submitRequest()
@@ -24,6 +27,8 @@ public class PathRequest {
 
     private boolean auto = false;
 
+    private UnaryOperator<PathPlannerAuto> eventTriggerFunction = (auto) -> auto;
+
     public PathRequest withGoal(Pose2d targetPose) {
         this.targetPose = targetPose;
         pathFindToPath = false;
@@ -33,6 +38,23 @@ public class PathRequest {
     public PathRequest withGoal(PathPlannerPath targetPath) {
         this.targetPath = targetPath;
         pathFindToPath = true;
+        return this;
+    }
+
+    public PathRequest withGoal(String targetPath) {
+        try {
+            this.targetPath = PathPlannerPath.fromPathFile(targetPath);
+        }
+        catch (Exception e) {
+            Elastic.sendNotification(
+                new Elastic.Notification().
+                withLevel(Elastic.NotificationLevel.ERROR)
+                .withTitle("Pathmaster Error")
+                .withDescription( "Path " + targetPath + " is not defined"));
+        }
+        finally {
+            pathFindToPath = true;
+        }
         return this;
     }
 
@@ -58,6 +80,11 @@ public class PathRequest {
 
     public PathRequest runAsAuto(boolean auto) {
         this.auto = auto;
+        return this;
+    }
+
+    public PathRequest withEventTriggers(UnaryOperator<PathPlannerAuto> eventTriggerFunction) {
+        this.eventTriggerFunction = eventTriggerFunction;
         return this;
     }
 
@@ -93,6 +120,10 @@ public class PathRequest {
 
     public boolean runsAsAuto() {
         return auto;
+    }
+
+    public UnaryOperator<PathPlannerAuto> EventTriggerFunction() {
+        return eventTriggerFunction;
     }
 }
 
