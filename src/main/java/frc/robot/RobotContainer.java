@@ -125,7 +125,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
         NamedCommands.registerCommand("Auton Fixed Shooting", new FixedPIDShooting(shooter, 1.366));
-
+        NamedCommands.registerCommand("Dih Command", new RunCommand(() -> Logger.recordOutput("Pathmaster/DIH", true)));
         // *Five shooting setpoints that form a semicircle around the hub
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
             monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
@@ -136,7 +136,8 @@ public class RobotContainer {
         monkeyDLuffy.addMultiRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
-
+        
+        monkeyDLuffy.addEventZone("TrenchBL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86)), Commands.runOnce(() -> System.out.println("dih")), true);
 
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("TestingAuto");
@@ -195,20 +196,21 @@ public class RobotContainer {
            driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
         }
 
+
         PathRequest request = new PathRequest()
-                            .withGoal("Game-Winning Path")
                             .withStops(List.of(VisionConstants.getCenter()))
-                            .runAsAuto(true)
                             .withEventTriggers((auto) -> {
-                                auto.timeElapsed(2.0).whileTrue(Commands.print("dih"));
-                                return auto;
+                                // auto.isRunning().whileTrue(Commands.print("dih")).whileFalse(Commands.print("no dih"));
+                                // auto.nearFieldPosition(VisionConstants.getCenter().getTranslation(), 0.5)
+                                //     .whileTrue(Commands.print("chase dih"))
+                                //     .whileFalse(Commands.print("dih"));
                             });
                             
 
         driverController.b().whileTrue(
             Commands.defer(
                 //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.submitRequest(request)
+                () -> monkeyDLuffy.submitRequest(request.withGoal(monkeyDLuffy.selectedWaypointPose()))
                     //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 ,Set.of(drivetrain)
             )

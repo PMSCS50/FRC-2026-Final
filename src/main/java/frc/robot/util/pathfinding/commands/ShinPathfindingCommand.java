@@ -7,6 +7,7 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
+import com.pathplanner.lib.events.EventScheduler;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.*;
@@ -58,6 +59,7 @@ public class ShinPathfindingCommand extends Command {
   private PathPlannerTrajectory currentTrajectory;
 
   private double timeOffset = 0;
+  private EventScheduler eventScheduler;
 
   private boolean finish = false;
 
@@ -124,6 +126,7 @@ public class ShinPathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
+    this.eventScheduler = new EventScheduler();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -219,6 +222,7 @@ public class ShinPathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = () -> false;
+    this.eventScheduler = new EventScheduler();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -430,6 +434,7 @@ public class ShinPathfindingCommand extends Command {
   @Override
   public void initialize() {
     currentTrajectory = null;
+    eventScheduler.end();
     timeOffset = 0;
     finish = false;
     followingTargetPath = false;
@@ -499,6 +504,9 @@ public class ShinPathfindingCommand extends Command {
                         speedsSupplier.get(),
                         poseSupplier.get().getRotation(),
                         robotConfig);
+        
+        eventScheduler.end();
+        eventScheduler.initialize(currentTrajectory);
 
         controller.reset(poseSupplier.get(), speedsSupplier.get());
 
@@ -514,9 +522,13 @@ public class ShinPathfindingCommand extends Command {
       currentPath = ShinPathfinding.getCurrentPath(constraints, goalEndState);
 
       if (currentPath != null) {
+
         currentTrajectory =
             new PathPlannerTrajectory(
                 currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
+        eventScheduler.end();
+        eventScheduler.initialize(currentTrajectory);
+
         if (!Double.isFinite(currentTrajectory.getTotalTimeSeconds())) {
           finish = true;
           return;
@@ -577,7 +589,8 @@ public class ShinPathfindingCommand extends Command {
     }
 
     if (currentTrajectory != null) {
-      var targetState = currentTrajectory.sample(timer.get() + timeOffset);
+      double currentTime = timer.get() + timeOffset;
+      var targetState = currentTrajectory.sample(currentTime);
 
       ChassisSpeeds targetSpeeds =
           controller.calculateRobotRelativeSpeeds(currentPose, targetState);
@@ -606,6 +619,7 @@ public class ShinPathfindingCommand extends Command {
       );
 
       output.accept(targetSpeeds, targetState.feedforwards);
+      eventScheduler.execute(currentTime);
     }
   }
 
@@ -634,6 +648,7 @@ public class ShinPathfindingCommand extends Command {
 
     PPLogging.logActivePath(null);
     PPLogging.logStopPoses(List.of());
+    eventScheduler.end();
   }
 
   /**
