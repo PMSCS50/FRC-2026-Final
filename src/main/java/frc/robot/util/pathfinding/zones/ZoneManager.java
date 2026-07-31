@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+
 /**
  * !Static class that manages rotation and orientation zones for the pathfinding system.
  // ?Provides thread-safe zone registration and state management.
@@ -133,6 +136,17 @@ public class ZoneManager {
      */
     public static int getZoneCount() {
         return zones.size();
+    }
+
+    public static Command getEventCommand(String name) {
+        for (PathZone zone : getActiveZones()) {
+            if (zone instanceof EventZone ezone) {
+                if (zone.name.equals(name)) {
+                    return ezone.getEvent();
+                }
+            }
+        }
+        return Commands.none();
     }
 }
 

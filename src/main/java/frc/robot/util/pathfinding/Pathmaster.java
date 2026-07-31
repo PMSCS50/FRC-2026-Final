@@ -182,7 +182,21 @@ public class Pathmaster {
         
         ZoneManager.addZone(new EventZone(name, min, max, command), active);
 
-        Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
+        Logger.recordOutput("Pathmaster/Event Zone " + name, new Pose2d[]{
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
+        });
+    }
+
+    // *Can make an EventZone out of a NamedCommand
+    public void addEventZone(String name, Translation2d min, Translation2d max, String namedcommand, boolean active) {
+        
+        ZoneManager.addZone(new EventZone(name, min, max, namedcommand), active);
+
+        Logger.recordOutput("Pathmaster/Event Zone " + name, new Pose2d[]{
             new Pose2d(min.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), min.getY(), new Rotation2d()),
             new Pose2d(max.getX(), max.getY(), new Rotation2d()),

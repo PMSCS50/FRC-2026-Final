@@ -1,6 +1,7 @@
 package frc.robot.util.pathfinding.builders;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -84,7 +85,18 @@ public class PathRequest {
     }
 
     public PathRequest withEventTriggers(UnaryOperator<PathPlannerAuto> eventTriggerFunction) {
+        this.auto = true;
         this.eventTriggerFunction = eventTriggerFunction;
+        return this;
+    }
+
+    //Just in case you forget to add "return auto;" to your lambda
+    public PathRequest withEventTriggers(Consumer<PathPlannerAuto> eventTriggerConsumer) {
+        this.auto = true;
+        this.eventTriggerFunction = (auto) -> {
+            eventTriggerConsumer.accept(auto);
+            return auto;
+        };
         return this;
     }
 
