@@ -2,6 +2,7 @@ package frc.robot.util.pathfinding.commands;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -25,8 +26,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
+import frc.robot.util.pathfinding.zones.ZoneManager;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -54,6 +58,7 @@ public class ShinPathfindingCommand extends Command {
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
+  private final HashSet<Subsystem> requirements;
 
   private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
@@ -93,7 +98,13 @@ public class ShinPathfindingCommand extends Command {
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
-    addRequirements(requirements);
+        
+    this.requirements = new HashSet<>(Set.of(requirements));
+    this.requirements.addAll(EventScheduler.getSchedulerRequirements(targetPath));
+    this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
+
+    addRequirements(this.requirements.toArray(new Subsystem[0]));
+    
 
     ShinPathfinding.ensureInitialized();
 
@@ -205,7 +216,10 @@ public class ShinPathfindingCommand extends Command {
       PathFollowingController controller,
       RobotConfig robotConfig,
       Subsystem... requirements) {
-    addRequirements(requirements);
+
+    this.requirements = new HashSet<>(Set.of(requirements));
+    this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
+    addRequirements(this.requirements.toArray(new Subsystem[0]));
 
     ShinPathfinding.ensureInitialized();
 
@@ -507,6 +521,9 @@ public class ShinPathfindingCommand extends Command {
         
         eventScheduler.end();
         eventScheduler.initialize(currentTrajectory);
+
+        PathPlannerAuto.setCurrentTrajectory(currentTrajectory);
+        PathPlannerAuto.currentPathName = currentPath.name;
 
         controller.reset(poseSupplier.get(), speedsSupplier.get());
 

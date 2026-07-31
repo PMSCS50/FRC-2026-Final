@@ -2,12 +2,15 @@ package frc.robot.util.pathfinding.zones;
 
 import frc.robot.util.Elastic;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 
 /**
  * !Static class that manages rotation and orientation zones for the pathfinding system.
@@ -147,6 +150,17 @@ public class ZoneManager {
             }
         }
         return Commands.none();
+    }
+
+    public static Set<Subsystem> getAllEventZoneRequirements() {
+        Set<Subsystem> requirements = new HashSet<>();
+
+        for (PathZone zone : getActiveZones()) {
+            if (zone instanceof EventZone ezone) {
+                requirements.addAll(ezone.getEvent().getRequirements());
+            }
+        }
+        return requirements;
     }
 }
 
