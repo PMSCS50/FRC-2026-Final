@@ -20,6 +20,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -46,6 +47,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drivetrain.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -125,7 +127,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
         NamedCommands.registerCommand("Auton Fixed Shooting", new FixedPIDShooting(shooter, 1.366));
-        NamedCommands.registerCommand("Dih Command", new RunCommand(() -> Logger.recordOutput("Pathmaster/DIH", true)));
+        NamedCommands.registerCommand("Dih Command", Commands.print("dih"));
         // *Five shooting setpoints that form a semicircle around the hub
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
             monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
@@ -136,7 +138,7 @@ public class RobotContainer {
         monkeyDLuffy.addMultiRotationZone("TrenchTL", new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchBR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchTR", new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64)), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
-        
+
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("TestingAuto");
         SmartDashboard.putData("Auto Mode", autoChooser);
@@ -196,19 +198,22 @@ public class RobotContainer {
 
 
         PathRequest request = new PathRequest()
+                            .withGoal("Game-Winning Path")
                             .withStops(List.of(VisionConstants.getCenter()))
                             .withEventTriggers((auto) -> {
-                                // auto.isRunning().whileTrue(Commands.print("dih")).whileFalse(Commands.print("no dih"));
-                                // auto.nearFieldPosition(VisionConstants.getCenter().getTranslation(), 0.5)
-                                //     .whileTrue(Commands.print("chase dih"))
-                                //     .whileFalse(Commands.print("dih"));
+                                auto.isRunning().whileTrue(Commands.print("dih")).whileFalse(Commands.print("no dih"));
+                                auto.nearFieldPosition(VisionConstants.getCenter().getTranslation(), 0.5)
+                                    .whileTrue(Commands.print("chase dih"))
+                                    .whileFalse(Commands.print("dih"));
+                                auto.activePath("Game-Winning Path").whileTrue(Commands.print("Succ dih"));
+                                auto.timeRange(6, 8).whileTrue(Commands.print("I love dih"));
                             });
                             
 
         driverController.b().whileTrue(
             Commands.defer(
                 //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.submitRequest(request.withGoal(monkeyDLuffy.selectedWaypointPose()))
+                () -> monkeyDLuffy.makePathTo(monkeyDLuffy.selectedWaypointPose(), List.of(VisionConstants.getCenter(), ClimbConstants.getClimbPose(Alliance.Red)))
                     //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 ,Set.of(drivetrain)
             )

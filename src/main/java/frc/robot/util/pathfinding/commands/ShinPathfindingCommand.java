@@ -25,9 +25,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;
+import frc.robot.util.pathfinding.events.EventSupervisor;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
-import frc.robot.util.pathfinding.zones.ZoneManager;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +65,7 @@ public class ShinPathfindingCommand extends Command {
   private PathPlannerTrajectory currentTrajectory;
 
   private double timeOffset = 0;
-  private EventScheduler eventScheduler;
+  private EventSupervisor eventScheduler;
 
   private boolean finish = false;
 
@@ -100,10 +101,10 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
         
     this.requirements = new HashSet<>(Set.of(requirements));
-    this.requirements.addAll(EventScheduler.getSchedulerRequirements(targetPath));
-    this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
+    //this.requirements.addAll(EventScheduler.getSchedulerRequirements(targetPath));
+    //this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
 
-    addRequirements(this.requirements.toArray(new Subsystem[0]));
+    addRequirements(this.requirements.toArray(Subsystem[]::new));
     
 
     ShinPathfinding.ensureInitialized();
@@ -137,7 +138,7 @@ public class ShinPathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
-    this.eventScheduler = new EventScheduler();
+    this.eventScheduler = new EventSupervisor();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -218,8 +219,8 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
 
     this.requirements = new HashSet<>(Set.of(requirements));
-    this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
-    addRequirements(this.requirements.toArray(new Subsystem[0]));
+    //this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
+    addRequirements(this.requirements.toArray(Subsystem[]::new));
 
     ShinPathfinding.ensureInitialized();
 
@@ -236,7 +237,7 @@ public class ShinPathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = () -> false;
-    this.eventScheduler = new EventScheduler();
+    this.eventScheduler = new EventSupervisor();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -544,6 +545,15 @@ public class ShinPathfindingCommand extends Command {
             new PathPlannerTrajectory(
                 currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
         eventScheduler.end();
+        
+        if (!followingTargetPath) {
+          var eventReqs = EventScheduler.getSchedulerRequirements(this.currentPath);
+          if (!Collections.disjoint(requirements, eventReqs)) {
+            throw new IllegalArgumentException(
+                "Events that are triggered during path following cannot require the drive subsystem");
+          }
+        }
+
         eventScheduler.initialize(currentTrajectory);
 
         if (!Double.isFinite(currentTrajectory.getTotalTimeSeconds())) {

@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.util.pathfinding.telemetry.PPLogger;
+import frc.robot.util.pathfinding.telemetry.PPLogging;
 import frc.robot.Constants.VisionConstants;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -150,8 +150,8 @@ public class PostPathPreciseAlignment extends Command {
 
         prevSpeeds = targetSpeeds;
 
-        PPLogger.logTargetPose(targetPose);
-        PPLogger.logVelocities(
+        PPLogging.logTargetPose(targetPose);
+        PPLogging.logVelocities(
             Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
             Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
             currentSpeeds.omegaRadiansPerSecond,
