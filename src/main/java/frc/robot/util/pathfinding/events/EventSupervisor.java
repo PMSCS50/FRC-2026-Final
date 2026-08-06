@@ -19,14 +19,11 @@ import java.util.*;
 public class EventSupervisor extends EventScheduler{
   private static final EventLoop eventLoop = EventScheduler.getEventLoop();
 
-  private final Map<Command, Boolean> eventCommands;
   private final Queue<Event> upcomingEvents;
-
   private final Set<Command> scheduledCommands;
 
   /** Create a new EventSupervisor */
   public EventSupervisor() {
-    this.eventCommands = new HashMap<>();
     this.upcomingEvents =
         new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestampSeconds));
     this.scheduledCommands = new HashSet<>();
@@ -40,7 +37,6 @@ public class EventSupervisor extends EventScheduler{
    */
   @Override
   public void initialize(PathPlannerTrajectory trajectory) {
-    eventCommands.clear();
     upcomingEvents.clear();
     scheduledCommands.clear();
     upcomingEvents.addAll(trajectory.getEvents());
@@ -57,21 +53,7 @@ public class EventSupervisor extends EventScheduler{
     // Check for events that should be handled this loop
     while (!upcomingEvents.isEmpty() && time >= upcomingEvents.peek().getTimestampSeconds()) {
       upcomingEvents.poll().handleEvent(this);
-     
     }
-
-    // // Run currently running commands
-    // for (var entry : eventCommands.entrySet()) {
-    //   if (!entry.getValue()) {
-    //     continue;
-    //   }
-
-    //   entry.getKey().execute();
-    //   if (entry.getKey().isFinished()) {
-    //     entry.getKey().end(false);
-    //     eventCommands.put(entry.getKey(), false);
-    //   }
-    // }
 
     eventLoop.poll();
   }

@@ -8,7 +8,6 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
-import com.pathplanner.lib.events.EventScheduler;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.*;
@@ -65,7 +64,7 @@ public class ShinPathfindingCommand extends Command {
   private PathPlannerTrajectory currentTrajectory;
 
   private double timeOffset = 0;
-  private EventSupervisor eventScheduler;
+  private EventSupervisor eventSupervisor;
 
   private boolean finish = false;
 
@@ -101,7 +100,7 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
         
     this.requirements = new HashSet<>(Set.of(requirements));
-    //this.requirements.addAll(EventScheduler.getSchedulerRequirements(targetPath));
+    //this.requirements.addAll(EventSupervisor.getAllSchedulerRequirements(targetPath));
     //this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
 
     addRequirements(this.requirements.toArray(Subsystem[]::new));
@@ -138,7 +137,7 @@ public class ShinPathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
-    this.eventScheduler = new EventSupervisor();
+    this.eventSupervisor = new EventSupervisor();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -237,7 +236,7 @@ public class ShinPathfindingCommand extends Command {
     this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = () -> false;
-    this.eventScheduler = new EventSupervisor();
+    this.eventSupervisor = new EventSupervisor();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -449,7 +448,7 @@ public class ShinPathfindingCommand extends Command {
   @Override
   public void initialize() {
     currentTrajectory = null;
-    eventScheduler.end();
+    eventSupervisor.end();
     timeOffset = 0;
     finish = false;
     followingTargetPath = false;
@@ -520,8 +519,14 @@ public class ShinPathfindingCommand extends Command {
                         poseSupplier.get().getRotation(),
                         robotConfig);
         
-        eventScheduler.end();
-        eventScheduler.initialize(currentTrajectory);
+        eventSupervisor.end();
+        eventSupervisor.initialize(currentTrajectory);
+
+        var eventReqs = EventSupervisor.getAllSchedulerRequirements(this.currentPath);
+        if (!Collections.disjoint(requirements, eventReqs)) {
+          throw new IllegalArgumentException(
+              "Events that are triggered during path following cannot require the drive subsystem");
+        }
 
         PathPlannerAuto.setCurrentTrajectory(currentTrajectory);
         PathPlannerAuto.currentPathName = currentPath.name;
@@ -544,17 +549,17 @@ public class ShinPathfindingCommand extends Command {
         currentTrajectory =
             new PathPlannerTrajectory(
                 currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
-        eventScheduler.end();
+        eventSupervisor.end();
         
         if (!followingTargetPath) {
-          var eventReqs = EventScheduler.getSchedulerRequirements(this.currentPath);
+          var eventReqs = EventSupervisor.getAllSchedulerRequirements(this.currentPath);
           if (!Collections.disjoint(requirements, eventReqs)) {
             throw new IllegalArgumentException(
                 "Events that are triggered during path following cannot require the drive subsystem");
           }
         }
 
-        eventScheduler.initialize(currentTrajectory);
+        eventSupervisor.initialize(currentTrajectory);
 
         if (!Double.isFinite(currentTrajectory.getTotalTimeSeconds())) {
           finish = true;
@@ -646,7 +651,7 @@ public class ShinPathfindingCommand extends Command {
       );
 
       output.accept(targetSpeeds, targetState.feedforwards);
-      eventScheduler.execute(currentTime);
+      eventSupervisor.execute(currentTime);
     }
   }
 
@@ -675,7 +680,7 @@ public class ShinPathfindingCommand extends Command {
 
     PPLogging.logActivePath(null);
     PPLogging.logStopPoses(List.of());
-    eventScheduler.end();
+    eventSupervisor.end();
   }
 
   /**
