@@ -390,7 +390,7 @@ public class RoronoaZoro implements ShinPathfinder {
       Translation2d realGoalPos,
       Set<GridPosition> obstacles) {
 
-    // 1. Reconstruct the sequential path chain: start -> stops -> goal
+    // Reconstruct the sequential path chain: start -> stops -> goal
     List<GridPosition> stops = new ArrayList<>(sStops);
     stops.add(sGoal);
 

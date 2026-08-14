@@ -1,6 +1,7 @@
 package frc.robot.util.pathfinding.commands;
 
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.util.PPLibTelemetry;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -98,6 +99,10 @@ public class PostPathPreciseAlignment extends Command {
         prevSpeeds       = new ChassisSpeeds();
         settleStartTime  = -1;
         startTime = Timer.getFPGATimestamp();
+
+        PPLogging.logTargetPose(targetPose);
+        PPLibTelemetry.setTargetPose(targetPose);
+
     }
 
     @Override
@@ -150,8 +155,15 @@ public class PostPathPreciseAlignment extends Command {
 
         prevSpeeds = targetSpeeds;
 
-        PPLogging.logTargetPose(targetPose);
         PPLogging.logVelocities(
+            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
+            Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
+            currentSpeeds.omegaRadiansPerSecond,
+            targetSpeeds.omegaRadiansPerSecond
+        );
+
+        
+        PPLibTelemetry.setVelocities(
             Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
             Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
             currentSpeeds.omegaRadiansPerSecond,

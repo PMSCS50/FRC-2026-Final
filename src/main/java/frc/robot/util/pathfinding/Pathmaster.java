@@ -9,8 +9,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
-import frc.robot.util.pathfinding.builders.GoingMerry;
-import frc.robot.util.pathfinding.builders.PathRequest;
+import frc.robot.util.pathfinding.builders.*;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
 import frc.robot.util.pathfinding.zones.*;
@@ -294,6 +293,16 @@ public class Pathmaster {
         .finallyDo(() -> pathing = false);
     }
 
+    // *Pathfind to waypoint corresponding with selectedWaypointIndex
+    public Command goToSelectedWaypoint(List<Pose2d> stops) {
+        if (!GoingMerry.isConfigured()) return Commands.none();
+        pathing = true;
+        return GoingMerry.pathfindToPose(
+            waypoints.get(waypointKeys.get(selectedWaypointIndex)), stops, constraints
+        )
+        .finallyDo(() -> pathing = false);
+    }
+
     // *Intended alignment pipeline.
     // ?pathfindToPose() has ~5cm error at endpoint.
     // ?A predetermined .path file has much less error, around <1cm.
@@ -389,7 +398,7 @@ public class Pathmaster {
         .finallyDo(() -> pathing = false);
     }
 
-        /**
+    /**
      * *Pathfinds to a destination while arriving faced toward a separate target.
      */
     public Command pathfindFaceTargetPose(Pose2d destination, Pose2d faceTarget, List<Pose2d> stops) {

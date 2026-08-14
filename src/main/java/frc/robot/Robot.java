@@ -86,7 +86,6 @@ public class Robot extends LoggedRobot {
   // !CODE FOR ROBOT STATES
   @Override
   public void robotInit() {
-    applyAllianceConfig();
     SmartDashboard.putData("Swerve Drive", new Sendable() {
       @Override
       public void initSendable(SendableBuilder builder) {
@@ -111,7 +110,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
-    applyAllianceConfig();
 
     CommandScheduler.getInstance().run();
     m_robotContainer.monkeyDLuffy.log();
@@ -125,29 +123,16 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
 
     // |Battery voltage error messages
-    if (batteryVoltage <= 8.5 && batterytimer >= 5000) {
+    if (batteryVoltage <= 7.5 && batterytimer >= 20000) {
       Elastic.sendNotification(
         new Elastic.Notification(
           Elastic.NotificationLevel.WARNING,
-          "Battery Warning",
+          "BATTERY WARNING",
           "Battery voltage is low, at only " + batteryVoltage + " volts"
         )
       );
       batterytimer = 0;
     }
-
-    // Logger.recordOutput("RoboRIO/Current 3.3V", RobotController.getCurrent3V3());
-    // Logger.recordOutput("RoboRIO/Current 5V", RobotController.getCurrent5V());
-    // Logger.recordOutput("RoboRIO/Current 6V", RobotController.getCurrent6V());
-    // Logger.recordOutput("RoboRIO/Num Current Faults 3.3V", RobotController.getFaultCount3V3());
-    // Logger.recordOutput("RoboRIO/Num Current Faults 5V", RobotController.getFaultCount5V());
-    // Logger.recordOutput("RoboRIO/Num Current Faults 6V", RobotController.getFaultCount6V());
-    
-    // |Field (using Advantagescope for now)
-    // Logger.recordOutput("Field/RobotPose", m_robotContainer.drivetrain.getPose());
-    // Logger.recordOutput("Field/VisionEstimatedPose", m_robotContainer.vision.getPose());
-    // Logger.recordOutput("Field/ActivePath", m_robotContainer.monkeyDLuffy.getActivePath());
-    //Logger.recordOutput("Field/TargetPose", m_robotContainer.monkeyDLuffy.selectedWaypointPose());
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     
@@ -295,12 +280,5 @@ public class Robot extends LoggedRobot {
         .setNumber(value);
   }
 
-  // // *Flip robot direction based on alliance color (if needed) for driver control
-  // // |not currently used since we are using field-oriented control, but can be useful if we switch to robot-oriented control for teleop
-  // private void applyAllianceDirFlip() {
-  //   Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-  //   boolean red = alliance == Alliance.Red;
 
-  //   m_robotContainer.flipDirection(red ? -1 : 1); 
-  // }
 }
