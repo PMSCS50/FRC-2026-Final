@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 
 import java.util.List;
@@ -52,7 +53,7 @@ public class GoingMerry {
       Subsystem... driveRequirements) {
     if (globals.configured) {
       DriverStation.reportError(
-          "Auto builder has already been configured. This is likely in error.", true);
+          "Going Merry has already been configured. This is likely in error.", true);
     }
 
     globals.pathFollowingCommandBuilder =
@@ -82,7 +83,8 @@ public class GoingMerry {
                 output,
                 controller,
                 robotConfig,
-                driveRequirements);
+                driveRequirements)
+            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
 
     globals.pathfindToPosesCommandBuilder =
         (pose, stops, constraints, goalEndVel) ->
@@ -96,7 +98,9 @@ public class GoingMerry {
                 output,
                 controller,
                 robotConfig,
-                driveRequirements);
+                driveRequirements)
+            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+
 
     globals.pathfindThenFollowPathCommandBuilder =
         (path, constraints) ->
@@ -109,7 +113,9 @@ public class GoingMerry {
                 controller,
                 robotConfig,
                 shouldFlipPath,
-                driveRequirements);
+                driveRequirements)
+            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+
 
     // Holy that is a long name
     globals.pathfindThroughStopsThenFollowPathCommandBuilder =
@@ -124,7 +130,8 @@ public class GoingMerry {
                 controller,
                 robotConfig,
                 shouldFlipPath,
-                driveRequirements);
+                driveRequirements)
+            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
     globals.pathfindingConfigured = true;
   }
 
@@ -239,7 +246,7 @@ public class GoingMerry {
   public static Command followPath(PathPlannerPath path) {
     if (!isConfigured()) {
       throw new AutoBuilderException(
-          "Auto builder was used to build a path following command before being configured");
+          "Going Merry was used to build a path following command before being configured");
     }
 
     return globals.pathFollowingCommandBuilder.apply(path);
@@ -258,7 +265,7 @@ public class GoingMerry {
       Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
-          "Auto builder was used to build a pathfinding command before being configured");
+          "Going Merry was used to build a pathfinding command before being configured");
     }
 
     return globals.pathfindToPoseCommandBuilder.apply(pose, constraints, goalEndVelocity);
@@ -278,7 +285,7 @@ public class GoingMerry {
       Pose2d pose, List<Pose2d> stops, PathConstraints constraints, double goalEndVelocity) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
-          "Auto builder was used to build a pathfinding command before being configured");
+          "Going Merry was used to build a pathfinding command before being configured");
     }
 
     return globals.pathfindToPosesCommandBuilder.apply(pose, stops, constraints, goalEndVelocity);
@@ -351,7 +358,7 @@ public class GoingMerry {
       PathPlannerPath goalPath, PathConstraints pathfindingConstraints) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
-          "Auto builder was used to build a pathfinding command before being configured");
+          "Going Merry was used to build a pathfinding command before being configured");
     }
 
     return globals.pathfindThenFollowPathCommandBuilder.apply(goalPath, pathfindingConstraints);
@@ -370,7 +377,7 @@ public class GoingMerry {
       PathPlannerPath goalPath, List<Pose2d> stops, PathConstraints pathfindingConstraints) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
-          "Auto builder was used to build a pathfinding command before being configured");
+          "Going Merry was used to build a pathfinding command before being configured");
     }
 
     return globals.pathfindThroughStopsThenFollowPathCommandBuilder.apply(goalPath, stops, pathfindingConstraints);
@@ -386,7 +393,7 @@ public class GoingMerry {
   public static Command buildRequest(PathRequest request, PathConstraints defaultConstraints) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
-          "Auto builder was used to build a pathfinding command before being configured");
+          "Going Merry was used to build a pathfinding command before being configured");
     }
 
     // Use requested constraints if present; otherwise fall back to default
