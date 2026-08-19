@@ -107,7 +107,10 @@ public class RobotContainer {
         }
         
         shooter = new Shooter();
-        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate * speedLimiter, pathMaxAngularAcceleration);
+
+        //Have to manually square speedLimiter since unlike the drive command, pathmaster doesnt do it.
+        double pathSpeedLimiter = speedLimiter * speedLimiter;
+        monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * pathSpeedLimiter, pathMaxLinearAcceleration, MaxAngularRate * pathSpeedLimiter, pathMaxAngularAcceleration);
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
@@ -125,7 +128,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
         NamedCommands.registerCommand("Auton Fixed Shooting", new FixedPIDShooting(shooter, 1.366));
-        NamedCommands.registerCommand("Dih Command", new RunCommand(() -> Logger.recordOutput("Pathmaster/DIH", true)));
+        
         // *Five shooting setpoints that form a semicircle around the hub
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
             monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
@@ -179,7 +182,8 @@ public class RobotContainer {
             Commands.parallel(
                 new RunCommand(() -> intake.stopIntake(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
-        ));
+            )
+        );
 
         driverController.leftBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter - 0.15)));
         driverController.rightBumper().onTrue(new InstantCommand(() -> this.setSpeed(speedLimiter + 0.15)));
