@@ -1,6 +1,7 @@
 package frc.robot.util.pathfinding.commands;
 
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.util.PPLibTelemetry;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -33,9 +34,6 @@ public class PostPathPreciseAlignment extends Command {
     private final double theta_ki    = 0.0;
     private final double theta_kd    = 0.07;
 
-
-    private final double maxLinVel = 1.5;
-    private final double maxLinAcc = 3.0;
     private final double maxAngVel = 2 * Math.PI;
     private final double maxAngAcc = 4 * Math.PI;
 
@@ -71,14 +69,11 @@ public class PostPathPreciseAlignment extends Command {
         this.drivetrain = drivetrain;
         this.targetPose = targetPose;
 
-        TrapezoidProfile.Constraints translationConstraints =
-            new TrapezoidProfile.Constraints(maxLinVel, maxLinAcc);
-
         TrapezoidProfile.Constraints rotationConstraints =
             new TrapezoidProfile.Constraints(maxAngVel, maxAngAcc);
 
-        xController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
-        yController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
+        xController     = new PIDController(xy_kp, 0, xy_kd);
+        yController     = new PIDController(xy_kp, 0, xy_kd);
 
         thetaController = new ProfiledPIDController(theta_kp, theta_ki, theta_kd, rotationConstraints);
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
@@ -98,6 +93,9 @@ public class PostPathPreciseAlignment extends Command {
         prevSpeeds       = new ChassisSpeeds();
         settleStartTime  = -1;
         startTime = Timer.getFPGATimestamp();
+
+        PPLogger.logTargetPose(targetPose);
+        PPLibTelemetry.setTargetPose(targetPose)
     }
 
     @Override
@@ -150,8 +148,15 @@ public class PostPathPreciseAlignment extends Command {
 
         prevSpeeds = targetSpeeds;
 
-        PPLogger.logTargetPose(targetPose);
+        
         PPLogger.logVelocities(
+            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
+            Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
+            currentSpeeds.omegaRadiansPerSecond,
+            targetSpeeds.omegaRadiansPerSecond
+        );
+
+        PPLibTelemetry.setVelocities(
             Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
             Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
             currentSpeeds.omegaRadiansPerSecond,
