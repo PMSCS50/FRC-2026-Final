@@ -3,6 +3,7 @@ package frc.robot.util.pathfinding.commands;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.util.PPLibTelemetry;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -34,9 +35,6 @@ public class PostPathPreciseAlignment extends Command {
     private final double theta_ki    = 0.0;
     private final double theta_kd    = 0.07;
 
-
-    private final double maxLinVel = 1.5;
-    private final double maxLinAcc = 3.0;
     private final double maxAngVel = 2 * Math.PI;
     private final double maxAngAcc = 4 * Math.PI;
 
@@ -52,8 +50,8 @@ public class PostPathPreciseAlignment extends Command {
 
     private final double dt = 0.02;
 
-    private final ProfiledPIDController xController;
-    private final ProfiledPIDController yController;
+    private final PIDController xController;
+    private final PIDController yController;
     private final ProfiledPIDController thetaController;
 
     private RobotConfig robotConfig;
@@ -72,14 +70,12 @@ public class PostPathPreciseAlignment extends Command {
         this.drivetrain = drivetrain;
         this.targetPose = targetPose;
 
-        TrapezoidProfile.Constraints translationConstraints =
-            new TrapezoidProfile.Constraints(maxLinVel, maxLinAcc);
 
         TrapezoidProfile.Constraints rotationConstraints =
             new TrapezoidProfile.Constraints(maxAngVel, maxAngAcc);
 
-        xController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
-        yController     = new ProfiledPIDController(xy_kp, 0, xy_kd, translationConstraints);
+        xController     = new PIDController(xy_kp, 0, xy_kd);
+        yController     = new PIDController(xy_kp, 0, xy_kd);
 
         thetaController = new ProfiledPIDController(theta_kp, theta_ki, theta_kd, rotationConstraints);
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
@@ -92,8 +88,6 @@ public class PostPathPreciseAlignment extends Command {
     public void initialize() {
         var state = drivetrain.getState();
 
-        xController.reset(state.Pose.getX(), state.Speeds.vxMetersPerSecond);
-        yController.reset(state.Pose.getY(), state.Speeds.vyMetersPerSecond);
         thetaController.reset(state.Pose.getRotation().getRadians(), state.Speeds.omegaRadiansPerSecond);
 
         prevSpeeds       = new ChassisSpeeds();
