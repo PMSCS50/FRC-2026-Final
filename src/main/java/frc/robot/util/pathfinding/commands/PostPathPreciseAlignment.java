@@ -3,6 +3,7 @@ package frc.robot.util.pathfinding.commands;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.util.PPLibTelemetry;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -49,8 +50,8 @@ public class PostPathPreciseAlignment extends Command {
 
     private final double dt = 0.02;
 
-    private final ProfiledPIDController xController;
-    private final ProfiledPIDController yController;
+    private final PIDController xController;
+    private final PIDController yController;
     private final ProfiledPIDController thetaController;
 
     private RobotConfig robotConfig;
@@ -85,9 +86,7 @@ public class PostPathPreciseAlignment extends Command {
     @Override
     public void initialize() {
         var state = drivetrain.getState();
-
-        xController.reset(state.Pose.getX(), state.Speeds.vxMetersPerSecond);
-        yController.reset(state.Pose.getY(), state.Speeds.vyMetersPerSecond);
+        
         thetaController.reset(state.Pose.getRotation().getRadians(), state.Speeds.omegaRadiansPerSecond);
 
         prevSpeeds       = new ChassisSpeeds();
@@ -95,7 +94,7 @@ public class PostPathPreciseAlignment extends Command {
         startTime = Timer.getFPGATimestamp();
 
         PPLogger.logTargetPose(targetPose);
-        PPLibTelemetry.setTargetPose(targetPose)
+        PPLibTelemetry.setTargetPose(targetPose);
     }
 
     @Override
