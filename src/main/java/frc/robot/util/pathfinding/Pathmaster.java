@@ -45,7 +45,7 @@ public class Pathmaster {
 
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
-        this.robotPose = () -> drivetrain.getState().Pose;
+        this.robotPose = () -> GoingMerry.getCurrentPose();
 
         this.selectedWaypointIndex = 0;
 
