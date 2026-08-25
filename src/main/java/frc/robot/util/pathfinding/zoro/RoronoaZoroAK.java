@@ -34,10 +34,13 @@ public class RoronoaZoroAK implements ShinPathfinder {
             } else {
                 clearInputs();
             }
-        }
 
-        Logger.processInputs(logKey, inputs);
-        return reconstructPath(constraints, goalEndState);
+            Logger.processInputs(logKey, inputs);
+            return currentPath;
+        } else {
+            Logger.processInputs(logKey, inputs);
+            return reconstructPath(constraints, goalEndState);
+        }
     }
 
     // ─── Logging ───────────────────────────────────────────────────────────

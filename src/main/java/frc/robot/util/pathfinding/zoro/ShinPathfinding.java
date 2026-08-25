@@ -77,7 +77,7 @@ public class ShinPathfinding {
   /**
    * Set the stop positions for multistop pathing
    *
-   * @param stopPoses Start position on the field. If this is within an obstacle it will be
+   * @param stopPoses Stop positions on the field. If this is within an obstacle it will be
    *     moved to the nearest non-obstacle node.
    */
   public static void setStops(List<Pose2d> stopPoses) {
