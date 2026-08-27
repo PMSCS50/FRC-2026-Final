@@ -201,7 +201,7 @@ public final class Constants {
     public static Pose2d getShootingSetpoint(int num) {
         if (cachedAllianceSetpoints == null && DriverStation.getAlliance().isPresent()) {
             cachedAllianceSetpoints = Arrays.stream(shootingSetpoints)
-                .map(p -> AllianceRelativePose(p))
+                .map(Constants::AllianceRelativePose)
                 .toArray(Pose2d[]::new);
         }
         if (cachedAllianceSetpoints != null) return cachedAllianceSetpoints[num - 1];

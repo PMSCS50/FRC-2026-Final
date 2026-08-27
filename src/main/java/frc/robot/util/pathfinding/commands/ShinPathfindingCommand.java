@@ -472,11 +472,8 @@ public class ShinPathfindingCommand extends Command {
     } else {
       ShinPathfinding.setStartPosition(currentPose.getTranslation());
       ShinPathfinding.setStartRotation(currentPose.getRotation());
-
-      if (stopPoses.isEmpty()) {
-        ShinPathfinding.setStops(List.of());
-      } else {
-        ShinPathfinding.setStops(stopPoses);
+      ShinPathfinding.setStops(stopPoses);
+      if (!stopPoses.isEmpty()) {
         PPLogging.logStopPoses(stopPoses);
       }
 

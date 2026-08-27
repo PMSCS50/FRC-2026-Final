@@ -45,7 +45,7 @@ public class Pathmaster {
 
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
-        this.robotPose = () -> GoingMerry.getCurrentPose();
+        this.robotPose = GoingMerry::getCurrentPose;
 
         this.selectedWaypointIndex = 0;
 
@@ -62,7 +62,7 @@ public class Pathmaster {
 
         this.drivetrain = drivetrain;
         this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax, nominalVoltageVolts);
-        this.robotPose = () -> drivetrain.getState().Pose;
+        this.robotPose = GoingMerry::getCurrentPose;
 
         this.selectedWaypointIndex = 0;
 

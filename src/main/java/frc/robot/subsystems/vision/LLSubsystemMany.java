@@ -101,8 +101,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
             Logger.recordOutput("CachedHubPose", cachedHubPose);
             hubLogged = hubPassed;
         }
-        // Logger.recordOutput("Vision/PeriodicRunning", true);
-        // Logger.recordOutput("Vision/PeriodicTimestamp", Timer.getFPGATimestamp());
 
         driveState = drivetrain.getState();
 
@@ -172,12 +170,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
                 }
             }
 
-            // *Tag positions
-            // Pose2d[] tagPoses = Arrays.stream(fiducials)
-            //     .filter(f -> tagposes.containsKey(f.id))
-            //     .map(f -> { Transform2d t = tagposes.get(f.id); return new Pose2d(t.getX(), t.getY(), t.getRotation()); })
-            //     .toArray(Pose2d[]::new);
-            //Logger.recordOutput("Vision/" + cam + "/TagPoses", tagPoses);
         }
 
         estimatedRobotPose = driveState.Pose;
@@ -400,10 +392,6 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
         inputs.targetId = bestId;
 
         inputs.hasTagTransform = inputs.hasTarget;
-        // inputs.tagToRobotX    = inputs.hasTagTransform ? getX(bestId) : 0.0;
-        // inputs.tagToRobotY    = inputs.hasTagTransform ? getY(bestId) : 0.0;
-        // inputs.tagToRobotZ    = 0.0;
-        // inputs.tagToRobotRotZ = inputs.hasTagTransform ? getYawRad(bestId) : 0.0;
 
         // *Dont use streams, they are quite resource heavy.
         int[] ids = new int[tagposes.size()];
@@ -415,28 +403,9 @@ public class LLSubsystemMany extends VisionGeneral implements VisionIO {
 
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = tagposes.values().toArray(Pose2d[]::new);
-        // inputs.allTagToRobotX    = new double[ids.length];
-        // inputs.allTagToRobotY    = new double[ids.length];
-        // inputs.allTagToRobotZ    = new double[ids.length];
-        // inputs.allTagToRobotRotZ = new double[ids.length];
-
-        // for (int i = 0; i < ids.length; i++) {
-        //     int id = ids[i];
-        //     inputs.allTagToRobotX[i]    = getX(id);
-        //     inputs.allTagToRobotY[i]    = getY(id);
-        //     inputs.allTagToRobotRotZ[i] = getYawRad(id);
-        // }
-
 
         inputs.hasEstimatedPose       = estimatedRobotPose != null;
         inputs.estimatedPose          = estimatedRobotPose != null ? estimatedRobotPose : Pose2d.kZero;
-        // inputs.estimatedPoseTimestamp = latestEstimate != null ? latestEstimate.timestampSeconds : 0.0;
-        // inputs.numTagsUsed            = latestEstimate != null ? latestEstimate.tagCount : 0;
-        // inputs.avgTagDistMeters       = latestEstimate != null ? latestEstimate.avgTagDist : 0.0;
-        //inputs.distanceToHub = getBestDistanceToHub();
-
-        //Matrix<N3, N1> stdDevMatrix = stdDevs;
-        //inputs.visionStdDevs = new double[]{stdDevMatrix.get(0, 0), stdDevMatrix.get(1, 0), stdDevMatrix.get(2, 0)};
     }
 }
 
