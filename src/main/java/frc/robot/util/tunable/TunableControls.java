@@ -7,6 +7,12 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+
+import com.revrobotics.spark.config.SparkMaxConfig;
+
+
 /**
  * Contains classes for defining control constants and tunable controllers.
  * <p>
@@ -237,6 +243,50 @@ public class TunableControls {
         }
 
         /**
+         * Creates a new {@link TalonFXConfiguration}
+         */
+        public TalonFXConfiguration getTalonFXConfiguration() {
+            TalonFXConfiguration configs = new TalonFXConfiguration();
+            configs.Slot0 = new Slot0Configs()
+                                .withKP(kP)
+                                .withKI(kI)
+                                .withKD(kD)
+                                .withKS(kS)
+                                .withKV(kV)
+                                .withKA(kA)
+                                .withKG(kG);
+
+            if (maxVel > 0 && maxAccel > 0) {\
+                configs.MotionMagic.MotionMagicCruiseVelocity = maxVel;
+                configs.MotionMagic.MotionMagicAcceleration = maxAccel;
+            }
+
+            return configs;
+        }
+
+        /**
+         * Creates a new {@link SparkMaxConfig}
+         */
+        public SparkMaxConfig getSparkMaxConfig() {
+            SparkMaxConfig configs = new SparkMaxConfig();
+            configs.closedLoop
+                    .pid(kP, kI, kD)
+                    .feedForward
+                    .kS(kS)
+                    .kV(kV)
+                    .kA(kA)
+                    .kG(kG);
+
+            if (maxVel > 0 && maxAccel > 0) {
+                configs.closedLoop.maxMotion
+                            .cruiseVelocity(maxVel)
+                            .maxAcceleration(maxAccel);
+            }
+
+            return configs;
+        }
+
+        /**
          * Creates a new {@link ElevatorFeedforward} with the configured constants.
          */
         public ElevatorFeedforward getElevatorFeedforward() {
@@ -359,6 +409,50 @@ public class TunableControls {
             controller.setIZone(iZone.get());
 
             return controller;
+        }
+
+        /**
+         * Creates a new {@link TalonFXConfiguration}
+         */
+        public TalonFXConfiguration getTalonFXConfiguration() {
+            TalonFXConfiguration configs = new TalonFXConfiguration();
+            configs.Slot0 = new Slot0Configs()
+                                .withKP(kP.get())
+                                .withKI(kI.get())
+                                .withKD(kD.get())
+                                .withKS(kS.get())
+                                .withKV(kV.get())
+                                .withKA(kA.get())
+                                .withKG(kG.get());
+
+            if (maxVel.get() > 0 && maxAccel.get() > 0) {\
+                configs.MotionMagic.MotionMagicCruiseVelocity = maxVel.get();
+                configs.MotionMagic.MotionMagicAcceleration = maxAccel.get();
+            }
+            
+            return configs;
+        }
+
+        /**
+         * Creates a new {@link SparkMaxConfig}
+         */
+        public SparkMaxConfig getSparkMaxConfig() {
+            SparkMaxConfig configs = new SparkMaxConfig();
+            configs.closedLoop
+                    .pid(kP.get(), kI.get(), kD.get())
+                    .feedForward
+                    .kS(kS.get())
+                    .kV(kV.get())
+                    .kA(kA.get())
+                    .kG(kG.get());
+
+            if (maxVel.get() > 0 && maxAccel.get() > 0) {
+                configs.closedLoop.maxMotion
+                            .cruiseVelocity(maxVel.get())
+                            .maxAcceleration(maxAccel.get());
+            }
+
+            return configs;
         }
 
         /**
