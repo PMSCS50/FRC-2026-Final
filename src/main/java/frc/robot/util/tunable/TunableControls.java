@@ -245,7 +245,7 @@ public class TunableControls {
         /**
          * Creates a new {@link TalonFXConfiguration}
          */
-        public TalonFXConfiguration getTalonFXConfiguration() {
+        public TalonFXConfiguration getTalonFXConfiguration(boolean MotionMagic) {
             TalonFXConfiguration configs = new TalonFXConfiguration();
             configs.Slot0 = new Slot0Configs()
                                 .withKP(kP)
@@ -256,7 +256,7 @@ public class TunableControls {
                                 .withKA(kA)
                                 .withKG(kG);
 
-            if (maxVel > 0 && maxAcc > 0) {
+            if (maxVel > 0 && maxAcc > 0 && MotionMagic) {
                 configs.MotionMagic.MotionMagicCruiseVelocity = maxVel;
                 configs.MotionMagic.MotionMagicAcceleration = maxAcc;
             }
@@ -267,7 +267,7 @@ public class TunableControls {
         /**
          * Creates a new {@link SparkMaxConfig}
          */
-        public SparkMaxConfig getSparkMaxConfig() {
+        public SparkMaxConfig getSparkMaxConfig(boolean maxMotion) {
             SparkMaxConfig configs = new SparkMaxConfig();
             configs.closedLoop
                     .pid(kP, kI, kD)
@@ -277,7 +277,7 @@ public class TunableControls {
                     .kA(kA)
                     .kG(kG);
 
-            if (maxVel > 0 && maxAcc > 0) {
+            if (maxVel > 0 && maxAcc > 0 && maxMotion) {
                 configs.closedLoop.maxMotion
                             .cruiseVelocity(maxVel)
                             .maxAcceleration(maxAcc);
@@ -414,7 +414,7 @@ public class TunableControls {
         /**
          * Creates a new {@link TalonFXConfiguration}
          */
-        public TalonFXConfiguration getTalonFXConfiguration() {
+        public TalonFXConfiguration getTalonFXConfiguration(boolean MotionMagic) {
             TalonFXConfiguration configs = new TalonFXConfiguration();
             configs.Slot0 = new Slot0Configs()
                                 .withKP(kP.get())
@@ -425,7 +425,7 @@ public class TunableControls {
                                 .withKA(kA.get())
                                 .withKG(kG.get());
 
-            if (maxVel.get() > 0 && maxAcc.get() > 0) {
+            if (maxVel.get() > 0 && maxAcc.get() > 0 && MotionMagic) {
                 configs.MotionMagic.MotionMagicCruiseVelocity = maxVel.get();
                 configs.MotionMagic.MotionMagicAcceleration = maxAcc.get();
             }
@@ -436,7 +436,7 @@ public class TunableControls {
         /**
          * Creates a new {@link SparkMaxConfig}
          */
-        public SparkMaxConfig getSparkMaxConfig() {
+        public SparkMaxConfig getSparkMaxConfig(boolean maxMotion) {
             SparkMaxConfig configs = new SparkMaxConfig();
             configs.closedLoop
                     .pid(kP.get(), kI.get(), kD.get())
@@ -446,7 +446,7 @@ public class TunableControls {
                     .kA(kA.get())
                     .kG(kG.get());
 
-            if (maxVel.get() > 0 && maxAcc.get() > 0) {
+            if (maxVel.get() > 0 && maxAcc.get() > 0 && maxMotion) {
                 configs.closedLoop.maxMotion
                             .cruiseVelocity(maxVel.get())
                             .maxAcceleration(maxAcc.get());
