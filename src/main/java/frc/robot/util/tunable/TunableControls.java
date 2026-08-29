@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.tunable;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -256,9 +256,9 @@ public class TunableControls {
                                 .withKA(kA)
                                 .withKG(kG);
 
-            if (maxVel > 0 && maxAccel > 0) {\
+            if (maxVel > 0 && maxAcc > 0) {
                 configs.MotionMagic.MotionMagicCruiseVelocity = maxVel;
-                configs.MotionMagic.MotionMagicAcceleration = maxAccel;
+                configs.MotionMagic.MotionMagicAcceleration = maxAcc;
             }
 
             return configs;
@@ -277,10 +277,10 @@ public class TunableControls {
                     .kA(kA)
                     .kG(kG);
 
-            if (maxVel > 0 && maxAccel > 0) {
+            if (maxVel > 0 && maxAcc > 0) {
                 configs.closedLoop.maxMotion
                             .cruiseVelocity(maxVel)
-                            .maxAcceleration(maxAccel);
+                            .maxAcceleration(maxAcc);
             }
 
             return configs;
@@ -425,9 +425,9 @@ public class TunableControls {
                                 .withKA(kA.get())
                                 .withKG(kG.get());
 
-            if (maxVel.get() > 0 && maxAccel.get() > 0) {\
+            if (maxVel.get() > 0 && maxAcc.get() > 0) {
                 configs.MotionMagic.MotionMagicCruiseVelocity = maxVel.get();
-                configs.MotionMagic.MotionMagicAcceleration = maxAccel.get();
+                configs.MotionMagic.MotionMagicAcceleration = maxAcc.get();
             }
             
             return configs;
@@ -446,10 +446,10 @@ public class TunableControls {
                     .kA(kA.get())
                     .kG(kG.get());
 
-            if (maxVel.get() > 0 && maxAccel.get() > 0) {
+            if (maxVel.get() > 0 && maxAcc.get() > 0) {
                 configs.closedLoop.maxMotion
                             .cruiseVelocity(maxVel.get())
-                            .maxAcceleration(maxAccel.get());
+                            .maxAcceleration(maxAcc.get());
             }
 
             return configs;
