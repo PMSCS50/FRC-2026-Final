@@ -71,6 +71,27 @@ public class TunableControls {
             this.minInput = constants.minInput;
         }
 
+        public ControlConstants() {
+            this.kP = 0;
+            this.kI = 0;
+            this.kD = 0;
+            this.tolerance = 0;
+            this.velTolerance = 0;
+            this.iZone = 0;
+            this.iMax = 0;
+            this.iMin = 0;
+            this.period = 0.02;
+            this.kV = 0;
+            this.kA = 0;
+            this.kS = 0;
+            this.kG = 0;
+            this.maxVel = 0;
+            this.maxAcc = 0;
+            this.isContinuous = false;
+            this.maxInput = 0;
+            this.minInput = 0;
+        }
+
         /**
          * Sets the PID constants.
          * 

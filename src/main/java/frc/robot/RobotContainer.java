@@ -198,7 +198,7 @@ public class RobotContainer {
 
 
         PathRequest request = new PathRequest()
-                            .withGoal("Game-Winning Path")
+                            .withGoal("choreo/Game_Winning_Path")
                             .withStops(List.of(VisionConstants.getCenter()))
                             .withEventTriggers((auto) -> {
                                 auto.isRunning().whileTrue(Commands.print("dih")).whileFalse(Commands.print("no dih"));
@@ -213,7 +213,7 @@ public class RobotContainer {
         driverController.b().whileTrue(
             Commands.defer(
                 //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.makePathTo(monkeyDLuffy.selectedWaypointPose(), List.of(VisionConstants.getCenter(), ClimbConstants.getClimbPose(Alliance.Red)))
+                () -> monkeyDLuffy.submitRequest(request)
                     //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
                 ,Set.of(drivetrain)
             )

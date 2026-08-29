@@ -44,7 +44,11 @@ public class PathRequest {
 
     public PathRequest withGoal(String targetPath) {
         try {
-            this.targetPath = PathPlannerPath.fromPathFile(targetPath);
+            if (targetPath.startsWith("choreo/")) {
+                this.targetPath = PathPlannerPath.fromChoreoTrajectory(targetPath.substring(7));
+            } else {
+                this.targetPath = PathPlannerPath.fromPathFile(targetPath);
+            }
         }
         catch (Exception e) {
             Elastic.sendNotification(
