@@ -256,7 +256,11 @@ public class TunableControls {
                                 .withKA(kA)
                                 .withKG(kG);
 
+<<<<<<< HEAD
             if (maxVel > 0 && maxAcc > 0 && MotionMagic) {
+=======
+            if (maxVel > 0 && maxAcc > 0) {
+>>>>>>> e3fdd82cdd065f7c2f7dbde71068b5e58955af6e
                 configs.MotionMagic.MotionMagicCruiseVelocity = maxVel;
                 configs.MotionMagic.MotionMagicAcceleration = maxAcc;
             }
@@ -277,7 +281,11 @@ public class TunableControls {
                     .kA(kA)
                     .kG(kG);
 
+<<<<<<< HEAD
             if (maxVel > 0 && maxAcc > 0 && maxMotion) {
+=======
+            if (maxVel > 0 && maxAcc > 0) {
+>>>>>>> e3fdd82cdd065f7c2f7dbde71068b5e58955af6e
                 configs.closedLoop.maxMotion
                             .cruiseVelocity(maxVel)
                             .maxAcceleration(maxAcc);
@@ -425,7 +433,11 @@ public class TunableControls {
                                 .withKA(kA.get())
                                 .withKG(kG.get());
 
+<<<<<<< HEAD
             if (maxVel.get() > 0 && maxAcc.get() > 0 && MotionMagic) {
+=======
+            if (maxVel.get() > 0 && maxAcc.get() > 0) {
+>>>>>>> e3fdd82cdd065f7c2f7dbde71068b5e58955af6e
                 configs.MotionMagic.MotionMagicCruiseVelocity = maxVel.get();
                 configs.MotionMagic.MotionMagicAcceleration = maxAcc.get();
             }
@@ -446,7 +458,11 @@ public class TunableControls {
                     .kA(kA.get())
                     .kG(kG.get());
 
+<<<<<<< HEAD
             if (maxVel.get() > 0 && maxAcc.get() > 0 && maxMotion) {
+=======
+            if (maxVel.get() > 0 && maxAcc.get() > 0) {
+>>>>>>> e3fdd82cdd065f7c2f7dbde71068b5e58955af6e
                 configs.closedLoop.maxMotion
                             .cruiseVelocity(maxVel.get())
                             .maxAcceleration(maxAcc.get());
