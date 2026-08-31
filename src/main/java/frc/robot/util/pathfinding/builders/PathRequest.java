@@ -19,7 +19,7 @@ public class PathRequest {
     private Pose2d targetPose;
 
     private PathPlannerPath targetPath;
-    private boolean pathFindToPath;
+    private boolean pathFindThenFollowPath;
 
     private List<Pose2d> stops = List.of();
     private PathConstraints constraints = null;
@@ -32,13 +32,13 @@ public class PathRequest {
 
     public PathRequest withGoal(Pose2d targetPose) {
         this.targetPose = targetPose;
-        pathFindToPath = false;
+        pathFindThenFollowPath = false;
         return this;
     }
 
     public PathRequest withGoal(PathPlannerPath targetPath) {
         this.targetPath = targetPath;
-        pathFindToPath = true;
+        pathFindThenFollowPath = true;
         return this;
     }
 
@@ -58,7 +58,7 @@ public class PathRequest {
                 .withDescription( "Path " + targetPath + " is not defined"));
         }
         finally {
-            pathFindToPath = true;
+            pathFindThenFollowPath = true;
         }
         return this;
     }
@@ -114,8 +114,8 @@ public class PathRequest {
         return targetPath;
     }
 
-    public boolean isPathFindToPath() {
-        return pathFindToPath;
+    public boolean isPathFindThenFollowPath() {
+        return pathFindThenFollowPath;
     }
 
     public List<Pose2d> getStops() {

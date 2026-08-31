@@ -400,7 +400,7 @@ public class GoingMerry {
     PathConstraints constraints =
         request.getConstraints() != null ? request.getConstraints() : defaultConstraints;
 
-    if (request.isPathFindToPath()) {
+    if (request.isPathFindThenFollowPath()) {
       return pathfindThenFollowPath(
           request.getTargetPath(),
           request.getStops(),

@@ -307,11 +307,16 @@ public class Pathmaster {
     // ?pathfindToPose() has ~5cm error at endpoint.
     // ?A predetermined .path file has much less error, around <1cm.
     // ?This pathfinds to the start of the .path, then follows it precisely to the end.
-    public Command pathfindToPath(String pathName) {
+    public Command pathFindThenFollowPath(String pathName) {
         if (!GoingMerry.isConfigured()) return Commands.none();
         try {
             pathing = true;
-            PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+            PathPlannerPath path;
+            if (pathName.startsWith("choreo/")) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(7));
+            } else {
+                path = PathPlannerPath.fromPathFile(pathName);
+            }
             return Commands.defer(
                 () -> GoingMerry.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
@@ -333,11 +338,16 @@ public class Pathmaster {
     // ?pathfindToPose() has ~5cm error at endpoint.
     // ?A predetermined .path file has much less error, around <1cm.
     // ?This pathfinds to the start of the .path, then follows it precisely to the end.
-    public Command pathfindToPath(String pathName, List<Pose2d> stops) {
+    public Command pathFindThenFollowPath(String pathName, List<Pose2d> stops) {
         if (!GoingMerry.isConfigured()) return Commands.none();
         try {
             pathing = true;
-            PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+            PathPlannerPath path;
+            if (pathName.startsWith("choreo/")) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(7));
+            } else {
+                path = PathPlannerPath.fromPathFile(pathName);
+            }
             return Commands.defer(
                 () -> GoingMerry.pathfindThenFollowPath(path, stops, constraints),
                 Set.of(drivetrain)
