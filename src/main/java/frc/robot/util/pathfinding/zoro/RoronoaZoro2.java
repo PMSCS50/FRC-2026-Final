@@ -26,7 +26,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**
- * Custom pathfinder extending AD* with support for many different Zones, as well as multistop pathfinding.
+ * Custom Incremental Phi* pathfinder (built on AD*) with support for many different Zones, as well as multistop pathfinding.
  * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
  * 
  * Zones can be toggled active/inactive at runtime.
@@ -39,7 +39,7 @@ import org.json.simple.parser.JSONParser;
  * * LocalADStar couldn't create paths from a->b->c smoothly, so this pathfinder also handles multiple stops.
  * * Although I am much prouder of this than the zones, i cant really say much more
  */
-public class RoronoaZoro implements ShinPathfinder {
+public class RoronoaZoro2 implements ShinPathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
   private static final double EPS = 2.5;
 
@@ -85,7 +85,7 @@ public class RoronoaZoro implements ShinPathfinder {
   private final List<EventMarker> eventMarkers = new ArrayList<>();
 
   /** Create a new pathfinder that runs AD* locally in a background thread */
-  public RoronoaZoro() {
+  public RoronoaZoro2() {
     planningThread = new Thread(this::runThread);
 
     requestStart = new GridPosition(0, 0);
@@ -755,6 +755,29 @@ public class RoronoaZoro implements ShinPathfinder {
     return heuristic(sStart, sEnd);
   }
 
+  // private boolean isCollision(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
+  //   if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
+  //     return true;
+  //   }
+
+  //   if (sStart.x != sEnd.x && sStart.y != sEnd.y) {
+  //     GridPosition s1;
+  //     GridPosition s2;
+
+  //     if (sEnd.x - sStart.x == sStart.y - sEnd.y) {
+  //       s1 = new GridPosition(Math.min(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
+  //       s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.max(sStart.y, sEnd.y));
+  //     } else {
+  //       s1 = new GridPosition(Math.min(sStart.x, sEnd.x), Math.max(sStart.y, sEnd.y));
+  //       s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
+  //     }
+
+  //     return obstacles.contains(s1) || obstacles.contains(s2);
+  //   }
+
+  //   return false;
+  // }
+
   private boolean isCollision(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
     if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
       return true;
@@ -1068,6 +1091,8 @@ public class RoronoaZoro implements ShinPathfinder {
     HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
     HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
     Set<GridPosition> closed = new HashSet<>();
+    HashMap<GridPosition, GridPosition> parent = new HashMap<>();
+    HashMap<GridPosition, Double> angle = new HashMap<>();
 
     double eps = EPS;
 
@@ -1079,7 +1104,6 @@ public class RoronoaZoro implements ShinPathfinder {
 }
 
 /*
-
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------  -------------------------------------------------------------------
 ------------------------------------------------------------------------------------- @-%-----------------------------------------------------------------
