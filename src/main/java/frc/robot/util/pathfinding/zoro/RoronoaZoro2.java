@@ -779,27 +779,72 @@ public class RoronoaZoro2 implements ShinPathfinder {
   // }
 
   private boolean isCollision(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
-    if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
-      return true;
-    }
 
-    if (sStart.x != sEnd.x && sStart.y != sEnd.y) {
-      GridPosition s1;
-      GridPosition s2;
+    List<GridPosition> supercoverCells = supercover(sStart, sEnd);
 
-      if (sEnd.x - sStart.x == sStart.y - sEnd.y) {
-        s1 = new GridPosition(Math.min(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
-        s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.max(sStart.y, sEnd.y));
-      } else {
-        s1 = new GridPosition(Math.min(sStart.x, sEnd.x), Math.max(sStart.y, sEnd.y));
-        s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
+    for (GridPosition cell : supercoverCells) {
+      if (obstacles.contains(cell)) {
+        return true;
       }
-
-      return obstacles.contains(s1) || obstacles.contains(s2);
     }
 
     return false;
   }
+
+  /**
+   * Traverses a grid using the supercover algorithm to find all cells 
+   * intersected by a line between sStart and sEnd.
+   */
+  public static List<GridPosition> supercover(GridPosition sStart, GridPosition sEnd) {
+      List<GridPosition> points = new ArrayList<>();
+      
+      int dx = sEnd.x - sStart.x;
+      int dy = sEnd.y - sStart.y;
+      
+      int nx = Math.abs(dx);
+      int ny = Math.abs(dy);
+      
+      int signX = Integer.compare(dx, 0);
+      int signY = Integer.compare(dy, 0);
+      
+      // Track the current tile coordinates
+      int currentX = sStart.x;
+      int currentY = sStart.y;
+      
+      // Add the starting position
+      points.add(new GridPosition(currentX, currentY));
+      
+      // ix and iy track the number of grid step increments taken
+      int ix = 0;
+      int iy = 0;
+      
+      while (ix < nx || iy < ny) {
+          // Using long to prevent any potential integer overflow with massive grids
+          long decision = (1L + 2 * ix) * ny - (1L + 2 * iy) * nx;
+          
+          if (decision == 0) {
+              // Perfect corner intersection
+              // Step diagonally and account for both steps simultaneously
+              currentX += signX;
+              currentY += signY;
+              ix++;
+              iy++;
+          } else if (decision < 0) {
+              // Next boundary crossed is a vertical grid line (move along X)
+              currentX += signX;
+              ix++;
+          } else {
+              // Next boundary crossed is a horizontal grid line (move along Y)
+              currentY += signY;
+              iy++;
+          }
+          
+          points.add(new GridPosition(currentX, currentY));
+      }
+      
+      return points;
+  }
+
 
   private List<GridPosition> getOpenNeighbors(GridPosition s, Set<GridPosition> obstacles) {
     List<GridPosition> ret = new ArrayList<>();
