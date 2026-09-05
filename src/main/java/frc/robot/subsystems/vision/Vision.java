@@ -42,7 +42,7 @@ public class Vision extends SubsystemBase{
 
     public Vision(CommandSwerveDrivetrain drivetrain, VisionIO io) {
         this.drivetrain = drivetrain;
-        this.io         = io;
+        this.io = io;
     }
 
     public void periodic() {
