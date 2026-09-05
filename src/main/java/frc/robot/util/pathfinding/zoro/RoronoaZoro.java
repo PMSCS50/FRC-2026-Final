@@ -1087,6 +1087,8 @@ public class RoronoaZoro implements ShinPathfinder {
     HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
     HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
     Set<GridPosition> closed = new HashSet<>();
+    HashMap<GridPosition, GridPosition> parent = new HashMap<>();
+    HashMap<GridPosition, Double> angle = new HashMap<>();
 
     double eps = EPS;
 
