@@ -26,7 +26,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**
- * Custom pathfinder extending AD* with support for many different Zones, as well as multistop pathfinding.
+ * Custom AD* pathfinder with support for many different Zones, as well as multistop pathfinding.
  * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
  * 
  * Zones can be toggled active/inactive at runtime.
@@ -622,41 +622,15 @@ public class RoronoaZoro implements ShinPathfinder {
     return null;
   }
 
-  private boolean walkable(GridPosition s1, GridPosition s2, Set<GridPosition> obstacles) {
-    int x0 = s1.x;
-    int y0 = s1.y;
-    int x1 = s2.x;
-    int y1 = s2.y;
+  private boolean walkable(
+    GridPosition s1,
+    GridPosition s2,
+    Set<GridPosition> obstacles) {
 
-    int dx = Math.abs(x1 - x0);
-    int dy = Math.abs(y1 - y0);
-    int x = x0;
-    int y = y0;
-    int n = 1 + dx + dy;
-    int xInc = (x1 > x0) ? 1 : -1;
-    int yInc = (y1 > y0) ? 1 : -1;
-    int error = dx - dy;
-    dx *= 2;
-    dy *= 2;
-
-    for (; n > 0; n--) {
-      if (obstacles.contains(new GridPosition(x, y))) {
-        return false;
-      }
-
-      if (error > 0) {
-        x += xInc;
-        error -= dy;
-      } else if (error < 0) {
-        y += yInc;
-        error += dx;
-      } else {
-        x += xInc;
-        y += yInc;
-        error -= dy;
-        error += dx;
-        n--;
-      }
+    for (GridPosition cell : supercover(s1, s2)) {
+        if (obstacles.contains(cell)) {
+            return false;
+        }
     }
 
     return true;
@@ -756,27 +730,72 @@ public class RoronoaZoro implements ShinPathfinder {
   }
 
   private boolean isCollision(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
-    if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
-      return true;
-    }
 
-    if (sStart.x != sEnd.x && sStart.y != sEnd.y) {
-      GridPosition s1;
-      GridPosition s2;
+    List<GridPosition> supercoverCells = supercover(sStart, sEnd);
 
-      if (sEnd.x - sStart.x == sStart.y - sEnd.y) {
-        s1 = new GridPosition(Math.min(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
-        s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.max(sStart.y, sEnd.y));
-      } else {
-        s1 = new GridPosition(Math.min(sStart.x, sEnd.x), Math.max(sStart.y, sEnd.y));
-        s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
+    for (GridPosition cell : supercoverCells) {
+      if (obstacles.contains(cell)) {
+        return true;
       }
-
-      return obstacles.contains(s1) || obstacles.contains(s2);
     }
 
     return false;
   }
+
+  /**
+   * Traverses a grid using the supercover algorithm to find all cells 
+   * intersected by a line between sStart and sEnd.
+   */
+  public static List<GridPosition> supercover(GridPosition sStart, GridPosition sEnd) {
+      List<GridPosition> points = new ArrayList<>();
+      
+      int dx = sEnd.x - sStart.x;
+      int dy = sEnd.y - sStart.y;
+      
+      int nx = Math.abs(dx);
+      int ny = Math.abs(dy);
+      
+      int signX = Integer.compare(dx, 0);
+      int signY = Integer.compare(dy, 0);
+      
+      // Track the current tile coordinates
+      int currentX = sStart.x;
+      int currentY = sStart.y;
+      
+      // Add the starting position
+      points.add(new GridPosition(currentX, currentY));
+      
+      // ix and iy track the number of grid step increments taken
+      int ix = 0;
+      int iy = 0;
+      
+      while (ix < nx || iy < ny) {
+          // Using long to prevent any potential integer overflow with massive grids
+          long decision = (1L + 2 * ix) * ny - (1L + 2 * iy) * nx;
+          
+          if (decision == 0) {
+              // Perfect corner intersection
+              // Step diagonally and account for both steps simultaneously
+              currentX += signX;
+              currentY += signY;
+              ix++;
+              iy++;
+          } else if (decision < 0) {
+              // Next boundary crossed is a vertical grid line (move along X)
+              currentX += signX;
+              ix++;
+          } else {
+              // Next boundary crossed is a horizontal grid line (move along Y)
+              currentY += signY;
+              iy++;
+          }
+          
+          points.add(new GridPosition(currentX, currentY));
+      }
+      
+      return points;
+  }
+
 
   private List<GridPosition> getOpenNeighbors(GridPosition s, Set<GridPosition> obstacles) {
     List<GridPosition> ret = new ArrayList<>();
@@ -1068,6 +1087,8 @@ public class RoronoaZoro implements ShinPathfinder {
     HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
     HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
     Set<GridPosition> closed = new HashSet<>();
+    HashMap<GridPosition, GridPosition> parent = new HashMap<>();
+    HashMap<GridPosition, Double> angle = new HashMap<>();
 
     double eps = EPS;
 
@@ -1079,7 +1100,6 @@ public class RoronoaZoro implements ShinPathfinder {
 }
 
 /*
-
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------  -------------------------------------------------------------------
 ------------------------------------------------------------------------------------- @-%-----------------------------------------------------------------
