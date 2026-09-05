@@ -1,6 +1,5 @@
 package frc.robot.subsystems.vision;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,7 +56,6 @@ public class VisionIOSim implements VisionIO {
 
         poseEstimator = new PhotonPoseEstimator(
             VisionConstants.aprilTagLayoutAndymark,
-            PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_RIO,
             ROBOT_TO_CAMERA
         );
     }
@@ -117,8 +115,13 @@ public class VisionIOSim implements VisionIO {
         inputs.visibleTagPoses = poses;
 
         // Pose estimate
-        Optional<EstimatedRobotPose> est = poseEstimator.update(result);
-
+        Optional<EstimatedRobotPose> est = Optional.empty();
+        for (var resultVar : results) {
+            est = poseEstimator.estimateCoprocMultiTagPose(resultVar);
+            if (est.isEmpty()) {
+                est = poseEstimator.estimateLowestAmbiguityPose(resultVar);
+            }
+        }
         if (est.isEmpty()) {
             inputs.hasEstimatedPose = false;
             return;
