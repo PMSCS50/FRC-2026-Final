@@ -1,20 +1,18 @@
 package frc.robot.commands;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-
-import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-// import frc.robot.subsystems.vision.VisionSubsystem;
-import frc.robot.subsystems.vision.VisionGeneral;
+import frc.robot.subsystems.vision.Vision;
 
 public class PV_Align extends Command {
 
     private final CommandSwerveDrivetrain drivetrain;
-    private final VisionGeneral vision;
+    private final Vision vision;
     private final int targetId;
 
     private double xSetpoint, ySetpoint, rotSetpoint;
@@ -27,7 +25,7 @@ public class PV_Align extends Command {
 
     public PV_Align(
         CommandSwerveDrivetrain drivetrain,
-        VisionGeneral vision,
+        Vision vision,
         int targetId,
         double xSetpoint,
         double ySetpoint,

@@ -21,6 +21,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,14 +37,16 @@ import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Pivoting;
 import frc.robot.commands.Intaking;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIOReal;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.builders.PathRequest;
 import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
 import frc.robot.subsystems.Pivot;
-import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drivetrain.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -74,10 +77,13 @@ public class RobotContainer {
 
     //! ACTUAL IMPORTANT STUFF (initiallize subsystems and the like)
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final VisionGeneral vision;
+
+    private final VisionIO visionIO;
+    public final Vision vision;
     public final Pathmaster monkeyDLuffy;
+
     private final Shooter shooter;
-    private final Intake intake = new Intake();
+    private final Intake intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
     private final Pivot pivot = new Pivot();
 
     public static final CommandXboxController driverController = new CommandXboxController(0);
@@ -102,11 +108,14 @@ public class RobotContainer {
 
     // *Constructor
     public RobotContainer() {
-        if (Constants.currentMode == Constants.Mode.SIM) {
-            vision = new PV_Sim(drivetrain, new VisionIOSim("imaginaryPenis"));
+        // Choose backend automatically
+        if (RobotBase.isReal()) {
+            visionIO = new VisionIOReal("");
         } else {
-            vision = new LLSubsystemMany(drivetrain, "");
+            visionIO = new VisionIOSim("imaginaryPenis");
         }
+
+        vision = new Vision(drivetrain, visionIO);
         
         shooter = new Shooter();
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate * speedLimiter, pathMaxAngularAcceleration);
@@ -172,14 +181,14 @@ public class RobotContainer {
         // *Triggers and Bumpers
         driverController.leftTrigger().whileTrue(
             Commands.parallel(
-                new RunCommand(() -> intake.spinIntakePID(1), intake),
+                new RunCommand(() -> intake.runPID(1), intake),
                 new RunCommand(() -> shooter.spinKickersSpecified(-.6), shooter)
             )
         );
         
         driverController.leftTrigger().onFalse(
             Commands.parallel(
-                new RunCommand(() -> intake.stopIntake(), intake),
+                new RunCommand(() -> intake.stop(), intake),
                 new RunCommand(() -> shooter.stopKicker(), shooter)
         ));
 
@@ -192,8 +201,8 @@ public class RobotContainer {
         // *Letters
         //driverController.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
-        if (vision instanceof LLSubsystemMany) {
-           driverController.a().whileTrue(new AlignToHub(drivetrain, (LLSubsystemMany) vision));
+        if (vision instanceof Vision) {
+           driverController.a().whileTrue(new AlignToHub(drivetrain, (Vision) vision));
         }
 
 
@@ -243,16 +252,16 @@ public class RobotContainer {
 
         operatorController.leftTrigger().whileTrue(
             new StartEndCommand(
-                () -> intake.spinIntakePID(1),
-                () -> intake.stopIntake(),
+                () -> intake.runPID(.2),
+                () -> intake.stop(),
                 intake
             )
         );
 
         operatorController.leftBumper().whileTrue(
             new StartEndCommand(
-                () -> intake.spinIntakePID(-1),
-                () -> intake.stopIntake(),
+                () -> intake.runPID(-1),
+                () -> intake.stop(),
                 intake
             )
         );

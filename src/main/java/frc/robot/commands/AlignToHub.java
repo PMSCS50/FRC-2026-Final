@@ -7,16 +7,16 @@ import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 // import frc.robot.subsystems.vision.LLSubsystem;
-import frc.robot.subsystems.vision.LLSubsystemMany;
+import frc.robot.subsystems.vision.Vision;
 import java.lang.Math;
 
 public class AlignToHub extends Command {
     private final PIDController rotController;
-    private final LLSubsystemMany llvision;
+    private final Vision llvision;
     private final CommandSwerveDrivetrain drivetrain;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
 
-    public AlignToHub(CommandSwerveDrivetrain drivetrain, LLSubsystemMany llvision) {
+    public AlignToHub(CommandSwerveDrivetrain drivetrain, Vision llvision) {
         this.drivetrain = drivetrain;
         this.llvision = llvision;
         this.rotController = new PIDController(Constants.ROT_REEF_ALIGNMENT_P, 0, 0);

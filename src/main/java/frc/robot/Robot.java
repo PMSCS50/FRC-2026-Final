@@ -27,7 +27,7 @@ import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.vision.LLSubsystemMany;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
@@ -258,10 +258,8 @@ public class Robot extends LoggedRobot {
     // *Re-add waypoints with correct alliance-relative poses
     m_robotContainer.loadAllianceWaypoints();
 
-    if (m_robotContainer.vision instanceof LLSubsystemMany ll) {
-      ll.cachedHubPose = null;
-      ll.hasSeededPose = false;
-    }
+    m_robotContainer.vision.cachedHubPose = null;
+    m_robotContainer.vision.hasSeededPose = false;
 
     lastAppliedAlliance = alliance;
   }

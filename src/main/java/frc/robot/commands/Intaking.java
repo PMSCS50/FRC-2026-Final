@@ -1,7 +1,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.intake.Intake;
 
 
 
@@ -21,14 +21,14 @@ public class Intaking extends Command {
 
     @Override
     public void execute() {
-        intake.spinIntakePID(1);
+        intake.runPID(.2);
         
     }
 
 
     @Override
     public void end(boolean interrupted) {
-        intake.stopIntake();
+        intake.stop();
     }
 
     @Override

@@ -9,17 +9,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.subsystems.vision.LLSubsystemMany;
+import frc.robot.subsystems.vision.Vision;
 
 public class LL_Orient extends Command {
     private final PIDController rotController;
     private final CommandSwerveDrivetrain drivetrain;
-    private final LLSubsystemMany llVision;
+    private final Vision llVision;
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
     private final DoubleSupplier xInput, yInput;
     private final int tagId;
 
-    public LL_Orient(CommandSwerveDrivetrain drivetrain, LLSubsystemMany llVision, int tagId, DoubleSupplier xInput, DoubleSupplier yInput) {
+    public LL_Orient(CommandSwerveDrivetrain drivetrain, Vision llVision, int tagId, DoubleSupplier xInput, DoubleSupplier yInput) {
         rotController = new PIDController(Constants.ROT_REEF_ALIGNMENT_P, 0, 0);
         this.drivetrain = drivetrain;
         this.llVision = llVision;

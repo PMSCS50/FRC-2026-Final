@@ -1,7 +1,8 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.shooter;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
@@ -19,11 +20,12 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.ShooterConstants;
 
-public class Shooter extends SubsystemBase {
+public class Shooter extends SubsystemBase implements ShooterIO {
 
     // !MOTORS
     private final TalonFX shooterMotor1;
@@ -35,12 +37,18 @@ public class Shooter extends SubsystemBase {
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0.0).withSlot(0);
 
     private final StatusSignal<AngularVelocity> shooterMotorVelocity;
-    
+    private final StatusSignal<Current> sm1SupplyCurrent;
+    private final StatusSignal<Current> sm2SupplyCurrent;
+
+
     // !CONSTRUCTOR
     public Shooter() {
         shooterMotor1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
         shooterMotor2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
+
         shooterMotorVelocity = shooterMotor1.getVelocity();
+        sm1SupplyCurrent = shooterMotor1.getSupplyCurrent();
+        sm2SupplyCurrent = shooterMotor2.getSupplyCurrent();
 
         TalonFXConfiguration shooterConfig = new TalonFXConfiguration();
         configureShooterMotor(shooterConfig);
@@ -91,9 +99,11 @@ public class Shooter extends SubsystemBase {
     // !PERIODIC
     @Override
     public void periodic() {
-        shooterMotorVelocity.refresh();
-        Logger.recordOutput("Shooter/Amperage (amps)",shooterMotor1.getMotorStallCurrent().getValueAsDouble());
-        Logger.recordOutput("Shooter/Velocity (rps)", shooterMotor1.getVelocity().getValueAsDouble());
+        BaseStatusSignal.refreshAll(
+            shooterMotorVelocity,
+            sm1SupplyCurrent, 
+            sm2SupplyCurrent
+        );
     }
 
     // *Regression model by Kevin
@@ -129,7 +139,7 @@ public class Shooter extends SubsystemBase {
 
     // *Checks if the shooter is within a certain RPM threshold of the target RPM based on current distance to target.
     public boolean atCorrectRPS(double distance) {
-        double currentRPS = shooterMotor1.getVelocity().getValueAsDouble();
+        double currentRPS = shooterMotorVelocity.getValueAsDouble();
         double targetRPS = this.rpsFromDistanceRegression(distance);
         boolean atCorrectRPS = Math.abs(currentRPS - targetRPS) < 5.0;
         Logger.recordOutput("Shooter/rpsControl/atCorrectRPS", atCorrectRPS);
@@ -165,4 +175,10 @@ public class Shooter extends SubsystemBase {
     public TalonFX getShooterMotor2() {
         return shooterMotor2;
     }
+
+	@Override
+	public void updateInputs(ShooterIOInputs inputs) {
+		inputs.totalCurrent = sm1SupplyCurrent.getValueAsDouble() + sm2SupplyCurrent.getValueAsDouble();
+        inputs.shooterVelocity = shooterMotorVelocity.getValueAsDouble();
+	}
 }
