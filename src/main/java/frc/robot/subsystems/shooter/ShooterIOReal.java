@@ -29,7 +29,6 @@ public class ShooterIOReal implements ShooterIO {
     private final SparkMaxConfig kickerConfig2 = new SparkMaxConfig();
 
     private final RelativeEncoder kicker1Encoder = kicker1.getEncoder();
-    private final RelativeEncoder kicker2Encoder = kicker2.getEncoder();
     
     private final VelocityVoltage velocityVoltage = new VelocityVoltage(0.0).withSlot(0);
 

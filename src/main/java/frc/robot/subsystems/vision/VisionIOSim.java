@@ -53,7 +53,6 @@ public class VisionIOSim implements VisionIO {
 
         poseEstimator = new PhotonPoseEstimator(
             VisionConstants.aprilTagLayoutAndymark,
-            PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_RIO,
             robotToCamera
         );
     }
@@ -64,8 +63,15 @@ public class VisionIOSim implements VisionIO {
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        inputs.name = name;
-        PhotonPipelineResult result = camera.getLatestResult();
+        List<PhotonPipelineResult> results = camera.getAllUnreadResults();
+
+        //Latest Result
+        if (results.isEmpty()) {
+            clear(inputs);
+            return;
+        }
+        
+        PhotonPipelineResult result = results.get(results.size() - 1);
 
         if (result == null) {
             clear(inputs);
@@ -105,10 +111,13 @@ public class VisionIOSim implements VisionIO {
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = poses;
 
-        Optional<EstimatedRobotPose> est = poseEstimator.update(result);
-        if (est.isEmpty()) {
-            clearPose(inputs);
-            return;
+        Optional<EstimatedRobotPose> est = Optional.empty();
+
+        for (PhotonPipelineResult r : results) {
+            est = poseEstimator.estimateCoprocMultiTagPose(r);
+            if (est.isEmpty()) {
+                est = poseEstimator.estimateLowestAmbiguityPose(r);
+            }
         }
 
         EstimatedRobotPose erp = est.get();
