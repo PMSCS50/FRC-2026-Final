@@ -27,8 +27,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
@@ -157,16 +155,16 @@ public class Robot extends LoggedRobot {
       DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
     }
 
-    // if (!m_orchestra.isPlaying() && allowOrchestra) {
-    //   m_orchestra.play();
-    // }
+    if (!m_orchestra.isPlaying() && allowOrchestra) {
+      m_orchestra.play();
+    }
   }
 
   @Override
   public void disabledExit() {
-      // if (m_orchestra.isPlaying()) {
-      //   m_orchestra.stop();
-      // }
+      if (m_orchestra.isPlaying()) {
+        m_orchestra.stop();
+      }
   }
 
   // *Autonomous mode
