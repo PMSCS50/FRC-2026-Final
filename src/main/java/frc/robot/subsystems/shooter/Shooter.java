@@ -5,7 +5,6 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.shooter.ShooterIO.ShooterIOInputs;
 
@@ -13,7 +12,7 @@ public class Shooter extends SubsystemBase {
 
     // !MOTORS
     private final ShooterIO io;
-    private final ShooterIO.ShooterIOInputs inputs = new ShooterIOInputs();
+    private final ShooterIOInputs inputs = new ShooterIOInputs();
 
     // *VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
 

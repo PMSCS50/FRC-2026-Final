@@ -22,7 +22,6 @@ public class ShooterIOSim implements ShooterIO {
     private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
 
     private final RelativeEncoder kicker1Encoder = kicker1.getEncoder();
-    private final RelativeEncoder kicker2Encoder = kicker2.getEncoder();
 
     // Flywheel simulation state
     private double shooterVelocityRPS = 0.0;
