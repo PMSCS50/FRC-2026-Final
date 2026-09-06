@@ -64,6 +64,11 @@ public class VisionIOSim implements VisionIO {
         List<PhotonPipelineResult> results = camera.getAllUnreadResults();
 
         //Latest Result
+        if (results.isEmpty()) {
+            clear(inputs);
+            return;
+        }
+        
         PhotonPipelineResult result = results.get(results.size() - 1);
 
         if (result == null) {
