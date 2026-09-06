@@ -208,10 +208,12 @@ public class RobotContainer {
            driverController.a().whileTrue(new AlignToHub(drivetrain, vision));
         }
 
-        driverController.b().whileTrue(Commands.defer(
-            () -> monkeyDLuffy.goToSelectedWaypoint(),
-            Set.of(drivetrain)
-        ));
+        driverController.b().whileTrue(
+            Commands.defer(
+                () -> monkeyDLuffy.goToSelectedWaypoint(),
+                Set.of(drivetrain)
+            )
+        );
 
         driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
         driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
