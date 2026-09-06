@@ -15,6 +15,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotController;
@@ -71,16 +72,18 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
     Pathmaster.startWarmupCommand();
 
+    if (RobotBase.isReal()) {
     // *Add all orchestra instruments
     // |Drivetrain
     for (int i = 0; i < 4; i++) {
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getDriveMotor(), 0);
-      m_orchestra.addInstrument(m_robotContainer.drivetrain.getModule(i).getSteerMotor(), 1);
+      m_orchestra.addInstrument(m_robotContainer.getDrivetrain().getModule(i).getDriveMotor(), 0);
+      m_orchestra.addInstrument(m_robotContainer.getDrivetrain().getModule(i).getSteerMotor(), 1);
     }
     
     // |Shooter
     m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor1(), 0);
     m_orchestra.addInstrument(m_robotContainer.getShooter().getShooterMotor2(), 0);
+    }
   }
 
   // !CODE FOR ROBOT STATES
@@ -91,15 +94,15 @@ public class Robot extends LoggedRobot {
       public void initSendable(SendableBuilder builder) {
         builder.setSmartDashboardType("SwerveDrive");
 
-        builder.addDoubleProperty("Front Left Angle",     () -> m_robotContainer.drivetrain.getState().ModuleStates[0].angle.getRadians(), null);
-        builder.addDoubleProperty("Front Left Velocity",  () -> m_robotContainer.drivetrain.getState().ModuleStates[0].speedMetersPerSecond, null);
-        builder.addDoubleProperty("Front Right Angle",    () -> m_robotContainer.drivetrain.getState().ModuleStates[1].angle.getRadians(), null);
-        builder.addDoubleProperty("Front Right Velocity", () -> m_robotContainer.drivetrain.getState().ModuleStates[1].speedMetersPerSecond, null);
-        builder.addDoubleProperty("Back Left Angle",      () -> m_robotContainer.drivetrain.getState().ModuleStates[2].angle.getRadians(), null);
-        builder.addDoubleProperty("Back Left Velocity",   () -> m_robotContainer.drivetrain.getState().ModuleStates[2].speedMetersPerSecond, null);
-        builder.addDoubleProperty("Back Right Angle",     () -> m_robotContainer.drivetrain.getState().ModuleStates[3].angle.getRadians(), null);
-        builder.addDoubleProperty("Back Right Velocity",  () -> m_robotContainer.drivetrain.getState().ModuleStates[3].speedMetersPerSecond, null);
-        builder.addDoubleProperty("Robot Angle",          () -> m_robotContainer.drivetrain.getState().Pose.getRotation().getRadians(), null);
+        builder.addDoubleProperty("Front Left Angle",     () -> m_robotContainer.getDrivetrain().getState().ModuleStates[0].angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity",  () -> m_robotContainer.getDrivetrain().getState().ModuleStates[0].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Front Right Angle",    () -> m_robotContainer.getDrivetrain().getState().ModuleStates[1].angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> m_robotContainer.getDrivetrain().getState().ModuleStates[1].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Back Left Angle",      () -> m_robotContainer.getDrivetrain().getState().ModuleStates[2].angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity",   () -> m_robotContainer.getDrivetrain().getState().ModuleStates[2].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Back Right Angle",     () -> m_robotContainer.getDrivetrain().getState().ModuleStates[3].angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity",  () -> m_robotContainer.getDrivetrain().getState().ModuleStates[3].speedMetersPerSecond, null);
+        builder.addDoubleProperty("Robot Angle",          () -> m_robotContainer.getDrivetrain().getState().Pose.getRotation().getRadians(), null);
       }
     });
 
@@ -112,15 +115,15 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
 
     CommandScheduler.getInstance().run();
-    m_robotContainer.monkeyDLuffy.log();
+    m_robotContainer.getPathmaster().log();
 
     // |RoboRIO voltage and current monitoring
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
 
     // |Drivetrain state logging
-    Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.drivetrain.getState().ModuleStates);
-    Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.drivetrain.getState().ModuleTargets);
+    Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleStates);
+    Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleTargets);
 
     // |Battery voltage error messages
     if (batteryVoltage <= 7.5 && batterytimer >= 20000) {
@@ -197,7 +200,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (m_robotContainer.vision.isAlignedToHub()) {
+    if (m_robotContainer.getVision().isAlignedToHub()) {
       rumbleControllers(0);
     } else {
       rumbleControllers(0);
@@ -228,7 +231,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void simulationPeriodic() {
-    m_robotContainer.drivetrain.updateSimState(0.02, RobotController.getBatteryVoltage());
+    m_robotContainer.getDrivetrain().updateSimState(0.02, RobotController.getBatteryVoltage());
   }
 
   // !HELPERS
@@ -244,13 +247,13 @@ public class Robot extends LoggedRobot {
 
     boolean red = alliance == Alliance.Red;
 
-    m_robotContainer.drivetrain.seedFieldCentric(
+    m_robotContainer.getDrivetrain().seedFieldCentric(
       new Rotation2d(
         red ? Math.PI : 0
       )
     );
     
-    m_robotContainer.drivetrain.getPigeon2().setYaw(red ? 180 : 0);
+    m_robotContainer.getDrivetrain().getPigeon2().setYaw(red ? 180 : 0);
 
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();
@@ -258,8 +261,8 @@ public class Robot extends LoggedRobot {
     // *Re-add waypoints with correct alliance-relative poses
     m_robotContainer.loadAllianceWaypoints();
 
-    m_robotContainer.vision.cachedHubPose = null;
-    m_robotContainer.vision.hasSeededPose = false;
+    m_robotContainer.getVision().cachedHubPose = null;
+    m_robotContainer.getVision().hasSeededPose = false;
 
     lastAppliedAlliance = alliance;
   }

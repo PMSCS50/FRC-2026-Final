@@ -20,7 +20,7 @@ public class LL_Orient extends Command {
     private final int tagId;
 
     public LL_Orient(CommandSwerveDrivetrain drivetrain, Vision llVision, int tagId, DoubleSupplier xInput, DoubleSupplier yInput) {
-        rotController = new PIDController(Constants.ROT_REEF_ALIGNMENT_P, 0, 0);
+        rotController = new PIDController(.1625, 0, 0);
         this.drivetrain = drivetrain;
         this.llVision = llVision;
         this.tagId = tagId;

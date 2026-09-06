@@ -1,6 +1,5 @@
 package frc.robot.subsystems.vision;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,25 +16,20 @@ import org.photonvision.simulation.VisionSystemSim;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-
+import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 
 public class VisionIOSim implements VisionIO {
-
-    private static final Transform3d ROBOT_TO_CAMERA = new Transform3d(
-        new Translation3d(0.072, -0.072, 0.495),
-        new Rotation3d(0, Math.toRadians(10), 0)
-    );
 
     private final VisionSystemSim visionSim;
     private final PhotonCamera camera;
     private final PhotonCameraSim cameraSim;
     private final PhotonPoseEstimator poseEstimator;
 
-    public VisionIOSim(String cameraName) {
+    private Pose2d lastGoodPose = null;
 
+    public VisionIOSim(String cameraName, Transform3d robotToCamera) {
         visionSim = new VisionSystemSim("simVision");
 
         if (VisionConstants.aprilTagLayoutAndymark != null) {
@@ -44,7 +38,7 @@ public class VisionIOSim implements VisionIO {
 
         SimCameraProperties props = new SimCameraProperties();
         props.setCalibration(960, 720, edu.wpi.first.math.geometry.Rotation2d.fromDegrees(90));
-        props.setCalibError(0.25, 0.08);
+        props.setCalibError(0.05, 0.02);
         props.setFPS(30);
         props.setAvgLatencyMs(20);
         props.setLatencyStdDevMs(5);
@@ -53,61 +47,53 @@ public class VisionIOSim implements VisionIO {
         cameraSim = new PhotonCameraSim(camera, props);
         cameraSim.enableDrawWireframe(true);
 
-        visionSim.addCamera(cameraSim, ROBOT_TO_CAMERA);
+        visionSim.addCamera(cameraSim, robotToCamera);
 
         poseEstimator = new PhotonPoseEstimator(
             VisionConstants.aprilTagLayoutAndymark,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_RIO,
-            ROBOT_TO_CAMERA
+            robotToCamera
         );
     }
 
-    /** Called by LLSubsystemMany each loop. */
     public void updateSimPose(Pose2d robotPose) {
         visionSim.update(robotPose);
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
+        PhotonPipelineResult result = camera.getLatestResult();
 
-        List<PhotonPipelineResult> results = camera.getAllUnreadResults();
-
-        if (results.isEmpty()) {
-            inputs.hasTarget        = false;
-            inputs.targetId         = -1;
-            inputs.visibleTagIds    = new int[0];
-            inputs.visibleTagPoses  = new Pose2d[0];
-            inputs.hasEstimatedPose = false;
+        if (result == null) {
+            clear(inputs);
             return;
         }
-
-        PhotonPipelineResult result = results.get(results.size() - 1);
 
         inputs.hasTarget = result.hasTargets();
-
         if (!inputs.hasTarget) {
-            inputs.targetId         = -1;
-            inputs.visibleTagIds    = new int[0];
-            inputs.visibleTagPoses  = new Pose2d[0];
-            inputs.hasEstimatedPose = false;
+            clear(inputs);
             return;
         }
 
-        PhotonTrackedTarget best = result.getBestTarget();
-        inputs.targetId = best.getFiducialId();
+        List<PhotonTrackedTarget> targets = result.getTargets();
+        int tagCount = targets.size();
 
-        // Per-tag field-space poses
-        List<PhotonTrackedTarget> allTargets = result.getTargets();
-        int n = allTargets.size();
+        // Allow single-tag solves; fusion layer will handle quality
+        if (tagCount < 1) {
+            clear(inputs);
+            return;
+        }
 
-        int[] ids = new int[n];
-        Pose2d[] poses = new Pose2d[n];
+        int[] ids = new int[tagCount];
+        Pose2d[] poses = new Pose2d[tagCount];
 
-        for (int i = 0; i < n; i++) {
-            PhotonTrackedTarget t = allTargets.get(i);
+        for (int i = 0; i < tagCount; i++) {
+            PhotonTrackedTarget t = targets.get(i);
             ids[i] = t.getFiducialId();
 
-            Optional<Pose3d> tagFieldPose = VisionConstants.aprilTagLayoutAndymark.getTagPose(ids[i]);
+            Optional<Pose3d> tagFieldPose =
+                VisionConstants.aprilTagLayoutAndymark.getTagPose(ids[i]);
+
             poses[i] = tagFieldPose.isPresent()
                 ? tagFieldPose.get().toPose2d()
                 : new Pose2d();
@@ -116,20 +102,58 @@ public class VisionIOSim implements VisionIO {
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = poses;
 
-        // Pose estimate
         Optional<EstimatedRobotPose> est = poseEstimator.update(result);
-
         if (est.isEmpty()) {
-            inputs.hasEstimatedPose = false;
+            clearPose(inputs);
             return;
         }
 
         EstimatedRobotPose erp = est.get();
+        Pose2d pose = erp.estimatedPose.toPose2d();
+
+        if (pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X ||
+            pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y) {
+            clearPose(inputs);
+            return;
+        }
+
+        double age = Timer.getFPGATimestamp() - erp.timestampSeconds;
+        if (age > 0.25) {
+            clearPose(inputs);
+            return;
+        }
+
+        // Save last good pose
+        lastGoodPose = pose;
 
         inputs.hasEstimatedPose       = true;
-        inputs.estimatedPose          = erp.estimatedPose.toPose2d();
+        inputs.estimatedPose          = pose;
         inputs.estimatedPoseTimestamp = erp.timestampSeconds;
-        inputs.numTagsUsed            = result.getTargets().size();
+        inputs.numTagsUsed            = tagCount;
+
+        PhotonTrackedTarget best = result.getBestTarget();
+        inputs.targetId = (best != null) ? best.getFiducialId() : -1;
+    }
+
+    private void clear(VisionIOInputs inputs) {
+        inputs.hasTarget        = false;
+        inputs.targetId         = -1;
+        inputs.visibleTagIds    = new int[0];
+        inputs.visibleTagPoses  = new Pose2d[0];
+        clearPose(inputs);
+    }
+
+    private void clearPose(VisionIOInputs inputs) {
+        inputs.hasEstimatedPose = false;
+
+        if (lastGoodPose != null) {
+            inputs.estimatedPose = lastGoodPose;   // fallback to last good pose
+        } else {
+            inputs.estimatedPose = new Pose2d();   // no pose yet
+        }
+
+        inputs.estimatedPoseTimestamp = 0.0;       // mark as fallback
+        inputs.numTagsUsed = 0;
     }
 
     public VisionSystemSim getVisionSim() {

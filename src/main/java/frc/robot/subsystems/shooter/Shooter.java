@@ -2,7 +2,10 @@ package frc.robot.subsystems.shooter;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.hardware.TalonFX;
+
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.shooter.ShooterIO.ShooterIOInputs;
 
@@ -88,6 +91,7 @@ public class Shooter extends SubsystemBase {
         io.setKickerVoltage(0.0);
     }
 
+    // *Getters
     public double getShooterVelocity() {
         return inputs.shooterVelocity;
     }
@@ -95,4 +99,19 @@ public class Shooter extends SubsystemBase {
     public double getKickerVelocity() {
         return inputs.kickerVelocity;
     }
+
+    public TalonFX getShooterMotor1() {
+        if (io instanceof ShooterIOReal real) {
+            return real.shooter1;
+        }
+        return null;
+    }
+
+    public TalonFX getShooterMotor2() {
+        if (io instanceof ShooterIOReal real) {
+            return real.shooter2;
+        }
+        return null;
+    }
+
 }

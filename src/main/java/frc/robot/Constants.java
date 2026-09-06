@@ -262,7 +262,6 @@ public final class Constants {
 
   public static final double X_REEF_ALIGNMENT_P = 2;
   public static final double Y_REEF_ALIGNMENT_P = 3;
-  public static final double ROT_REEF_ALIGNMENT_P = 0.1625;
 
   public static final double ROT_SETPOINT_REEF_ALIGNMENT = -1.0;  // Rotation
   public static final double ROT_TOLERANCE_REEF_ALIGNMENT = 0.25;

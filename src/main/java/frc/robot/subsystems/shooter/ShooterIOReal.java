@@ -19,8 +19,8 @@ import frc.robot.Constants.ShooterConstants;
 
 public class ShooterIOReal implements ShooterIO {
     
-    private final TalonFX shooter1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
-    private final TalonFX shooter2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
+    public final TalonFX shooter1 = new TalonFX(ShooterConstants.shooterMotorCanId1);
+    public final TalonFX shooter2 = new TalonFX(ShooterConstants.shooterMotorCanId2);
     private final SparkMax kicker1 = new SparkMax(ShooterConstants.kickerMotorCanId1, MotorType.kBrushless);
     private final SparkMax kicker2 = new SparkMax(ShooterConstants.kickerMotorCanId2, MotorType.kBrushless);
 

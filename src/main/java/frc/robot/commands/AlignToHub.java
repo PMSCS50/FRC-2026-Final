@@ -1,68 +1,93 @@
 package frc.robot.commands;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-// import frc.robot.subsystems.vision.LLSubsystem;
 import frc.robot.subsystems.vision.Vision;
-import java.lang.Math;
 
 public class AlignToHub extends Command {
+
     private final PIDController rotController;
-    private final Vision llvision;
+    private final Vision vision;
     private final CommandSwerveDrivetrain drivetrain;
     private final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric();
 
-    public AlignToHub(CommandSwerveDrivetrain drivetrain, Vision llvision) {
+    // Hysteresis state: remembers which direction we were turning
+    // so we don't dither when the error is near the +/-180 boundary.
+    private double lastYawErrorDeg = 0.0;
+
+    // How close to the +/-180 boundary counts as "antipodal" and
+    // needs direction locking instead of trusting the raw wrapped error.
+    private static final double ANTIPODAL_DEADBAND_DEG = 2.0;
+
+    public AlignToHub(CommandSwerveDrivetrain drivetrain, Vision vision) {
         this.drivetrain = drivetrain;
-        this.llvision = llvision;
-        this.rotController = new PIDController(Constants.ROT_REEF_ALIGNMENT_P, 0, 0);
-        rotController.setTolerance(Constants.ROT_TOLERANCE_REEF_ALIGNMENT);
+        this.vision = vision;
+
+        rotController = new PIDController(3, .5, .05);
         rotController.enableContinuousInput(-180, 180);
+        rotController.setTolerance(.01);
+
         addRequirements(drivetrain);
     }
 
     @Override
     public void initialize() {
         rotController.reset();
+        lastYawErrorDeg = 0.0;
     }
 
     @Override
-    public void execute() {
-        if (!llvision.hasTargets()) {
-            drivetrain.setControl(drive
-                .withVelocityX(0)
-                .withVelocityY(0)
-                .withRotationalRate(0)
+        public void execute() {
+            Pose2d hubPose = vision.getCachedHubPose();
+            Logger.recordOutput("AlignToHub/hubPoseFound", hubPose != null);
+
+            if (hubPose == null) {
+                drivetrain.setControl(drive.withRotationalRate(0));
+                return;
+            }
+
+            double rawYawErrorDeg = vision.getYawToTarget(hubPose);
+
+            double yawErrorDeg = rawYawErrorDeg;
+            if (Math.abs(rawYawErrorDeg) > (180.0 - ANTIPODAL_DEADBAND_DEG)) {
+                double lockedSign = (lastYawErrorDeg != 0.0)
+                    ? Math.signum(lastYawErrorDeg)
+                    : 1.0;
+                yawErrorDeg = lockedSign * Math.abs(rawYawErrorDeg);
+            }
+            lastYawErrorDeg = yawErrorDeg;
+
+            // NOTE: PIDController.calculate(measurement, setpoint) computes
+            // error = setpoint - measurement = -yawErrorDeg, so we negate
+            // the output to get the correct rotation direction.
+            double rotCmdDegPerSec = -rotController.calculate(yawErrorDeg, 0);
+            double rotCmdRadPerSec = Math.toRadians(rotCmdDegPerSec);
+
+            Logger.recordOutput("AlignToHub/rawYawErrorDeg", rawYawErrorDeg);
+            Logger.recordOutput("AlignToHub/yawErrorDeg", yawErrorDeg);
+            Logger.recordOutput("AlignToHub/rotCmdRadPerSec", rotCmdRadPerSec);
+            Logger.recordOutput("AlignToHub/atSetpoint", rotController.atSetpoint());
+
+            drivetrain.setControl(
+                drive.withVelocityX(0)
+                    .withVelocityY(0)
+                    .withRotationalRate(rotCmdRadPerSec)
             );
-            return;
         }
-
-        double angleToHub = llvision.getYawToTarget(VisionConstants.getHubPose()) * 180 / Math.PI;
-        double currentHeading = llvision.getRobotYawDeg();
-        double rotValue = rotController.calculate(currentHeading, angleToHub);
-
-        drivetrain.setControl(drive
-            .withVelocityX(0)
-            .withVelocityY(0)
-            .withRotationalRate(rotValue)
-        );
-    }
 
     @Override
     public void end(boolean interrupted) {
-        drivetrain.setControl(drive
-            .withVelocityX(0)
-            .withVelocityY(0)
-            .withRotationalRate(0)
-        );
+        drivetrain.setControl(drive.withRotationalRate(0));
     }
 
     @Override
     public boolean isFinished() {
         return rotController.atSetpoint();
     }
-}           
+}

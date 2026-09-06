@@ -19,7 +19,10 @@ import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -47,6 +50,8 @@ import frc.robot.util.pathfinding.builders.PathRequest;
 import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
 import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIOReal;
+import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drivetrain.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -57,7 +62,7 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
 
 public class RobotContainer {
-    // *DRIVETRAIN CONSTANTS
+    // *Drivetrain constants
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
@@ -66,37 +71,39 @@ public class RobotContainer {
 
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
-    // *EXTRA SETUP - I GOT NO CLUE
 
-    // *SwerveRequests. Huh ig it was a good idea to put these in DriveConstants
     private final SwerveRequest.SwerveDriveBrake xBrake = DriveConstants.xBrake;
 
-    
+    // *Declare and initialize subsystems and commands
+    private final CommandSwerveDrivetrain drivetrain;
+    private final Pathmaster monkeyDLuffy;
 
-    //private final Telemetry logger = new Telemetry(MaxSpeed);
-
-    //! ACTUAL IMPORTANT STUFF (initiallize subsystems and the like)
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-
-    private final VisionIO visionIO;
-    public final Vision vision;
-    public final Pathmaster monkeyDLuffy;
-
+    private final Vision vision;
     private final Shooter shooter;
-    private final Intake intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
-    private final Pivot pivot = new Pivot();
+    private final Intake intake;
+    private final Pivot pivot;
 
     public static final CommandXboxController driverController = new CommandXboxController(0);
     public static final CommandXboxController operatorController = new CommandXboxController(1);
 
-    // Path follower
+    private static final Transform3d ROBOT_TO_CAMERA_FRONT = new Transform3d(
+        new Translation3d(0.072, -0.072, 0.495),
+        new Rotation3d(0, Math.toRadians(10), 0)
+    );
+
+    private static final Transform3d ROBOT_TO_CAMERA_BACK = new Transform3d(
+        new Translation3d(0.072, 0.072, 0.495),
+        new Rotation3d(0, Math.toRadians(10), Math.toRadians(180))
+    );
+
+    // *For choosing the auto and generating configurations for it
     private SendableChooser<Command> autoChooser;
 
     public static RobotConfig robotConfig = null;
     static {
         try {
             robotConfig = RobotConfig.fromGUISettings();
-        } catch (Exception e) {
+        } catch (Exception e) { 
             Elastic.sendNotification(
                 new Elastic.Notification().
                 withLevel(Elastic.NotificationLevel.ERROR)
@@ -105,24 +112,19 @@ public class RobotContainer {
         }
     }
     
-
     // *Constructor
     public RobotContainer() {
-        // Choose backend automatically
-        if (RobotBase.isReal()) {
-            visionIO = new VisionIOReal("");
-        } else {
-            visionIO = new VisionIOSim("imaginaryPenis");
-        }
-
-        vision = new Vision(drivetrain, visionIO);
-        
-        shooter = new Shooter();
+        // *Initialize subsystems
+        drivetrain = TunerConstants.createDrivetrain();
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate * speedLimiter, pathMaxAngularAcceleration);
+
+        vision = new Vision(drivetrain, RobotBase.isReal() ? List.of(new VisionIOReal("", ROBOT_TO_CAMERA_FRONT)) : List.of(new VisionIOSim("imgCamFront", ROBOT_TO_CAMERA_FRONT), new VisionIOSim("imgCamBack", ROBOT_TO_CAMERA_BACK)));
+        shooter = new Shooter(RobotBase.isReal() ? new ShooterIOReal() : new ShooterIOSim());
+        intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
+        pivot = new Pivot();
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
-        //NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision).withTimeout(4));
         NamedCommands.registerCommand("Distance Based Shooting", new DistanceBasedShooting(shooter, vision, drivetrain).withTimeout(4));
 
         // *Intaking
@@ -136,7 +138,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
         NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
         NamedCommands.registerCommand("Auton Fixed Shooting", new FixedPIDShooting(shooter, 1.366));
-        NamedCommands.registerCommand("Dih Command", Commands.print("dih"));
+
         // *Five shooting setpoints that form a semicircle around the hub
         for (int i = 1; i <= ShooterConstants.shootingSetpoints.length; i++) {
             monkeyDLuffy.addWaypoint(i + ":Shooting", ShooterConstants.getShootingSetpoint(i));
@@ -166,8 +168,7 @@ public class RobotContainer {
         //         () -> -driverController.getRightX() * speedLimiter
         //     )
         // );
-
-        
+    
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() ->
                 DriveCommands.joystickDriveRequest(
@@ -202,36 +203,13 @@ public class RobotContainer {
         //driverController.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
         
         if (vision instanceof Vision) {
-           driverController.a().whileTrue(new AlignToHub(drivetrain, (Vision) vision));
+           driverController.a().whileTrue(new AlignToHub(drivetrain, vision));
         }
 
+        driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+        driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
-        PathRequest request = new PathRequest()
-                            .withGoal("choreo/Game_Winning_Path")
-                            .withStops(List.of(VisionConstants.getCenter()))
-                            .withEventTriggers((auto) -> {
-                                auto.isRunning().whileTrue(Commands.print("dih")).whileFalse(Commands.print("no dih"));
-                                auto.nearFieldPosition(VisionConstants.getCenter().getTranslation(), 0.5)
-                                    .whileTrue(Commands.print("chase dih"))
-                                    .whileFalse(Commands.print("dih"));
-                                auto.activePath("Game-Winning Path").whileTrue(Commands.print("Succ dih"));
-                                auto.timeRange(6, 8).whileTrue(Commands.print("I love dih"));
-                            });
-                            
-
-        driverController.b().whileTrue(
-            Commands.defer(
-                //Changed temporarily for testing and improvement purposes
-                () -> monkeyDLuffy.submitRequest(request)
-                    //.andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
-                ,Set.of(drivetrain)
-            )
-        );
-
-       driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-       driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
-
-        // *POV Controlss
+        // *POV Controls
         //driverController.povUp()
         //driverController.povRight()
         //driverController.povLeft()
@@ -333,6 +311,9 @@ public class RobotContainer {
         return autoChooser.getSelected(); 
     }
 
+    public CommandSwerveDrivetrain getDrivetrain() { return drivetrain; }
+    public Pathmaster getPathmaster() { return monkeyDLuffy; }
+    public Vision getVision() { return vision; }
     public Intake getIntake() { return intake; }
     public Shooter getShooter() { return shooter; }
     public Pivot getPivot() { return pivot; }

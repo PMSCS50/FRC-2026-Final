@@ -491,10 +491,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         inputs.robotChassisSpeeds = state.Speeds;
         inputs.robotHeading = state.Pose.getRotation().getRadians();
-        //inputs.robotPose = state.Pose;
         
         inputs.isFieldOriented = false;
         inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
+
+        inputs.robotPose = state.Pose;
     }
 
     public Rotation2d getRotation() {
