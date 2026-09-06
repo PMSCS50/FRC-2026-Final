@@ -58,78 +58,93 @@ public class Vision extends SubsystemBase {
         refreshAllianceCache();
 
         var driveState = drivetrain.getState();
-        double yawDeg = driveState.Pose.getRotation().getDegrees();
+        Pose2d robotPose = driveState.Pose;
+        double yawDeg = robotPose.getRotation().getDegrees();
 
-        // Seed pose once from any camera that has a good estimate
-        for (var inputs : cameraInputs) {
-            if (!hasSeededPose
-                && inputs.hasEstimatedPose
-                && inputs.estimatedPoseTimestamp != 0.0) {
-                drivetrain.resetPose(inputs.estimatedPose);
-                hasSeededPose = true;
-                break;
-            }
-        }
+        // Precompute inverse transform once (faster than Pose2d.relativeTo)
+        Transform2d robotInv = new Transform2d(
+            robotPose.getTranslation().unaryMinus(),
+            robotPose.getRotation().unaryMinus()
+        );
 
-        // Update each camera IO with its own inputs object
+        // Reset per-cycle structures
+        tagposes.clear();
+        tagambiguities.clear();
+
+        // Preallocated good pose buffer
+        Pose2d[] goodPosesBuf = new Pose2d[cameraInputs.size()];
+        int goodPoseCount = 0;
+        double fusedTimestamp = 0.0;
+
+        double closestTagDist = Double.MAX_VALUE;
+
+        // Single unified camera loop
         for (int i = 0; i < cameras.size(); i++) {
             VisionIO io = cameras.get(i);
             VisionIOInputsAutoLogged inputs = cameraInputs.get(i);
 
+            // Update IO
             if (io instanceof VisionIOReal realIO) {
                 realIO.setRobotYaw(yawDeg);
-            } else if (io instanceof VisionIOSim simIO) {
-                simIO.updateSimPose(driveState.Pose);
+            } else {
+                ((VisionIOSim) io).updateSimPose(robotPose);
             }
-
             io.updateInputs(inputs);
-        }
 
-        // Clear tag maps for this cycle
-        tagposes.clear();
-        tagambiguities.clear();
+            // Seed pose once
+            if (!hasSeededPose &&
+                inputs.hasEstimatedPose &&
+                inputs.estimatedPoseTimestamp != 0.0) {
 
-        // Build tag maps from all cameras (only from cameras that currently have targets)
-        for (var inputs : cameraInputs) {
-            if (!inputs.hasTarget) continue;
-            if (inputs.visibleTagIds == null || inputs.visibleTagPoses == null) continue;
-
-            for (int i = 0; i < inputs.visibleTagIds.length; i++) {
-                int id = inputs.visibleTagIds[i];
-                Pose2d tagFieldPose = inputs.visibleTagPoses[i];
-                Pose2d robotFieldPose = driveState.Pose;
-
-                Pose2d tagRobotPose = tagFieldPose.relativeTo(robotFieldPose);
-
-                tagposes.put(id, tagRobotPose);
-
-                double ambiguity = inputs.hasEstimatedPose && inputs.estimatedPoseTimestamp != 0.0
-                    ? 1.0 / Math.max(1, inputs.numTagsUsed)
-                    : Double.MAX_VALUE;
-                tagambiguities.put(id, ambiguity);
+                drivetrain.resetPose(inputs.estimatedPose);
+                hasSeededPose = true;
             }
+
+            // Tag processing
+            if (inputs.hasTarget &&
+                inputs.visibleTagIds != null &&
+                inputs.visibleTagPoses != null) {
+
+                Pose2d[] tagPoses = inputs.visibleTagPoses;
+                int[] tagIds = inputs.visibleTagIds;
+
+                for (int j = 0; j < tagIds.length; j++) {
+                    int id = tagIds[j];
+                    Pose2d tagFieldPose = tagPoses[j];
+
+                    // Fast transform: field → robot
+                    Pose2d tagRobotPose = tagFieldPose.plus(robotInv);
+                    tagposes.put(id, tagRobotPose);
+
+                    double ambiguity = (inputs.hasEstimatedPose && inputs.estimatedPoseTimestamp != 0.0)
+                        ? 1.0 / Math.max(1, inputs.numTagsUsed)
+                        : Double.MAX_VALUE;
+                    tagambiguities.put(id, ambiguity);
+
+                    // Track closest tag distance
+                    double d = robotPose.getTranslation().getDistance(tagFieldPose.getTranslation());
+                    if (d < closestTagDist) closestTagDist = d;
+                }
+            }
+
+            // Collect valid pose estimates
+            if (inputs.hasEstimatedPose &&
+                inputs.estimatedPoseTimestamp != 0.0 &&
+                inputs.numTagsUsed > 0 &&
+                isEstimateValid(inputs.estimatedPose, yawDeg, inputs.estimatedPoseTimestamp)) {
+
+                goodPosesBuf[goodPoseCount++] = inputs.estimatedPose;
+                fusedTimestamp = inputs.estimatedPoseTimestamp;
+            }
+
+            //Logger.processInputs("LoggedVision" + i, cameraInputs.get(i));
         }
 
-        // Collect good pose estimates from all cameras
-        List<Pose2d> goodPoses = new ArrayList<>();
-        double fusedTimestamp = 0.0;
+        // Compute std devs
+        if (goodPoseCount > 0) {
+            if (closestTagDist < 1.0) closestTagDist = 1.0;
 
-        for (var inputs : cameraInputs) {
-            if (!inputs.hasEstimatedPose) continue;
-            if (inputs.estimatedPoseTimestamp == 0.0) continue; // fallback → ignore
-            if (inputs.numTagsUsed <= 0) continue;
-            if (!isEstimateValid(inputs.estimatedPose, yawDeg, inputs.estimatedPoseTimestamp)) continue;
-
-            goodPoses.add(inputs.estimatedPose);
-            fusedTimestamp = inputs.estimatedPoseTimestamp;
-        }
-
-        // Compute std devs based on closest tag distance and number of good poses
-        if (!goodPoses.isEmpty()) {
-            double closest = getClosestTagDistance(driveState.Pose);
-            if (closest < 1.0) closest = 1.0;
-
-            double stdDev = 0.04 * closest * closest / goodPoses.size() + 0.25;
+            double stdDev = 0.04 * closestTagDist * closestTagDist / goodPoseCount + 0.25;
             visionStdDevs = VecBuilder.fill(stdDev, stdDev, Double.MAX_VALUE);
         } else {
             visionStdDevs = VecBuilder.fill(
@@ -138,18 +153,27 @@ public class Vision extends SubsystemBase {
         }
 
         // Fuse pose (real robot only)
-        if (!goodPoses.isEmpty() && RobotBase.isReal()) {
-            Pose2d fusedPose = fusePoses(goodPoses);
+        if (goodPoseCount > 0 && RobotBase.isReal()) {
+            double x = 0.0, y = 0.0, theta = 0.0;
+
+            for (int i = 0; i < goodPoseCount; i++) {
+                Pose2d p = goodPosesBuf[i];
+                x += p.getX();
+                y += p.getY();
+                theta += p.getRotation().getRadians();
+            }
+
+            Pose2d fusedPose = new Pose2d(
+                x / goodPoseCount,
+                y / goodPoseCount,
+                new edu.wpi.first.math.geometry.Rotation2d(theta / goodPoseCount)
+            );
+
             drivetrain.addVisionMeasurement(
                 fusedPose,
                 Utils.fpgaToCurrentTime(fusedTimestamp),
                 visionStdDevs
             );
-        }
-
-        // Log all camera inputs separately
-        for (int i = 0; i < cameraInputs.size(); i++) {
-            //Logger.processInputs("LoggedVision" + i, cameraInputs.get(i));
         }
     }
 
@@ -317,13 +341,6 @@ public class Vision extends SubsystemBase {
             targetPose.getY() - robotPose.getY(),
             targetPose.getX() - robotPose.getX()
         ));
-
-        Logger.recordOutput("AlignToHub/robotPoseX", robotPose.getX());
-        Logger.recordOutput("AlignToHub/robotPoseY", robotPose.getY());
-        Logger.recordOutput("AlignToHub/robotHeadingDeg", robotPose.getRotation().getDegrees());
-        Logger.recordOutput("AlignToHub/targetPoseX", targetPose.getX());
-        Logger.recordOutput("AlignToHub/targetPoseY", targetPose.getY());
-        Logger.recordOutput("AlignToHub/angleToTargetDeg", angleToTarget);
 
         return MathUtil.inputModulus(
             angleToTarget - robotPose.getRotation().getDegrees(),

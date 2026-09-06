@@ -50,7 +50,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private int loggingLoopCounter = 0;
     private static final int LOG_EVERY_N_LOOPS = 5; // 5 loops = about 100ms
-    private final BaseStatusSignal[] m_logSignals;
+    //private final BaseStatusSignal[] m_logSignals;
 
     //* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -171,7 +171,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, modules);
-        m_logSignals = cacheLogSignals();
+        //m_logSignals = cacheLogSignals();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -200,7 +200,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
-        m_logSignals = cacheLogSignals();
+        //m_logSignals = cacheLogSignals();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -234,7 +234,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation, modules);
-        m_logSignals = cacheLogSignals();
+        //m_logSignals = cacheLogSignals();
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -364,7 +364,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         // |Swerve module states and motor outputs
         if (shouldLogSlowSignals) {
-            BaseStatusSignal.refreshAll(m_logSignals);
+            //BaseStatusSignal.refreshAll(m_logSignals);
             for (int i = 0; i < 4; i++) {
                 SwerveModule<?, ?, ?> module = getModule(i);
 

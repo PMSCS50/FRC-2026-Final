@@ -38,17 +38,19 @@ import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
-import frc.robot.commands.Pivoting;
+import frc.robot.commands.PivotToAngle;
 import frc.robot.commands.Intaking;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIOReal;
 import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.pivot.Pivot;
+import frc.robot.subsystems.pivot.PivotIOReal;
+import frc.robot.subsystems.pivot.PivotIOSim;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.builders.PathRequest;
 import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
-import frc.robot.subsystems.Pivot;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOReal;
 import frc.robot.subsystems.shooter.ShooterIOSim;
@@ -121,7 +123,7 @@ public class RobotContainer {
         vision = new Vision(drivetrain, RobotBase.isReal() ? List.of(new VisionIOReal("", ROBOT_TO_CAMERA_FRONT)) : List.of(new VisionIOSim("imgCamFront", ROBOT_TO_CAMERA_FRONT), new VisionIOSim("imgCamBack", ROBOT_TO_CAMERA_BACK)));
         shooter = new Shooter(RobotBase.isReal() ? new ShooterIOReal() : new ShooterIOSim());
         intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
-        pivot = new Pivot();
+        pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
@@ -133,10 +135,10 @@ public class RobotContainer {
         NamedCommands.registerCommand("6 sec Intaking", new Intaking(intake).withTimeout(6));
 
         // *Pivoting
-        NamedCommands.registerCommand("Forward Pivoting 30%", new Pivoting(pivot, true).withTimeout(.5));
-        NamedCommands.registerCommand("Backward Pivoting 30%" , new Pivoting(pivot, false).withTimeout(.5));
-        NamedCommands.registerCommand("Forward Pivoting 10%", new Pivoting(pivot, true).withTimeout(1.5));
-        NamedCommands.registerCommand("Backward Pivoting 10%" , new Pivoting(pivot, false).withTimeout(1.5));
+        NamedCommands.registerCommand("Forward Pivoting 30%", new PivotToAngle(pivot, true).withTimeout(.5));
+        NamedCommands.registerCommand("Backward Pivoting 30%" , new PivotToAngle(pivot, false).withTimeout(.5));
+        NamedCommands.registerCommand("Forward Pivoting 10%", new PivotToAngle(pivot, true).withTimeout(1.5));
+        NamedCommands.registerCommand("Backward Pivoting 10%" , new PivotToAngle(pivot, false).withTimeout(1.5));
         NamedCommands.registerCommand("Auton Fixed Shooting", new FixedPIDShooting(shooter, 1.366));
 
         // *Five shooting setpoints that form a semicircle around the hub
@@ -246,14 +248,14 @@ public class RobotContainer {
 
         operatorController.rightTrigger().onTrue(
             new InstantCommand(
-                () -> pivot.goToPosition(IntakeConstants.kPivotSetpointB),
+                () -> pivot.setPivotAngle(IntakeConstants.kPivotSetpointB),
                 pivot
             )
         );
 
         operatorController.rightBumper().onTrue(
             new InstantCommand(
-                () -> pivot.goToPosition(IntakeConstants.kPivotSetpointA),
+                () -> pivot.setPivotAngle(IntakeConstants.kPivotSetpointA),
                 pivot
             )
         );
@@ -279,10 +281,10 @@ public class RobotContainer {
         // *Letters
         operatorController.a().whileTrue(new FixedPIDShooting(shooter, 5));
         operatorController.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
-        operatorController.x().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(.3), pivot));
-        operatorController.x().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));
-        operatorController.y().whileTrue(new RunCommand(() -> pivot.spinPivotDuty(-.3), pivot));
-        operatorController.y().onFalse(new RunCommand(() -> pivot.stopPivot(), pivot));        
+        operatorController.x().whileTrue(new RunCommand(() -> pivot.setManualDuty(.3), pivot));
+        operatorController.x().onFalse(new RunCommand(() -> pivot.stop(), pivot));
+        operatorController.y().whileTrue(new RunCommand(() -> pivot.setManualDuty(-.3), pivot));
+        operatorController.y().onFalse(new RunCommand(() -> pivot.stop(), pivot));        
     }
 
     // *changing drivetrain speed: crawl, low, mid, high

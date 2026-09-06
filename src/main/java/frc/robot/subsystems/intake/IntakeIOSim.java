@@ -15,6 +15,11 @@ public class IntakeIOSim implements IntakeIO {
     private double appliedVolts = 0;
 
     @Override
+    public void setVoltage(double volts) {
+        appliedVolts = volts;
+    }
+
+    @Override
     public void updateInputs(IntakeIOInputs inputs) {
         sim.setInputVoltage(appliedVolts);
         sim.update(.02);
@@ -22,10 +27,5 @@ public class IntakeIOSim implements IntakeIO {
         inputs.motorAmperage = sim.getCurrentDrawAmps();
         inputs.motorVoltage = appliedVolts;
         inputs.motorVelocity = sim.getAngularVelocityRadPerSec();
-    }
-
-    @Override
-    public void setVoltage(double volts) {
-        appliedVolts = volts;
     }
 }

@@ -45,7 +45,6 @@ public class AlignToHub extends Command {
     @Override
         public void execute() {
             Pose2d hubPose = vision.getCachedHubPose();
-            Logger.recordOutput("AlignToHub/hubPoseFound", hubPose != null);
 
             if (hubPose == null) {
                 drivetrain.setControl(drive.withRotationalRate(0));
@@ -53,27 +52,20 @@ public class AlignToHub extends Command {
             }
 
             double rawYawErrorDeg = vision.getYawToTarget(hubPose);
-
             double yawErrorDeg = rawYawErrorDeg;
+
             if (Math.abs(rawYawErrorDeg) > (180.0 - ANTIPODAL_DEADBAND_DEG)) {
                 double lockedSign = (lastYawErrorDeg != 0.0)
                     ? Math.signum(lastYawErrorDeg)
                     : 1.0;
                 yawErrorDeg = lockedSign * Math.abs(rawYawErrorDeg);
             }
+
             lastYawErrorDeg = yawErrorDeg;
 
-            // NOTE: PIDController.calculate(measurement, setpoint) computes
-            // error = setpoint - measurement = -yawErrorDeg, so we negate
-            // the output to get the correct rotation direction.
             double rotCmdDegPerSec = -rotController.calculate(yawErrorDeg, 0);
             double rotCmdRadPerSec = Math.toRadians(rotCmdDegPerSec);
-
-            Logger.recordOutput("AlignToHub/rawYawErrorDeg", rawYawErrorDeg);
-            Logger.recordOutput("AlignToHub/yawErrorDeg", yawErrorDeg);
-            Logger.recordOutput("AlignToHub/rotCmdRadPerSec", rotCmdRadPerSec);
-            Logger.recordOutput("AlignToHub/atSetpoint", rotController.atSetpoint());
-
+            
             drivetrain.setControl(
                 drive.withVelocityX(0)
                     .withVelocityY(0)

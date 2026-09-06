@@ -125,22 +125,7 @@ public final class Constants {
 
     public static Pose2d getAimPose() {
       return ShooterConstants.getShootingSetpoint(1);
-    }
-
-
-    public static LoggedNetworkNumber centerX = new LoggedNetworkNumber("Vision/Center/X", 8.270494);
-    public static LoggedNetworkNumber centerY = new LoggedNetworkNumber("Vision/Center/Y", 4.034536);
-    public static LoggedNetworkNumber centerRot = new LoggedNetworkNumber("Vision/Center/Rot", 0.0);
-
-    public static Pose2d getCenter() {
-        return new Pose2d(
-            centerX.get(),
-            centerY.get(),
-            Rotation2d.fromDegrees(centerRot.get())
-        );
-    }
-
-    
+    }    
   }
 
   // *intake motorIDs are values of 20
