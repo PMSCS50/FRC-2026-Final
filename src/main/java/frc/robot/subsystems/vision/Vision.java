@@ -61,24 +61,24 @@ public class Vision extends SubsystemBase {
         Pose2d robotPose = driveState.Pose;
         double yawDeg = robotPose.getRotation().getDegrees();
 
-        // Precompute inverse transform once (faster than Pose2d.relativeTo)
         Transform2d robotInv = new Transform2d(
             robotPose.getTranslation().unaryMinus(),
             robotPose.getRotation().unaryMinus()
         );
 
-        // Reset per-cycle structures
         tagposes.clear();
         tagambiguities.clear();
 
-        // Preallocated good pose buffer
         Pose2d[] goodPosesBuf = new Pose2d[cameraInputs.size()];
+        double[] weightsBuf = new double[cameraInputs.size()];
+        double[] camDistBuf = new double[cameraInputs.size()];
+
         int goodPoseCount = 0;
         double fusedTimestamp = 0.0;
 
-        double closestTagDist = Double.MAX_VALUE;
+        double globalClosestTagDist = Double.MAX_VALUE;
 
-        // Single unified camera loop
+        // Unified camera loop
         for (int i = 0; i < cameras.size(); i++) {
             VisionIO io = cameras.get(i);
             VisionIOInputsAutoLogged inputs = cameraInputs.get(i);
@@ -101,6 +101,8 @@ public class Vision extends SubsystemBase {
             }
 
             // Tag processing
+            double closestForCamera = Double.MAX_VALUE;
+
             if (inputs.hasTarget &&
                 inputs.visibleTagIds != null &&
                 inputs.visibleTagPoses != null) {
@@ -112,71 +114,155 @@ public class Vision extends SubsystemBase {
                     int id = tagIds[j];
                     Pose2d tagFieldPose = tagPoses[j];
 
-                    // Fast transform: field → robot
                     Pose2d tagRobotPose = tagFieldPose.plus(robotInv);
                     tagposes.put(id, tagRobotPose);
 
-                    double ambiguity = (inputs.hasEstimatedPose && inputs.estimatedPoseTimestamp != 0.0)
-                        ? 1.0 / Math.max(1, inputs.numTagsUsed)
-                        : Double.MAX_VALUE;
+                    double ambiguity = 1.0 / Math.max(1, inputs.numTagsUsed);
                     tagambiguities.put(id, ambiguity);
 
-                    // Track closest tag distance
                     double d = robotPose.getTranslation().getDistance(tagFieldPose.getTranslation());
-                    if (d < closestTagDist) closestTagDist = d;
+                    if (d < closestForCamera) closestForCamera = d;
+                    if (d < globalClosestTagDist) globalClosestTagDist = d;
                 }
             }
 
-            // Collect valid pose estimates
-            if (inputs.hasEstimatedPose &&
-                inputs.estimatedPoseTimestamp != 0.0 &&
-                inputs.numTagsUsed > 0 &&
-                isEstimateValid(inputs.estimatedPose, yawDeg, inputs.estimatedPoseTimestamp)) {
+            camDistBuf[i] = closestForCamera;
 
-                goodPosesBuf[goodPoseCount++] = inputs.estimatedPose;
-                fusedTimestamp = inputs.estimatedPoseTimestamp;
-            }
+            // STRICT CAMERA REJECTION
+            if (!inputs.hasEstimatedPose) continue;
+            if (inputs.estimatedPoseTimestamp == 0.0) continue;
+            if (inputs.numTagsUsed < 2) continue; // must use >=2 tags
 
-            //Logger.processInputs("LoggedVision" + i, cameraInputs.get(i));
+            double age = Timer.getFPGATimestamp() - inputs.estimatedPoseTimestamp;
+            if (age > 0.20) continue; // stricter age cutoff
+
+            double jump = robotPose.getTranslation().getDistance(inputs.estimatedPose.getTranslation());
+            if (jump > 0.75) continue; // strict jump rejection
+
+            double amb = 1.0 / Math.max(1, inputs.numTagsUsed);
+            if (amb > 0.5) continue; // strict ambiguity rejection
+
+            double dist = camDistBuf[i];
+            if (dist > 5.0) continue; // reject long-range solves entirely
+
+            if (!isEstimateValid(inputs.estimatedPose, yawDeg, inputs.estimatedPoseTimestamp)) continue;
+
+            // Accept camera
+            goodPosesBuf[goodPoseCount] = inputs.estimatedPose;
+
+            // STRICT WEIGHTING
+            double tagFactor = inputs.numTagsUsed;         // linear tag count
+            double distFactor = 1.0 / Math.pow(dist, 4);  // quartic falloff
+            double ambFactor = 1.0 / Math.pow(Math.max(0.1, amb), 2); // squared ambiguity penalty
+
+            double w = tagFactor * distFactor * ambFactor;
+            weightsBuf[goodPoseCount] = w;
+
+            fusedTimestamp = inputs.estimatedPoseTimestamp;
+            goodPoseCount++;
+
+            Logger.recordOutput("Vision/cam_" + inputs.name + "/estimatedPose", inputs.estimatedPose);
+            Logger.recordOutput("Vision/cam_" + inputs.name + "/weight", w);
         }
 
-        // Compute std devs
-        if (goodPoseCount > 0) {
-            if (closestTagDist < 1.0) closestTagDist = 1.0;
-
-            double stdDev = 0.04 * closestTagDist * closestTagDist / goodPoseCount + 0.25;
-            visionStdDevs = VecBuilder.fill(stdDev, stdDev, Double.MAX_VALUE);
-        } else {
-            visionStdDevs = VecBuilder.fill(
-                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE
-            );
+        if (goodPoseCount == 0) {
+            visionStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+            return;
         }
 
-        // Fuse pose (real robot only)
-        if (goodPoseCount > 0 && RobotBase.isReal()) {
-            double x = 0.0, y = 0.0, theta = 0.0;
+        // Dominant camera override (20× rule)
+        double avgWeight = 0.0;
+        for (int i = 0; i < goodPoseCount; i++) avgWeight += weightsBuf[i];
+        avgWeight /= goodPoseCount;
 
-            for (int i = 0; i < goodPoseCount; i++) {
-                Pose2d p = goodPosesBuf[i];
-                x += p.getX();
-                y += p.getY();
-                theta += p.getRotation().getRadians();
+        for (int i = 0; i < goodPoseCount; i++) {
+            if (weightsBuf[i] > 20.0 * avgWeight) {
+                Pose2d dominant = goodPosesBuf[i];
+                visionStdDevs = VecBuilder.fill(1.0, 1.0, Double.MAX_VALUE);
+
+                if (RobotBase.isReal()) {
+                    drivetrain.addVisionMeasurement(
+                        dominant,
+                        Utils.fpgaToCurrentTime(fusedTimestamp),
+                        visionStdDevs
+                    );
+                }
+
+                Logger.recordOutput("Vision/fusedPose", dominant);
+                Logger.recordOutput("Vision/fusedStdDev", 1.0);
+                Logger.recordOutput("Vision/fusedSpread", 0.0);
+                return;
             }
+        }
 
-            Pose2d fusedPose = new Pose2d(
-                x / goodPoseCount,
-                y / goodPoseCount,
-                new edu.wpi.first.math.geometry.Rotation2d(theta / goodPoseCount)
-            );
+        // Weighted fusion
+        double x = 0.0, y = 0.0, theta = 0.0;
+        double wSum = 0.0;
 
+        for (int i = 0; i < goodPoseCount; i++) {
+            Pose2d p = goodPosesBuf[i];
+            double w = weightsBuf[i];
+
+            x += w * p.getX();
+            y += w * p.getY();
+            theta += w * p.getRotation().getRadians();
+            wSum += w;
+        }
+
+        Pose2d fusedPose = new Pose2d(
+            x / wSum,
+            y / wSum,
+            new edu.wpi.first.math.geometry.Rotation2d(theta / wSum)
+        );
+
+        // STRICT DISAGREEMENT CHECK
+        double spread = 0.0;
+        for (int i = 0; i < goodPoseCount; i++) {
+            Pose2d p = goodPosesBuf[i];
+            double dx = p.getX() - fusedPose.getX();
+            double dy = p.getY() - fusedPose.getY();
+            double d = Math.hypot(dx, dy);
+            if (d > spread) spread = d;
+        }
+
+        // HARD REJECTION IF CAMERAS DISAGREE TOO MUCH
+        if (spread > 0.25) {
+            visionStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+            Logger.recordOutput("Vision/fusedPose", fusedPose);
+            Logger.recordOutput("Vision/fusedSpread", spread);
+            return;
+        }
+
+        // STRICT STD DEV
+        double avgDist = Math.max(1.0, globalClosestTagDist);
+        double effectiveTags = Math.max(1.0, wSum);
+
+        double base = 0.06;
+        double stdDev = base * (avgDist * avgDist) / effectiveTags + 0.35;
+
+        // strong quadratic disagreement inflation
+        stdDev *= (1.0 + 10.0 * spread * spread);
+
+        // minimum floor
+        stdDev = Math.max(stdDev, 1.0);
+
+        visionStdDevs = VecBuilder.fill(stdDev, stdDev, Double.MAX_VALUE);
+
+        if (RobotBase.isReal()) {
             drivetrain.addVisionMeasurement(
                 fusedPose,
                 Utils.fpgaToCurrentTime(fusedTimestamp),
                 visionStdDevs
             );
         }
+
+        Logger.recordOutput("Vision/fusedPose", fusedPose);
+        Logger.recordOutput("Vision/fusedStdDev", stdDev);
+        Logger.recordOutput("Vision/fusedSpread", spread);
     }
 
+
+    // *Helpers
     private Pose2d fusePoses(List<Pose2d> poses) {
         double x = 0.0, y = 0.0, theta = 0.0;
 
@@ -194,17 +280,20 @@ public class Vision extends SubsystemBase {
         );
     }
 
-    private boolean isEstimateValid(Pose2d pose, double headingDeg, double timestampSeconds) {
-        if (pose == null) return false;
+    private boolean isEstimateValid(Pose2d estimatedPose, double headingDeg, double timestampSeconds) {
+        if (estimatedPose == null) return false;
+
+        // double jump = robotPose.getTranslation().getDistance(estimatedPose.getTranslation());
+        // if (jump > .75) return false;
 
         double age = Timer.getFPGATimestamp() - timestampSeconds;
         if (age > 0.25) return false;
 
-        if (pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X) return false;
-        if (pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y) return false;
+        if (estimatedPose.getX() < 0 || estimatedPose.getX() > Constants.FIELD_MAX_X) return false;
+        if (estimatedPose.getY() < 0 || estimatedPose.getY() > Constants.FIELD_MAX_Y) return false;
 
         double headingError = Math.abs(MathUtil.inputModulus(
-            pose.getRotation().getDegrees() - headingDeg,
+            estimatedPose.getRotation().getDegrees() - headingDeg,
             -180, 180
         ));
         return headingError <= 90.0;

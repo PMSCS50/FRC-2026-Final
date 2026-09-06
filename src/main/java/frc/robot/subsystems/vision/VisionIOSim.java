@@ -26,11 +26,13 @@ public class VisionIOSim implements VisionIO {
     private final PhotonCamera camera;
     private final PhotonCameraSim cameraSim;
     private final PhotonPoseEstimator poseEstimator;
+    private final String name;
 
     private Pose2d lastGoodPose = null;
 
     public VisionIOSim(String cameraName, Transform3d robotToCamera) {
         visionSim = new VisionSystemSim("simVision");
+        this.name = cameraName;
 
         if (VisionConstants.aprilTagLayoutAndymark != null) {
             visionSim.addAprilTags(VisionConstants.aprilTagLayoutAndymark);
@@ -43,7 +45,7 @@ public class VisionIOSim implements VisionIO {
         props.setAvgLatencyMs(20);
         props.setLatencyStdDevMs(5);
 
-        camera    = new PhotonCamera(cameraName);
+        camera    = new PhotonCamera(name);
         cameraSim = new PhotonCameraSim(camera, props);
         cameraSim.enableDrawWireframe(true);
 
@@ -62,6 +64,7 @@ public class VisionIOSim implements VisionIO {
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
+        inputs.name = name;
         PhotonPipelineResult result = camera.getLatestResult();
 
         if (result == null) {

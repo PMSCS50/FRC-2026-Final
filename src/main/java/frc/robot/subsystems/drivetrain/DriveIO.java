@@ -24,7 +24,7 @@ public interface DriveIO {
         // *Robot heading, linear & angular speeds, and pose
         public double robotHeading = 0.0; // [rad]
         public ChassisSpeeds robotChassisSpeeds = new ChassisSpeeds(); // [m/s], robot-relative
-        //public Pose2d robotPose = new Pose2d(); // [m], field-relative
+        public Pose2d robotPose = new Pose2d(); // [m], field-relative
 
         // *Total current and voltage of the drivetrain
         public double totalCurrent = 0.0;
@@ -33,8 +33,6 @@ public interface DriveIO {
         // *Additional robot state information
         public boolean isFieldOriented = false;
         public double distanceToHub = 0.0; // [m]
-
-        public Pose2d robotPose = new Pose2d(); // [m], field-relative
 
     }
 

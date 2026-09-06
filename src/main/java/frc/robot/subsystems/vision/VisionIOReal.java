@@ -12,7 +12,7 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 
 public class VisionIOReal implements VisionIO {
 
-    private final String llName;
+    private final String name;
     private final Transform3d robotToCamera;
 
     private Pose2d lastGoodPose = null;
@@ -24,12 +24,12 @@ public class VisionIOReal implements VisionIO {
      * @param robotToCamera Transform from robot origin to camera
      */
     public VisionIOReal(String cameraName, Transform3d robotToCamera) {
-        this.llName = cameraName;
+        this.name = cameraName;
         this.robotToCamera = robotToCamera;
 
         // Configure Limelight camera pose from Transform3d
         LimelightHelpers.setCameraPose_RobotSpace(
-            llName,
+            name,
             robotToCamera.getX(),
             robotToCamera.getY(),
             robotToCamera.getZ(),
@@ -42,20 +42,21 @@ public class VisionIOReal implements VisionIO {
     /** Called by Vision each loop to seed LL orientation. */
     public void setRobotYaw(double yawDegrees) {
         LimelightHelpers.SetRobotOrientation(
-            llName, yawDegrees, 0, 0, 0, 0, 0
+            name, yawDegrees, 0, 0, 0, 0, 0
         );
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        inputs.hasTarget = LimelightHelpers.getTV(llName);
+        inputs.name = name;
+        inputs.hasTarget = LimelightHelpers.getTV(name);
 
         if (!inputs.hasTarget) {
             clear(inputs);
             return;
         }
 
-        LimelightResults results = LimelightHelpers.getLatestResults(llName);
+        LimelightResults results = LimelightHelpers.getLatestResults(name);
         LimelightTarget_Fiducial[] fiducials = results.targets_Fiducials;
 
         int tagCount = fiducials.length;
@@ -81,7 +82,7 @@ public class VisionIOReal implements VisionIO {
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = poses;
 
-        PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llName);
+        PoseEstimate pe = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
 
         if (!LimelightHelpers.validPoseEstimate(pe)) {
             clearPose(inputs);
