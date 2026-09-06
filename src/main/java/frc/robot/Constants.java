@@ -23,8 +23,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
-
 import frc.robot.generated.TunerConstants;
 
 // *The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean constants.

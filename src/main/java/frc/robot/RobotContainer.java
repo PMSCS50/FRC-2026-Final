@@ -16,17 +16,20 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.config.RobotConfig;
-import edu.wpi.first.math.util.Units;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
+
+import edu.wpi.first.math.util.Units;
+
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -34,34 +37,28 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
+import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.ShooterConstants;
+
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
-import frc.robot.commands.PivotToAngle;
 import frc.robot.commands.Intaking;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeIOReal;
-import frc.robot.subsystems.intake.IntakeIOSim;
-import frc.robot.subsystems.pivot.Pivot;
-import frc.robot.subsystems.pivot.PivotIOReal;
-import frc.robot.subsystems.pivot.PivotIOSim;
-import frc.robot.subsystems.vision.*;
-import frc.robot.util.Elastic;
-import frc.robot.util.pathfinding.Pathmaster;
-import frc.robot.util.pathfinding.builders.PathRequest;
-import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
-import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.ShooterIOReal;
-import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.commands.PivotToAngle;
+
+import frc.robot.generated.TunerConstants;
+
 import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drivetrain.DriveCommands;
-import frc.robot.generated.TunerConstants;
-import frc.robot.Constants.ClimbConstants;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.ShooterConstants;
-import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.intake.*;
+import frc.robot.subsystems.pivot.*;
+import frc.robot.subsystems.shooter.*;
+import frc.robot.subsystems.vision.*;
+
+import frc.robot.util.Elastic;
+import frc.robot.util.pathfinding.Pathmaster;
 
 public class RobotContainer {
     // *Drivetrain constants
