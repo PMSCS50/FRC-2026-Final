@@ -13,7 +13,6 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 public class VisionIOReal implements VisionIO {
 
     private final String name;
-    private final Transform3d robotToCamera;
 
     private Pose2d lastGoodPose = null;
 
@@ -25,7 +24,6 @@ public class VisionIOReal implements VisionIO {
      */
     public VisionIOReal(String cameraName, Transform3d robotToCamera) {
         this.name = cameraName;
-        this.robotToCamera = robotToCamera;
 
         // Configure Limelight camera pose from Transform3d
         LimelightHelpers.setCameraPose_RobotSpace(
@@ -39,13 +37,14 @@ public class VisionIOReal implements VisionIO {
         );
     }
 
-    /** Called by Vision each loop to seed LL orientation. */
+    // *Called by Vision each loop to seed LL orientation.
     public void setRobotYaw(double yawDegrees) {
         LimelightHelpers.SetRobotOrientation(
             name, yawDegrees, 0, 0, 0, 0, 0
         );
     }
 
+    // *Update IO
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         inputs.name = name;
@@ -116,6 +115,7 @@ public class VisionIOReal implements VisionIO {
             }
         }
 
+        // |Save last good pose
         lastGoodPose = pose;
 
         inputs.hasEstimatedPose       = true;
@@ -126,6 +126,7 @@ public class VisionIOReal implements VisionIO {
         inputs.targetId = ids[0]; // best target = first fiducial
     }
 
+    // *IO clearing helpers
     private void clear(VisionIOInputs inputs) {
         inputs.hasTarget        = false;
         inputs.targetId         = -1;

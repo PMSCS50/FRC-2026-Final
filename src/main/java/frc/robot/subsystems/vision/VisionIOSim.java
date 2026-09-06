@@ -30,6 +30,12 @@ public class VisionIOSim implements VisionIO {
 
     private Pose2d lastGoodPose = null;
 
+    /**
+     * Simulated camera IO with configurable mounting.
+     *
+     * @param cameraName    Limelight name
+     * @param robotToCamera Transform from robot origin to camera
+     */
     public VisionIOSim(String cameraName, Transform3d robotToCamera) {
         visionSim = new VisionSystemSim("simVision");
         this.name = cameraName;
@@ -57,10 +63,12 @@ public class VisionIOSim implements VisionIO {
         );
     }
 
+    // *Called by Vision each loop to seed PV orientation.
     public void updateSimPose(Pose2d robotPose) {
         visionSim.update(robotPose);
     }
 
+    // *Update IO
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         List<PhotonPipelineResult> results = camera.getAllUnreadResults();
@@ -135,7 +143,7 @@ public class VisionIOSim implements VisionIO {
             return;
         }
 
-        // Save last good pose
+        // |Save last good pose
         lastGoodPose = pose;
 
         inputs.hasEstimatedPose       = true;
@@ -147,6 +155,7 @@ public class VisionIOSim implements VisionIO {
         inputs.targetId = (best != null) ? best.getFiducialId() : -1;
     }
 
+    // *IO clearing helpers
     private void clear(VisionIOInputs inputs) {
         inputs.hasTarget        = false;
         inputs.targetId         = -1;
@@ -168,6 +177,7 @@ public class VisionIOSim implements VisionIO {
         inputs.numTagsUsed = 0;
     }
 
+    // *Getters
     public VisionSystemSim getVisionSim() {
         return visionSim;
     }

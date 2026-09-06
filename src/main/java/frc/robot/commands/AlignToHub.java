@@ -51,7 +51,7 @@ public class AlignToHub extends Command {
                 return;
             }
 
-            double rawYawErrorDeg = vision.getYawToTarget(hubPose);
+            double rawYawErrorDeg = vision.getYawToPose(hubPose);
             double yawErrorDeg = rawYawErrorDeg;
 
             if (Math.abs(rawYawErrorDeg) > (180.0 - ANTIPODAL_DEADBAND_DEG)) {

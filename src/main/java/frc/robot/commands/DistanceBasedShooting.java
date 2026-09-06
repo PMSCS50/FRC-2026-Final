@@ -33,7 +33,7 @@ public class DistanceBasedShooting extends Command {
         //drivetrain.setControl(brake); // hold position, no scheduling
 
         double distance;
-        distance = vision.getDistanceToTarget(vision.getCachedHubPose());
+        distance = vision.getDistanceToPose(vision.getCachedHubPose());
         if (distance < 0) {
             distance = vision.getBestDistanceToHub();
         }
