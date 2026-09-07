@@ -7,7 +7,7 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
+import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.builders.*;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;

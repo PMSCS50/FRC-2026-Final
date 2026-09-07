@@ -4,8 +4,8 @@
 // Use of this source code is governed by a BSD
 // license that can be found in the LICENSE file
 // at the root directory of this project.
-
-package frc.robot.subsystems.drivetrain;
+ // !Most teams seem to not use AK IO directly on their drivetrain. IDK what to do
+package frc.robot.subsystems.swerve;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;

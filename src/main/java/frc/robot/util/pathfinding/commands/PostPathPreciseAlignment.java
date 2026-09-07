@@ -11,10 +11,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-
-import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 

@@ -35,7 +35,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
@@ -49,15 +48,15 @@ import frc.robot.commands.Intaking;
 import frc.robot.commands.PivotToAngle;
 
 import frc.robot.generated.TunerConstants;
-
-import frc.robot.subsystems.drivetrain.CommandSwerveDrivetrain;
-import frc.robot.subsystems.drivetrain.DriveCommands;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.pivot.*;
 import frc.robot.subsystems.shooter.*;
+import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
+import frc.robot.subsystems.swerve.DriveCommands;
 import frc.robot.subsystems.vision.*;
 
 import frc.robot.util.Elastic;
+import frc.robot.util.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
 
 public class RobotContainer {
@@ -82,8 +81,8 @@ public class RobotContainer {
     private final Intake intake;
     private final Pivot pivot;
 
-    public static final CommandXboxController driverController = new CommandXboxController(0);
-    public static final CommandXboxController operatorController = new CommandXboxController(1);
+    public static final ExtendedCommandXboxController driverController = new ExtendedCommandXboxController(0);
+    public static final ExtendedCommandXboxController operatorController = new ExtendedCommandXboxController(1);
 
     private static final Transform3d ROBOT_TO_CAMERA_FRONT = new Transform3d(
         new Translation3d(0.072, -0.072, 0.495),

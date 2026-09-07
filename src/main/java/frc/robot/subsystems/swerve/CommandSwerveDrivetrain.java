@@ -1,4 +1,4 @@
-package frc.robot.subsystems.drivetrain;
+package frc.robot.subsystems.swerve;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -26,27 +26,29 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.VisionConstants;
+import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.builders.GoingMerry;
+import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 
 /**
  *  !Class that extends the Phoenix 6 SwerveDrivetrain class and implements
  *  !Subsystem so it can easily be used in command-based projects.
  */
-public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem, DriveIO {
-    private static final double kSimLoopPeriod = 0.005; // 5 ms
+public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+    private static final double kSimLoopPeriod = 0.002; // 2 ms
     private Notifier m_simNotifier = null;
-    private double m_lastSimTime;
 
     private int loggingLoopCounter = 0;
     private static final int LOG_EVERY_N_LOOPS = 5; // 5 loops = about 100ms
@@ -61,7 +63,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    private final DriveIOInputsAutoLogged m_inputs = new DriveIOInputsAutoLogged();
+    private final SwerveIOInputsAutoLogged m_inputs = new SwerveIOInputsAutoLogged();
 
     /** // !Swerve request to apply during robot-centric path following 
      *  // *This also takes in our robot's physical constrants to create optimal path speeds.
@@ -170,15 +172,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SwerveDrivetrainConstants drivetrainConstants,
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
-        super(drivetrainConstants, modules);
-        //m_logSignals = cacheLogSignals();
+        super(drivetrainConstants, MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(modules));
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
         configureAutoBuilder();
-
-        //| Probably not needed since we are doing the same in Advantagecope
-        //configureSignalLogging();
     }
 
     /**
@@ -315,6 +314,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param request Function returning the request to apply
      * @return Command to run
      */
+
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
         return run(() -> this.setControl(requestSupplier.get()));
     }
@@ -359,6 +359,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // *Update inputs; log inputs and other values in Advantagekit
         updateInputs(m_inputs);
         Logger.processInputs("LoggedDrivetrain", m_inputs);  // also needed for AdvantageKit to log it
+        Logger.recordOutput("maplesimpose", mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
 
         boolean shouldLogSlowSignals = (++loggingLoopCounter % LOG_EVERY_N_LOOPS) == 0;
 
@@ -383,16 +384,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             Logger.recordOutput("Gyro/ModYaw", pigeon.getYaw().getValueAsDouble() % 360 - 180);
             Logger.recordOutput("Gyro/YawRate", pigeon.getAngularVelocityZWorld().getValueAsDouble());
             Logger.recordOutput("Gyro/IsConnected", pigeon.isConnected());
-
-            // Logger.recordOutput("Gyro/Pitch",    pigeon.getPitch().getValueAsDouble());
-            // Logger.recordOutput("Gyro/Roll",     pigeon.getRoll().getValueAsDouble());
-
-            // Logger.recordOutput("Gyro/PitchRate", pigeon.getAngularVelocityYWorld().getValueAsDouble());
-            // Logger.recordOutput("Gyro/RollRate",  pigeon.getAngularVelocityXWorld().getValueAsDouble());
-
-            // Logger.recordOutput("Gyro/FaultHardware",         pigeon.getFault_Hardware().getValue());
-            // Logger.recordOutput("Gyro/FaultUndervoltage",     pigeon.getFault_Undervoltage().getValue());
-            // Logger.recordOutput("Gyro/FaultBootDuringEnable", pigeon.getFault_BootDuringEnable().getValue());
         }
 
         // |Sim alliance perspective config
@@ -410,79 +401,39 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
+    private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
+
+    
     private void startSimThread() {
-        m_lastSimTime = Utils.getCurrentTimeSeconds();
+        mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
+                this,
+                Seconds.of(kSimLoopPeriod),
+                Pounds.of(115),
+                Inches.of(30),
+                Inches.of(30),
+                DCMotor.getKrakenX60(1),
+                DCMotor.getFalcon500(1),
+                1.2,
+                getModuleLocations(),
+                getPigeon2(),
+                getModules(),
+                TunerConstants.FrontLeft,
+                TunerConstants.FrontRight,
+                TunerConstants.BackLeft,
+                TunerConstants.BackRight);
 
-        // *Run simulation at a faster rate so PID gains behave more reasonably
-        m_simNotifier = new Notifier(() -> {
-            final double currentTime = Utils.getCurrentTimeSeconds();
-            double deltaTime = currentTime - m_lastSimTime;
-            m_lastSimTime = currentTime;
+        resetPose(new Pose2d(
+            2.0,
+            2.0,
+            Rotation2d.fromDegrees(0)
+        ));
 
-            // *use the measured time delta, get battery voltage from WPILib
-            updateSimState(deltaTime, RobotController.getBatteryVoltage());
-        });
+        /* Run simulation at a faster rate so PID gains behave more reasonably */
+        m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
-    private void configureSignalLogging() {
-        for (int i = 0; i < getModules().length; i++) {
-            var module = getModule(i);
-            // *Phoenix automatically logs these at the CANivore rate
-            // *Just ensure signal update frequency is set
-            module.getDriveMotor().getStatorCurrent().setUpdateFrequency(50);
-            module.getDriveMotor().getSupplyCurrent().setUpdateFrequency(50);
-            module.getDriveMotor().getMotorVoltage().setUpdateFrequency(50);
-            module.getSteerMotor().getStatorCurrent().setUpdateFrequency(50);
-            module.getSteerMotor().getSupplyCurrent().setUpdateFrequency(50);
-            module.getSteerMotor().getMotorVoltage().setUpdateFrequency(50);
-        }
-        SignalLogger.start(); // starts .hoot logging
-    }
-
-    private BaseStatusSignal[] cacheLogSignals() {
-        BaseStatusSignal[] signals = new BaseStatusSignal[] {
-            getModule(0).getDriveMotor().getMotorVoltage(),
-            getModule(0).getDriveMotor().getSupplyCurrent(),
-            getModule(0).getDriveMotor().getStatorCurrent(),
-            getModule(0).getSteerMotor().getMotorVoltage(),
-            getModule(0).getSteerMotor().getSupplyCurrent(),
-            getModule(0).getSteerMotor().getStatorCurrent(),
-
-            getModule(1).getDriveMotor().getMotorVoltage(),
-            getModule(1).getDriveMotor().getSupplyCurrent(),
-            getModule(1).getDriveMotor().getStatorCurrent(),
-            getModule(1).getSteerMotor().getMotorVoltage(),
-            getModule(1).getSteerMotor().getSupplyCurrent(),
-            getModule(1).getSteerMotor().getStatorCurrent(),
-
-            getModule(2).getDriveMotor().getMotorVoltage(),
-            getModule(2).getDriveMotor().getSupplyCurrent(),
-            getModule(2).getDriveMotor().getStatorCurrent(),
-            getModule(2).getSteerMotor().getMotorVoltage(),
-            getModule(2).getSteerMotor().getSupplyCurrent(),
-            getModule(2).getSteerMotor().getStatorCurrent(),
-
-            getModule(3).getDriveMotor().getMotorVoltage(),
-            getModule(3).getDriveMotor().getSupplyCurrent(),
-            getModule(3).getDriveMotor().getStatorCurrent(),
-            getModule(3).getSteerMotor().getMotorVoltage(),
-            getModule(3).getSteerMotor().getSupplyCurrent(),
-            getModule(3).getSteerMotor().getStatorCurrent(),
-
-            getPigeon2().getYaw(),
-            getPigeon2().getAngularVelocityZWorld()
-        };
-
-        for (BaseStatusSignal signal : signals) {
-            signal.setUpdateFrequency(50);
-        }
-
-        return signals;
-    }
-
-    @Override
-    public void updateInputs(DriveIOInputs inputs) {
+    public void updateInputs(SwerveIOInputs inputs) {
         var state = getState();
 
         inputs.moduleStates = state.ModuleStates;
@@ -491,9 +442,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         inputs.robotChassisSpeeds = state.Speeds;
         inputs.robotHeading = state.Pose.getRotation().getRadians();
+
+        inputs.totalCurrent = 0.0;
+
+        for (int i = 0; i < 4; i++) {
+            var module = getModule(i);
+            inputs.totalCurrent += module.getDriveMotor().getSupplyCurrent().getValueAsDouble() + module.getSteerMotor().getSupplyCurrent().getValueAsDouble();
+        }
+
+        inputs.totalVoltage = RobotController.getBatteryVoltage();
         
         inputs.isFieldOriented = false;
-        inputs.distanceToHub = state.Pose.getTranslation().getDistance(VisionConstants.getHubPose().getTranslation());
 
         inputs.robotPose = state.Pose;
     }
@@ -516,5 +475,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         setControl(
             m_teleopApplyRobotSpeeds.withSpeeds(discreteSpeeds)
         );
+    }
+
+    @Override
+    public void resetPose(Pose2d pose) {
+        if (this.mapleSimSwerveDrivetrain != null) {mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(pose);}
+        super.resetPose(pose);
     }
 }
