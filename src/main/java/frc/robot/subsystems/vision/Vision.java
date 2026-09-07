@@ -305,6 +305,8 @@ public class Vision extends SubsystemBase {
         Logger.recordOutput("Vision/fusedPose", fusedPose);
         Logger.recordOutput("Vision/fusedStdDev", stdDev);
         Logger.recordOutput("Vision/fusedSpread", spread);
+
+        Logger.recordOutput("Pose", drivetrain.getState().Pose);
     }
 
 

@@ -151,9 +151,9 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
     rumbleControllers(0);
 
-    if (Constants.currentMode == Constants.simMode) {
-      DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
-    }
+    // if (Constants.currentMode == Constants.simMode) {
+    //   DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+    // }
 
     if (!m_orchestra.isPlaying() && allowOrchestra) {
       m_orchestra.play();
@@ -224,7 +224,13 @@ public class Robot extends LoggedRobot {
   // *Simulation mode
   @Override
   public void simulationInit() {
-    DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+    DriverStationSim.setAllianceStationId(AllianceStationID.Blue1); 
+    
+    // Tell the code that FMS is actively connected
+    DriverStationSim.setFmsAttached(true);
+    
+    // Notify the DriverStation system to update immediately
+    DriverStationSim.notifyNewData();
   }
 
   @Override
