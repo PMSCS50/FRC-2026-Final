@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.AllianceUtil;
 
 // *The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean constants.
 // !This class should not be used for any other purpose. All constants should be declared globally (i.e. public static).
@@ -83,13 +84,13 @@ public final class Constants {
     public static final int redRightTagId = 2;
 
     public static int getMiddleTagId () {
-      return AllianceRelativeFiducial(blueMiddleTagId);
+      return AllianceUtil.allianceRelativeFiducial(blueMiddleTagId);
     }
     public static int getLeftTagId () {
-      return AllianceRelativeFiducial(blueLeftTagId);
+      return AllianceUtil.allianceRelativeFiducial(blueLeftTagId);
     }
     public static int getRightTagId () {
-      return AllianceRelativeFiducial(blueRightTagId);
+      return AllianceUtil.allianceRelativeFiducial(blueRightTagId);
     }
 
     public static double getDirectionFlipper() {
@@ -114,7 +115,7 @@ public final class Constants {
     static final Pose2d BLUE_HUB = new Pose2d(4.611, 4.024, Rotation2d.fromDegrees(0));
 
     public static Pose2d getHubPose() {
-      return AllianceRelativePose(BLUE_HUB);
+      return AllianceUtil.allianceRelativePose(BLUE_HUB);
     }
 
     public static Pose2d getHubPose(DriverStation.Alliance alliance) {
@@ -184,11 +185,11 @@ public final class Constants {
     public static Pose2d getShootingSetpoint(int num) {
         if (cachedAllianceSetpoints == null && DriverStation.getAlliance().isPresent()) {
             cachedAllianceSetpoints = Arrays.stream(shootingSetpoints)
-                .map(Constants::AllianceRelativePose)
+                .map(AllianceUtil::allianceRelativePose)
                 .toArray(Pose2d[]::new);
         }
         if (cachedAllianceSetpoints != null) return cachedAllianceSetpoints[num - 1];
-        return AllianceRelativePose(shootingSetpoints[num - 1]);  // fallback if DS not ready
+        return AllianceUtil.allianceRelativePose(shootingSetpoints[num - 1]);  // fallback if DS not ready
     }
   }
 
@@ -200,37 +201,13 @@ public final class Constants {
     private static final Pose2d RedClimb = new Pose2d(14.94, 3.71, Rotation2d.fromDegrees(0));
     private static final Pose2d BlueClimb = new Pose2d(1.6, 3.71, Rotation2d.fromDegrees(0));
     public static Pose2d getClimbPose() {
-      return AllianceRelativePose(BlueClimb);
+      return AllianceUtil.allianceRelativePose(BlueClimb);
     }
 
     public static Pose2d getClimbPose(DriverStation.Alliance alliance) {
       return alliance == DriverStation.Alliance.Red ? RedClimb : BlueClimb;
     }
     
-  }
-
-  // *Helper methods for alliance-relative calculations
-  // ?These methods take in a pose or tag ID and return the appropriate value based on the current alliance color.
-  // ?This allows us to write code that is agnostic to alliance color, and just use these methods to get the correct values.
-  private static Pose2d AllianceRelativePose(Pose2d pose) {
-    if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) {
-        return new Pose2d(
-            FIELD_MAX_X - pose.getX(),
-            FIELD_MAX_Y - pose.getY(),
-            pose.getRotation().plus(Rotation2d.fromDegrees(180))
-        );
-    } else {
-        return pose;
-    }
-  }
-
-  // *Helper method for alliance-relative tag IDs, since the red and blue tags are in different positions on the field.
-  private static int AllianceRelativeFiducial(int blueTagId) {
-    if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Red) {
-        return blueTagId - 16;
-    } else {
-        return blueTagId;
-    }
   }
 
   // *Helper method to calculate the angle from the robot to a target pose, copied straight from PhotonUtils.

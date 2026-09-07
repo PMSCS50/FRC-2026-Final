@@ -10,7 +10,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.hal.AllianceStationID;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -27,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.util.AllianceUtil;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
@@ -243,15 +243,11 @@ public class Robot extends LoggedRobot {
     Alliance alliance = allianceOpt.get();
     if (alliance == lastAppliedAlliance) return;
 
-    boolean red = alliance == Alliance.Red;
-
     m_robotContainer.getDrivetrain().seedFieldCentric(
-      new Rotation2d(
-        red ? Math.PI : 0
-      )
+      AllianceUtil.getZeroRotation()
     );
     
-    m_robotContainer.getDrivetrain().getPigeon2().setYaw(red ? 180 : 0);
+    m_robotContainer.getDrivetrain().getPigeon2().setYaw(AllianceUtil.getZeroRotation().getDegrees());
 
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();
