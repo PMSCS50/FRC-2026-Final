@@ -255,32 +255,24 @@ public class MapleSimSwerveDrivetrain {
      * robot hardware.</h4>
      */
     private static void regulateModuleConstantForSimulation(SwerveModuleConstants<?, ?, ?> moduleConstants) {
-        // Skip regulation if running on a real robot
         if (RobotBase.isReal()) return;
 
-        // Apply simulation-specific adjustments to module constants
         moduleConstants
-                // Disable encoder offsets
-                .withEncoderOffset(0)
-                // Disable motor inversions for drive and steer motors
-                .withDriveMotorInverted(false)
-                .withSteerMotorInverted(false)
-                // Disable CanCoder inversion
-                .withEncoderInverted(false)
-                // Adjust steer motor PID gains for simulation
-                .withSteerMotorGains(new Slot0Configs()
-                        .withKP(70)
-                        .withKI(0)
-                        .withKD(4.5)
-                        .withKS(0)
-                        .withKV(1.91)
-                        .withKA(0)
-                        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign))
-                .withSteerMotorGearRatio(16.0)
-                // Adjust friction voltages
-                .withDriveFrictionVoltage(Volts.of(0.1))
-                .withSteerFrictionVoltage(Volts.of(0.05))
-                // Adjust steer inertia
-                .withSteerInertia(KilogramSquareMeters.of(0.05));
+            .withEncoderOffset(0)
+            .withDriveMotorInverted(false)
+            .withSteerMotorInverted(false)
+            .withEncoderInverted(false)
+            .withSteerMotorGains(new Slot0Configs()
+                    .withKP(100)
+                    .withKI(0)
+                    .withKD(0.5)
+                    .withKS(0.1)
+                    .withKV(2.66)
+                    .withKA(0)
+                    .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign))
+            .withSteerMotorGearRatio(16.0)
+            .withDriveFrictionVoltage(Volts.of(0.1))
+            .withSteerFrictionVoltage(Volts.of(0.05))
+            .withSteerInertia(KilogramSquareMeters.of(0.05));
     }
 }
