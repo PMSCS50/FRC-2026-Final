@@ -404,16 +404,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
 
     
+    @SuppressWarnings("unchecked")
     private void startSimThread() {
         mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
                 this,
                 Seconds.of(kSimLoopPeriod),
-                Pounds.of(115),
+                Kilograms.of(60),
                 Inches.of(30),
                 Inches.of(30),
                 DCMotor.getKrakenX60(1),
-                DCMotor.getFalcon500(1),
-                1.2,
+                DCMotor.getKrakenX60(1),
+                1.7,
                 getModuleLocations(),
                 getPigeon2(),
                 getModules(),
