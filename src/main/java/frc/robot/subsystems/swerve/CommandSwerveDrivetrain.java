@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -18,8 +17,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.util.swerve.SwerveSetpoint;
-import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -46,7 +43,7 @@ import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
  *  !Class that extends the Phoenix 6 SwerveDrivetrain class and implements
  *  !Subsystem so it can easily be used in command-based projects.
  */
-public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem, SwerveIO {
     private static final double kSimLoopPeriod = 0.002; // 2 ms
     private Notifier m_simNotifier = null;
 
@@ -78,12 +75,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     // *so the stale path-end forces keep the drive motors spinning at cruise speed
     // *regardless of what velocity is commanded — causing the observed drift.
     private final SwerveRequest.ApplyRobotSpeeds m_teleopApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
-
-    //**Setpoint generator to optimize traversal through paths, made by FRC team 254.*/
-    private SwerveSetpointGenerator m_setpointGenerator;
-
-    //**A setpoint value */
-    private SwerveSetpoint m_previousSetpoint;
     
     //** Swerve request to apply after the robot finished going through a path in Pathmaster. */
     private final SwerveRequest.Idle m_idle = new SwerveRequest.Idle();
@@ -247,9 +238,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
             //Configure AutoBuilder
             AutoBuilder.configure(
-                () -> getState().Pose,   // Supplier of current robot pose
+                this::getPose,   // Supplier of current robot pose
                 this::resetPose,         // Consumer for seeding pose against auto
-                () -> getState().Speeds, // Supplier of current robot speeds
+                this::getSpeeds, // Supplier of current robot speeds
 
                 (speeds, feedforwards) -> {
                     setControl(
@@ -277,8 +268,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             //Also, since AutoBuilder is still used in the autochooser for auton paths I cant and wont remove it
             //The constructor is entirely the same except for the lack of a resetPose() parameter
             GoingMerry.configure(
-                () -> getState().Pose,   // Supplier of current robot pose
-                () -> getState().Speeds, // Supplier of current robot speeds
+                this::getPose,   // Supplier of current robot pose
+                this::getSpeeds, // Supplier of current robot speeds
 
                 (speeds, feedforwards) -> {
                     setControl(
@@ -343,10 +334,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // *get robot pose
     public Pose2d getPose() {
+        if (Utils.isSimulation() && mapleSimSwerveDrivetrain != null) {
+            return mapleSimSwerveDrivetrain.mapleSimDrive
+                .getSimulatedDriveTrainPose();
+        }
+
         return getState().Pose;
     }
 
     public ChassisSpeeds getSpeeds() {
+        if (Utils.isSimulation() && mapleSimSwerveDrivetrain != null) {
+            return mapleSimSwerveDrivetrain.mapleSimDrive
+                .getDriveTrainSimulatedChassisSpeedsRobotRelative();
+        }
+
         return getState().Speeds;
     }
 
@@ -409,9 +410,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
                 this,
                 Seconds.of(kSimLoopPeriod),
-                Kilograms.of(60),
-                Inches.of(30),
-                Inches.of(30),
+                Pounds.of(115),
+                Meters.of(0.858),
+                Meters.of(0.858),
                 DCMotor.getKrakenX60(1),
                 DCMotor.getKrakenX60(1),
                 1.7,
