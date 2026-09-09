@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.misc;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Joules;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class VirtualPDH {
+public class VirtualPD {
     private static ArrayList<Supplier<Current>> motors = new ArrayList<>();
     private static ArrayList<String> groups = new ArrayList<>();
     private static HashMap<String, Energy> groupEnergyTotals = new HashMap<>();
@@ -52,12 +52,12 @@ public class VirtualPDH {
             groupEnergyTotals.put(group, groupEnergyTotals.get(group).plus(energy));
         }
 
-        Logger.recordOutput("VirtualPDH/Total", total);
+        Logger.recordOutput("VirtualPD/Total", total);
         for (String group : groupCurrentTotals.keySet()) {
-            Logger.recordOutput("VirtualPDH/Current/" + group, groupCurrentTotals.get(group));
+            Logger.recordOutput("VirtualPD/Current/" + group, groupCurrentTotals.get(group));
         }
         for (String group : groupEnergyTotals.keySet()) {
-            Logger.recordOutput("VirtualPDH/Energy/" + group, groupEnergyTotals.get(group));
+            Logger.recordOutput("VirtualPD/Energy/" + group, groupEnergyTotals.get(group));
         }
     }
 }

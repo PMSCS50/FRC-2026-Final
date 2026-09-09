@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.AllianceUtil;
+import frc.robot.util.misc.AllianceUtil;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
