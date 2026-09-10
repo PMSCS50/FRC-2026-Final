@@ -14,7 +14,7 @@ import edu.wpi.first.units.measure.Frequency;
 import java.util.function.Supplier;
 
 //We should add all our StatusSignals here.
-public class SignalUtil {
+public class PhoenixUtil {
     private static StatusSignalCollection signals = new StatusSignalCollection();
 
     /** Attempts to run the command until no error is produced. */

@@ -43,7 +43,7 @@ public class ShooterIOSim implements ShooterIO {
 
     @Override
     public void registerMotors() {
-        VirtualPD.registerMotor(() -> shooter1.getSupplyCurrent().getValue(), "Shooter");
+        VirtualPD.registerMotor(shooter1.getSupplyCurrent().asSupplier(), "Shooter");
         VirtualPD.registerMotor(() -> Amps.of(kicker1.getOutputCurrent()), "Shooter");
     }
 

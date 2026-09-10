@@ -52,7 +52,9 @@ public class VirtualPD {
             groupEnergyTotals.put(group, groupEnergyTotals.get(group).plus(energy));
         }
 
-        Logger.recordOutput("VirtualPD/Total", total);
+        Logger.recordOutput("VirtualPD/Total/Current", total);
+        Logger.recordOutput("VirtualPD/Total/Energy", totalEnergy)
+        
         for (String group : groupCurrentTotals.keySet()) {
             Logger.recordOutput("VirtualPD/Current/" + group, groupCurrentTotals.get(group));
         }
