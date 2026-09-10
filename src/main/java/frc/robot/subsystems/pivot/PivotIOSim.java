@@ -1,7 +1,10 @@
 package frc.robot.subsystems.pivot;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.robot.util.misc.VirtualPD;
 
 public class PivotIOSim implements PivotIO {
 
@@ -42,10 +45,14 @@ public class PivotIOSim implements PivotIO {
     }
 
     @Override
+    public void registerMotors() {
+        VirtualPD.registerMotor(() -> Amps.of(armSim.getCurrentDrawAmps()), "Pivot");
+    }
+
+    @Override
     public void updateInputs(PivotIOInputs inputs) {
         armSim.update(0.02);
 
-        inputs.motorAmperage = armSim.getCurrentDrawAmps();
         inputs.motorVoltage = appliedVolts;
         inputs.motorPosition = armSim.getAngleRads();
         inputs.motorVelocity = armSim.getVelocityRadPerSec();

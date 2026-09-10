@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.RelativeEncoder;
@@ -7,6 +9,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.util.misc.VirtualPD;
 
 public class ShooterIOSim implements ShooterIO {
 
@@ -36,6 +39,12 @@ public class ShooterIOSim implements ShooterIO {
     public ShooterIOSim() {
         shooter1Sim.setSupplyVoltage(12.0);
         shooter2Sim.setSupplyVoltage(12.0);
+    }
+
+    @Override
+    public void registerMotors() {
+        VirtualPD.registerMotor(() -> shooter1.getSupplyCurrent().getValue(), "Shooter");
+        VirtualPD.registerMotor(() -> Amps.of(kicker1.getOutputCurrent()), "Shooter");
     }
 
     @Override
@@ -79,8 +88,5 @@ public class ShooterIOSim implements ShooterIO {
         inputs.shooterVelocity = shooterVelocityRPS;
         inputs.kickerVelocity = kicker1Encoder.getVelocity();
 
-        inputs.totalCurrent =
-            shooter1Sim.getTorqueCurrent() +
-            kicker1.getOutputCurrent();
     }
 }

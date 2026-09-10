@@ -19,6 +19,7 @@ public class Shooter extends SubsystemBase {
     // !CONSTRUCTOR
     public Shooter(ShooterIO io) {
         this.io = io;
+        io.registerMotors();
     }
 
     // !PERIODIC

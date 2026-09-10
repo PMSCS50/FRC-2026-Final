@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -16,6 +18,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.util.misc.VirtualPD;
 
 public class ShooterIOReal implements ShooterIO {
     
@@ -77,6 +80,12 @@ public class ShooterIOReal implements ShooterIO {
     }
 
     @Override
+    public void registerMotors() {
+        VirtualPD.registerMotor(() -> shooter1.getSupplyCurrent().getValue(), "Shooter");
+        VirtualPD.registerMotor(() -> Amps.of(kicker1.getOutputCurrent()), "Shooter");
+    }
+
+    @Override
     public void setShooterVoltage(double volts) {
         shooter1.setVoltage(volts);
     }
@@ -95,6 +104,5 @@ public class ShooterIOReal implements ShooterIO {
     public void updateInputs(ShooterIOInputs inputs) {
         inputs.shooterVelocity = shooter1.getVelocity().getValueAsDouble();
         inputs.kickerVelocity = kicker1Encoder.getVelocity();
-        inputs.totalCurrent = shooter1.getSupplyCurrent().getValueAsDouble() + kicker1.getOutputCurrent();
     }
 }
