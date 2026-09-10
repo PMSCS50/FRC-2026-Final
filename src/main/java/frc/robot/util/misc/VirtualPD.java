@@ -62,17 +62,10 @@ public class VirtualPD {
     }
 
     public static Current getCurrent(String group) {
-<<<<<<< HEAD
         MutCurrent groupCurrent = Amps.zero().mutableCopy();
         for (int i = 0; i < motors.size(); i++) {
             if (groups.get(i).equals(group)) {
                 groupCurrent.mut_plus(motors.get(i).get());
-=======
-        Current groupCurrent = Amps.zero();
-        for (int i = 0; i < motors.size(); i++) {
-            if (groups.get(i).equals(group)) {
-                groupCurrent = groupCurrent.plus(motors.get(i).get());
->>>>>>> 96156e3af9c42585d9e472b85c06b5f7536c0c40
             }
         }
         return groupCurrent;
