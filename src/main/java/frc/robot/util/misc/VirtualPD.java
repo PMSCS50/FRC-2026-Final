@@ -60,4 +60,18 @@ public class VirtualPD {
             Logger.recordOutput("VirtualPD/Energy/" + group, groupEnergyTotals.get(group));
         }
     }
+
+    public static Current getCurrent(String group) {
+        MutCurrent groupCurrent = Amps.zero().mutableCopy();
+        for (int i = 0; i < motors.size(); i++) {
+            if (groups.get(i).equals(group)) {
+                groupCurrent.mut_plus(motors.get(i).get());
+            }
+        }
+        return groupCurrent;
+    }
+
+    public static double getCurrentAmps(String group) {
+        return getCurrent(group).in(Amps);
+    }
 }
