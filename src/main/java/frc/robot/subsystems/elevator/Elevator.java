@@ -31,8 +31,11 @@ public class Elevator extends SubsystemBase {
         elevatorMotor2.setControl(slave);
         elevatorMotor3.setControl(slave);
 
-
         positionRequest = new PositionVoltage(0.0).withSlot(0);
+
+        VirtualPD.registerMotor(elevatorMotor1.getSupplyCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorMotor2.getSupplyCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorMotor3.getSupplyCurrent().asSupplier(), "Elevator");
     }
 
     configureMotors() {

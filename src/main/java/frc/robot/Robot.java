@@ -119,6 +119,9 @@ public class Robot extends LoggedRobot {
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
 
+    // |Current logging
+    VirtualPD.logTotalCurrent();
+
     // |Drivetrain state logging
     Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleStates);
     Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleTargets);
