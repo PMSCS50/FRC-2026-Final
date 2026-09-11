@@ -27,6 +27,7 @@ import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.misc.AllianceUtil;
+import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.Elastic;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
@@ -115,9 +116,12 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().run();
     m_robotContainer.getPathmaster().log();
 
-    // |RoboRIO voltage and current monitoring
+    // |RoboRIO voltage logging
     batteryVoltage = RobotController.getBatteryVoltage();
     Logger.recordOutput("RoboRIO/Battery Voltage", batteryVoltage);
+
+    // |Current and Energy logging
+    VirtualPD.logTotalCurrent();
 
     // |Drivetrain state logging
     Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleStates);

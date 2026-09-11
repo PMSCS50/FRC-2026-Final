@@ -2,6 +2,7 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -17,7 +18,9 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.util.misc.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 
 public class ShooterIOReal implements ShooterIO {
@@ -34,6 +37,8 @@ public class ShooterIOReal implements ShooterIO {
     private final RelativeEncoder kicker1Encoder = kicker1.getEncoder();
     
     private final VelocityVoltage velocityVoltage = new VelocityVoltage(0.0).withSlot(0);
+
+    private final StatusSignal<AngularVelocity> velocity = shooter1.getVelocity();
 
     public ShooterIOReal() {
         // *Config Talons
@@ -58,6 +63,8 @@ public class ShooterIOReal implements ShooterIO {
 
         kicker1.configure(kickerConfig1, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         kicker2.configure(kickerConfig2, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        PhoenixUtil.registerStatusSignals(velocity);
     }
 
     // *Configure the TalonFX for the shooter motors
@@ -102,7 +109,7 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void updateInputs(ShooterIOInputs inputs) {
-        inputs.shooterVelocity = shooter1.getVelocity().getValueAsDouble();
+        inputs.shooterVelocity = velocity.getValueAsDouble();
         inputs.kickerVelocity = kicker1Encoder.getVelocity();
     }
 }

@@ -27,14 +27,14 @@ public class PhoenixUtil {
 
     public static void registerStatusSignals(Frequency frequency, BaseStatusSignal... signals) {
         BaseStatusSignal.setUpdateFrequencyForAll(frequency, signals);
-        SignalUtil.registerStatusSignals(signals);
+        PhoenixUtil.registerStatusSignals(signals);
     }
 
     public static void registerStatusSignals(BaseStatusSignal... signals) {
-        SignalUtil.signals.addSignals(signals);
+        PhoenixUtil.signals.addSignals(signals);
     }
 
     public static StatusCode refreshAll() {
-        return SignalUtil.signals.refreshAll();
+        return PhoenixUtil.signals.refreshAll();
     }
 }
