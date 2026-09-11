@@ -1,0 +1,68 @@
+package frc.robot.subsystems.elevator;
+
+
+public class Elevator extends SubsystemBase {
+    private final TalonFX elevatorMotor1 = new TalonFX(ElevatorConstants.elevatorMotor1CanId);
+    private final TalonFX elevatorMotor2 = new TalonFX(ElevatorConstants.elevatorMotor2CanId);
+    private final TalonFX elevatorMotor3 = new TalonFX(ElevatorConstants.elevatorMotor3CanId);
+
+    //Bullshit controls made out my ass
+    private final TunableControlConstants elevatorControlConstants = 
+        new TunableControlConstants(
+            "ElevatorControls",
+            new ControlConstants()
+            .withPID(3, 0.0, 0.02)
+            .withFeedforward(0.115, 0.0)
+            .withPhysical(0.25, 0.1)
+            .withTolerance(0.02)
+        );
+
+    private TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration();
+
+    private final PositionVoltage positionRequest;
+
+    public Elevator() {
+        
+        configureMotors();
+
+        //Elevator motors 2 and 3 are slaves to motor 1
+        Follower slave = new Follower(elevatorMotor1.getDeviceID(), MotorAlignmentValue.Aligned);
+
+        elevatorMotor2.setControl(slave);
+        elevatorMotor3.setControl(slave);
+
+
+        positionRequest = new PositionVoltage(0.0).withSlot(0);
+    }
+
+    configureMotors() {
+        config = elevatorControlConstants.getTalonFXConfiguration();
+
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLimitEnable = true;
+
+        elevatorMotor1.getConfigurator().apply(config);
+        elevatorMotor2.getConfigurator().apply(config);
+        elevatorMotor3.getConfigurator().apply(config);
+    }
+
+    @Override
+    public void periodic() {
+        if (elevatorControlConstants.hasChanged()) {
+            configureMotors();
+        }
+    }
+
+    //Currently only takes rotation. When Oliver furthers CAD, we can take elevator pos.
+    public void goToPosition(double position) {
+        shooterMotor1.setControl(positionRequest.withPosition(30));
+    }
+
+    public void stop() {
+        shooterMotor1.stopMotor();
+    }
+
+
+}

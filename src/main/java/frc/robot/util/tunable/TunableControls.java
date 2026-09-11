@@ -327,6 +327,8 @@ public class TunableControls {
      * {@link LoggedTunableNumber}s for runtime tuning and logging.
      */
     public static class TunableControlConstants {
+
+        String key;
         // PID gains
         LoggedTunableNumber kP;
         LoggedTunableNumber kI;
@@ -365,6 +367,7 @@ public class TunableControls {
          * @param constants initial ControlConstants to copy values from
          */
         public TunableControlConstants(String key, ControlConstants constants) {
+            this.key = key;
             this.kP = new LoggedTunableNumber(key + "/kP", constants.kP);
             this.kI = new LoggedTunableNumber(key + "/kI", constants.kI);
             this.kD = new LoggedTunableNumber(key + "/kD", constants.kD);
@@ -398,6 +401,17 @@ public class TunableControls {
             return new LoggedTunableNumber[] {
                     kP, kI, kD, tolerance, velTolerance, iZone, iMin, iMax, kV, kA, kS, kG, maxVel, maxAcc
             };
+        }
+
+        public boolean hasChanged() {
+            counter = 0;
+            for (LoggedTunableNumber num : getAllTunableNumbers()) {
+                if (num.hasChanged(Integer.hashCode(counter))) {
+                    return true;
+                }
+                counter++;
+            }
+            return false;
         }
 
         /**

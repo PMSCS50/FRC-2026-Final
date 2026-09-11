@@ -210,6 +210,12 @@ public final class Constants {
     
   }
 
+  private final class ElevatorConstants {
+    public static final int elevatorMotor1CanId = 51;
+    public static final int elevatorMotor1CanId = 52;
+    public static final int elevatorMotor1CanId = 53;
+  }
+
   // *Helper method to calculate the angle from the robot to a target pose, copied straight from PhotonUtils.
   private static Pose2d facePose(Pose2d pose, Pose2d facing) {
         Translation2d relativeTrl = facing.relativeTo(pose).getTranslation();
