@@ -15,6 +15,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -257,7 +258,7 @@ public class Vision extends SubsystemBase {
         Pose2d fusedPose = new Pose2d(
             x / wSum,
             y / wSum,
-            new edu.wpi.first.math.geometry.Rotation2d(theta / wSum)
+            new Rotation2d(theta / wSum)
         );
 
         lastFusedPose = fusedPose;
@@ -332,7 +333,7 @@ public class Vision extends SubsystemBase {
         return new Pose2d(
             x / n,
             y / n,
-            new edu.wpi.first.math.geometry.Rotation2d(theta / n)
+            new Rotation2d(theta / n)
         );
     }
 
