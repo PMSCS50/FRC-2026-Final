@@ -42,6 +42,7 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AlignToHub;
 import frc.robot.commands.DistanceBasedShooting;
+import frc.robot.commands.DriveToPointCommand;
 import frc.robot.commands.FixedPIDShooting;
 import frc.robot.commands.FixedWaypointShooting;
 import frc.robot.commands.Intaking;
@@ -58,8 +59,6 @@ import frc.robot.subsystems.vision.*;
 import frc.robot.util.Elastic;
 import frc.robot.util.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
-import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
-import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment2;
 
 
 public class RobotContainer {
@@ -209,9 +208,8 @@ public class RobotContainer {
 
         driverController.b().whileTrue(
             Commands.defer(() ->
-                // monkeyDLuffy.goToSelectedWaypoint()
-                // .andThen(PostPathPreciseAlignment2.generateCommand(drivetrain, monkeyDLuffy.selectedWaypointPose(), Seconds.of(5.0))),
-                PostPathPreciseAlignment2.generateCommand(drivetrain, monkeyDLuffy.selectedWaypointPose(), Seconds.of(5.0)),
+                monkeyDLuffy.goToSelectedWaypoint()
+                .andThen(DriveToPointCommand.generateCommand(drivetrain, monkeyDLuffy.selectedWaypointPose(), Seconds.of(5.0))),
                 Set.of(drivetrain)
             )
         );

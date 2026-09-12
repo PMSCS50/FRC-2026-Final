@@ -1,4 +1,4 @@
-package frc.robot.util.pathfinding.commands;
+package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -20,8 +20,9 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 
-// * Copied from 4915 Spartronics (known as PositionPIDCommand there) bc its a way better implementation than our original PostPathPreciseAlignment.
-public class PostPathPreciseAlignment2 extends Command{
+// * Generic Drive to a point command, copied from Team 4915 Spartronics (their use of Pathplanner in 2025 convinced me to make PP Align)
+// * Can also work well as precise alignment after paths
+public class DriveToPointCommand extends Command{
     
     public CommandSwerveDrivetrain drivetrain;
     public final Pose2d goalPose;
@@ -32,7 +33,7 @@ public class PostPathPreciseAlignment2 extends Command{
 
     private final BooleanPublisher endTriggerLogger = NetworkTableInstance.getDefault().getTable("logging").getBooleanTopic("PositionPIDEndTrigger").publish();
 
-    private PostPathPreciseAlignment2(CommandSwerveDrivetrain drivetrain, Pose2d goalPose) {
+    private DriveToPointCommand(CommandSwerveDrivetrain drivetrain, Pose2d goalPose) {
         this.drivetrain = drivetrain;
         this.goalPose = goalPose;
 
@@ -60,7 +61,7 @@ public class PostPathPreciseAlignment2 extends Command{
     }
 
     public static Command generateCommand(CommandSwerveDrivetrain swerve, Pose2d goalPose, Time timeout){
-        return new PostPathPreciseAlignment2(swerve, goalPose).withTimeout(timeout).finallyDo(() -> {
+        return new DriveToPointCommand(swerve, goalPose).withTimeout(timeout).finallyDo(() -> {
             swerve.runVelocity(new ChassisSpeeds());
             swerve.applyRequest(() -> DriveConstants.xBrake);
         });
