@@ -9,6 +9,8 @@ import static edu.wpi.first.units.Units.*;
 import java.util.Arrays;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -19,6 +21,9 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -61,12 +66,29 @@ public final class Constants {
 
     public static final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
     public static final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-    public static final SwerveRequest.RobotCentric forwardStraight = new SwerveRequest.RobotCentric()
+    public static final SwerveRequest.RobotCentric robotCentric = new SwerveRequest.RobotCentric()
             .withDriveRequestType(DriveRequestType.Velocity);
+
+    public static final PPHolonomicDriveController driveController =
+      new PPHolonomicDriveController(
+          // *PID constants for translation
+          //Ligthened from 8.0 for sharp turns
+          new PIDConstants(7.5, 0, 0),
+          // *PID constants for rotation
+          new PIDConstants(4, 0, 0)
+      );
 
     // !High ceiling, calculated from claude given robot config. May need to be tuned on real robot.
     public static final double pathMaxLinearAcceleration =  5; // m/s^2
     public static final double pathMaxAngularAcceleration = 5; // rad/s^2
+
+    //Copied from 4915 Spartronics. Their Post Path Precise Alignment is far better than ours
+    public static final Rotation2d kRotationTolerance = Rotation2d.fromDegrees(3.0);
+    public static final Distance kPositionTolerance = Centimeter.of(1.5);
+    public static final LinearVelocity kSpeedTolerance = InchesPerSecond.of(2);
+
+    public static final Time kEndTriggerDebounce = Seconds.of(0.04);
+
   }
 
   // *Constants for vision processing and AprilTag field layout

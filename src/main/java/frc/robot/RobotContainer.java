@@ -59,6 +59,8 @@ import frc.robot.util.Elastic;
 import frc.robot.util.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment;
+import frc.robot.util.pathfinding.commands.PostPathPreciseAlignment2;
+
 
 public class RobotContainer {
     // *Drivetrain constants
@@ -206,9 +208,10 @@ public class RobotContainer {
         }
 
         driverController.b().whileTrue(
-            Commands.defer(
-                () -> monkeyDLuffy.goToSelectedWaypoint()
-                .andThen(new PostPathPreciseAlignment(drivetrain, monkeyDLuffy.selectedWaypointPose(), robotConfig)),
+            Commands.defer(() ->
+                // monkeyDLuffy.goToSelectedWaypoint()
+                // .andThen(PostPathPreciseAlignment2.generateCommand(drivetrain, monkeyDLuffy.selectedWaypointPose(), Seconds.of(5.0))),
+                PostPathPreciseAlignment2.generateCommand(drivetrain, monkeyDLuffy.selectedWaypointPose(), Seconds.of(5.0)),
                 Set.of(drivetrain)
             )
         );
