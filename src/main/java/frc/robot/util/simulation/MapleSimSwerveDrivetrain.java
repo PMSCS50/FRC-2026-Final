@@ -27,6 +27,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 import org.ironmaple.simulation.SimulatedArena;
@@ -268,9 +269,10 @@ public class MapleSimSwerveDrivetrain {
                     .withKV(2.66)
                     .withKA(0)
                     .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign))
-            .withSteerMotorGearRatio(16.0)
-            .withDriveFrictionVoltage(Volts.of(0.1))
-            .withSteerFrictionVoltage(Volts.of(0.05))
-            .withSteerInertia(KilogramSquareMeters.of(0.05));
+            .withSteerMotorGearRatio(21.428571428571427)
+            .withDriveMotorGearRatio(6.746031746031747)
+            .withDriveFrictionVoltage(Volts.of(0.2))
+            .withSteerFrictionVoltage(Volts.of(0.2))
+            .withSteerInertia(KilogramSquareMeters.of(0.01));
     }
 }

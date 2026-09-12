@@ -85,9 +85,7 @@ public class PostPathPreciseAlignment extends Command {
 
     @Override
     public void initialize() {
-        var state = drivetrain.getState();
-
-        thetaController.reset(state.Pose.getRotation().getRadians(), state.Speeds.omegaRadiansPerSecond);
+        thetaController.reset(drivetrain.getPose().getRotation().getRadians(), drivetrain.getSpeeds().omegaRadiansPerSecond);
 
         prevSpeeds       = new ChassisSpeeds();
         settleStartTime  = -1;
@@ -100,9 +98,8 @@ public class PostPathPreciseAlignment extends Command {
 
     @Override
     public void execute() {
-        var state = drivetrain.getState();
-        Pose2d currentPose          = state.Pose;
-        ChassisSpeeds currentSpeeds = state.Speeds;
+        Pose2d currentPose          = drivetrain.getPose();
+        ChassisSpeeds currentSpeeds = drivetrain.getSpeeds();
 
         double vxField = xController.calculate(currentPose.getX(), targetPose.getX());
         double vyField = yController.calculate(currentPose.getY(), targetPose.getY());
@@ -183,9 +180,8 @@ public class PostPathPreciseAlignment extends Command {
             return true;
         }
 
-        var state            = drivetrain.getState();
-        Pose2d current       = state.Pose;
-        ChassisSpeeds speeds = state.Speeds;
+        Pose2d current       = drivetrain.getPose();
+        ChassisSpeeds speeds = drivetrain.getSpeeds();
 
         double translationError = current.getTranslation().getDistance(targetPose.getTranslation());
         double rotationError    = Math.abs(

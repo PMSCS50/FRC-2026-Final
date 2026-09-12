@@ -66,8 +66,7 @@ public interface ShinPathfinder {
    * @param currentRobotPos The current position of the robot. This is needed to change the start
    *     position of the path to properly avoid obstacles
    */
-  void setDynamicObstacles(
-      List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos);
+  void setDynamicObstacles(List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos);
 }
 
 /*

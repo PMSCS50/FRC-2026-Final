@@ -124,7 +124,11 @@ public final class Constants {
 
     public static Pose2d getAimPose() {
       return ShooterConstants.getShootingSetpoint(1);
-    }    
+    }
+    
+    public static Pose2d getCenter() {
+      return new Pose2d(FIELD_MAX_X / 2, FIELD_MAX_Y / 2, Rotation2d.fromDegrees(0));
+    }
   }
 
   // *intake motorIDs are values of 20
