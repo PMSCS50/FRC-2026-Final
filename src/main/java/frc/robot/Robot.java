@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.AllianceUtil;
+import frc.robot.util.misc.AllianceUtil;
 import frc.robot.util.Elastic;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.pathfinding.Pathmaster;
@@ -37,17 +37,12 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
-  //private boolean allianceConfigApplied = false;
-  //private String allianceColor = "Unknown";
 
   //Disables orchestra if false
   private boolean allowOrchestra = false;
 
   //Show me the power we made together!
   private final Orchestra m_orchestra = new Orchestra("audio/LR_PHY_SSJ2_Gohan_Active_Skill.chrp");
-
-  // int[] redTags = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-  // int[] blueTags = {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
 
   private double batteryVoltage;
   private int batterytimer = 0;
