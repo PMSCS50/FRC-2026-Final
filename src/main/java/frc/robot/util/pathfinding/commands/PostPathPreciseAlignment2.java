@@ -69,6 +69,8 @@ public class PostPathPreciseAlignment2 extends Command{
     @Override
     public void initialize() {
         endTriggerLogger.accept(endTrigger.getAsBoolean());
+        PPLogging.logTargetPose(goalPose);
+        PPLibTelemetry.setTargetPose(goalPose);
     }
 
     @Override
