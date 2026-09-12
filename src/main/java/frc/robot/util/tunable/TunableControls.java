@@ -404,7 +404,7 @@ public class TunableControls {
         }
 
         public boolean hasChanged() {
-            counter = 0;
+            int counter = 0;
             for (LoggedTunableNumber num : getAllTunableNumbers()) {
                 if (num.hasChanged(Integer.hashCode(counter))) {
                     return true;

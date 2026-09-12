@@ -28,6 +28,7 @@ import com.ctre.phoenix6.Orchestra;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.AllianceUtil;
 import frc.robot.util.Elastic;
+import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.zoro.RoronoaZoroAK;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;

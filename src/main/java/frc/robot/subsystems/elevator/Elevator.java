@@ -1,5 +1,15 @@
 package frc.robot.subsystems.elevator;
 
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.misc.VirtualPD;
+import frc.robot.util.tunable.TunableControls.*;
+import frc.robot.Constants.ElevatorConstants;
 
 public class Elevator extends SubsystemBase {
     private final TalonFX elevatorMotor1 = new TalonFX(ElevatorConstants.elevatorMotor1CanId);
@@ -17,7 +27,7 @@ public class Elevator extends SubsystemBase {
             .withTolerance(0.02)
         );
 
-    private TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration();
+    private TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration(false);
 
     private final PositionVoltage positionRequest;
 
@@ -38,8 +48,8 @@ public class Elevator extends SubsystemBase {
         VirtualPD.registerMotor(elevatorMotor3.getSupplyCurrent().asSupplier(), "Elevator");
     }
 
-    configureMotors() {
-        config = elevatorControlConstants.getTalonFXConfiguration();
+    private void configureMotors() {
+        config = elevatorControlConstants.getTalonFXConfiguration(false);
 
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -60,11 +70,11 @@ public class Elevator extends SubsystemBase {
 
     //Currently only takes rotation. When Oliver furthers CAD, we can take elevator pos.
     public void goToPosition(double position) {
-        shooterMotor1.setControl(positionRequest.withPosition(30));
+        elevatorMotor1.setControl(positionRequest.withPosition(30));
     }
 
     public void stop() {
-        shooterMotor1.stopMotor();
+        elevatorMotor1.stopMotor();
     }
 
 
