@@ -14,19 +14,21 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 
-// * Generic Drive to a point command, copied from Team 4915 Spartronics (their use of Pathplanner in 2025 convinced me to make PP Align)
+// * Generic Drive to a point command, copied from Team 4915 Spartronics
+// * They used this as post path precise alignment when using Pathplanner's pathfinding capabilities
 // * Can also work well as precise alignment after paths
 public class DriveToPointCommand extends Command{
     
     public CommandSwerveDrivetrain drivetrain;
     public final Pose2d goalPose;
-    private PPHolonomicDriveController mDriveController = DriveConstants.driveController;
+    private PPHolonomicDriveController driveController = DriveConstants.driveController;
 
     private final Trigger endTrigger;
     private final Trigger endTriggerDebounced;
@@ -77,7 +79,7 @@ public class DriveToPointCommand extends Command{
 
         Logger.recordOutput("Drive/DriveToPointReached", endTrigger.getAsBoolean());
 
-        ChassisSpeeds targetSpeeds = mDriveController.calculateRobotRelativeSpeeds(drivetrain.getPose(), goalState);
+        ChassisSpeeds targetSpeeds = driveController.calculateRobotRelativeSpeeds(drivetrain.getPose(), goalState);
         drivetrain.runVelocity(targetSpeeds);
         
         ChassisSpeeds currentSpeeds = drivetrain.getSpeeds();
@@ -101,6 +103,8 @@ public class DriveToPointCommand extends Command{
     @Override
     public void end(boolean interrupted) {
         Logger.recordOutput("Drive/DriveToPointReached", endTrigger.getAsBoolean());
+        Timer.delay(1);
+        Logger.recordOutput("Drive/DriveToPointReached", false);
     }
 
     @Override

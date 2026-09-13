@@ -19,7 +19,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -29,11 +28,10 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import frc.robot.generated.TunerConstants;
-import frc.robot.util.misc.AllianceUtil;
+import frc.robot.util.misc.FieldUtil;
 
 // *The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean constants.
 // !This class should not be used for any other purpose. All constants should be declared globally (i.e. public static).
-// !Do not put anything functional in this class. <--- WE GOTTA FIX THIS AND PUT THE FUNCTIONS SOMEWHERE ELSE
 
 // *It is advised to statically import this class (or one of its inner classes) wherever the constants are needed, to reduce verbosity.
 
@@ -83,8 +81,8 @@ public final class Constants {
     public static final double pathMaxAngularAcceleration = 5; // rad/s^2
 
     //Copied from 4915 Spartronics. Their Post Path Precise Alignment is far better than ours
-    public static final Rotation2d kRotationTolerance = Rotation2d.fromDegrees(3.0);
-    public static final Distance kPositionTolerance = Centimeter.of(1.5);
+    public static final Rotation2d kRotationTolerance = Rotation2d.fromDegrees(1.0);
+    public static final Distance kPositionTolerance = Centimeter.of(1.0);
     public static final LinearVelocity kSpeedTolerance = InchesPerSecond.of(2);
 
     public static final Time kEndTriggerDebounce = Seconds.of(0.04);
@@ -106,13 +104,13 @@ public final class Constants {
     public static final int redRightTagId = 2;
 
     public static int getMiddleTagId () {
-      return AllianceUtil.allianceRelativeFiducial(blueMiddleTagId);
+      return FieldUtil.allianceRelativeFiducial(blueMiddleTagId);
     }
     public static int getLeftTagId () {
-      return AllianceUtil.allianceRelativeFiducial(blueLeftTagId);
+      return FieldUtil.allianceRelativeFiducial(blueLeftTagId);
     }
     public static int getRightTagId () {
-      return AllianceUtil.allianceRelativeFiducial(blueRightTagId);
+      return FieldUtil.allianceRelativeFiducial(blueRightTagId);
     }
 
     public static double getDirectionFlipper() {
@@ -137,7 +135,7 @@ public final class Constants {
     static final Pose2d BLUE_HUB = new Pose2d(4.611, 4.024, Rotation2d.fromDegrees(0));
 
     public static Pose2d getHubPose() {
-      return AllianceUtil.allianceRelativePose(BLUE_HUB);
+      return FieldUtil.allianceRelativePose(BLUE_HUB);
     }
 
     public static Pose2d getHubPose(DriverStation.Alliance alliance) {
@@ -195,12 +193,12 @@ public final class Constants {
     // ?Facing toward blue hub at (4.611624, 4.024) from (2, 2)
     // ?Angle = atan2(2.024, 2.611624) ≈ 37.592°    
     public static final Pose2d[] shootingSetpoints = {
-      facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
-      facePose(new Pose2d(2,    2,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
-      facePose(new Pose2d(1.6,  4,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
-      facePose(new Pose2d(2,    6,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
-      facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
-    };  
+      FieldUtil.facePose(new Pose2d(3.03, 0.75, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      FieldUtil.facePose(new Pose2d(2,    2,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      FieldUtil.facePose(new Pose2d(1.6,  4,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      FieldUtil.facePose(new Pose2d(2,    6,    Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+      FieldUtil.facePose(new Pose2d(3.03, 7.25, Rotation2d.kZero), VisionConstants.getHubPose(Alliance.Blue)),
+    };
 
     private static Pose2d[] cachedAllianceSetpoints = null;
 
@@ -211,11 +209,11 @@ public final class Constants {
     public static Pose2d getShootingSetpoint(int num) {
         if (cachedAllianceSetpoints == null && DriverStation.getAlliance().isPresent()) {
             cachedAllianceSetpoints = Arrays.stream(shootingSetpoints)
-                .map(AllianceUtil::allianceRelativePose)
+                .map(FieldUtil::allianceRelativePose)
                 .toArray(Pose2d[]::new);
         }
         if (cachedAllianceSetpoints != null) return cachedAllianceSetpoints[num - 1];
-        return AllianceUtil.allianceRelativePose(shootingSetpoints[num - 1]);  // fallback if DS not ready
+        return FieldUtil.allianceRelativePose(shootingSetpoints[num - 1]);  // fallback if DS not ready
     }
   }
 
@@ -227,7 +225,7 @@ public final class Constants {
     private static final Pose2d RedClimb = new Pose2d(14.94, 3.71, Rotation2d.fromDegrees(0));
     private static final Pose2d BlueClimb = new Pose2d(1.6, 3.71, Rotation2d.fromDegrees(0));
     public static Pose2d getClimbPose() {
-      return AllianceUtil.allianceRelativePose(BlueClimb);
+      return FieldUtil.allianceRelativePose(BlueClimb);
     }
 
     public static Pose2d getClimbPose(DriverStation.Alliance alliance) {
@@ -241,12 +239,6 @@ public final class Constants {
     public static final int elevatorMotor2CanId = 52;
     public static final int elevatorMotor3CanId = 53;
   }
-
-  // *Helper method to calculate the angle from the robot to a target pose, copied straight from PhotonUtils.
-  private static Pose2d facePose(Pose2d pose, Pose2d facing) {
-        Translation2d relativeTrl = facing.relativeTo(pose).getTranslation();
-        return new Pose2d(pose.getTranslation(), new Rotation2d(relativeTrl.getX(), relativeTrl.getY()));
-    }
      
   // *From Reefscape
   public static final double FIELD_MAX_X = 16.518;

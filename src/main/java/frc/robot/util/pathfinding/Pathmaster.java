@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
+import frc.robot.util.misc.FieldUtil;
 import frc.robot.util.pathfinding.builders.*;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
@@ -415,8 +416,7 @@ public class Pathmaster {
         pathing = true;
         return Commands.defer(
             () -> {
-                Rotation2d facing = getRotationToPose(destination, faceTarget);
-                Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
+                Pose2d oriented = FieldUtil.facePose(destination, faceTarget);
                 return GoingMerry.pathfindToPose(oriented, stops, constraints);
             }, Set.of(drivetrain)
         )

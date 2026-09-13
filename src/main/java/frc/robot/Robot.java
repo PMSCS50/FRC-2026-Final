@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import com.ctre.phoenix6.Orchestra;
 
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.misc.AllianceUtil;
+import frc.robot.util.misc.FieldUtil;
 import frc.robot.util.Elastic;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.pathfinding.Pathmaster;
@@ -249,10 +249,10 @@ public class Robot extends LoggedRobot {
     if (alliance == lastAppliedAlliance) return;
 
     m_robotContainer.getDrivetrain().seedFieldCentric(
-      AllianceUtil.getZeroRotation()
+      FieldUtil.getZeroRotation()
     );
     
-    m_robotContainer.getDrivetrain().getPigeon2().setYaw(AllianceUtil.getZeroRotation().getDegrees());
+    m_robotContainer.getDrivetrain().getPigeon2().setYaw(FieldUtil.getZeroRotation().getDegrees());
 
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();

@@ -2,11 +2,12 @@ package frc.robot.util.misc;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import java.util.Optional;
 
-public class AllianceUtil {
+public class FieldUtil {
 
   public static final double FIELD_MAX_X = 16.518;
   public static final double FIELD_MAX_Y = 8.043;
@@ -36,5 +37,10 @@ public class AllianceUtil {
 
   public static int allianceRelativeFiducial(int blueId) {
     return isRedAlliance() ? blueId - 16 : blueId;
+  }
+
+  public static Pose2d facePose(Pose2d pose, Pose2d facing) {
+        Translation2d relativeTrl = facing.relativeTo(pose).getTranslation();
+        return new Pose2d(pose.getTranslation(), new Rotation2d(relativeTrl.getX(), relativeTrl.getY()));
   }
 }
