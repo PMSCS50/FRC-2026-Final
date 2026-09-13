@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -11,8 +13,6 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -30,8 +30,6 @@ public class DriveToPointCommand extends Command{
 
     private final Trigger endTrigger;
     private final Trigger endTriggerDebounced;
-
-    private final BooleanPublisher endTriggerLogger = NetworkTableInstance.getDefault().getTable("logging").getBooleanTopic("PositionPIDEndTrigger").publish();
 
     private DriveToPointCommand(CommandSwerveDrivetrain drivetrain, Pose2d goalPose) {
         this.drivetrain = drivetrain;
@@ -51,8 +49,6 @@ public class DriveToPointCommand extends Command{
             boolean position = diff.getTranslation().getNorm() < DriveConstants.kPositionTolerance.in(Meters);
 
             boolean speed = Math.hypot(drivetrain.getSpeeds().vxMetersPerSecond, drivetrain.getSpeeds().vyMetersPerSecond) < DriveConstants.kSpeedTolerance.in(MetersPerSecond);
-
-            System.out.println("end trigger conditions R: "+ rotation + "\tP: " + position + "\tS: " + speed);
             
             return rotation && position && speed;
         });
@@ -69,7 +65,7 @@ public class DriveToPointCommand extends Command{
 
     @Override
     public void initialize() {
-        endTriggerLogger.accept(endTrigger.getAsBoolean());
+        Logger.recordOutput("Drive/DriveToPointReached", false);
         PPLogging.logTargetPose(goalPose);
         PPLibTelemetry.setTargetPose(goalPose);
     }
@@ -79,7 +75,7 @@ public class DriveToPointCommand extends Command{
         PathPlannerTrajectoryState goalState = new PathPlannerTrajectoryState();
         goalState.pose = goalPose;
 
-        endTriggerLogger.accept(endTrigger.getAsBoolean());
+        Logger.recordOutput("Drive/DriveToPointReached", endTrigger.getAsBoolean());
 
         ChassisSpeeds targetSpeeds = mDriveController.calculateRobotRelativeSpeeds(drivetrain.getPose(), goalState);
         drivetrain.runVelocity(targetSpeeds);
@@ -104,7 +100,7 @@ public class DriveToPointCommand extends Command{
 
     @Override
     public void end(boolean interrupted) {
-        endTriggerLogger.accept(endTrigger.getAsBoolean());
+        Logger.recordOutput("Drive/DriveToPointReached", endTrigger.getAsBoolean());
     }
 
     @Override
