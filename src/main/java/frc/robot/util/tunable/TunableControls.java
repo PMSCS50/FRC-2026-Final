@@ -284,6 +284,17 @@ public class TunableControls {
 
             return configs;
         }
+        
+        public Slot0Configs getSlot0Configs() {
+            return new Slot0Configs()
+                    .withKP(kP.get())
+                    .withKI(kI.get())
+                    .withKD(kD.get())
+                    .withKS(kS.get())
+                    .withKV(kV.get())
+                    .withKA(kA.get())
+                    .withKG(kG.get());
+        }
 
         /**
          * Creates a new {@link SparkMaxConfig}
@@ -466,6 +477,17 @@ public class TunableControls {
             }
             
             return configs;
+        }
+
+        public Slot0Configs getSlot0Configs() {
+            return new Slot0Configs()
+                    .withKP(kP.get())
+                    .withKI(kI.get())
+                    .withKD(kD.get())
+                    .withKS(kS.get())
+                    .withKV(kV.get())
+                    .withKA(kA.get())
+                    .withKG(kG.get());
         }
 
         /**

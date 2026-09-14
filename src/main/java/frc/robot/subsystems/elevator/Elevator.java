@@ -2,7 +2,7 @@ package frc.robot.subsystems.elevator;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
@@ -12,9 +12,10 @@ import frc.robot.util.tunable.TunableControls.*;
 import frc.robot.Constants.ElevatorConstants;
 
 public class Elevator extends SubsystemBase {
-    private final TalonFX elevatorMotor1 = new TalonFX(ElevatorConstants.elevatorMotor1CanId);
-    private final TalonFX elevatorMotor2 = new TalonFX(ElevatorConstants.elevatorMotor2CanId);
-    private final TalonFX elevatorMotor3 = new TalonFX(ElevatorConstants.elevatorMotor3CanId);
+    private final TalonFX elevatorOne = new TalonFX(ElevatorConstants.elevatorOneCanId);
+    private final TalonFX elevatorTwo = new TalonFX(ElevatorConstants.elevatorTwoCanId);
+    private final TalonFX elevatorThree = new TalonFX(ElevatorConstants.elevatorThreeCanId);
+    
 
     //Bullshit controls made out my ass
     private final TunableControlConstants elevatorControlConstants = 
@@ -27,54 +28,96 @@ public class Elevator extends SubsystemBase {
             .withTolerance(0.02)
         );
 
-    private TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration(false);
+    private final TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration(true);
 
-    private final PositionVoltage positionRequest;
+    private final MotionMagicVoltage positionRequest;
+
+    private final StatusSignal<Angle> elevatorPosition;
+    private final StatusSignal<AngularVelocity> elevatorVelocity;
+    private final StatusSignal<AngularAcceleration> elevatorAcceleration;
+    private final StatusSignal<Voltage> elevatorAppliedVoltage;
+    private final StatisSignal<Boolean> atSetpoint;
+
 
     public Elevator() {
-        
         configureMotors();
 
         //Elevator motors 2 and 3 are slaves to motor 1
-        Follower slave = new Follower(elevatorMotor1.getDeviceID(), MotorAlignmentValue.Aligned);
-
-        elevatorMotor2.setControl(slave);
-        elevatorMotor3.setControl(slave);
+        Follower slave = new Follower(elevatorOne.getDeviceID(), MotorAlignmentValue.Aligned);
+        elevatorTwo.setControl(slave);
+        elevatorThree.setControl(slave);
 
         positionRequest = new PositionVoltage(0.0).withSlot(0);
 
-        VirtualPD.registerMotor(elevatorMotor1.getSupplyCurrent().asSupplier(), "Elevator");
-        VirtualPD.registerMotor(elevatorMotor2.getSupplyCurrent().asSupplier(), "Elevator");
-        VirtualPD.registerMotor(elevatorMotor3.getSupplyCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorOne.getSupplyCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorTwo.getSupplyCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorThree.getSupplyCurrent().asSupplier(), "Elevator");
+
+        elevatorPosition = elevatorOne.getPosition();
+        elevatorVelocity = elevatorOne.getRotorVelocity();
+        elevatorAcceleration = elevatorOne.getAcceleration();
+        elevatorAppliedVoltage = elevatorOne.getMotorVoltage();
+        atSetpoint = elevatorOne.getMotionMagicAtTarget();
+
+        PhoenixUtil.registerStatusSignals(
+            elevatorPosition,
+            elevatorVelocity,
+            elevatorAcceleration,
+            elevatorAppliedVoltage,
+            atSetpoint
+        );
     }
 
     private void configureMotors() {
-        config = elevatorControlConstants.getTalonFXConfiguration(false);
-
+        
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.NeutralMode = NeutralMode.Brake;
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
+        
+        applyConfig();
+    }
 
-        elevatorMotor1.getConfigurator().apply(config);
-        elevatorMotor2.getConfigurator().apply(config);
-        elevatorMotor3.getConfigurator().apply(config);
+    private void updateSlot0Configs() {
+        config.slot0 = elevatorControlConstants.getSlot0Configs();
+        applyConfig();
+    }
+
+    private void applyConfig() {
+        elevatorOne.getConfigurator().apply(config);
+        elevatorTwo.getConfigurator().apply(config);
+        elevatorThree.getConfigurator().apply(config);
     }
 
     @Override
     public void periodic() {
         if (elevatorControlConstants.hasChanged()) {
-            configureMotors();
+            updateSlot0Configs();
         }
     }
 
-    //Currently only takes rotation. When Oliver furthers CAD, we can take elevator pos.
-    public void goToPosition(double position) {
-        elevatorMotor1.setControl(positionRequest.withPosition(30));
+    public void goToPosition(double positionMeters) {
+        elevatorOne.setControl(positionRequest.withPosition(positionMeters / ElevatorConstants.elevator_POSITION_COEFFICIENT));
+    }
+
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        elevatorOne.setNeutralMode(neutralMode);
+        elevatorTwo.setNeutralMode(neutralMode);
+        elevatorThree.setNeutralMode(neutralMode);
+    }
+
+    public void setDutyCycle(double dutyCycle) {
+        elevatorOne.setControl(dutyCycleOut.withOutput(dutyCycle));
+    }
+
+    public boolean isAtSetpoint() {
+        return atSetpoint.getValue();
     }
 
     public void stop() {
-        elevatorMotor1.stopMotor();
+        elevatorOne.stopMotor();
     }
 
 }

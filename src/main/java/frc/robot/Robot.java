@@ -118,6 +118,9 @@ public class Robot extends LoggedRobot {
     // |Current logging
     VirtualPD.logTotalCurrent();
 
+    // |Refresh all status signals
+    PhoenixUtil.refreshAll();
+
     // |Drivetrain state logging
     Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleStates);
     Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleTargets);

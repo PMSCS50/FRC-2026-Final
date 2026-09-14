@@ -235,9 +235,17 @@ public final class Constants {
   }
 
   public static final class ElevatorConstants {
-    public static final int elevatorMotor1CanId = 51;
-    public static final int elevatorMotor2CanId = 52;
-    public static final int elevatorMotor3CanId = 53;
+    public static final int elevatorOneCanId = 51;
+    public static final int elevatorTwoCanId = 52;
+    public static final int elevatorThreeCanId = 53;
+
+    public static final double ELEVATOR_GEAR_RATIO =
+                ((32.0 / 16.0) * (40.0 / 26.0) * (50.0 / 20.0) * (62.0 / 76.0));
+    public static final double ELEVATOR_PULLEY_DIAMETER =
+            Units.Meter.convertFrom(0.25 * 16.0 / Math.PI, Units.Inch);
+    public static final double ELEVATOR_CASCADE_COEFFICIENT = 2.0;
+    public static final double ELEVATOR_POSITION_COEFFICIENT =
+            Math.PI * ELEVATOR_PULLEY_DIAMETER / ELEVATOR_GEAR_RATIO * ELEVATOR_CASCADE_COEFFICIENT;
   }
      
   // *From Reefscape
