@@ -28,7 +28,7 @@ public class PathRequest {
 
     private boolean auto = false;
 
-    private UnaryOperator<PathPlannerAuto> eventTriggerFunction = (auto) -> auto;
+    private UnaryOperator<PathPlannerAuto> eventTriggerFunction = auto -> auto;
 
     public PathRequest withGoal(Pose2d targetPose) {
         this.targetPose = targetPose;
@@ -44,8 +44,8 @@ public class PathRequest {
 
     public PathRequest withGoal(String targetPath) {
         try {
-            if (targetPath.startsWith("choreo/")) {
-                this.targetPath = PathPlannerPath.fromChoreoTrajectory(targetPath.substring(7));
+            if (targetPath.startsWith(choreoKey)) {
+                this.targetPath = PathPlannerPath.fromChoreoTrajectory(targetPath.substring(choreoKey.length()));
             } else {
                 this.targetPath = PathPlannerPath.fromPathFile(targetPath);
             }

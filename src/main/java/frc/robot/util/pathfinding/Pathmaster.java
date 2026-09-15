@@ -249,6 +249,11 @@ public class Pathmaster {
         .finallyDo(() -> pathing = false);
     }
 
+    //Uses a PoseSupplier instead.
+    public Command makePathTo(Supplier<Pose2d> destinationSupplier) {
+        return makePathTo(destinationSUpplier.get());
+    }
+
     // *Pathfind to any field pose with obstacle avoidance
     public Command makePathTo(Pose2d destination, List<Pose2d> stops) {
         if (!GoingMerry.isConfigured()) return Commands.none();
@@ -258,6 +263,11 @@ public class Pathmaster {
             Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false);
+    }
+
+    // *Pathfind to any field pose with obstacle avoidance
+    public Command makePathTo(Supplier<Pose2d> destinationSupplier, List<Pose2d> stops) {
+        return makePathTo(destinationSupplier.get(), stops);
     }
 
     // *Pathfind to a registered waypoint
@@ -288,8 +298,11 @@ public class Pathmaster {
     public Command goToSelectedWaypoint() {
         if (!GoingMerry.isConfigured()) return Commands.none();
         pathing = true;
-        return GoingMerry.pathfindToPose(
-            waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints
+        return Commands.defer(() ->
+            GoingMerry.pathfindToPose(
+                waypoints.get(waypointKeys.get(selectedWaypointIndex)), constraints
+            ),
+            Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false);
     }
@@ -298,8 +311,11 @@ public class Pathmaster {
     public Command goToSelectedWaypoint(List<Pose2d> stops) {
         if (!GoingMerry.isConfigured()) return Commands.none();
         pathing = true;
-        return GoingMerry.pathfindToPose(
-            waypoints.get(waypointKeys.get(selectedWaypointIndex)), stops, constraints
+        return Commands.defer(() ->
+            GoingMerry.pathfindToPose(
+                waypoints.get(waypointKeys.get(selectedWaypointIndex)), stops, constraints
+            ),
+            Set.of(drivetrain)
         )
         .finallyDo(() -> pathing = false);
     }
@@ -313,8 +329,8 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith("choreo/")) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(7));
+            if (pathName.startsWith(choreoKey)) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
             } else {
                 path = PathPlannerPath.fromPathFile(pathName);
             }
@@ -344,8 +360,8 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith("choreo/")) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(7));
+            if (pathName.startsWith(choreoKey)) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
             } else {
                 path = PathPlannerPath.fromPathFile(pathName);
             }
@@ -451,11 +467,9 @@ public class Pathmaster {
     public Command cancelPathing() {
         return Commands.runOnce(() -> {
             Command current = drivetrain.getCurrentCommand();
-            if (current != null) {
-                if (current instanceof ShinPathfindingCommand || current instanceof PathPlannerAuto) {
-                    current.cancel();
-                    pathing = false;
-                }
+            if (current != null && pathing) {
+                current.cancel();
+                pathing = false;
             }
         });
     }
@@ -478,20 +492,8 @@ public class Pathmaster {
         return pathing;
     }
 
-    public boolean warmedUp() {
-        return warmup;
-    }
-    
-    public boolean GoingMerryPathFindingConfigured() {
-        return GoingMerry.isPathfindingConfigured();
-    }
-
-    public boolean GoingMerryConfigured() {
-        return GoingMerry.isConfigured();
-    }
-
-    public Pose2d[] getActivePath() {
-        return PPLogger.getActivePath();
+    public boolean configured() {
+        return warmup && GoingMerry.isConfigured() && GoingMerry.isPathfindingConfigured();
     }
 
 }

@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.*;
 
 // *GoingMerry is what builds the pathfinding commands, so its AutoBuilder Minus. Made to interact with ShinPathfindingCommand
@@ -397,8 +398,7 @@ public class GoingMerry {
     }
 
     // Use requested constraints if present; otherwise fall back to default
-    PathConstraints constraints =
-        request.getConstraints() != null ? request.getConstraints() : defaultConstraints;
+    PathConstraints constraints = Optional.of(request.getConstraints).orElse(defaultConstraints);
 
     if (request.isPathFindThenFollowPath()) {
       return pathfindThenFollowPath(

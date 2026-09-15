@@ -20,7 +20,7 @@ public class PPLogger {
 
   /**
    * *Publish actual and commanded velocities.
-   * Called in CommandSwerveDriveTrain in path-following command, as well as PostPathPreciseAlignment
+   * Called in CommandSwerveDriveTrain in path-following command, as well as DriveToPointCommand
    *
    * @param actualVel       Actual chassis speed in m/s
    * @param commandedVel    Commanded chassis speed in m/s
@@ -33,7 +33,6 @@ public class PPLogger {
       double actualAngVel,
       double commandedAngVel) {
 
-    // *AdvantageKit — logged to .wpilog AND re-published to NT4 automatically
     Logger.recordOutput("Pathmaster/Velocity/actual",          actualVel);
     Logger.recordOutput("Pathmaster/Velocity/commanded",       commandedVel);
     Logger.recordOutput("Pathmaster/Velocity/actualAngular",   actualAngVel);

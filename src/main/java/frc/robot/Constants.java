@@ -87,6 +87,8 @@ public final class Constants {
 
     public static final Time kEndTriggerDebounce = Seconds.of(0.04);
 
+    public static final String choreoKey = "choreo/";
+
   }
 
   // *Constants for vision processing and AprilTag field layout
