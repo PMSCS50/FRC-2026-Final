@@ -14,7 +14,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.DriveConstants;
@@ -103,8 +102,6 @@ public class DriveToPointCommand extends Command{
     @Override
     public void end(boolean interrupted) {
         Logger.recordOutput("Drive/DriveToPointReached", endTrigger.getAsBoolean());
-        Timer.delay(1);
-        Logger.recordOutput("Drive/DriveToPointReached", false);
     }
 
     @Override

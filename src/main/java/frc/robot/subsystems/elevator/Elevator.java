@@ -1,12 +1,21 @@
 package frc.robot.subsystems.elevator;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.misc.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.tunable.TunableControls.*;
 import frc.robot.Constants.ElevatorConstants;
@@ -31,12 +40,13 @@ public class Elevator extends SubsystemBase {
     private final TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration(true);
 
     private final MotionMagicVoltage positionRequest;
+    private final DutyCycleOut dcRequest;
 
     private final StatusSignal<Angle> elevatorPosition;
     private final StatusSignal<AngularVelocity> elevatorVelocity;
     private final StatusSignal<AngularAcceleration> elevatorAcceleration;
     private final StatusSignal<Voltage> elevatorAppliedVoltage;
-    private final StatisSignal<Boolean> atSetpoint;
+    private final StatusSignal<Boolean> atSetpoint;
 
 
     public Elevator() {
@@ -47,7 +57,8 @@ public class Elevator extends SubsystemBase {
         elevatorTwo.setControl(slave);
         elevatorThree.setControl(slave);
 
-        positionRequest = new PositionVoltage(0.0).withSlot(0);
+        positionRequest = new MotionMagicVoltage(0.0).withSlot(0);
+        dcRequest = new DutyCycleOut(0);
 
         VirtualPD.registerMotor(elevatorOne.getSupplyCurrent().asSupplier(), "Elevator");
         VirtualPD.registerMotor(elevatorTwo.getSupplyCurrent().asSupplier(), "Elevator");
@@ -71,7 +82,7 @@ public class Elevator extends SubsystemBase {
     private void configureMotors() {
         
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        config.MotorOutput.NeutralMode = NeutralMode.Brake;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.CurrentLimits.StatorCurrentLimit = 80.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 40.0;
@@ -81,7 +92,7 @@ public class Elevator extends SubsystemBase {
     }
 
     private void updateSlot0Configs() {
-        config.slot0 = elevatorControlConstants.getSlot0Configs();
+        config.Slot0 = elevatorControlConstants.getSlot0Configs();
         applyConfig();
     }
 
@@ -99,7 +110,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public void goToPosition(double positionMeters) {
-        elevatorOne.setControl(positionRequest.withPosition(positionMeters / ElevatorConstants.elevator_POSITION_COEFFICIENT));
+        elevatorOne.setControl(positionRequest.withPosition(positionMeters / ElevatorConstants.ELEVATOR_POSITION_COEFFICIENT));
     }
 
     public void setNeutralMode(NeutralModeValue neutralMode) {
@@ -109,7 +120,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public void setDutyCycle(double dutyCycle) {
-        elevatorOne.setControl(dutyCycleOut.withOutput(dutyCycle));
+        elevatorOne.setControl(dcRequest.withOutput(dutyCycle));
     }
 
     public boolean isAtSetpoint() {

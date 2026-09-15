@@ -287,13 +287,13 @@ public class TunableControls {
         
         public Slot0Configs getSlot0Configs() {
             return new Slot0Configs()
-                    .withKP(kP.get())
-                    .withKI(kI.get())
-                    .withKD(kD.get())
-                    .withKS(kS.get())
-                    .withKV(kV.get())
-                    .withKA(kA.get())
-                    .withKG(kG.get());
+                    .withKP(kP)
+                    .withKI(kI)
+                    .withKD(kD)
+                    .withKS(kS)
+                    .withKV(kV)
+                    .withKA(kA)
+                    .withKG(kG);
         }
 
         /**
