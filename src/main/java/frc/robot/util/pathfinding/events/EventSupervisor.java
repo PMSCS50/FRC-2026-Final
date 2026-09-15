@@ -16,7 +16,7 @@ import java.util.*;
  * This is done so that we dont have to define requirements in ShinPathfindingCommand
  * which allows us to get all the requirements dynamically as new paths are found
  */
-public class EventSupervisor extends EventScheduler{
+public class EventSupervisor extends EventScheduler {
   private static final EventLoop eventLoop = EventScheduler.getEventLoop();
 
   private final Queue<Event> upcomingEvents;
@@ -85,7 +85,12 @@ public class EventSupervisor extends EventScheduler{
     return eventLoop;
   }
 
-  public static Set<Subsystem> getAllSchedulerRequirements(PathPlannerPath path) {
+  /**
+   * Get all subsystem requirements for a given path
+   * 
+   * @return Set of all Subsystems required by the path
+   */
+  public static Set<Subsystem> getSchedulerRequirements(PathPlannerPath path) {
     return EventScheduler.getSchedulerRequirements(path);
   }
 

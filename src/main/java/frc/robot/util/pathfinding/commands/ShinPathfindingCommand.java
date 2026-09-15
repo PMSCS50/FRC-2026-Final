@@ -100,7 +100,7 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
         
     this.requirements = new HashSet<>(Set.of(requirements));
-    //this.requirements.addAll(EventSupervisor.getAllSchedulerRequirements(targetPath));
+    //this.requirements.addAll(EventSupervisor.getSchedulerRequirements(targetPath));
     //this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
 
     addRequirements(this.requirements.toArray(Subsystem[]::new));
@@ -519,7 +519,7 @@ public class ShinPathfindingCommand extends Command {
         eventSupervisor.end();
         eventSupervisor.initialize(currentTrajectory);
 
-        var eventReqs = EventSupervisor.getAllSchedulerRequirements(this.currentPath);
+        var eventReqs = EventSupervisor.getSchedulerRequirements(this.currentPath);
         if (!Collections.disjoint(requirements, eventReqs)) {
           throw new IllegalArgumentException(
               "Events that are triggered during path following cannot require the drive subsystem");
@@ -549,7 +549,7 @@ public class ShinPathfindingCommand extends Command {
         eventSupervisor.end();
         
         if (!followingTargetPath) {
-          var eventReqs = EventSupervisor.getAllSchedulerRequirements(this.currentPath);
+          var eventReqs = EventSupervisor.getSchedulerRequirements(this.currentPath);
           if (!Collections.disjoint(requirements, eventReqs)) {
             throw new IllegalArgumentException(
                 "Events that are triggered during path following cannot require the drive subsystem");
