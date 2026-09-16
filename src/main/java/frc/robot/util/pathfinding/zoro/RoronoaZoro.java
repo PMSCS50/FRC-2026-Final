@@ -7,14 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
-import frc.robot.util.pathfinding.zones.ConstraintZone;
-import frc.robot.util.pathfinding.zones.DynamicOrientationZone;
-import frc.robot.util.pathfinding.zones.EventZone;
-import frc.robot.util.pathfinding.zones.MultiRotationZone;
-import frc.robot.util.pathfinding.zones.OrientationZone;
-import frc.robot.util.pathfinding.zones.PathZone;
-import frc.robot.util.pathfinding.zones.RotationZone;
-import frc.robot.util.pathfinding.zones.ZoneManager;
+import frc.robot.util.pathfinding.zones.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -945,6 +938,7 @@ public class RoronoaZoro implements ShinPathfinder {
                 new PointTowardsZone(
                   zone.name,
                    oz.getTarget().getTranslation(), 
+                   oz.getOffset(),
                    entryWaypointIndex, 
                    exitWaypointIndex
                 )
@@ -1032,7 +1026,7 @@ public class RoronoaZoro implements ShinPathfinder {
       Rotation2d lastRotationTarget;
 
       if (zone instanceof OrientationZone oz) {
-        pointTowardsZones.add(new PointTowardsZone(zone.name, oz.getTarget().getTranslation(), entryWaypointIndex, exitWaypointIndex));
+        pointTowardsZones.add(new PointTowardsZone(zone.name, oz.getTarget().getTranslation(), oz.getOffset(), entryWaypointIndex, exitWaypointIndex));
       } else if (zone instanceof DynamicOrientationZone doz) {
         for (int j = entryIndex; j <= exitIndex; j++) {
           PathPoint point = points.get(j);
