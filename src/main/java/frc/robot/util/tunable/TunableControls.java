@@ -415,12 +415,10 @@ public class TunableControls {
         }
 
         public boolean hasChanged() {
-            int counter = 0;
             for (LoggedTunableNumber num : getAllTunableNumbers()) {
-                if (num.hasChanged(Integer.hashCode(counter))) {
+                if (num.hasChanged(num.hashCode())) {
                     return true;
                 }
-                counter++;
             }
             return false;
         }

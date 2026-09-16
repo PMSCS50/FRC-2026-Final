@@ -10,6 +10,7 @@ package frc.robot.util.tunable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -117,5 +118,10 @@ public class LoggedTunableNumber implements DoubleSupplier {
     @Override
     public double getAsDouble() {
         return get();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, dashboardNumber);
     }
 }
