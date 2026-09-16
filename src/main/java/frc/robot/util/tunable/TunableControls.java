@@ -416,7 +416,7 @@ public class TunableControls {
 
         public boolean hasChanged() {
             for (LoggedTunableNumber num : getAllTunableNumbers()) {
-                if (num.hasChanged(num.hashCode())) {
+                if (num.hasChanged(this.hashCode())) {
                     return true;
                 }
             }

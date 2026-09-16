@@ -120,8 +120,4 @@ public class LoggedTunableNumber implements DoubleSupplier {
         return get();
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(key, dashboardNumber);
-    }
 }

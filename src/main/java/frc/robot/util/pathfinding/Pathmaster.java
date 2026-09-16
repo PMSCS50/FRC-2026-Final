@@ -163,6 +163,23 @@ public class Pathmaster {
         });
     }
 
+    // *Creates a dynamic orientation zone
+     // ?When the robot paths through it, it will continuously face the given target pose with an offset given by supplier.
+    public void addDynamicOrientationZone(
+        String name, Translation2d min, Translation2d max, Pose2d targetPose,
+        Supplier<Rotation2d> offsetSupplier, boolean active) {
+        
+        ZoneManager.addZone(new DynamicOrientationZone(name, min, max, targetPose, offsetSupplier), active);
+
+        Logger.recordOutput("Pathmaster/Dynamic Orientation Zone " + name, new Pose2d[]{
+            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
+            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
+            new Pose2d(min.getX(), min.getY(), new Rotation2d())
+        });
+    }
+
     // *Creates an orientation zone.
     //?When the robot paths through it, it will continuously face the given target pose.
     public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {

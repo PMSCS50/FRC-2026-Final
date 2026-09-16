@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * // *A zone where the robot holds a fixed chassis heading throughout, and chooses the rotation that requires the least turning
- * // ?Example (REBUILT): always face forward through the trench to not slam the intake into a wall, 
+ * // ?Application (REBUILT): always face forward through the trench to not slam the intake into a wall, 
  * // ?but to also avoid turning 180 degrees into the trench, risking hitting against the wall too
  */
 public class MultiRotationZone extends PathZone {

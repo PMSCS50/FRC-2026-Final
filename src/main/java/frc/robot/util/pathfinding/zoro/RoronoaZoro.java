@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.util.pathfinding.zones.ConstraintZone;
+import frc.robot.util.pathfinding.zones.DynamicOrientationZone;
 import frc.robot.util.pathfinding.zones.EventZone;
 import frc.robot.util.pathfinding.zones.MultiRotationZone;
 import frc.robot.util.pathfinding.zones.OrientationZone;
@@ -948,6 +949,23 @@ public class RoronoaZoro implements ShinPathfinder {
                    exitWaypointIndex
                 )
               );
+            } else if (zone instanceof DynamicOrientationZone doz) {
+              for (int j = entryIndex; j <= exitIndex; j++) {
+                  PathPoint point = points.get(j);
+
+                  Rotation2d rotation =
+                      doz.getTarget().getTranslation()
+                          .minus(point.position)
+                          .getAngle()
+                          .plus(doz.getOffset().get());
+
+                  rotationTargets.add(
+                      new RotationTarget(
+                          point.waypointRelativePos,
+                          rotation
+                      )
+                  );
+              }
             } else if (zone instanceof RotationZone rz) {
 
               rotationTargets.add(new RotationTarget(entryWaypointIndex, rz.getRotation()));
@@ -1015,6 +1033,23 @@ public class RoronoaZoro implements ShinPathfinder {
 
       if (zone instanceof OrientationZone oz) {
         pointTowardsZones.add(new PointTowardsZone(zone.name, oz.getTarget().getTranslation(), entryWaypointIndex, exitWaypointIndex));
+      } else if (zone instanceof DynamicOrientationZone doz) {
+        for (int j = entryIndex; j <= exitIndex; j++) {
+          PathPoint point = points.get(j);
+
+          Rotation2d rotation =
+              doz.getTarget().getTranslation()
+                  .minus(point.position)
+                  .getAngle()
+                  .plus(doz.getOffset().get());
+
+          rotationTargets.add(
+              new RotationTarget(
+                  point.waypointRelativePos,
+                  rotation
+              )
+          );
+        }
       } else if (zone instanceof RotationZone rz) {
         rotationTargets.add(new RotationTarget(entryWaypointIndex, rz.getRotation()));
         rotationTargets.add(new RotationTarget(exitWaypointIndex, rz.getRotation()));

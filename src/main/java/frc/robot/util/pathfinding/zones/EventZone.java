@@ -7,7 +7,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 
 /**
  // *A zone where the robot activates a certain NamedCommand
- // ?Example (REBUILT): activating the robot's intake when going to the neutral zone
+ // ?Application (REBUILT): activating the robot's intake when going to the neutral zone
  * 
  // !EventZones must use NamedCommands rather than just commands
  // !so that our pathfinder can properly retrieve the event markers during log replay
