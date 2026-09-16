@@ -27,7 +27,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 import org.ironmaple.simulation.SimulatedArena;
@@ -75,6 +74,7 @@ public class MapleSimSwerveDrivetrain {
          * @param modules the {@link SwerveModule}s, typically obtained via {@link SwerveDrivetrain#getModules()}
          * @param moduleConstants the constants for the swerve modules
          */
+        @SuppressWarnings("unchecked")
         public MapleSimSwerveDrivetrain(
                 CommandSwerveDrivetrain ctreDrivetrain,
                 Time simPeriod,
@@ -193,14 +193,11 @@ public class MapleSimSwerveDrivetrain {
     }
 
     public static class TalonFXMotorControllerWithRemoteCanCoderSim extends TalonFXMotorControllerSim {
-        private final int encoderId;
         private final CANcoderSimState remoteCancoderSimState;
 
         public TalonFXMotorControllerWithRemoteCanCoderSim(TalonFX talonFX, CANcoder cancoder) {
             super(talonFX);
             this.remoteCancoderSimState = cancoder.getSimState();
-
-            this.encoderId = cancoder.getDeviceID();
         }
 
         @Override

@@ -39,8 +39,8 @@ public class Elevator extends SubsystemBase {
 
     private final TalonFXConfiguration config = elevatorControlConstants.getTalonFXConfiguration(true);
 
-    private final MotionMagicVoltage positionRequest;
-    private final DutyCycleOut dcRequest;
+    private final MotionMagicVoltage mmPositionRequest;
+    private final DutyCycleOut dutyCycleOut;
 
     private final StatusSignal<Angle> elevatorPosition;
     private final StatusSignal<AngularVelocity> elevatorVelocity;
@@ -57,8 +57,8 @@ public class Elevator extends SubsystemBase {
         elevatorTwo.setControl(slave);
         elevatorThree.setControl(slave);
 
-        positionRequest = new MotionMagicVoltage(0.0).withSlot(0);
-        dcRequest = new DutyCycleOut(0);
+        mmPositionRequest = new MotionMagicVoltage(0.0).withSlot(0);
+        dutyCycleOut = new DutyCycleOut(0);
 
         VirtualPD.registerMotor(elevatorOne.getSupplyCurrent().asSupplier(), "Elevator");
         VirtualPD.registerMotor(elevatorTwo.getSupplyCurrent().asSupplier(), "Elevator");
@@ -110,7 +110,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public void goToPosition(double positionMeters) {
-        elevatorOne.setControl(positionRequest.withPosition(positionMeters / ElevatorConstants.ELEVATOR_POSITION_COEFFICIENT));
+        elevatorOne.setControl(mmPositionRequest.withPosition(positionMeters / ElevatorConstants.ELEVATOR_POSITION_COEFFICIENT));
     }
 
     public void setNeutralMode(NeutralModeValue neutralMode) {
@@ -120,7 +120,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public void setDutyCycle(double dutyCycle) {
-        elevatorOne.setControl(dcRequest.withOutput(dutyCycle));
+        elevatorOne.setControl(dutyCycleOut.withOutput(dutyCycle));
     }
 
     public boolean isAtSetpoint() {

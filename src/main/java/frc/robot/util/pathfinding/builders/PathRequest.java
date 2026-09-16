@@ -9,6 +9,7 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.util.Elastic;
 
 // *An alternate way of creating pathfinder commands.
@@ -44,8 +45,8 @@ public class PathRequest {
 
     public PathRequest withGoal(String targetPath) {
         try {
-            if (targetPath.startsWith(choreoKey)) {
-                this.targetPath = PathPlannerPath.fromChoreoTrajectory(targetPath.substring(choreoKey.length()));
+            if (targetPath.startsWith(DriveConstants.choreoKey)) {
+                this.targetPath = PathPlannerPath.fromChoreoTrajectory(targetPath.substring(DriveConstants.choreoKey.length()));
             } else {
                 this.targetPath = PathPlannerPath.fromPathFile(targetPath);
             }

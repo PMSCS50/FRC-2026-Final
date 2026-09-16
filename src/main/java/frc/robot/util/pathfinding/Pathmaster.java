@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.misc.FieldUtil;
@@ -251,7 +252,7 @@ public class Pathmaster {
 
     //Uses a PoseSupplier instead.
     public Command makePathTo(Supplier<Pose2d> destinationSupplier) {
-        return makePathTo(destinationSUpplier.get());
+        return makePathTo(destinationSupplier.get());
     }
 
     // *Pathfind to any field pose with obstacle avoidance
@@ -329,8 +330,8 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith(choreoKey)) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
+            if (pathName.startsWith(DriveConstants.choreoKey)) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(DriveConstants.choreoKey.length()));
             } else {
                 path = PathPlannerPath.fromPathFile(pathName);
             }
@@ -360,8 +361,8 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith(choreoKey)) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
+            if (pathName.startsWith(DriveConstants.choreoKey)) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(DriveConstants.choreoKey.length()));
             } else {
                 path = PathPlannerPath.fromPathFile(pathName);
             }

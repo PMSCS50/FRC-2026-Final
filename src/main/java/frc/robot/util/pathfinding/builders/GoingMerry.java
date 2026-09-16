@@ -398,7 +398,7 @@ public class GoingMerry {
     }
 
     // Use requested constraints if present; otherwise fall back to default
-    PathConstraints constraints = Optional.of(request.getConstraints).orElse(defaultConstraints);
+    PathConstraints constraints = Optional.of(request.getConstraints()).orElse(defaultConstraints);
 
     if (request.isPathFindThenFollowPath()) {
       return pathfindThenFollowPath(

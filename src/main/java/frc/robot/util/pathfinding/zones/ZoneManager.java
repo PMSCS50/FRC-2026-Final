@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -141,6 +142,15 @@ public class ZoneManager {
         return zones.size();
     }
 
+    public static Optional<PathZone> getRegisteredZone(String name) {
+        for (PathZone zone : getActiveZones()) {
+            if (zone.name.equals(name)) {
+                return Optional.of(zone);
+            }
+        }
+        return Optional.empty();
+    }
+
     public static Command getEventCommand(String name) {
         for (PathZone zone : getActiveZones()) {
             if (zone instanceof EventZone ezone) {
@@ -162,6 +172,7 @@ public class ZoneManager {
         }
         return requirements;
     }
+    
 }
 
 
