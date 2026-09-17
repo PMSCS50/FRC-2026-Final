@@ -3,7 +3,14 @@ package frc.robot.util.pathfinding.zones;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.geometry.Translation2d;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.ConstraintsZone;
+import com.pathplanner.lib.path.EventMarker;
+import com.pathplanner.lib.path.PointTowardsZone;
+import com.pathplanner.lib.path.RotationTarget;
 
 /**
  // *A zone where the robot activates a certain NamedCommand
@@ -30,6 +37,21 @@ public class EventZone extends PathZone {
 
     public Command getEvent() {
         return command;
+    }
+
+    @Override
+    public List<RotationTarget> createRotationTargets(double entry, double exit) { return new ArrayList<>();}
+
+    @Override
+    public List<PointTowardsZone> createPointTowardsZones(double entry, double exit) { return new ArrayList<>();}
+
+    @Override
+    public List<ConstraintsZone> createConstraintsZones(double entry, double exit) { return new ArrayList<>();}
+
+    @Override
+    public List<EventMarker> createEventMarkers(double entry, double exit) { 
+        EventMarker em = new EventMarker(name, entry, exit, command);
+        return List.of(em);
     }
 
 }

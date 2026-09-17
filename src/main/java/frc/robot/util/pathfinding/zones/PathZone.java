@@ -1,6 +1,13 @@
 package frc.robot.util.pathfinding.zones;
 
+import java.util.List;
 import java.util.Objects;
+
+import com.pathplanner.lib.path.RotationTarget;
+import com.pathplanner.lib.path.PointTowardsZone;
+import com.pathplanner.lib.path.ConstraintsZone;
+import com.pathplanner.lib.path.EventMarker;
+
 import edu.wpi.first.math.geometry.Translation2d;
 
 // *Creates a zone on the field that pathfinder will use for rotation or alignment.
@@ -65,6 +72,11 @@ public abstract class PathZone {
         }
         return last;
     }
+
+    public abstract List<RotationTarget> createRotationTargets(double entry, double exit);
+    public abstract List<PointTowardsZone> createPointTowardsZones(double entry, double exit);
+    public abstract List<ConstraintsZone> createConstraintsZones(double entry, double exit);
+    public abstract List<EventMarker> createEventMarkers(double entry, double exit);
 
 }
 

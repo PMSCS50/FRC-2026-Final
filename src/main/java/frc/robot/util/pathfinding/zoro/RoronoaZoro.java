@@ -874,6 +874,7 @@ public class RoronoaZoro implements ShinPathfinder {
   }
 
   //Decorates the pathplannerpath with actions based on zones and stop rotations
+    // Decorates the PathPlannerPath with actions based on zones and stop rotations
   private PathPlannerPath fillZones(PathPlannerPath basePath) {
     // Reset lists
     rotationTargets.clear();
@@ -885,27 +886,38 @@ public class RoronoaZoro implements ShinPathfinder {
     List<Waypoint> waypoints = basePath.getWaypoints();
     if (waypoints.size() < 2) return null;
 
-    // Loop through all pathpoints. If it enters or exits a zone, get waypoint relative position
+    // Path points
     List<PathPoint> points = basePath.getAllPathPoints();
     List<PathZone> activeZones = ZoneManager.getActiveZones();
 
-    //Since the rotation component of the stops was never injected into the path
-    //we have to artificialy create rotation targets at those points.
+    // Initialize zone context
+    ZoneUtil.initialize(
+        points,
+        requestRealStartRot,
+        rotationTargets
+    );
 
-    double waypointNum = 0;
+    // Since the rotation component of the stops was never injected into the path,
+    // we have to artificially create rotation targets at those points.
     for (Translation2d stop : requestRealStopPoses) {
+      double waypointNum = 0;
+
       for (int i = 0; i < waypoints.size(); i++) {
-          if (waypoints.get(i).anchor().equals(stop)) {
-            waypointNum = i;
-          }
+        if (waypoints.get(i).anchor().equals(stop)) {
+          waypointNum = i;
+          break;
+        }
       }
+
       rotationTargets.add(
-        new RotationTarget(waypointNum, requestRealStopRotations.get(stop))
+          new RotationTarget(
+              waypointNum,
+              requestRealStopRotations.get(stop)
+          )
       );
     }
 
-    //Actual zone filling in.
-
+    // Actual zone filling
     Map<PathZone, Integer> activeZoneEntries = new HashMap<>();
 
     for (int i = 0; i < points.size(); i++) {
@@ -927,80 +939,40 @@ public class RoronoaZoro implements ShinPathfinder {
           int exitIndex = isInside ? i : i - 1;
 
           if (exitIndex >= entryIndex) {
-            double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
-            double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
+            double entryWaypointIndex =
+                points.get(entryIndex).waypointRelativePos;
 
-            //For MultiRotationZones to calculate closest heading
-            Rotation2d lastRotationTarget;
+            double exitWaypointIndex =
+                points.get(exitIndex).waypointRelativePos;
 
-            if (zone instanceof OrientationZone oz) {
-              pointTowardsZones.add(
-                new PointTowardsZone(
-                  zone.name,
-                   oz.getTarget().getTranslation(), 
-                   oz.getOffset(),
-                   entryWaypointIndex, 
-                   exitWaypointIndex
+            // Let the zone create whatever decorations it needs.
+            rotationTargets.addAll(
+                zone.createRotationTargets(
+                    entryWaypointIndex,
+                    exitWaypointIndex
                 )
-              );
-            } else if (zone instanceof DynamicOrientationZone doz) {
-              for (int j = entryIndex; j <= exitIndex; j++) {
-                  PathPoint point = points.get(j);
+            );
 
-                  Rotation2d rotation =
-                      doz.getTarget().getTranslation()
-                          .minus(point.position)
-                          .getAngle()
-                          .plus(doz.getOffset().get());
-
-                  rotationTargets.add(
-                      new RotationTarget(
-                          point.waypointRelativePos,
-                          rotation
-                      )
-                  );
-              }
-            } else if (zone instanceof RotationZone rz) {
-
-              rotationTargets.add(new RotationTarget(entryWaypointIndex, rz.getRotation()));
-              rotationTargets.add(new RotationTarget(exitWaypointIndex, rz.getRotation()));
-            
-            } else if (zone instanceof MultiRotationZone mrz) {
-
-              //Find most recent rotation target before this rotation zone
-              RotationTarget bestPreviousTarget = null;
-              for (RotationTarget target : rotationTargets) {
-                if (target.position() < entryWaypointIndex) {
-                  if (bestPreviousTarget == null || target.position() > bestPreviousTarget.position()) {
-                    bestPreviousTarget = target;
-                  }
-                }
-              }
-
-              // Fall back to robot's start rotation if no prior target exists
-              lastRotationTarget = (bestPreviousTarget != null) 
-                  ? bestPreviousTarget.rotation() 
-                  : requestRealStartRot;
-
-              Rotation2d chosenRotation = mrz.getClosestRotation(lastRotationTarget);
-
-              rotationTargets.add(new RotationTarget(entryWaypointIndex, chosenRotation));
-              rotationTargets.add(new RotationTarget(exitWaypointIndex, chosenRotation));
-              
-            } else if (zone instanceof ConstraintZone cz) {
-
-              constraintZones.add(new ConstraintsZone(entryWaypointIndex, exitWaypointIndex, cz.getConstraints()));
-            
-            } else if (zone instanceof EventZone ez) {
-              eventMarkers.add(
-                new EventMarker(
-                  zone.name, 
-                  entryWaypointIndex, 
-                  exitWaypointIndex, 
-                  ez.getEvent()
+            pointTowardsZones.addAll(
+                zone.createPointTowardsZones(
+                    entryWaypointIndex,
+                    exitWaypointIndex
                 )
-              );
-            }
+            );
+
+            constraintZones.addAll(
+                zone.createConstraintsZones(
+                    entryWaypointIndex,
+                    exitWaypointIndex
+                )
+            );
+
+            eventMarkers.addAll(
+                zone.createEventMarkers(
+                    entryWaypointIndex,
+                    exitWaypointIndex
+                )
+            );
           }
 
           activeZoneEntries.remove(zone);
@@ -1019,72 +991,52 @@ public class RoronoaZoro implements ShinPathfinder {
       int entryIndex = entry.getValue();
       int exitIndex = points.size() - 1;
 
-      double entryWaypointIndex = points.get(entryIndex).waypointRelativePos;
-      double exitWaypointIndex  = points.get(exitIndex).waypointRelativePos;
+      double entryWaypointIndex =
+          points.get(entryIndex).waypointRelativePos;
 
-      //For MultiRotationZones to calculate closest heading
-      Rotation2d lastRotationTarget;
+      double exitWaypointIndex =
+          points.get(exitIndex).waypointRelativePos;
 
-      if (zone instanceof OrientationZone oz) {
-        pointTowardsZones.add(new PointTowardsZone(zone.name, oz.getTarget().getTranslation(), oz.getOffset(), entryWaypointIndex, exitWaypointIndex));
-      } else if (zone instanceof DynamicOrientationZone doz) {
-        for (int j = entryIndex; j <= exitIndex; j++) {
-          PathPoint point = points.get(j);
+      // Let the zone create whatever decorations it needs.
+      rotationTargets.addAll(
+          zone.createRotationTargets(
+              entryWaypointIndex,
+              exitWaypointIndex
+          )
+      );
 
-          Rotation2d rotation =
-              doz.getTarget().getTranslation()
-                  .minus(point.position)
-                  .getAngle()
-                  .plus(doz.getOffset().get());
+      pointTowardsZones.addAll(
+          zone.createPointTowardsZones(
+              entryWaypointIndex,
+              exitWaypointIndex
+          )
+      );
 
-          rotationTargets.add(
-              new RotationTarget(
-                  point.waypointRelativePos,
-                  rotation
-              )
-          );
-        }
-      } else if (zone instanceof RotationZone rz) {
-        rotationTargets.add(new RotationTarget(entryWaypointIndex, rz.getRotation()));
-        rotationTargets.add(new RotationTarget(exitWaypointIndex, rz.getRotation()));
-      } else if (zone instanceof MultiRotationZone mrz) {
-        //Find most recent rotation target before this rotation zone
-        RotationTarget bestPreviousTarget = null;
-        for (RotationTarget target : rotationTargets) {
-          if (target.position() < entryWaypointIndex) {
-            if (bestPreviousTarget == null || target.position() > bestPreviousTarget.position()) {
-              bestPreviousTarget = target;
-            }
-          }
-        }
+      constraintZones.addAll(
+          zone.createConstraintsZones(
+              entryWaypointIndex,
+              exitWaypointIndex
+          )
+      );
 
-        // Fall back to robot's start rotation if no prior target exists
-        lastRotationTarget = (bestPreviousTarget != null) 
-            ? bestPreviousTarget.rotation() 
-            : requestRealStartRot;
-
-        Rotation2d chosenRotation = mrz.getClosestRotation(lastRotationTarget);
-
-        rotationTargets.add(new RotationTarget(entryWaypointIndex, chosenRotation));
-        rotationTargets.add(new RotationTarget(exitWaypointIndex, chosenRotation));
-        
-      } else if (zone instanceof ConstraintZone cz) {
-        constraintZones.add(new ConstraintsZone(entryWaypointIndex, exitWaypointIndex, cz.getConstraints()));
-      } else if (zone instanceof EventZone ez) {
-        eventMarkers.add(new EventMarker(zone.name, entryWaypointIndex, exitWaypointIndex, ez.getEvent()));
-      }
+      eventMarkers.addAll(
+          zone.createEventMarkers(
+              entryWaypointIndex,
+              exitWaypointIndex
+          )
+      );
     }
 
     basePath = new PathPlannerPath(
-        waypoints,                                              
-        new ArrayList<>(rotationTargets),                       
-        new ArrayList<>(pointTowardsZones),                     
-        new ArrayList<>(constraintZones),                       
-        new ArrayList<>(eventMarkers),                          
-        basePath.getGlobalConstraints(),                        
-        null,                               
-        basePath.getGoalEndState(),                              
-        false                                          
+        waypoints,
+        new ArrayList<>(rotationTargets),
+        new ArrayList<>(pointTowardsZones),
+        new ArrayList<>(constraintZones),
+        new ArrayList<>(eventMarkers),
+        basePath.getGlobalConstraints(),
+        null,
+        basePath.getGoalEndState(),
+        false
     );
 
     return basePath;
