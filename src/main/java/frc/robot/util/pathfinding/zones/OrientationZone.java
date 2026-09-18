@@ -22,9 +22,7 @@ public class OrientationZone extends PathZone {
     private final Rotation2d offset;
 
     public OrientationZone(String name,Translation2d min,Translation2d max, Pose2d target) {
-        super(name, min, max);
-        this.target = target;
-        this.offset = Rotation2d.kZero;
+        this(name, min, max, target, Rotation2d.kZero);
     }
 
     //Constructor with offset.

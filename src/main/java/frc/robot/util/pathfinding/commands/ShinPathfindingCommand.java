@@ -101,7 +101,7 @@ public class ShinPathfindingCommand extends Command {
         
     this.requirements = new HashSet<>(Set.of(requirements));
     //this.requirements.addAll(EventSupervisor.getSchedulerRequirements(targetPath));
-    //this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
+    //this.requirements.addAll(ZoneManager.getAllZoneRequirements());
 
     addRequirements(this.requirements.toArray(Subsystem[]::new));
     
@@ -218,7 +218,7 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
 
     this.requirements = new HashSet<>(Set.of(requirements));
-    //this.requirements.addAll(ZoneManager.getAllEventZoneRequirements());
+    //this.requirements.addAll(ZoneManager.getAllZoneRequirements());
     addRequirements(this.requirements.toArray(Subsystem[]::new));
 
     ShinPathfinding.ensureInitialized();

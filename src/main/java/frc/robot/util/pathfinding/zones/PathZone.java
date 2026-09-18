@@ -9,6 +9,8 @@ import com.pathplanner.lib.path.ConstraintsZone;
 import com.pathplanner.lib.path.EventMarker;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.util.pathfinding.builders.GoingMerry;
 
 // *Creates a zone on the field that pathfinder will use for rotation or alignment.
 
@@ -71,6 +73,10 @@ public abstract class PathZone {
             if (containsPoint(point)) last = point;
         }
         return last;
+    }
+
+    public Trigger inZoneArea() {
+        return new Trigger(() -> this.containsPoint(GoingMerry.getCurrentPose().getTranslation()));
     }
 
     public abstract List<RotationTarget> createRotationTargets(double entry, double exit);

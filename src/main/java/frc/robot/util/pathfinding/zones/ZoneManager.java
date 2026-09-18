@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.pathplanner.lib.path.EventMarker;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -162,12 +164,13 @@ public class ZoneManager {
         return Commands.none();
     }
 
-    public static Set<Subsystem> getAllEventZoneRequirements() {
+    public static Set<Subsystem> getAllZoneRequirements() {
         Set<Subsystem> requirements = new HashSet<>();
+        List<EventMarker> emList;
 
         for (PathZone zone : getActiveZones()) {
-            if (zone instanceof EventZone ezone) {
-                requirements.addAll(ezone.getEvent().getRequirements());
+            if (!(emList = zone.createEventMarkers(0, 1)).isEmpty()) {
+                emList.forEach((em) -> requirements.addAll(em.command().getRequirements()));
             }
         }
         return requirements;
