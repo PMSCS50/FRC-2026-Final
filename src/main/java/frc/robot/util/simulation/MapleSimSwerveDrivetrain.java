@@ -226,8 +226,17 @@ public class MapleSimSwerveDrivetrain {
      */
     public static SwerveModuleConstants<?, ?, ?>[] regulateModuleConstantsForSimulation(
             SwerveModuleConstants<?, ?, ?>[] moduleConstants) {
-        for (SwerveModuleConstants<?, ?, ?> moduleConstant : moduleConstants)
+        Angle[] moduleEncoderOffsets = {
+            Rotations.of(0.019287109375),  //FL
+            Rotations.of(0.320068359375),  //FR
+            Rotations.of(-0.147705078125), //BL
+            Rotations.of(-0.153076171875)  //BR
+        };
+        int it = 0;
+        for (SwerveModuleConstants<?, ?, ?> moduleConstant : moduleConstants) {
             regulateModuleConstantForSimulation(moduleConstant);
+            moduleConstant.withEncoderOffset(moduleEncoderOffsets[it++]);
+        }
 
         return moduleConstants;
     }
@@ -256,7 +265,7 @@ public class MapleSimSwerveDrivetrain {
         moduleConstants
             .withEncoderOffset(0)
             .withDriveMotorInverted(false)
-            .withSteerMotorInverted(false)
+            .withSteerMotorInverted(true) //Test this later
             .withEncoderInverted(false)
             .withSteerMotorGains(new Slot0Configs()
                     .withKP(100)
