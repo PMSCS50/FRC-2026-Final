@@ -241,10 +241,8 @@ public final class Constants {
     public static final int elevatorTwoCanId = 52;
     public static final int elevatorThreeCanId = 53;
 
-    public static final double ELEVATOR_GEAR_RATIO =
-                ((32.0 / 16.0) * (40.0 / 26.0) * (50.0 / 20.0) * (62.0 / 76.0));
-    public static final double ELEVATOR_PULLEY_DIAMETER =
-            Meter.convertFrom(0.25 * 16.0 / Math.PI, Inch);
+    public static final double ELEVATOR_GEAR_RATIO = (40.0 / 12.0) * (36.0 / 40.0) * (34.0 / 14.0) * (62.0 / 78.0);
+    public static final double ELEVATOR_PULLEY_DIAMETER = Meter.convertFrom(0.25 * 16.0 / Math.PI, Inch);
     public static final double ELEVATOR_CASCADE_COEFFICIENT = 2.0;
     public static final double ELEVATOR_POSITION_COEFFICIENT =
             Math.PI * ELEVATOR_PULLEY_DIAMETER / ELEVATOR_GEAR_RATIO * ELEVATOR_CASCADE_COEFFICIENT;
