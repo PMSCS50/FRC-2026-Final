@@ -17,7 +17,6 @@ import frc.robot.util.pathfinding.telemetry.*;
 import frc.robot.util.pathfinding.zones.*;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -390,12 +389,7 @@ public class Pathmaster {
         pathing = true;
         return Commands.defer(
             () -> {
-                Pose2d nearest = candidates.stream()
-                    .min(Comparator.comparingDouble(
-                        p -> p.getTranslation()
-                            .getDistance(robotPose.get().getTranslation())
-                    ))
-                    .orElseThrow();
+                Pose2d nearest = robotPose.get().nearest(candidates);
                 return GoingMerry.pathfindToPose(nearest, constraints);
             }, Set.of(drivetrain)
         )
@@ -418,8 +412,7 @@ public class Pathmaster {
         pathing = true;
         return Commands.defer(
             () -> {
-                Rotation2d facing = getRotationToPose(destination, faceTarget);
-                Pose2d oriented = new Pose2d(destination.getTranslation(), facing);
+                Pose2d oriented = FieldUtil.facePose(destination, faceTarget);
                 return GoingMerry.pathfindToPose(oriented, constraints);
             }, Set.of(drivetrain)
         )
@@ -482,12 +475,6 @@ public class Pathmaster {
         Logger.recordOutput("Pathmaster/pathing", pathing);
     }
 
-    // !Helpers
-    //* Returns the rotation needed at 'from' to face toward 'target'
-    private Rotation2d getRotationToPose(Pose2d from, Pose2d target) {
-        Translation2d delta = target.getTranslation().minus(from.getTranslation());
-        return new Rotation2d(delta.getX(), delta.getY());
-    }
 
     public boolean isPathing() {
         return pathing;
