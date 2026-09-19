@@ -177,13 +177,7 @@ public class Vision extends SubsystemBase {
                 inputs.stdDevs
             );
 
-            Logger.recordOutput(
-                "Vision/cam_" + inputs.name + "/estimatedPose",
-                inputs.estimatedPose);
-
-            Logger.recordOutput(
-                "Vision/cam_" + inputs.name + "/stdDevs",
-                inputs.stdDevs);
+            Logger.processInputs("LoggedVision/camera_" + i, inputs);
         }
     }
 
