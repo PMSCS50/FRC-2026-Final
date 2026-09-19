@@ -35,5 +35,6 @@ public interface VisionIO {
     }
 
     // *Updates the set of loggable inputs. Called every loop in Vision.periodic()
-    public default void updateInputs(VisionIOInputs inputs) {}
+    public void updateInputs(VisionIOInputs inputs);
+     
 }

@@ -12,7 +12,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -34,7 +33,6 @@ public class Vision extends SubsystemBase {
     private final HashMap<Integer, Double> tagambiguities = new HashMap<>();
 
     public Pose2d cachedHubPose = null;
-    private Pose2d lastFusedPose = null;
     public boolean hasSeededPose = false;
     private boolean autoStarted = false;
 
@@ -58,21 +56,11 @@ public class Vision extends SubsystemBase {
         Pose2d robotPose = driveState.Pose;
         double yawDeg = robotPose.getRotation().getDegrees();
 
-        Transform2d robotInv = new Transform2d(
-            robotPose.getTranslation().unaryMinus(),
-            robotPose.getRotation().unaryMinus()
-        );
-
         tagposes.clear();
         tagambiguities.clear();
 
-        Pose2d[] goodPosesBuf = new Pose2d[cameraInputs.size()];
         double[] camDistBuf = new double[cameraInputs.size()];
-
-        int goodPoseCount = 0;
         
-        double globalClosestTagDist = Double.MAX_VALUE;
-
         if (DriverStation.isAutonomousEnabled()) {
             autoStarted = true;
         }
@@ -89,7 +77,7 @@ public class Vision extends SubsystemBase {
                 if (inputs.estimatedPoseTimestamp == 0.0) continue;
                 if (inputs.numTagsUsed < 1) continue;
 
-                double age = Timer.getFPGATimestamp() - inputs.estimatedPoseTimestamp;
+                double age = Timer.getTimestamp() - inputs.estimatedPoseTimestamp;
                 if (age > 0.20) continue;
 
                 double dist = camDistBuf[i];
@@ -122,16 +110,17 @@ public class Vision extends SubsystemBase {
             VisionIO io = cameras.get(i);
             VisionIOInputsAutoLogged inputs = cameraInputs.get(i);
 
-            // *Update IO
+            // Update IO
             if (io instanceof VisionIOReal realIO) {
                 realIO.setRobotYaw(yawDeg);
-            } else if (io instanceof VisionIOSim simIO){
+            } else if (io instanceof VisionIOSim simIO) {
                 simIO.updateSimPose(robotPose);
             }
+
             io.updateInputs(inputs);
 
-            // *Tag processing
-            double closestForCamera = Double.MAX_VALUE;
+            // Tag processing
+            double closestTagDist = Double.MAX_VALUE;
 
             if (inputs.hasTarget &&
                 inputs.visibleTagIds != null &&
@@ -142,55 +131,60 @@ public class Vision extends SubsystemBase {
 
                 for (int j = 0; j < tagIds.length; j++) {
                     int id = tagIds[j];
-                    Pose2d tagFieldPose = tagPoses[j];
+                    Pose2d tagRobotPose = tagPoses[j];
 
-                    Pose2d tagRobotPose = tagFieldPose.plus(robotInv);
                     tagposes.put(id, tagRobotPose);
 
                     double ambiguity = 1.0 / Math.max(1, inputs.numTagsUsed);
                     tagambiguities.put(id, ambiguity);
 
-                    double d = robotPose.getTranslation().getDistance(tagFieldPose.getTranslation());
-                    if (d < closestForCamera) closestForCamera = d;
-                    if (d < globalClosestTagDist) globalClosestTagDist = d;
+                    double d = tagRobotPose.getTranslation().getNorm();
+
+                    if (d < closestTagDist) {
+                        closestTagDist = d;
+                    }
                 }
             }
 
-            camDistBuf[i] = closestForCamera;
-
-            // *Camera rejection/acceptance
+            // Pose validation
             if (!inputs.hasEstimatedPose) continue;
             if (inputs.estimatedPoseTimestamp == 0.0) continue;
-            if (inputs.numTagsUsed < 2) continue; // must use >=2 tags
+            if (inputs.numTagsUsed < 2) continue;
 
             double age = Timer.getTimestamp() - inputs.estimatedPoseTimestamp;
-            if (age > 0.25) continue; // stricter age cutoff
+            if (age > 0.25) continue;
 
-            double jump = robotPose.getTranslation().getDistance(inputs.estimatedPose.getTranslation());
-            if (jump > 0.75) continue; // strict jump rejection
+            double jump = robotPose.getTranslation()
+                .getDistance(inputs.estimatedPose.getTranslation());
+
+            if (jump > 0.75) continue;
 
             double amb = 1.0 / Math.max(1, inputs.numTagsUsed);
-            if (amb > 0.5) continue; // strict ambiguity rejection
+            if (amb > 0.5) continue;
 
-            double dist = camDistBuf[i];
-            if (dist > 5.0) continue; // reject long-range solves entirely
+            if (closestTagDist > 5.0) continue;
 
-            if (!isEstimateValid(inputs.estimatedPose, yawDeg, inputs.estimatedPoseTimestamp)) continue;
+            if (!isEstimateValid(
+                inputs.estimatedPose,
+                yawDeg,
+                inputs.estimatedPoseTimestamp)) {
+                continue;
+            }
 
-            goodPosesBuf[goodPoseCount] = inputs.estimatedPose;
+            drivetrain.addVisionMeasurement(
+                inputs.estimatedPose,
+                inputs.estimatedPoseTimestamp,
+                inputs.stdDevs
+            );
 
-            // |Log cameras here
-            Logger.recordOutput("Vision/cam_" + inputs.name + "/estimatedPose", inputs.estimatedPose);
-            Logger.recordOutput("Vision/cam_" + inputs.name + "/stdDevs", inputs.stdDevs);
+            Logger.recordOutput(
+                "Vision/cam_" + inputs.name + "/estimatedPose",
+                inputs.estimatedPose);
+
+            Logger.recordOutput(
+                "Vision/cam_" + inputs.name + "/stdDevs",
+                inputs.stdDevs);
         }
-
-        // *If all the estimated poses are bad then make EKF reject vision
-        if (goodPoseCount == 0) {
-            return;
-        }
-
-        Pose2d fusedPose = fuseAllPoses();
-        lastFusedPose = fusedPose;
     }
 
 
@@ -276,35 +270,13 @@ public class Vision extends SubsystemBase {
         return Math.hypot(getX(id), getY(id));
     }
 
-    public Pose2d fuseAllPoses() {
-        List<Pose2d> good = new ArrayList<>();
-
-        for (var in : cameraInputs) {
-            if (!in.hasEstimatedPose) continue;
-            if (in.estimatedPoseTimestamp == 0.0) continue;
-            if (in.numTagsUsed <= 0) continue;
-
-            good.add(in.estimatedPose);
-
-            drivetrain.addVisionMeasurement(
-                in.estimatedPose,
-                in.estimatedPoseTimestamp,
-                in.stdDevs
-            );
-        }
-        return good.isEmpty() ? Pose2d.kZero : drivetrain.getState().Pose;
-    }
-
-    public Pose2d getFusedWeighedEstimatedPose() {
-        return lastFusedPose;
-    }
-
     // |Return hub pose
     public Pose2d getCachedHubPose() {
         return cachedHubPose;
     }
 
     // *External Methods
+
     // |Whether the robot is aligned to hub
     public boolean isAlignedToHub() {
         if (cachedHubPose == null) return false;
@@ -326,6 +298,24 @@ public class Vision extends SubsystemBase {
         );
     }
 
+    // |Whether the robot is aligned to a certain pose with given tolerance in degrees
+    public boolean isAlignedToPose(Pose2d target, double toleranceDeg) {
+        Pose2d robotPose = drivetrain.getState().Pose;
+
+        double angleToHub = Math.toDegrees(Math.atan2(
+            target.getY() - robotPose.getY(),
+            target.getX() - robotPose.getX()
+        ));
+
+        double yawErrorDeg = MathUtil.angleModulus(
+            angleToHub - robotPose.getRotation().getDegrees()
+        ) * 180 / Math.PI;
+
+        return alignDebouncer.calculate(
+            Math.abs(yawErrorDeg) <= toleranceDeg
+        );
+    }
+
     // |Yaw to position
     public double getYawToPose(Pose2d targetPose) {
         if (targetPose == null) return 0.0;
@@ -337,10 +327,9 @@ public class Vision extends SubsystemBase {
             targetPose.getX() - robotPose.getX()
         ));
 
-        return MathUtil.inputModulus(
-            angleToTarget - robotPose.getRotation().getDegrees(),
-            -180, 180
-        );
+        return MathUtil.angleModulus(
+            angleToTarget - robotPose.getRotation().getDegrees()
+        ) * 180 / Math.PI;
     }
 
     // |Distance to position

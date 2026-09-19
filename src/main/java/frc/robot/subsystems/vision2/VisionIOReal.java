@@ -10,7 +10,6 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.LimelightResults;
 import frc.robot.util.LimelightHelpers.LimelightTarget_Fiducial;
@@ -79,10 +78,7 @@ public class VisionIOReal implements VisionIO {
             int id = (int) fiducials[i].fiducialID;
             ids[i] = id;
 
-            var tagFieldPose = VisionConstants.aprilTagLayoutAndymark.getTagPose(id);
-            poses[i] = tagFieldPose.isPresent()
-                ? tagFieldPose.get().toPose2d()
-                : new Pose2d();
+            poses[i] = fiducials[i].getTargetPose_RobotSpace2D();
         }
 
         inputs.visibleTagIds   = ids;

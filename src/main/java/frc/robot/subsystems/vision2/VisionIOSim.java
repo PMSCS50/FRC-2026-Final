@@ -16,7 +16,7 @@ import org.photonvision.simulation.VisionSystemSim;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -31,6 +31,7 @@ public class VisionIOSim implements VisionIO {
     private final PhotonCameraSim cameraSim;
     private final PhotonPoseEstimator poseEstimator;
     private final String name;
+    private final Transform3d robotToCamera;
 
     private Pose2d lastGoodPose = null;
 
@@ -43,13 +44,14 @@ public class VisionIOSim implements VisionIO {
     public VisionIOSim(String cameraName, Transform3d robotToCamera) {
         visionSim = new VisionSystemSim("simVision");
         this.name = cameraName;
+        this.robotToCamera = robotToCamera;
 
         if (VisionConstants.aprilTagLayoutAndymark != null) {
             visionSim.addAprilTags(VisionConstants.aprilTagLayoutAndymark);
         }
 
         SimCameraProperties props = new SimCameraProperties();
-        props.setCalibration(960, 720, edu.wpi.first.math.geometry.Rotation2d.fromDegrees(90));
+        props.setCalibration(960, 720, Rotation2d.fromDegrees(90));
         props.setCalibError(0.05, 0.02);
         props.setFPS(30);
         props.setAvgLatencyMs(20);
@@ -113,12 +115,13 @@ public class VisionIOSim implements VisionIO {
             PhotonTrackedTarget t = targets.get(i);
             ids[i] = t.getFiducialId();
 
-            Optional<Pose3d> tagFieldPose =
-                VisionConstants.aprilTagLayoutAndymark.getTagPose(ids[i]);
+            Transform3d tagToRobotTransform = t.getBestCameraToTarget().plus(robotToCamera.inverse());
 
-            poses[i] = tagFieldPose.isPresent()
-                ? tagFieldPose.get().toPose2d()
-                : new Pose2d();
+            poses[i] = new Pose2d(
+                tagToRobotTransform.getX(),
+                tagToRobotTransform.getY(),
+                tagToRobotTransform.getRotation().toRotation2d()
+            );
         }
 
         inputs.visibleTagIds   = ids;
