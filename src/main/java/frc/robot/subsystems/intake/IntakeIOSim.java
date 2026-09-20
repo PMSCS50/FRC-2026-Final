@@ -1,10 +1,13 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import frc.robot.util.misc.VirtualPD;
 
 public class IntakeIOSim implements IntakeIO {
     double kV = 12.0 / 5676.0;   // will need to be tuned later
@@ -20,11 +23,15 @@ public class IntakeIOSim implements IntakeIO {
     }
 
     @Override
+    public void registerMotors() {
+        VirtualPD.registerMotor(() -> Amps.of(sim.getCurrentDrawAmps()), "Intake");
+    }
+
+    @Override
     public void updateInputs(IntakeIOInputs inputs) {
         sim.setInputVoltage(appliedVolts);
         sim.update(.02);
 
-        inputs.motorAmperage = sim.getCurrentDrawAmps();
         inputs.motorVoltage = appliedVolts;
         inputs.motorVelocity = sim.getAngularVelocityRadPerSec();
     }

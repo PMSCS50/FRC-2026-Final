@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOInputs;
@@ -19,16 +17,13 @@ public class Intake extends SubsystemBase {
     // constructor
     public Intake(IntakeIO io) {
         this.io = io;
+        io.registerMotors();
     }
 
     // periodic method to update inputs and log outputs
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.recordOutput("Intake/Amperage", inputs.motorAmperage);
-        Logger.recordOutput("Intake/Voltage", inputs.motorVoltage);
-        Logger.recordOutput("Intake/Velocity", inputs.motorVelocity);
-        Logger.recordOutput("Intake/TargetRPM", targetRPM);
     }
 
     // actual complex commands for the motor (not just instantiation or voltage control) or commands that dont need to be differentiated between sim and real
@@ -51,7 +46,4 @@ public class Intake extends SubsystemBase {
         return inputs.motorVelocity;
     }
 
-    public double getCurrent() {
-        return inputs.motorAmperage;
-    }
 }

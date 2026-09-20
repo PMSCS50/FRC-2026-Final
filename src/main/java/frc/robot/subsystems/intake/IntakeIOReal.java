@@ -1,5 +1,7 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Amps;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -10,6 +12,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.util.misc.VirtualPD;
 
 public class IntakeIOReal implements IntakeIO {
 
@@ -33,13 +36,17 @@ public class IntakeIOReal implements IntakeIO {
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
+    @Override
+    public void registerMotors() {
+        VirtualPD.registerMotor(() -> Amps.of(motor.getOutputCurrent()), "Intake");
+    }
+
     public void setVoltage(double volts) {
         motor.setVoltage(volts);
     }
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        inputs.motorAmperage = motor.getOutputCurrent();
         inputs.motorVoltage = motor.getBusVoltage();
         inputs.motorVelocity = encoder.getVelocity();
 

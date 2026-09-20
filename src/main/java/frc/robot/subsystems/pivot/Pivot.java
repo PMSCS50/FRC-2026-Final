@@ -5,6 +5,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.misc.VirtualPD;
 
 public class Pivot extends SubsystemBase {
 
@@ -59,6 +60,7 @@ public class Pivot extends SubsystemBase {
 
     public Pivot(PivotIO io) {
         this.io = io;
+        io.registerMotors();
         pid.setGoal(goalRad);
         pid.reset(0.0);
     }
@@ -86,7 +88,7 @@ public class Pivot extends SubsystemBase {
             double delta = Math.abs(pos - lastPos);
             lastPos = pos;
 
-            if (inputs.motorAmperage > kStallAmps && delta < kStallMovementRad) {
+            if (VirtualPD.getCurrentAmps("Pivot") > kStallAmps && delta < kStallMovementRad) {
                 stallCounter = 0;
                 stalled = true;
             } else {
