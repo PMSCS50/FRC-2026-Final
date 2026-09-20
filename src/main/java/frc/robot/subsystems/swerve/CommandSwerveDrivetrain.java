@@ -13,7 +13,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
 
 import edu.wpi.first.math.Matrix;
@@ -241,33 +240,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         try {
             RobotConfig config = RobotConfig.fromGUISettings();
 
-            //Configure AutoBuilder
-            AutoBuilder.configure(
-                this::getPose,   // Supplier of current robot pose
-                this::resetPose,         // Consumer for seeding pose against auto
-                this::getSpeeds, // Supplier of current robot speeds
-
-                (speeds, feedforwards) -> {
-                    setControl(
-                        m_pathApplyRobotSpeeds.withSpeeds(speeds)
-                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                    );
-                },
-
-                DriveConstants.driveController,
-                config,
-                // *Assume the path needs to be flipped for Red vs Blue, this is normally the case
-                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-                this // Subsystem for requirements
-            );
-
-            //GoingMerry is an AutoBuilder completely optimized for the type of pathfinding we are doing.
-            //Unfortunately I cant copy the AutoBuilder configs so I'm stuck with this.
-            //Also, since AutoBuilder is still used in the autochooser for auton paths I cant and wont remove it
-            //The constructor is entirely the same except for the lack of a resetPose() parameter
             GoingMerry.configure(
                 this::getPose,   // Supplier of current robot pose
+                this::resetPose, // Consumer for seeding pose against auto
                 this::getSpeeds, // Supplier of current robot speeds
 
                 (speeds, feedforwards) -> {

@@ -2,6 +2,7 @@ package frc.robot.util.pathfinding.builders;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
 import com.pathplanner.lib.commands.*;
 import com.pathplanner.lib.config.RobotConfig;
@@ -165,6 +166,39 @@ public class GoingMerry {
         robotConfig,
         shouldFlipPath,
         driveRequirements);
+  }
+
+  //This constructor can configure both GoingMerry and AutoBuilder
+  public static void configure(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPoseSupplier,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    
+    configure(
+        poseSupplier,
+        robotRelativeSpeedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        shouldFlipPath,
+        driveRequirements);
+
+    if (!AutoBuilder.isConfigured()) {
+      AutoBuilder.configure(
+        poseSupplier,
+        resetPoseSupplier,
+        robotRelativeSpeedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        shouldFlipPath,
+        driveRequirements);
+    }
   }
 
   /**
