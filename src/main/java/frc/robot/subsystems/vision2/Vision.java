@@ -12,6 +12,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -36,6 +37,8 @@ public class Vision extends SubsystemBase {
     public boolean hasSeededPose = false;
     private boolean autoStarted = false;
 
+    private Pose2d[] poseArray = new Pose2d[0];
+
     // *Constructor
     public Vision(CommandSwerveDrivetrain drivetrain, List<VisionIO> cameras) {
         this.drivetrain = drivetrain;
@@ -54,6 +57,7 @@ public class Vision extends SubsystemBase {
         // *Declare and initialize variables
         SwerveDriveState driveState = drivetrain.getState();
         Pose2d robotPose = driveState.Pose;
+        robotPose = drivetrain.getPose();
         double yawDeg = robotPose.getRotation().getDegrees();
 
         tagposes.clear();
@@ -77,7 +81,7 @@ public class Vision extends SubsystemBase {
                 if (inputs.estimatedPoseTimestamp == 0.0) continue;
                 if (inputs.numTagsUsed < 1) continue;
 
-                double age = Timer.getTimestamp() - inputs.estimatedPoseTimestamp;
+                double age = Timer.getFPGATimestamp() - inputs.estimatedPoseTimestamp;
                 if (age > 0.20) continue;
 
                 double dist = camDistBuf[i];
@@ -151,7 +155,7 @@ public class Vision extends SubsystemBase {
             if (inputs.estimatedPoseTimestamp == 0.0) continue;
             if (inputs.numTagsUsed < 2) continue;
 
-            double age = Timer.getTimestamp() - inputs.estimatedPoseTimestamp;
+            double age = Timer.getFPGATimestamp() - inputs.estimatedPoseTimestamp;
             if (age > 0.25) continue;
 
             double jump = robotPose.getTranslation()
@@ -173,12 +177,21 @@ public class Vision extends SubsystemBase {
 
             drivetrain.addVisionMeasurement(
                 inputs.estimatedPose,
-                inputs.estimatedPoseTimestamp,
-                inputs.stdDevs
+                inputs.estimatedPoseTimestamp
+                //,inputs.stdDevs
             );
 
             Logger.processInputs("LoggedVision/camera_" + i, inputs);
         }
+
+        poseArray = tagposes.values().toArray(Pose2d[]::new);
+
+        for (int i = 0; i < poseArray.length; i++) {
+            poseArray[i] = robotPose.plus(new Transform2d(poseArray[i].getTranslation(), poseArray[i].getRotation()).inverse());
+        }
+
+        Logger.recordOutput("Vision/TagFieldPoses", poseArray);
+        
     }
 
 

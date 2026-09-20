@@ -71,7 +71,6 @@ public class VisionIOSim implements VisionIO {
 
     // *Called by Vision each loop to seed PV orientation.
     public void updateSimPose(Pose2d robotPose) {
-        poseEstimator.addHeadingData(Timer.getTimestamp(), robotPose.getRotation());
         visionSim.update(robotPose);
     }
 
@@ -115,7 +114,7 @@ public class VisionIOSim implements VisionIO {
             PhotonTrackedTarget t = targets.get(i);
             ids[i] = t.getFiducialId();
 
-            Transform3d tagToRobotTransform = t.getBestCameraToTarget().plus(robotToCamera.inverse());
+            Transform3d tagToRobotTransform = robotToCamera.plus(t.getBestCameraToTarget()).inverse();
 
             poses[i] = new Pose2d(
                 tagToRobotTransform.getX(),
@@ -126,6 +125,8 @@ public class VisionIOSim implements VisionIO {
 
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = poses;
+
+        inputs.hasTagTransform = tagCount > 0;
 
         Optional<EstimatedRobotPose> est = Optional.empty();
 
@@ -157,7 +158,7 @@ public class VisionIOSim implements VisionIO {
         inputs.hasEstimatedPose       = true;
         inputs.estimatedPose          = pose;
         inputs.estimatedPoseTimestamp = erp.timestampSeconds;
-        inputs.numTagsUsed            = tagCount;
+        inputs.numTagsUsed            = erp.targetsUsed.size();
 
         inputs.stdDevs = calculateStdDevs(erp);
 
@@ -179,9 +180,6 @@ public class VisionIOSim implements VisionIO {
 
         // Base noise floor (0.05m) + distance squared penalty divided by tag count
         double xyStdDev = 0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount);
-
-        // If MegaTag2 / gyro-assisted vision is used, trust translation down to ~0.03m
-        xyStdDev = Math.max(xyStdDev, 0.03);
 
         // Trust gyro completely for theta by setting rotation std dev to infinity
         return VecBuilder.fill(xyStdDev, xyStdDev, Double.MAX_VALUE);
