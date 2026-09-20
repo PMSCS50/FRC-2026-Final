@@ -5,7 +5,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
-import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision2.Vision;
 
 //import frc.robot.subsystems.vision.VisionSubsystem;
 
