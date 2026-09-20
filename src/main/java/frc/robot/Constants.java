@@ -248,20 +248,9 @@ public final class Constants {
             Math.PI * ELEVATOR_PULLEY_DIAMETER / ELEVATOR_GEAR_RATIO * ELEVATOR_CASCADE_COEFFICIENT;
   }
      
-  // *From Reefscape
-  public static final double FIELD_MAX_X = 16.518;
-  public static final double FIELD_MAX_Y = 8.043;
-
-  public static final double X_REEF_ALIGNMENT_P = 2;
-  public static final double Y_REEF_ALIGNMENT_P = 3;
-
-  public static final double ROT_SETPOINT_REEF_ALIGNMENT = -1.0;  // Rotation
-  public static final double ROT_TOLERANCE_REEF_ALIGNMENT = 0.25;
-  public static final double X_SETPOINT_REEF_ALIGNMENT_L4 = -0.25;  // Vertical 
-  public static final double X_SETPOINT_REEF_ALIGNMENT = -0.25;
-  public static final double X_TOLERANCE_REEF_ALIGNMENT = 0.005;
-  public static final double Y_SETPOINT_REEF_ALIGNMENT = 0;  // Horizontal pose
-  public static final double Y_TOLERANCE_REEF_ALIGNMENT = 0.0025;
+  // *Field
+  public static final double FIELD_MAX_X = FieldUtil.FIELD_MAX_X;
+  public static final double FIELD_MAX_Y = FieldUtil.FIELD_MAX_Y;
 
   // *Constants for tag observation and pose validation
   public static final double DONT_SEE_TAG_WAIT_TIME = 0.5;

@@ -108,7 +108,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             null,        // Use default timeout (10 s)
 
             // *Log state with SignalLogger class
-            state -> SignalLogger.writeString("SysIdSteer_State", state.toString())
+            state -> {
+                SignalLogger.writeString("SysIdSteer_State", state.toString());
+                Logger.recordOutput("Drive/SysIdSteer_State", state.toString());
+            }
         ),
         new SysIdRoutine.Mechanism(
             volts -> setControl(m_steerCharacterization.withVolts(volts)),
@@ -130,7 +133,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             Volts.of(Math.PI),
             null, // Use default timeout (10 s)
             // Log state with SignalLogger class
-            state -> SignalLogger.writeString("SysIdRotation_State", state.toString())
+            state -> {
+                SignalLogger.writeString("SysIdRotation_State", state.toString());
+                Logger.recordOutput("Drive/SysIdRotation_State", state.toString());
+            }
         ),
         new SysIdRoutine.Mechanism(
             output -> {
@@ -138,6 +144,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
                 /* also log the requested output for SysId */
                 SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
+                Logger.recordOutput("Drive/Rotational_Rate", output.in(Volts));
             },
             null,
             this

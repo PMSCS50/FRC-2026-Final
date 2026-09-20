@@ -31,8 +31,8 @@ public class LL_Orient extends Command {
 
     @Override
     public void initialize() {
-        rotController.setSetpoint(Constants.ROT_SETPOINT_REEF_ALIGNMENT);
-        rotController.setTolerance(Constants.ROT_TOLERANCE_REEF_ALIGNMENT);
+        rotController.setSetpoint(-1.0);
+        rotController.setTolerance(0.25);
     }
 
     @Override
