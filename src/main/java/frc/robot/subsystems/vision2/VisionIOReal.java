@@ -11,14 +11,10 @@ import limelight.networktables.LimelightResults;
 
 import limelight.networktables.Orientation3d;
 import limelight.networktables.PoseEstimate;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 
@@ -26,8 +22,8 @@ public class VisionIOReal implements VisionIO {
 
     private Pose2d lastGoodPose = null;
 
+    private final String cameraName;
     private final Limelight limelight;
-
     private final LimelightPoseEstimator poseEstimator;
 
     /**
@@ -36,6 +32,7 @@ public class VisionIOReal implements VisionIO {
      * @param cameraName    Limelight name
      */
     public VisionIOReal(String cameraName, Transform3d robotToCamera) {
+        this.cameraName = cameraName;
         limelight = new Limelight(cameraName);
         limelight.getSettings()
                 .withCameraOffset(new Pose3d(
@@ -50,10 +47,7 @@ public class VisionIOReal implements VisionIO {
     }
 
     public VisionIOReal(String cameraName) {
-        limelight = new Limelight(cameraName);
-
-        poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
-
+        this(cameraName, Transform3d.kZero);
     }
 
     // *Called by Vision each loop to seed LL orientation.
@@ -96,7 +90,7 @@ public class VisionIOReal implements VisionIO {
         for (int i = 0; i < tagCount; i++) {
             ids[i] = (int) fiducials[i].fiducialID;
 
-            poses[i] = fiducials[i].getTargetPose_RobotSpace2D();
+            poses[i] = fiducials[i].getRobotPose_TargetSpace2D();
         }
 
         inputs.visibleTagIds   = ids;
@@ -106,19 +100,13 @@ public class VisionIOReal implements VisionIO {
         Pose2d pose = pe.pose.toPose2d();
         inputs.hasEstimatedPose = pe.hasData;
 
-        boolean inFieldArea = pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X || 
+        boolean notInFieldArea = pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X || 
                               pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y;
 
         double age = Timer.getFPGATimestamp() - pe.timestampSeconds;
-        boolean notOld = age > 0.25;
+        boolean old = age > 0.25;
 
-        boolean noJump = true;
-        if (lastGoodPose != null) {
-            double jump = pose.getTranslation().getDistance(lastGoodPose.getTranslation());
-            noJump = jump > 2.0;
-        }
-
-        if (pe.getMinTagAmbiguity() > 0.3 && inputs.hasEstimatedPose && inFieldArea && notOld && noJump) {
+        if (pe.getMinTagAmbiguity() > 0.3 || !inputs.hasEstimatedPose || notInFieldArea || old) {
             clearPose(inputs);
             return;
         }
@@ -129,24 +117,31 @@ public class VisionIOReal implements VisionIO {
         inputs.estimatedPose          = pose;
         inputs.estimatedPoseTimestamp = pe.timestampSeconds;
         inputs.numTagsUsed            = pe.tagCount;
-        inputs.stdDevs = calculateStdDevs(pe);
+
+        inputs.ambiguity[0] = pe.getMinTagAmbiguity();
+        inputs.ambiguity[1] = pe.getAvgTagAmbiguity();
+        inputs.ambiguity[2] = pe.getMaxTagAmbiguity();
+
+        inputs.stdDevs[0] = results.stdev_mt2[0];
+        inputs.stdDevs[1] = results.stdev_mt2[1];
+        inputs.stdDevs[2] = results.stdev_mt2[5];
 
         inputs.targetId = ids[0]; // best target = first fiducial
     }
 
-    private Matrix<N3, N1> calculateStdDevs(PoseEstimate pe) {
-        if (!pe.hasData) {
-            return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-        }
+    // private Matrix<N3, N1> calculateStdDevs(PoseEstimate pe) {
+    //     if (!pe.hasData) {
+    //         return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+    //     }
 
-        double avgDist = pe.avgTagDist;
-        double avgAmbiguity = pe.getAvgTagAmbiguity();
-        int tagCount = pe.tagCount;
+    //     double avgDist = pe.avgTagDist;
+    //     double avgAmbiguity = pe.getAvgTagAmbiguity();
+    //     int tagCount = pe.tagCount;
 
-        double xyStdDev = 100 * (0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
+    //     double xyStdDev = 20 * (0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
 
-        return VecBuilder.fill(xyStdDev, xyStdDev, Double.MAX_VALUE);
-    }
+    //     return VecBuilder.fill(xyStdDev, xyStdDev, Double.MAX_VALUE);
+    // }
 
     // *IO clearing helpers
     private void clear(VisionIOInputs inputs) {
@@ -168,5 +163,10 @@ public class VisionIOReal implements VisionIO {
 
         inputs.estimatedPoseTimestamp = 0.0;       // mark as fallback
         inputs.numTagsUsed = 0;
+    }
+
+    @Override
+    public String getName() {
+        return cameraName;
     }
 }

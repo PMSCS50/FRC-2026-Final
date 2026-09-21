@@ -9,6 +9,7 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -17,7 +18,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
@@ -31,7 +31,6 @@ public class Vision extends SubsystemBase {
     private final Debouncer alignDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
     private final HashMap<Integer, Pose2d> tagposes = new HashMap<>();
-    private final HashMap<Integer, Double> tagambiguities = new HashMap<>();
 
     public Pose2d cachedHubPose = null;
     public boolean hasSeededPose = false;
@@ -61,7 +60,6 @@ public class Vision extends SubsystemBase {
         double yawDeg = robotPose.getRotation().getDegrees();
 
         tagposes.clear();
-        tagambiguities.clear();
 
         double[] camDistBuf = new double[cameraInputs.size()];
         
@@ -139,9 +137,6 @@ public class Vision extends SubsystemBase {
 
                     tagposes.put(id, tagRobotPose);
 
-                    double ambiguity = 1.0 / Math.max(1, inputs.numTagsUsed);
-                    tagambiguities.put(id, ambiguity);
-
                     double d = tagRobotPose.getTranslation().getNorm();
 
                     if (d < closestTagDist) {
@@ -149,24 +144,6 @@ public class Vision extends SubsystemBase {
                     }
                 }
             }
-
-            // Pose validation
-            if (!inputs.hasEstimatedPose) continue;
-            if (inputs.estimatedPoseTimestamp == 0.0) continue;
-            if (inputs.numTagsUsed < 2) continue;
-
-            double age = Timer.getFPGATimestamp() - inputs.estimatedPoseTimestamp;
-            if (age > 0.25) continue;
-
-            double jump = robotPose.getTranslation()
-                .getDistance(inputs.estimatedPose.getTranslation());
-
-            if (jump > 0.75) continue;
-
-            double amb = 1.0 / Math.max(1, inputs.numTagsUsed);
-            if (amb > 0.5) continue;
-
-            if (closestTagDist > 5.0) continue;
 
             if (!isEstimateValid(
                 inputs.estimatedPose,
@@ -178,10 +155,10 @@ public class Vision extends SubsystemBase {
             drivetrain.addVisionMeasurement(
                 inputs.estimatedPose,
                 inputs.estimatedPoseTimestamp
-                //,inputs.stdDevs
+                ,VecBuilder.fill(inputs.stdDevs[0], inputs.stdDevs[1], inputs.stdDevs[2])
             );
 
-            Logger.processInputs("LoggedVision/camera_" + i, inputs);
+            Logger.processInputs("LoggedVision/" + io.getName(), inputs);
         }
 
         poseArray = tagposes.values().toArray(Pose2d[]::new);
@@ -208,12 +185,6 @@ public class Vision extends SubsystemBase {
 
     private boolean isEstimateValid(Pose2d estimatedPose, double headingDeg, double timestampSeconds) {
         if (estimatedPose == null) return false;
-
-        double age = Timer.getFPGATimestamp() - timestampSeconds;
-        if (age > 0.25) return false;
-
-        if (estimatedPose.getX() < 0 || estimatedPose.getX() > Constants.FIELD_MAX_X) return false;
-        if (estimatedPose.getY() < 0 || estimatedPose.getY() > Constants.FIELD_MAX_Y) return false;
 
         double headingError = Math.abs(MathUtil.inputModulus(
             estimatedPose.getRotation().getDegrees() - headingDeg,
@@ -243,9 +214,7 @@ public class Vision extends SubsystemBase {
             if (!in.hasTarget) continue;
 
             if (in.targetId != -1 && in.numTagsUsed > 0) {
-                double amb = in.hasEstimatedPose && in.estimatedPoseTimestamp != 0.0
-                    ? 1.0 / Math.max(1, in.numTagsUsed)
-                    : Double.MAX_VALUE;
+                double amb = in.ambiguity[0];
                 if (amb < bestAmbiguity) {
                     bestAmbiguity = amb;
                     bestId = in.targetId;

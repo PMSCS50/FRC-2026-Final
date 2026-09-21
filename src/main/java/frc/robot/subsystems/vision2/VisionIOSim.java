@@ -1,107 +1,108 @@
 package frc.robot.subsystems.vision2;
 
-import java.util.List;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+
 import java.util.Optional;
 
-import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
-
-import org.photonvision.simulation.PhotonCameraSim;
-import org.photonvision.simulation.SimCameraProperties;
-import org.photonvision.simulation.VisionSystemSim;
-
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
+import limelight.Limelight;
+import limelight.networktables.AngularVelocity3d;
+import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightPoseEstimator.EstimationMode;
+import limelight.networktables.target.AprilTagFiducial;
+import limelight.sim.LimelightSim;
+import limelight.sim.LimelightSimSettings;
+import limelight.networktables.LimelightResults;
+import limelight.networktables.Orientation3d;
+import limelight.networktables.PoseEstimate;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import frc.robot.Constants.VisionConstants;
 
 public class VisionIOSim implements VisionIO {
 
-    private final VisionSystemSim visionSim;
-    private final PhotonCamera camera;
-    private final PhotonCameraSim cameraSim;
-    private final PhotonPoseEstimator poseEstimator;
-    private final String name;
-    private final Transform3d robotToCamera;
-
     private Pose2d lastGoodPose = null;
 
+    private final String cameraName;
+    private final Limelight limelight;
+    private final LimelightSim limelightSim;
+    private final LimelightPoseEstimator poseEstimator;
+
     /**
-     * Simulated camera IO with configurable mounting.
+     * Real camera IO with configurable mounting.
      *
      * @param cameraName    Limelight name
-     * @param robotToCamera Transform from robot origin to camera
      */
     public VisionIOSim(String cameraName, Transform3d robotToCamera) {
-        visionSim = new VisionSystemSim("simVision");
-        this.name = cameraName;
-        this.robotToCamera = robotToCamera;
+        this.cameraName = cameraName;
+        limelight = new Limelight(cameraName);
+        limelight.getSettings()
+                .withCameraOffset(new Pose3d(
+                    robotToCamera.getX(),
+                    robotToCamera.getY(),
+                    robotToCamera.getZ(),
+                    robotToCamera.getRotation()
+                ));
+        poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
 
-        if (VisionConstants.aprilTagLayoutAndymark != null) {
-            visionSim.addAprilTags(VisionConstants.aprilTagLayoutAndymark);
-        }
+        LimelightSimSettings cell = LimelightSimSettings.perfect();
 
-        SimCameraProperties props = new SimCameraProperties();
-        props.setCalibration(960, 720, Rotation2d.fromDegrees(90));
-        props.setCalibError(0.05, 0.02);
-        props.setFPS(30);
-        props.setAvgLatencyMs(20);
-        props.setLatencyStdDevMs(5);
+        //As a soon to be broken man once said, youre either perfect, or youre not me
+        limelightSim = new LimelightSim(limelight, cell);
+        limelightSim.withRobotToCameraTransform(robotToCamera);
 
-        camera    = new PhotonCamera(name);
-        cameraSim = new PhotonCameraSim(camera, props);
-        cameraSim.enableDrawWireframe(true);
+        //Texas fields use Andymark iirc
+        limelightSim.withAprilTagFieldLayout(AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark));
 
-        visionSim.addCamera(cameraSim, robotToCamera);
-
-        poseEstimator = new PhotonPoseEstimator(
-            VisionConstants.aprilTagLayoutAndymark,
-            robotToCamera
-        );
     }
 
-    // *Called by Vision each loop to seed PV orientation.
+    public VisionIOSim(String cameraName) {
+        this(cameraName, Transform3d.kZero);
+    }
+
+    // *Called by Vision each loop to seed LL orientation.
     public void updateSimPose(Pose2d robotPose) {
-        visionSim.update(robotPose);
+        limelight.getSettings()
+            .withRobotOrientation(
+                new Orientation3d(
+                    new Rotation3d(0, 0, robotPose.getRotation().getRadians()),
+                    new AngularVelocity3d(
+                        DegreesPerSecond.of(0),
+                        DegreesPerSecond.of(0),
+                        DegreesPerSecond.of(0))))
+        .save();
+
+        limelightSim.update(robotPose);
     }
 
     // *Update IO
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        List<PhotonPipelineResult> results = camera.getAllUnreadResults();
 
-        //Latest Result
-        if (results.isEmpty()) {
-            clear(inputs);
-            return;
-        }
-        
-        PhotonPipelineResult result = results.get(results.size() - 1);
+        Optional<LimelightResults> resultsOpt = limelight.getLatestResults();
 
-        if (result == null) {
+        if (resultsOpt.isEmpty()) {
             clear(inputs);
             return;
         }
 
-        inputs.hasTarget = result.hasTargets();
+        LimelightResults results = resultsOpt.get();
+
+        inputs.hasTarget = results.valid;
+
         if (!inputs.hasTarget) {
             clear(inputs);
             return;
         }
 
-        List<PhotonTrackedTarget> targets = result.getTargets();
-        int tagCount = targets.size();
+        AprilTagFiducial[] fiducials = results.targets_Fiducials;
 
-        // Allow single-tag solves; fusion layer will handle quality
+        int tagCount = fiducials.length;
+
         if (tagCount < 1) {
             clear(inputs);
             return;
@@ -111,43 +112,27 @@ public class VisionIOSim implements VisionIO {
         Pose2d[] poses = new Pose2d[tagCount];
 
         for (int i = 0; i < tagCount; i++) {
-            PhotonTrackedTarget t = targets.get(i);
-            ids[i] = t.getFiducialId();
+            ids[i] = (int) fiducials[i].fiducialID;
 
-            Transform3d tagToRobotTransform = robotToCamera.plus(t.getBestCameraToTarget()).inverse();
-
-            poses[i] = new Pose2d(
-                tagToRobotTransform.getX(),
-                tagToRobotTransform.getY(),
-                tagToRobotTransform.getRotation().toRotation2d()
-            );
+            poses[i] = fiducials[i].getRobotPose_TargetSpace2D();
         }
 
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = poses;
 
-        inputs.hasTagTransform = tagCount > 0;
+        PoseEstimate pe = poseEstimator.getPoseEstimate().get();
 
-        Optional<EstimatedRobotPose> est = Optional.empty();
+        Pose2d pose = pe.pose.toPose2d();
+        inputs.hasEstimatedPose = pe.hasData;
 
-        for (PhotonPipelineResult r : results) {
-            est = poseEstimator.estimateCoprocMultiTagPose(r);
-            if (est.isEmpty()) {
-                est = poseEstimator.estimateLowestAmbiguityPose(r);
-            }
-        }
+        boolean notInFieldArea = pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X || 
+                              pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y;
 
-        EstimatedRobotPose erp = est.get();
-        Pose2d pose = erp.estimatedPose.toPose2d();
+        double age = Timer.getFPGATimestamp() - pe.timestampSeconds;
+        boolean old = age > 0.25;
 
-        if (pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X ||
-            pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y) {
-            clearPose(inputs);
-            return;
-        }
 
-        double age = Timer.getFPGATimestamp() - erp.timestampSeconds;
-        if (age > 0.25) {
+        if (pe.getMinTagAmbiguity() > 0.3 || !inputs.hasEstimatedPose || notInFieldArea || old) {
             clearPose(inputs);
             return;
         }
@@ -155,35 +140,34 @@ public class VisionIOSim implements VisionIO {
         // |Save last good pose
         lastGoodPose = pose;
 
-        inputs.hasEstimatedPose       = true;
         inputs.estimatedPose          = pose;
-        inputs.estimatedPoseTimestamp = erp.timestampSeconds;
-        inputs.numTagsUsed            = erp.targetsUsed.size();
+        inputs.estimatedPoseTimestamp = pe.timestampSeconds;
+        inputs.numTagsUsed            = pe.tagCount;
+        
+        inputs.ambiguity[0] = pe.getMinTagAmbiguity();
+        inputs.ambiguity[1] = pe.getAvgTagAmbiguity();
+        inputs.ambiguity[2] = pe.getMaxTagAmbiguity();
 
-        inputs.stdDevs = calculateStdDevs(erp);
+        inputs.stdDevs[0] = results.stdev_mt2[0];
+        inputs.stdDevs[1] = results.stdev_mt2[1];
+        inputs.stdDevs[2] = results.stdev_mt2[5];
 
-        PhotonTrackedTarget best = result.getBestTarget();
-        inputs.targetId = (best != null) ? best.getFiducialId() : -1;
+        inputs.targetId = ids[0]; // best target = first fiducial
     }
 
-    private Matrix<N3, N1> calculateStdDevs(EstimatedRobotPose erp) {
-        if (erp.targetsUsed.isEmpty()) {
-            return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-        }
+    // private Matrix<N3, N1> calculateStdDevs(PoseEstimate pe) {
+    //     if (!pe.hasData) {
+    //         return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+    //     }
 
-        double avgDist = 0; 
-        for (PhotonTrackedTarget target : erp.targetsUsed) {
-            avgDist += target.getBestCameraToTarget().getTranslation().getNorm();
-        }
-        int tagCount = erp.targetsUsed.size();
-        avgDist /= tagCount;
+    //     double avgDist = pe.avgTagDist;
+    //     double avgAmbiguity = pe.getAvgTagAmbiguity();
+    //     int tagCount = pe.tagCount;
 
-        // Base noise floor (0.05m) + distance squared penalty divided by tag count
-        double xyStdDev = 0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount);
+    //     double xyStdDev = 20 * (0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
 
-        // Trust gyro completely for theta by setting rotation std dev to infinity
-        return VecBuilder.fill(xyStdDev, xyStdDev, Double.MAX_VALUE);
-    }
+    //     return VecBuilder.fill(xyStdDev, xyStdDev, Double.MAX_VALUE);
+    // }
 
     // *IO clearing helpers
     private void clear(VisionIOInputs inputs) {
@@ -207,8 +191,7 @@ public class VisionIOSim implements VisionIO {
         inputs.numTagsUsed = 0;
     }
 
-    // *Getters
-    public VisionSystemSim getVisionSim() {
-        return visionSim;
+    public String getName() {
+        return cameraName;
     }
 }
