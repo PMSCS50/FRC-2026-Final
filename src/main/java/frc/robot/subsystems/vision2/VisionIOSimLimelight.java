@@ -2,13 +2,16 @@ package frc.robot.subsystems.vision2;
 
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 
+import java.util.Optional;
+
 import limelight.Limelight;
 import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 import limelight.networktables.target.AprilTagFiducial;
+import limelight.sim.LimelightSim;
+import limelight.sim.LimelightSimSettings;
 import limelight.networktables.LimelightResults;
-
 import limelight.networktables.Orientation3d;
 import limelight.networktables.PoseEstimate;
 import edu.wpi.first.math.Matrix;
@@ -20,14 +23,17 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
-public class VisionIOReal implements VisionIO {
+public class VisionIOSimLimelight implements VisionIO {
 
     private Pose2d lastGoodPose = null;
 
     private final Limelight limelight;
 
+    private final LimelightSim limelightSim;
     private final LimelightPoseEstimator poseEstimator;
 
     /**
@@ -35,7 +41,7 @@ public class VisionIOReal implements VisionIO {
      *
      * @param cameraName    Limelight name
      */
-    public VisionIOReal(String cameraName, Transform3d robotToCamera) {
+    public VisionIOSimLimelight(String cameraName, Transform3d robotToCamera) {
         limelight = new Limelight(cameraName);
         limelight.getSettings()
                 .withCameraOffset(new Pose3d(
@@ -44,43 +50,56 @@ public class VisionIOReal implements VisionIO {
                     robotToCamera.getZ(),
                     robotToCamera.getRotation()
                 ));
-
         poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
+
+        LimelightSimSettings perfectCell = LimelightSimSettings.perfect();
+
+        limelightSim = new LimelightSim(limelight, perfectCell);
+
+        Field2d field2d = new Field2d();
+        SmartDashboard.putData("Limelight_Field", field2d);
+
+        limelightSim.withField2d(field2d);
 
     }
 
-    public VisionIOReal(String cameraName) {
-        limelight = new Limelight(cameraName);
-
-        poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
-
+    public VisionIOSimLimelight(String cameraName) {
+        this(cameraName, Transform3d.kZero);
     }
 
     // *Called by Vision each loop to seed LL orientation.
-    public void setRobotYaw(double yawDegrees) {
+    public void setRobotYaw(Pose2d robotPose) {
         limelight.getSettings()
             .withRobotOrientation(
                 new Orientation3d(
-                    new Rotation3d(0, 0, yawDegrees * 180 / Math.PI),
+                    new Rotation3d(0, 0, robotPose.getRotation().getRadians()),
                     new AngularVelocity3d(
                         DegreesPerSecond.of(0),
                         DegreesPerSecond.of(0),
                         DegreesPerSecond.of(0))))
         .save();
+
+        limelightSim.update(robotPose);
     }
 
     // *Update IO
     @Override
     public void updateInputs(VisionIOInputs inputs) {
 
-        inputs.hasTarget = limelight.getLatestResults().get().valid;
+        Optional<LimelightResults> resultsOpt = limelight.getLatestResults();
+
+        if (resultsOpt.isEmpty()) {
+            clear(inputs);
+            return;
+        }
+
+        LimelightResults results = resultsOpt.get();
 
         if (!inputs.hasTarget) {
             clear(inputs);
             return;
         }
 
-        LimelightResults results = limelight.getLatestResults().get();
         AprilTagFiducial[] fiducials = results.targets_Fiducials;
 
         int tagCount = fiducials.length;
@@ -103,6 +122,7 @@ public class VisionIOReal implements VisionIO {
         inputs.visibleTagPoses = poses;
 
         PoseEstimate pe = poseEstimator.getPoseEstimate().get();
+
         Pose2d pose = pe.pose.toPose2d();
         inputs.hasEstimatedPose = pe.hasData;
 

@@ -13,8 +13,6 @@ public interface VisionIO {
     // *IO interface
     @AutoLog
     public static class VisionIOInputs {
-        // |Name of camera
-        public String name;
 
         // |Primary (best) target for this camera
         public boolean hasTarget = false;

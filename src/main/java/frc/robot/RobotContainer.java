@@ -116,7 +116,7 @@ public class RobotContainer {
         drivetrain = TunerConstants.createDrivetrain();
         monkeyDLuffy = new Pathmaster(drivetrain, MaxSpeed * speedLimiter, pathMaxLinearAcceleration, MaxAngularRate * speedLimiter, pathMaxAngularAcceleration);
 
-        vision = new Vision(drivetrain, RobotBase.isReal() ? List.of(new VisionIOReal("", ROBOT_TO_CAMERA_FRONT)) : List.of(new VisionIOSim("imgCamFront", ROBOT_TO_CAMERA_FRONT), new VisionIOSim("imgCamBack", ROBOT_TO_CAMERA_BACK)));
+        vision = new Vision(drivetrain, RobotBase.isReal() ? List.of(new VisionIOReal("", ROBOT_TO_CAMERA_FRONT)) : List.of(new VisionIOSimLimelight("imgCamFront", ROBOT_TO_CAMERA_FRONT), new VisionIOSimLimelight("imgCamBack", ROBOT_TO_CAMERA_BACK)));
         shooter = new Shooter(RobotBase.isReal() ? new ShooterIOReal() : new ShooterIOSim());
         intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
