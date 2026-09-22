@@ -28,6 +28,7 @@ public interface VisionIO {
         // [minAmbiguity, avgAmbiguity, maxAmbiguity]
         public double[] ambiguity = new double[3];
 
+        // [x_stddev, y_stddev, yaw_stddev]
         public double[] stdDevs = new double[3];
     }
 

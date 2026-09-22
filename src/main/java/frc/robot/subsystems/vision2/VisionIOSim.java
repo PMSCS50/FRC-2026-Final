@@ -49,10 +49,13 @@ public class VisionIOSim implements VisionIO {
                 ));
         poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
 
-        LimelightSimSettings cell = LimelightSimSettings.perfect();
+        LimelightSimSettings imperfectCell = new LimelightSimSettings()
+                .withResolution(640, 400)
+                .withFOV(82.9, 56.0)
+                .withMaxDetectionRange(5.5)
+                .withPipelineLatency(35, 5);
 
-        //As a soon to be broken man once said, youre either perfect, or youre not me
-        limelightSim = new LimelightSim(limelight, cell);
+        limelightSim = new LimelightSim(limelight, imperfectCell);
         limelightSim.withRobotToCameraTransform(robotToCamera);
 
         //Texas fields use Andymark iirc
@@ -148,26 +151,24 @@ public class VisionIOSim implements VisionIO {
         inputs.ambiguity[1] = pe.getAvgTagAmbiguity();
         inputs.ambiguity[2] = pe.getMaxTagAmbiguity();
 
-        inputs.stdDevs[0] = results.stdev_mt2[0];
-        inputs.stdDevs[1] = results.stdev_mt2[1];
-        inputs.stdDevs[2] = results.stdev_mt2[5];
+        inputs.stdDevs = calculateStdDevs(pe);
 
         inputs.targetId = ids[0]; // best target = first fiducial
     }
 
-    // private Matrix<N3, N1> calculateStdDevs(PoseEstimate pe) {
-    //     if (!pe.hasData) {
-    //         return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-    //     }
+    private double[] calculateStdDevs(PoseEstimate pe) {
+        if (!pe.hasData) {
+            return new double[] {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+        }
 
-    //     double avgDist = pe.avgTagDist;
-    //     double avgAmbiguity = pe.getAvgTagAmbiguity();
-    //     int tagCount = pe.tagCount;
+        double avgDist = pe.avgTagDist;
+        double avgAmbiguity = pe.getAvgTagAmbiguity();
+        int tagCount = pe.tagCount;
 
-    //     double xyStdDev = 20 * (0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
+        double xyStdDev = 3 * (0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
 
-    //     return VecBuilder.fill(xyStdDev, xyStdDev, Double.MAX_VALUE);
-    // }
+        return new double[] {xyStdDev, xyStdDev, Double.MAX_VALUE};
+    }
 
     // *IO clearing helpers
     private void clear(VisionIOInputs inputs) {
