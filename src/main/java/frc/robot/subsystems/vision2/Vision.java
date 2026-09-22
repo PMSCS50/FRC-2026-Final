@@ -85,7 +85,7 @@ public class Vision extends SubsystemBase {
                 double dist = camDistBuf[i];
                 if (dist > 5.0) continue;
 
-                double amb = 1.0 / Math.max(1, inputs.numTagsUsed);
+                double amb = inputs.ambiguity[1];
                 if (amb > 0.5) continue;
 
                 double jump = robotPose.getTranslation().getDistance(inputs.estimatedPose.getTranslation());
@@ -154,8 +154,8 @@ public class Vision extends SubsystemBase {
 
             drivetrain.addVisionMeasurement(
                 inputs.estimatedPose,
-                inputs.estimatedPoseTimestamp
-                ,VecBuilder.fill(inputs.stdDevs[0], inputs.stdDevs[1], inputs.stdDevs[2])
+                Utils.fpgaToCurrentTime(inputs.estimatedPoseTimestamp),
+                VecBuilder.fill(inputs.stdDevs[0], inputs.stdDevs[1], inputs.stdDevs[2])
             );
 
             Logger.processInputs("LoggedVision/" + io.getName(), inputs);
