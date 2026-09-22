@@ -29,7 +29,7 @@ public interface VisionIO {
         public double[] ambiguity = new double[3];
 
         // [x_stddev, y_stddev, yaw_stddev]
-        public double[] stdDevs = new double[3];
+        public double[] stdDevs = {0.9, 0.9, Double.MAX_VALUE};
     }
 
     // *Updates the set of loggable inputs. Called every loop in Vision.periodic()

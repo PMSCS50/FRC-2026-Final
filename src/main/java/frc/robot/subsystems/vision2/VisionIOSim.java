@@ -53,7 +53,8 @@ public class VisionIOSim implements VisionIO {
                 .withResolution(640, 400)
                 .withFOV(82.9, 56.0)
                 .withMaxDetectionRange(5.5)
-                .withPipelineLatency(35, 5);
+                .withPipelineLatency(35, 5)
+                .withRandomSeed(330480398504850348L);
 
         limelightSim = new LimelightSim(limelight, imperfectCell);
         limelightSim.withRobotToCameraTransform(robotToCamera);
@@ -151,24 +152,22 @@ public class VisionIOSim implements VisionIO {
         inputs.ambiguity[1] = pe.getAvgTagAmbiguity();
         inputs.ambiguity[2] = pe.getMaxTagAmbiguity();
 
-        inputs.stdDevs = calculateStdDevs(pe);
-
         inputs.targetId = ids[0]; // best target = first fiducial
     }
 
-    private double[] calculateStdDevs(PoseEstimate pe) {
-        if (!pe.hasData) {
-            return new double[] {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
-        }
+    // private double[] calculateStdDevs(PoseEstimate pe) {
+    //     if (!pe.hasData) {
+    //         return new double[] {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+    //     }
 
-        double avgDist = pe.avgTagDist;
-        double avgAmbiguity = pe.getAvgTagAmbiguity();
-        int tagCount = pe.tagCount;
+    //     double avgDist = pe.avgTagDist;
+    //     double avgAmbiguity = pe.getAvgTagAmbiguity();
+    //     int tagCount = pe.tagCount;
 
-        double xyStdDev = 3 * (0.05 + (0.08 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
+    //     double xyStdDev = 9 * (0.15 + (0.1 * Math.pow(avgDist, 2) / tagCount)) * avgAmbiguity;
 
-        return new double[] {xyStdDev, xyStdDev, Double.MAX_VALUE};
-    }
+    //     return new double[] {xyStdDev, xyStdDev, Double.MAX_VALUE};
+    // }
 
     // *IO clearing helpers
     private void clear(VisionIOInputs inputs) {
