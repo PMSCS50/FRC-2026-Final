@@ -265,7 +265,7 @@ public class MapleSimSwerveDrivetrain {
         moduleConstants
             .withEncoderOffset(0)
             .withDriveMotorInverted(false)
-            .withSteerMotorInverted(true) //Test this later
+            .withSteerMotorInverted(false)
             .withEncoderInverted(false)
             .withSteerMotorGains(new Slot0Configs()
                     .withKP(100)
