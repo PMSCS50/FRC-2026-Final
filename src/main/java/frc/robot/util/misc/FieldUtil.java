@@ -40,7 +40,7 @@ public class FieldUtil {
   }
 
   public static Pose2d facePose(Pose2d pose, Pose2d facing) {
-        Translation2d relativeTrl = facing.relativeTo(pose).getTranslation();
-        return new Pose2d(pose.getTranslation(), new Rotation2d(relativeTrl.getX(), relativeTrl.getY()));
+    Translation2d relativeTrl = facing.relativeTo(pose).getTranslation();
+    return new Pose2d(pose.getTranslation(), new Rotation2d(relativeTrl.getX(), relativeTrl.getY()));
   }
 }

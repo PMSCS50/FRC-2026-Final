@@ -103,7 +103,11 @@ public class PPLogging {
    */
   public static void logStopPoses(List<Pose2d> stopPoses) {
     if (logStopPoses != null) {
-      logStopPoses.accept(stopPoses);
+      if (stopPoses != null) {
+        logStopPoses.accept(stopPoses);
+      } else {
+        logActivePath.accept(new ArrayList<>());
+      }
     }
   }
 

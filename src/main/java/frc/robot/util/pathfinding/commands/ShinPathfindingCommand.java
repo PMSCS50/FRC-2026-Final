@@ -100,9 +100,6 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
         
     this.requirements = new HashSet<>(Set.of(requirements));
-    //this.requirements.addAll(EventSupervisor.getSchedulerRequirements(targetPath));
-    //this.requirements.addAll(ZoneManager.getAllZoneRequirements());
-
     addRequirements(this.requirements.toArray(Subsystem[]::new));
     
 
@@ -218,7 +215,6 @@ public class ShinPathfindingCommand extends Command {
       Subsystem... requirements) {
 
     this.requirements = new HashSet<>(Set.of(requirements));
-    //this.requirements.addAll(ZoneManager.getAllZoneRequirements());
     addRequirements(this.requirements.toArray(Subsystem[]::new));
 
     ShinPathfinding.ensureInitialized();
@@ -676,7 +672,7 @@ public class ShinPathfindingCommand extends Command {
     }
 
     PPLogging.logActivePath(null);
-    PPLogging.logStopPoses(List.of());
+    PPLogging.logStopPoses(null);
     eventSupervisor.end();
   }
 
@@ -688,7 +684,6 @@ public class ShinPathfindingCommand extends Command {
   public static Command warmupCommand() {
     return new ShinPathfindingCommand(
             new Pose2d(15.0, 4.0, Rotation2d.k180deg),
-            //List.of(Pose2d.kZero),
             new PathConstraints(4, 3, 4, 4),
             () -> new Pose2d(1.5, 4, Rotation2d.kZero),
             ChassisSpeeds::new,

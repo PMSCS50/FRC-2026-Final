@@ -284,9 +284,9 @@ public class Vision extends SubsystemBase {
             target.getX() - robotPose.getX()
         ));
 
-        double yawErrorDeg = MathUtil.angleModulus(
-            angleToHub - robotPose.getRotation().getDegrees()
-        ) * 180 / Math.PI;
+        double yawErrorDeg = MathUtil.inputModulus(
+            angleToHub - robotPose.getRotation().getDegrees(), -180, 180
+        );
 
         return alignDebouncer.calculate(
             Math.abs(yawErrorDeg) <= toleranceDeg

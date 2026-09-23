@@ -342,8 +342,8 @@ public class Pathmaster {
         } catch (Exception e) {
             pathing = false;
             Elastic.sendNotification(
-                new Elastic.Notification().
-                withLevel(Elastic.NotificationLevel.ERROR)
+                new Elastic.Notification()
+                .withLevel(Elastic.NotificationLevel.ERROR)
                 .withTitle("Pathmaster Error")
                 .withDescription( "Path " + pathName + " is not defined"));
 
@@ -373,8 +373,8 @@ public class Pathmaster {
         } catch (Exception e) {
             pathing = false;
             Elastic.sendNotification(
-                new Elastic.Notification().
-                withLevel(Elastic.NotificationLevel.ERROR)
+                new Elastic.Notification()
+                .withLevel(Elastic.NotificationLevel.ERROR)
                 .withTitle("Pathmaster Error")
                 .withDescription( "Path " + pathName + " is not defined"));
 

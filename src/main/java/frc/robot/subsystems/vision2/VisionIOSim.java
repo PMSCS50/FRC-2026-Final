@@ -53,8 +53,7 @@ public class VisionIOSim implements VisionIO {
                 .withResolution(640, 400)
                 .withFOV(82.9, 56.0)
                 .withMaxDetectionRange(5.5)
-                .withPipelineLatency(35, 5)
-                .withRandomSeed(330480398504850348L);
+                .withPipelineLatency(35, 5);
 
         limelightSim = new LimelightSim(limelight, imperfectCell);
         limelightSim.withRobotToCameraTransform(robotToCamera);

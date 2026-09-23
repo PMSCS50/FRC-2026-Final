@@ -103,8 +103,8 @@ public class RobotContainer {
             robotConfig = RobotConfig.fromGUISettings();
         } catch (Exception e) { 
             Elastic.sendNotification(
-                new Elastic.Notification().
-                withLevel(Elastic.NotificationLevel.ERROR)
+                new Elastic.Notification()
+                .withLevel(Elastic.NotificationLevel.ERROR)
                 .withTitle("RobotConfig Not initialized")
                 .withDescription("Could not properly load RobotConfig"));
         }

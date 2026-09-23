@@ -53,8 +53,8 @@ public class PathRequest {
         }
         catch (Exception e) {
             Elastic.sendNotification(
-                new Elastic.Notification().
-                withLevel(Elastic.NotificationLevel.ERROR)
+                new Elastic.Notification()
+                .withLevel(Elastic.NotificationLevel.ERROR)
                 .withTitle("Pathmaster Error")
                 .withDescription( "Path " + targetPath + " is not defined"));
         }
