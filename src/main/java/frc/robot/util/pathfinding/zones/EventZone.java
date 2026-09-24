@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.path.ConstraintsZone;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PointTowardsZone;
@@ -23,16 +24,16 @@ public class EventZone extends PathZone {
 
     private final Command command;
 
+    //Register an EventZone
+    public EventZone(String name, Translation2d min, Translation2d max, Command command) {
+        super(name, min, max);
+        this.command = CommandUtil.wrappedEventCommand(command);
+    }
+
     //Register an EventZone through a NamedCommand
     public EventZone(String name, Translation2d min, Translation2d max, String namedcommand) {
         super(name, min, max);
         this.command = NamedCommands.getCommand(namedcommand);        
-    }
-
-    //Register an EventZone
-    public EventZone(String name, Translation2d min, Translation2d max, Command command) {
-        super(name, min, max);
-        this.command = command;
     }
 
     public Command getEvent() {
