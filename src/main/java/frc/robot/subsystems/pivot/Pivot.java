@@ -1,5 +1,7 @@
 package frc.robot.subsystems.pivot;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -10,7 +12,7 @@ import frc.robot.util.misc.VirtualPD;
 public class Pivot extends SubsystemBase {
 
     private final PivotIO io;
-    private final PivotIO.PivotIOInputs inputs = new PivotIO.PivotIOInputs();
+    private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
     // Desired pivot angle (radians)
     private double goalRad = 0.0;
@@ -98,6 +100,8 @@ public class Pivot extends SubsystemBase {
                 }
             }
         }
+
+        Logger.processInputs("LoggedPivot", inputs);
     }
 
     // *Getters? Revealers? API?

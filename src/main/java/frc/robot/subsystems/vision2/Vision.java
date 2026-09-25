@@ -149,7 +149,7 @@ public class Vision extends SubsystemBase {
             if (!isEstimateValid(
                 inputs.estimatedPose,
                 yawDeg,
-                inputs.estimatedPoseTimestamp)) {
+                inputs.estimatedPoseTimestamp) || inputs.numTagsUsed == 0) {
                 continue;
             }
 

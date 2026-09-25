@@ -198,11 +198,7 @@ public class RobotContainer {
         //joystick.rightTrigger().onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
         // *Letters
-        //driverController.a().whileTrue(new LL_Orient(drivetrain, "pppr", 8, () -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
-        
-        if (vision instanceof Vision) {
-           driverController.a().whileTrue(new AlignToHub(drivetrain, vision));
-        }
+        driverController.a().whileTrue(new AlignToHub(drivetrain, vision));
 
         driverController.b().whileTrue(
             Commands.defer(() ->
@@ -213,6 +209,7 @@ public class RobotContainer {
         );
 
         driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+
         driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
         
