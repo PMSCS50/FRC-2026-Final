@@ -106,7 +106,8 @@ public class VisionIOReal implements VisionIO {
         double age = Timer.getFPGATimestamp() - pe.timestampSeconds;
         boolean old = age > 0.25;
 
-        if (pe.getMinTagAmbiguity() > 0.3 || !inputs.hasEstimatedPose || notInFieldArea || old) {
+        if (pe.getMinTagAmbiguity() > 0.3 || pe == null || pe.rawFiducials == null ||
+        pe.rawFiducials.length != 0 || notInFieldArea || old) {
             clearPose(inputs);
             return;
         }

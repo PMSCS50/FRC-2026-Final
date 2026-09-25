@@ -6,13 +6,12 @@ import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.shooter.ShooterIO.ShooterIOInputs;
 
 public class Shooter extends SubsystemBase {
 
     // !MOTORS
     private final ShooterIO io;
-    private final ShooterIOInputs inputs = new ShooterIOInputs();
+    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
     // *VelocityVoltage: closed-loop RPM control, used by setVelocityTo()
 
@@ -30,6 +29,8 @@ public class Shooter extends SubsystemBase {
         //     sm1SupplyCurrent, 
         //     sm2SupplyCurrent
         // );
+        io.updateInputs(inputs);
+        Logger.processInputs("LoggedShooter", inputs);
     }
 
     // *Regression model by Kevin

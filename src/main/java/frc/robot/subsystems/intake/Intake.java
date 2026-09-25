@@ -1,15 +1,16 @@
 package frc.robot.subsystems.intake;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.intake.IntakeIO.IntakeIOInputs;
 
 // variables: target rpm, current rpm, current, voltage
 
 public class Intake extends SubsystemBase {
 
     private final IntakeIO io;
-    private final IntakeIO.IntakeIOInputs inputs = new IntakeIOInputs();
+    private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
     private final PIDController pid = new PIDController(.01, 0, 0);
     private double targetRPM = 0;
@@ -24,6 +25,7 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        Logger.processInputs("LoggedIntake", inputs);
     }
 
     // actual complex commands for the motor (not just instantiation or voltage control) or commands that dont need to be differentiated between sim and real
