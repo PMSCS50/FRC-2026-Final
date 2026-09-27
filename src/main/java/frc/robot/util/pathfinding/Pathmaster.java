@@ -3,6 +3,8 @@ package frc.robot.util.pathfinding;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.*;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -33,7 +35,10 @@ public class Pathmaster {
     private Supplier<Pose2d> robotPose;
     private static boolean warmup = false;
     private final LinkedHashMap<String, Pose2d> waypoints = new LinkedHashMap<>();
+
+    @AutoLogOutput(key = "Pathmaster/pathing")
     private boolean pathing = false;
+
     private int selectedWaypointIndex;
 
     // *Constructors
@@ -106,10 +111,12 @@ public class Pathmaster {
         waypoints.put(name, pose);
     }
 
+    @AutoLogOutput(key = "Pathmaster/Selected Waypoint/name")
     public String selectedWaypoint() {
         return waypointKeys.get(selectedWaypointIndex);
     }
 
+    @AutoLogOutput(key = "Pathmaster/Selected Waypoint/pose")
     public Pose2d selectedWaypointPose() {
         return waypoints.get(selectedWaypoint());
     }
@@ -467,14 +474,6 @@ public class Pathmaster {
             }
         });
     }
-
-    //Log Stuff
-    public void log() {
-        Logger.recordOutput("Pathmaster/Selected Waypoint", selectedWaypoint());
-        Logger.recordOutput("Pathmaster/Selected Waypoint Pose", selectedWaypointPose());
-        Logger.recordOutput("Pathmaster/pathing", pathing);
-    }
-
 
     public boolean isPathing() {
         return pathing;

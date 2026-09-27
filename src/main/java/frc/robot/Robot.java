@@ -110,7 +110,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
 
     CommandScheduler.getInstance().run();
-    m_robotContainer.getPathmaster().log();
 
     // |RoboRIO voltage and current monitoring
     batteryVoltage = RobotController.getBatteryVoltage();
