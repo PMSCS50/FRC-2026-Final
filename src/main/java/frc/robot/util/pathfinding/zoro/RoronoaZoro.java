@@ -925,7 +925,7 @@ public class RoronoaZoro implements ShinPathfinder {
       boolean isStop = requestRealStopPoses.contains(currentPoint.position);
 
       for (PathZone zone : activeZones) {
-        boolean isInside = zone.containsPoint(currentPoint.position);
+        boolean isInside = zone.contains(currentPoint.position);
         boolean isActive = activeZoneEntries.containsKey(zone);
 
         // Track zone entry

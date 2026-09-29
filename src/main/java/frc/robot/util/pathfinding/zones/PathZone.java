@@ -3,91 +3,176 @@ package frc.robot.util.pathfinding.zones;
 import java.util.List;
 import java.util.Objects;
 
-import com.pathplanner.lib.path.RotationTarget;
-import com.pathplanner.lib.path.PointTowardsZone;
 import com.pathplanner.lib.path.ConstraintsZone;
 import com.pathplanner.lib.path.EventMarker;
+import com.pathplanner.lib.path.PointTowardsZone;
+import com.pathplanner.lib.path.RotationTarget;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
+import frc.robot.util.misc.Zone;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 
-// *Creates a zone on the field that pathfinder will use for rotation or alignment.
+/**
+ * A Zone used by the pathfinding system.
+ *
+ * <p>PathZone wraps a general {x@link Zone} and adds the PathPlanner-specific
+ * behavior associated with that zone.
+ */
+public abstract class PathZone implements Zone {
 
-public abstract class PathZone {
-    
     public final String name;
-    public final Translation2d min;
-    public final Translation2d max;
+    protected final Zone zone;
 
+    /**
+     * Creates a PathZone using an existing Zone.
+     *
+     * @param name name of the path zone
+     * @param zone geometric zone represented by this PathZone
+     */
+    public PathZone(String name, Zone zone) {
+        this.name = name;
+        this.zone = zone;
+    }
+
+    /**
+     * Creates a PathZone using an existing Zone.
+     *
+     * @param name name of the path zone
+     * @param zone geometric zone represented by this PathZone
+     */
     public PathZone(String name, Translation2d min, Translation2d max) {
         this.name = name;
-        this.min = min;
-        this.max = max;
+        this.zone = new RectangleZone(min, max);
     }
 
+    /**
+     * Returns whether a point is inside this zone.
+     */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PathZone pathZone = (PathZone) o;
-        return Objects.equals(name, pathZone.name) && Objects.equals(min, pathZone.min) && Objects.equals(max, pathZone.max);
+    public boolean contains(Translation2d point) {
+        return zone.contains(point);
     }
 
+    /**
+     * Returns a Trigger that is active while the robot is inside this zone.
+     */
     @Override
-    public int hashCode() {
-        return Objects.hash(name, min, max);
+    public Trigger contains(
+            java.util.function.Supplier<Translation2d> translation) {
+        return zone.contains(translation);
     }
 
-
-    public boolean containsPoint(Translation2d point) {
-        return point.getX() >= min.getX() && point.getX() <= max.getX()
-            && point.getY() >= min.getY() && point.getY() <= max.getY();
+    /**
+     * Returns the vertices of the underlying geometric zone.
+     */
+    @Override
+    public Pose2d[] getPoints() {
+        return zone.getPoints();
     }
 
+    /**
+     * Returns whether the line segment from {@code from} to {@code to}
+     * passes through this zone.
+     */
     public boolean isOnPath(Translation2d from, Translation2d to) {
         for (double t = 0.0; t <= 1.0; t += 0.02) {
             double x = from.getX() + t * (to.getX() - from.getX());
             double y = from.getY() + t * (to.getY() - from.getY());
-            if (containsPoint(new Translation2d(x, y))) return true;
+
+            if (contains(new Translation2d(x, y))) {
+                return true;
+            }
         }
+
         return false;
     }
 
-    public Translation2d getEntryPoint(Translation2d from, Translation2d to) {
+    /**
+     * Returns the first sampled point along the path that enters this zone.
+     */
+    public Translation2d getEntryPoint(
+            Translation2d from,
+            Translation2d to) {
+
         for (double t = 0.0; t <= 1.0; t += 0.01) {
             double x = from.getX() + t * (to.getX() - from.getX());
             double y = from.getY() + t * (to.getY() - from.getY());
+
             Translation2d point = new Translation2d(x, y);
-            if (containsPoint(point)) return point;
+
+            if (contains(point)) {
+                return point;
+            }
         }
+
         return from;
     }
 
-    public Translation2d getExitPoint(Translation2d from, Translation2d to) {
+    /**
+     * Returns the last sampled point along the path that remains inside this
+     * zone.
+     */
+    public Translation2d getExitPoint(
+            Translation2d from,
+            Translation2d to) {
+
         Translation2d last = from;
+
         for (double t = 0.0; t <= 1.0; t += 0.01) {
             double x = from.getX() + t * (to.getX() - from.getX());
             double y = from.getY() + t * (to.getY() - from.getY());
+
             Translation2d point = new Translation2d(x, y);
-            if (containsPoint(point)) last = point;
+
+            if (contains(point)) {
+                last = point;
+            }
         }
+
         return last;
     }
 
+    /**
+     * Returns a Trigger that activates while the robot is inside this zone.
+     */
     public Trigger inZoneArea() {
-        return new Trigger(() -> this.containsPoint(GoingMerry.getCurrentPose().getTranslation()));
+        return contains(
+            () -> GoingMerry.getCurrentPose().getTranslation()
+        );
     }
 
     public abstract List<RotationTarget> createRotationTargets(double entry, double exit);
+
     public abstract List<PointTowardsZone> createPointTowardsZones(double entry, double exit);
+
     public abstract List<ConstraintsZone> createConstraintsZones(double entry, double exit);
+
     public abstract List<EventMarker> createEventMarkers(double entry, double exit);
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PathZone pathZone = (PathZone) o;
+
+        return Objects.equals(name, pathZone.name)
+                && Objects.equals(zone, pathZone.zone);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, zone);
+    }
 }
-
-
-
 
 /*
 
@@ -207,6 +292,5 @@ public abstract class PathZone {
 .   .                . .  ... ...                           . .%%%@:..           .      ..           ..          ....       .        .. .   . ..   ..     
 .       .  ..   ....          ..     ..                      .@@+..   .                       ....        .    .          ..  . .  . .  .         ..      
 .         ...      .                        ...  .    . ....  ..     ..            ....  . .                  ..    ..       .     ..     .  .   ....   ..
-
 
 */
