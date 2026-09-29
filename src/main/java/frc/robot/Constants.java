@@ -70,7 +70,7 @@ public final class Constants {
     public static final PPHolonomicDriveController driveController =
       new PPHolonomicDriveController(
           // *PID constants for translation
-          //Ligthened from 8.0 for sharp turns
+          //Lightened from 8.0 for sharp turns
           new PIDConstants(7.5, 0, 0),
           // *PID constants for rotation
           new PIDConstants(4, 0, 0)

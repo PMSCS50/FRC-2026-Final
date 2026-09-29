@@ -38,13 +38,7 @@ import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.commands.AlignToHub;
-import frc.robot.commands.DistanceBasedShooting;
-import frc.robot.commands.DriveToPointCommand;
-import frc.robot.commands.FixedPIDShooting;
-import frc.robot.commands.FixedWaypointShooting;
-import frc.robot.commands.Intaking;
-import frc.robot.commands.PivotToAngle;
+import frc.robot.commands.*;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.intake.*;

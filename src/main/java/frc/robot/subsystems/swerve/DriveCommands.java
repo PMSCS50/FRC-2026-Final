@@ -111,7 +111,7 @@ public class DriveCommands {
     double translation = y * DriveConstants.MaxSpeed;
     double turn = omega * DriveConstants.MaxAngularRate;
 
-    return  DriveConstants.driveRequest
+    return DriveConstants.driveRequest
             .withVelocityX(forward)
             .withVelocityY(translation)
             .withRotationalRate(turn);

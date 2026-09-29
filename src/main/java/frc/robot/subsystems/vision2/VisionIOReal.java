@@ -12,11 +12,11 @@ import limelight.networktables.LimelightResults;
 import limelight.networktables.Orientation3d;
 import limelight.networktables.PoseEstimate;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
+import frc.robot.util.misc.GeometryUtil;
 
 public class VisionIOReal implements VisionIO {
 
@@ -35,12 +35,7 @@ public class VisionIOReal implements VisionIO {
         this.cameraName = cameraName;
         limelight = new Limelight(cameraName);
         limelight.getSettings()
-                .withCameraOffset(new Pose3d(
-                    robotToCamera.getX(),
-                    robotToCamera.getY(),
-                    robotToCamera.getZ(),
-                    robotToCamera.getRotation()
-                ));
+                .withCameraOffset(GeometryUtil.toPose3D(robotToCamera));
 
         poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
 
@@ -101,7 +96,7 @@ public class VisionIOReal implements VisionIO {
         inputs.hasEstimatedPose = pe.hasData;
 
         boolean notInFieldArea = pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X || 
-                              pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y;
+                                 pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y;
 
         double age = Timer.getFPGATimestamp() - pe.timestampSeconds;
         boolean old = age > 0.25;

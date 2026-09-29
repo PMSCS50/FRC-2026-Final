@@ -165,7 +165,7 @@ public class Vision extends SubsystemBase {
         poseArray = tagposes.values().toArray(Pose2d[]::new);
 
         for (int i = 0; i < poseArray.length; i++) {
-            poseArray[i] = robotPose.plus(new Transform2d(poseArray[i].getTranslation(), poseArray[i].getRotation()).inverse());
+            poseArray[i] = robotPose.plus(GeometryUtil.toPose2D(poseArray[i]).inverse());
         }
 
         Logger.recordOutput("Vision/TagFieldPoses", poseArray);
