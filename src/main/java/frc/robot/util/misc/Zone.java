@@ -180,7 +180,7 @@ public interface Zone {
       }
       return points;
     }
-
+  }
   /**
    * An axis-aligned rectangular zone defined by two corner points.
    */
@@ -285,7 +285,6 @@ public interface Zone {
       }
 
       return inside;
-      }
     }
   }
 }

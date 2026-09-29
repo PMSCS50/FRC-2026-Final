@@ -130,86 +130,60 @@ public class Pathmaster {
     // *Creates a rotation zone.
     // ?When the robot paths through it, it will rotate to and hold the given heading.
     public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
-        ZoneManager.addZone(new RotationZone(name, min, max, rotation), active);
+        RotationZone rz = new RotationZone(name, min, max, rotation);
 
-        Logger.recordOutput("Pathmaster/Rotation Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
+        ZoneManager.addZone(rz, active);
+
+        Logger.recordOutput("Pathmaster/Rotation Zone " + name, rz.getPoints());
     }
 
     // *Creates a rotation zone.
     // ?When the robot paths through it, it will rotate to and hold the given heading.
     public void addMultiRotationZone(String name, Translation2d min, Translation2d max, List<Rotation2d> rotations, boolean active) {
-        ZoneManager.addZone(new MultiRotationZone(name, min, max, rotations), active);
+        MultiRotationZone mrz = new MultiRotationZone(name, min, max, rotations);
+        
+        ZoneManager.addZone(mrz, active);
 
-        Logger.recordOutput("Pathmaster/Multi-Rotation Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
+        Logger.recordOutput("Pathmaster/Multi-Rotation Zone " + name, mrz.getPoints());
     }
 
     // *Creates an orientation zone. 
     // ?When the robot paths through it, it will continuously face the given target pose.
     public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
-        ZoneManager.addZone(new OrientationZone(name, min, max, targetPose), active);
+        OrientationZone oz = new OrientationZone(name, min, max, targetPose);
+        
+        ZoneManager.addZone(oz, active);
 
-        Logger.recordOutput("Pathmaster/Orientation Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
+        Logger.recordOutput("Pathmaster/Orientation Zone " + name, oz.getPoints());
     }
     
     // *Creates an orientation zone.
     //?When the robot paths through it, it will continuously face the given target pose.
     public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {
-        ZoneManager.addZone(new ConstraintZone(name, min, max, constraints), active);
+        ConstraintZone cz = new ConstraintZone(name, min, max, constraints);
+        
+        ZoneManager.addZone(cz, active);
 
-        Logger.recordOutput("Pathmaster/Constraint Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
+        Logger.recordOutput("Pathmaster/Constraint Zone " + name, cz.getPoints());
     }
 
     // *Creates an event zone
      // ?When the robot paths through it, it will schedule the given command.
     public void addEventZone(String name, Translation2d min, Translation2d max, Command command, boolean active) {
-        
-        ZoneManager.addZone(new EventZone(name, min, max, command), active);
+        EventZone ez = new EventZone(name, min, max, command);
 
-        Logger.recordOutput("Pathmaster/Event Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
+        ZoneManager.addZone(ez, active);
+
+        Logger.recordOutput("Pathmaster/Event Zone " + name, ez.getPoints());
     }
 
     // *Can make an EventZone out of a NamedCommand
     public void addEventZone(String name, Translation2d min, Translation2d max, String namedcommand, boolean active) {
-        
-        ZoneManager.addZone(new EventZone(name, min, max, namedcommand), active);
+        EventZone ez = new EventZone(name, min, max, namedcommand);
 
-        Logger.recordOutput("Pathmaster/Event Zone " + name, new Pose2d[]{
-            new Pose2d(min.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), min.getY(), new Rotation2d()),
-            new Pose2d(max.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), max.getY(), new Rotation2d()),
-            new Pose2d(min.getX(), min.getY(), new Rotation2d())
-        });
+        ZoneManager.addZone(ez, active);
+
+        Logger.recordOutput("Pathmaster/Event Zone " + name, ez.getPoints());
     }
 
     // *Activates a single zone
