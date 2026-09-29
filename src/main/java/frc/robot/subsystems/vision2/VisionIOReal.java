@@ -35,7 +35,7 @@ public class VisionIOReal implements VisionIO {
         this.cameraName = cameraName;
         limelight = new Limelight(cameraName);
         limelight.getSettings()
-                .withCameraOffset(GeometryUtil.toPose3D(robotToCamera));
+                .withCameraOffset(GeometryUtil.toPose3d(robotToCamera));
 
         poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
 

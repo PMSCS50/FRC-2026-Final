@@ -14,13 +14,13 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
+import frc.robot.util.misc.GeometryUtil;
 
 public class Vision extends SubsystemBase {
 
@@ -165,7 +165,7 @@ public class Vision extends SubsystemBase {
         poseArray = tagposes.values().toArray(Pose2d[]::new);
 
         for (int i = 0; i < poseArray.length; i++) {
-            poseArray[i] = robotPose.plus(GeometryUtil.toPose2D(poseArray[i]).inverse());
+            poseArray[i] = robotPose.plus(GeometryUtil.toTransform2d(poseArray[i]).inverse());
         }
 
         Logger.recordOutput("Vision/TagFieldPoses", poseArray);
