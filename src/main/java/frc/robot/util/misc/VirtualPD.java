@@ -22,6 +22,8 @@ public class VirtualPD {
     private static ArrayList<Energy> motorEnergyTotals = new ArrayList<>();
     private static Energy totalEnergy = Joules.zero();
 
+    private VirtualPD() {}
+
     public static void registerMotor(Supplier<Current> currentSupplier, String group) {
         motors.add(currentSupplier);
         groups.add(group);

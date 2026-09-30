@@ -16,8 +16,17 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
+import java.awt.geom.Area;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
+import java.util.ArrayList;
+
 /** Geometry utilities for working with translations, rotations, transforms, and poses. */
+/** Also helps with polygon operations for Zones */
 public class GeometryUtil {
+
+  private GeometryUtil() {}
+
   /**
    * Creates a pure translating transform
    *
@@ -171,4 +180,129 @@ public class GeometryUtil {
   public static Pose2d withRotation(Pose2d pose, Rotation2d rotation) {
     return new Pose2d(pose.getTranslation(), rotation);
   }
+
+  /**
+   * Converts a WPILib Pose2d array into a java.awt.geom.Area object.
+   * Skips null separators if present in the input.
+   */
+  private static Area createAreaFromPoses(Pose2d[] vertices) {
+    if (vertices == null || vertices.length < 3) {
+      return new Area();
+    }
+    Path2D.Double path = new Path2D.Double();
+    boolean started = false;
+    
+    for (Pose2d vertex : vertices) {
+      if (vertex == null) {
+        if (started) {
+          path.closePath();
+          started = false;
+        }
+        continue;
+      }
+      
+      if (!started) {
+        path.moveTo(vertex.getX(), vertex.getY());
+        started = true;
+      } else {
+        path.lineTo(vertex.getX(), vertex.getY());
+      }
+    }
+    
+    if (started) {
+      path.closePath();
+    }
+    return new Area(path);
+  }
+
+  /**
+   * Converts an Area back into a single flat Pose2d[] array.
+   * Inserts a 'null' element between disjoint shapes or holes so AdvantageScope 
+   * renders them as distinct boundaries without ugly cross-connecting lines.
+   */
+  private static Pose2d[] createFlatPosesFromArea(Area area) {
+    ArrayList<Pose2d> flatList = new ArrayList<>();
+    PathIterator iterator = area.getPathIterator(null);
+    double[] coords = new double[6];
+
+    while (!iterator.isDone()) {
+      int type = iterator.currentSegment(coords);
+      switch (type) {
+        case PathIterator.SEG_MOVETO:
+          if (!flatList.isEmpty()) {
+            flatList.add(null);
+          }
+          flatList.add(new Pose2d(coords[0], coords[1], Rotation2d.kZero));
+          break;
+        case PathIterator.SEG_LINETO:
+          flatList.add(new Pose2d(coords[0], coords[1], Rotation2d.kZero));
+          break;
+        case PathIterator.SEG_CLOSE:
+          break;
+      }
+      iterator.next();
+    }
+    return flatList.toArray(new Pose2d[0]);
+  }
+
+  /**
+   * Combines both shapes into a unified boundary array.
+   */
+  public static Pose2d[] union(Pose2d[] polyA, Pose2d[] polyB) {
+    Area areaA = createAreaFromPoses(polyA);
+    Area areaB = createAreaFromPoses(polyB);
+    areaA.add(areaB);
+    return createFlatPosesFromArea(areaA);
+  }
+
+  /**
+   * Finds the overlapping area between both shapes as a single array.
+   */
+  public static Pose2d[] intersection(Pose2d[] polyA, Pose2d[] polyB) {
+    Area areaA = createAreaFromPoses(polyA);
+    Area areaB = createAreaFromPoses(polyB);
+    areaA.intersect(areaB);
+    return createFlatPosesFromArea(areaA);
+  }
+
+  /**
+   * Subtracts PolyB from PolyA (A - B) as a single array.
+   */
+  public static Pose2d[] difference(Pose2d[] polyA, Pose2d[] polyB) {
+    Area areaA = createAreaFromPoses(polyA);
+    Area areaB = createAreaFromPoses(polyB);
+    areaA.subtract(areaB);
+    return createFlatPosesFromArea(areaA);
+  }
+
+    /**
+   * Finds the complement of a polygon relative to a custom field boundary (Boundary - Poly).
+   * 
+   * @param poly The polygon to invert.
+   * @param fieldBoundary The outer boundary representing the full field or universe.
+   * @return Everywhere on the field EXCEPT the provided polygon.
+   */
+  private static Pose2d[] complement(Pose2d[] poly, Pose2d[] fieldBoundary) {
+    Area universeArea = createAreaFromPoses(fieldBoundary);
+    Area polyArea = createAreaFromPoses(poly);
+    universeArea.subtract(polyArea);
+    return createFlatPosesFromArea(universeArea);
+  }
+
+  /**
+   * Finds the complement of a polygon relative to a standard rectangular field.
+   * 
+   * @param poly The polygon to invert.
+   * @return Everywhere on the field EXCEPT the provided polygon.
+   */
+  public static Pose2d[] complement(Pose2d[] poly) {
+    Pose2d[] standardFieldBoundary = {
+      new Pose2d(0, 0, Rotation2d.kZero),
+      new Pose2d(FieldUtil.FIELD_MAX_X, 0, Rotation2d.kZero),
+      new Pose2d(FieldUtil.FIELD_MAX_X, FieldUtil.FIELD_MAX_Y, Rotation2d.kZero),
+      new Pose2d(0, FieldUtil.FIELD_MAX_Y, Rotation2d.kZero)
+    };
+    return complement(poly, standardFieldBoundary);
+  }
+
 }

@@ -2,6 +2,7 @@ package frc.robot.util.pathfinding.zones;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import com.pathplanner.lib.path.ConstraintsZone;
 import com.pathplanner.lib.path.EventMarker;
@@ -60,8 +61,7 @@ public abstract class PathZone implements Zone {
      * Returns a Trigger that is active while the robot is inside this zone.
      */
     @Override
-    public Trigger contains(
-            java.util.function.Supplier<Translation2d> translation) {
+    public Trigger contains(Supplier<Translation2d> translation) {
         return zone.contains(translation);
     }
 
@@ -139,9 +139,7 @@ public abstract class PathZone implements Zone {
      * Returns a Trigger that activates while the robot is inside this zone.
      */
     public Trigger inZoneArea() {
-        return contains(
-            () -> GoingMerry.getCurrentPose().getTranslation()
-        );
+        return contains(() -> GoingMerry.getCurrentPose().getTranslation());
     }
 
     public abstract List<RotationTarget> createRotationTargets(double entry, double exit);

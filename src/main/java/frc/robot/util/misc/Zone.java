@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.List;
 import java.util.function.Supplier;
 
+
 /**
  * Represents a 2D zone on the field.
  *
@@ -73,7 +74,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-        return new Pose2d[0];
+        return GeometryUtil.union(Zone.this.getPoints(), other.getPoints());
       }
     };
   }
@@ -88,7 +89,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-          return new Pose2d[0];
+          return GeometryUtil.intersection(Zone.this.getPoints(), other.getPoints());
       }
     };
   }
@@ -106,7 +107,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-          return new Pose2d[0];
+          return GeometryUtil.difference(Zone.this.getPoints(), other.getPoints());
       }
     };
   }
@@ -121,7 +122,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-        return new Pose2d[0];
+        return GeometryUtil.complement(Zone.this.getPoints());
       }
     };
   }

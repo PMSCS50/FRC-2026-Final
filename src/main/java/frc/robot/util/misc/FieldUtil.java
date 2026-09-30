@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public class FieldUtil {
 
+  private FieldUtil() {}
+
   public static final double FIELD_MAX_X = 16.518;
   public static final double FIELD_MAX_Y = 8.043;
 

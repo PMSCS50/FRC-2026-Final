@@ -11,6 +11,8 @@ import java.util.List;
  */
 public class PPLogger {
 
+  private PPLogger() {}
+
   // !Internal state for loggable stuff
   private static Pose2d lastCurrentPose  = new Pose2d();
   private static Pose2d lastTargetPose   = new Pose2d();

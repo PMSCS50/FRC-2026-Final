@@ -1,6 +1,7 @@
 package frc.robot.util.pathfinding.zones;
 
 import frc.robot.util.Elastic;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
  // ?accessible to the RoronoaZoro pathfinder.
  */
 public class ZoneManager {
+
+    private ZoneManager() {}
     
     /** Thread-safe storage of zones and their active states */
     private static final ConcurrentHashMap<PathZone, Boolean> zones = new ConcurrentHashMap<>();

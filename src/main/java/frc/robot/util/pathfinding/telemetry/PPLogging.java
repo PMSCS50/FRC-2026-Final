@@ -8,6 +8,9 @@ import java.util.function.Consumer;
 
 // *Extension of PPLogging utility class for ShinPathfindingCommand
 public class PPLogging {
+
+  private PPLogging() {}
+  
   private static Consumer<Pose2d> logCurrentPose = null;
   private static Consumer<Pose2d> logTargetPose = null;
   private static Consumer<List<Pose2d>> logStopPoses = null;
