@@ -5,10 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -76,10 +73,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-        Set<Pose2d> combinedSet = new HashSet<>(Arrays.asList(Zone.this.getPoints()));
-        combinedSet.addAll(Arrays.asList(other.getPoints()));
-        
-        return combinedSet.toArray(Pose2d[]::new); 
+        return new Pose2d[0];
       }
     };
   }
@@ -94,11 +88,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-          Set<Pose2d> shared = new HashSet<>(Arrays.asList(Zone.this.getPoints()));
-
-          shared.retainAll(Arrays.asList(other.getPoints()));
-
-          return shared.toArray(Pose2d[]::new);
+          return new Pose2d[0];
       }
     };
   }
@@ -116,11 +106,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-          Set<Pose2d> shared = new HashSet<>(Arrays.asList(Zone.this.getPoints()));
-
-          shared.removeAll(Arrays.asList(other.getPoints()));
-
-          return shared.toArray(Pose2d[]::new);
+          return new Pose2d[0];
       }
     };
   }
