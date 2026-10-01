@@ -303,6 +303,8 @@ public interface Zone {
       this(center, xAxis, yAxis, Rotation2d.kZero);
     }
 
+    //If you are confused... Then I cant help you idk wtf is going on
+    //This sdEllipse algorithm was copied from https://iquilezles.org/articles/distfunctions2d/#:~:text=float-,sdEllipse,-(%20in%20vec2
     private double sdEllipse(Translation2d point) {
       Translation2d local = point
               .minus(center)
@@ -399,7 +401,7 @@ public interface Zone {
         // 2. Calculate the X and Y coordinates relative to the center
         double x = center.getX() + xAxis * Math.cos(angleRad);
         double y = center.getY() + yAxis * Math.sin(angleRad);
-        Translation2d pointLocation = new Translation2d(x, y).rotateAround(center, rotation);
+        Translation2d pointLocation = new Translation2d(x, y).minus(center).rotateBy(rotation.unaryMinus());
 
         points[i] = new Pose2d(pointLocation, Rotation2d.kZero);
       }
