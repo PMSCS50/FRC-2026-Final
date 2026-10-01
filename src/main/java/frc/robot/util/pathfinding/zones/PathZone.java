@@ -19,7 +19,7 @@ import frc.robot.util.pathfinding.builders.GoingMerry;
 /**
  * A Zone used by the pathfinding system.
  *
- * <p>PathZone wraps a general {x@link Zone} and adds the PathPlanner-specific
+ * <p>PathZone wraps a general {@link Zone} and adds the PathPlanner-specific
  * behavior associated with that zone.
  */
 public abstract class PathZone implements Zone {
@@ -71,68 +71,6 @@ public abstract class PathZone implements Zone {
     @Override
     public Pose2d[] getPoints() {
         return zone.getPoints();
-    }
-
-    /**
-     * Returns whether the line segment from {@code from} to {@code to}
-     * passes through this zone.
-     */
-    public boolean isOnPath(Translation2d from, Translation2d to) {
-        for (double t = 0.0; t <= 1.0; t += 0.02) {
-            double x = from.getX() + t * (to.getX() - from.getX());
-            double y = from.getY() + t * (to.getY() - from.getY());
-
-            if (contains(new Translation2d(x, y))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns the first sampled point along the path that enters this zone.
-     */
-    public Translation2d getEntryPoint(
-            Translation2d from,
-            Translation2d to) {
-
-        for (double t = 0.0; t <= 1.0; t += 0.01) {
-            double x = from.getX() + t * (to.getX() - from.getX());
-            double y = from.getY() + t * (to.getY() - from.getY());
-
-            Translation2d point = new Translation2d(x, y);
-
-            if (contains(point)) {
-                return point;
-            }
-        }
-
-        return from;
-    }
-
-    /**
-     * Returns the last sampled point along the path that remains inside this
-     * zone.
-     */
-    public Translation2d getExitPoint(
-            Translation2d from,
-            Translation2d to) {
-
-        Translation2d last = from;
-
-        for (double t = 0.0; t <= 1.0; t += 0.01) {
-            double x = from.getX() + t * (to.getX() - from.getX());
-            double y = from.getY() + t * (to.getY() - from.getY());
-
-            Translation2d point = new Translation2d(x, y);
-
-            if (contains(point)) {
-                last = point;
-            }
-        }
-
-        return last;
     }
 
     /**

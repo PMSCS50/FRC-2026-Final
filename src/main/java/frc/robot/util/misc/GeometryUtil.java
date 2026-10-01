@@ -274,35 +274,4 @@ public class GeometryUtil {
     areaA.subtract(areaB);
     return createFlatPosesFromArea(areaA);
   }
-
-    /**
-   * Finds the complement of a polygon relative to a custom field boundary (Boundary - Poly).
-   * 
-   * @param poly The polygon to invert.
-   * @param fieldBoundary The outer boundary representing the full field or universe.
-   * @return Everywhere on the field EXCEPT the provided polygon.
-   */
-  private static Pose2d[] complement(Pose2d[] poly, Pose2d[] fieldBoundary) {
-    Area universeArea = createAreaFromPoses(fieldBoundary);
-    Area polyArea = createAreaFromPoses(poly);
-    universeArea.subtract(polyArea);
-    return createFlatPosesFromArea(universeArea);
-  }
-
-  /**
-   * Finds the complement of a polygon relative to a standard rectangular field.
-   * 
-   * @param poly The polygon to invert.
-   * @return Everywhere on the field EXCEPT the provided polygon.
-   */
-  public static Pose2d[] complement(Pose2d[] poly) {
-    Pose2d[] standardFieldBoundary = {
-      new Pose2d(0, 0, Rotation2d.kZero),
-      new Pose2d(FieldUtil.FIELD_MAX_X, 0, Rotation2d.kZero),
-      new Pose2d(FieldUtil.FIELD_MAX_X, FieldUtil.FIELD_MAX_Y, Rotation2d.kZero),
-      new Pose2d(0, FieldUtil.FIELD_MAX_Y, Rotation2d.kZero)
-    };
-    return complement(poly, standardFieldBoundary);
-  }
-
 }

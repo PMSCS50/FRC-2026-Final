@@ -122,7 +122,7 @@ public interface Zone {
 
       @Override
       public Pose2d[] getPoints() {
-        return GeometryUtil.complement(Zone.this.getPoints());
+        return Zone.this.getPoints(); // Points are inverted, but the boundary representation remains the same.
       }
     };
   }
