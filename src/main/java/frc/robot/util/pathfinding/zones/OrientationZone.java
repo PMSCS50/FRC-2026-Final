@@ -11,6 +11,7 @@ import com.pathplanner.lib.path.RotationTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.util.Zone;
 
 /**
  // *A zone where the robot continuously faces toward a target field pose,
@@ -26,10 +27,20 @@ public class OrientationZone extends PathZone {
     }
 
     //Constructor with offset.
-    public OrientationZone(String name,Translation2d min,Translation2d max, Pose2d target, Rotation2d offset) {
+    public OrientationZone(String name, Translation2d min,Translation2d max, Pose2d target, Rotation2d offset) {
         super(name, min, max);
         this.target = target;
         this.offset = offset;
+    }
+
+    public OrientationZone(String name, Zone zone, Pose2d target, Rotation2d offset) {
+        super(name, zone);
+        this.target = target;
+        this.offset = offset;
+    }
+
+    public OrientationZone(String name, Zone zone, Pose2d target) {
+        this(name, zone, target, Rotation2d.kZero);
     }
 
     public Pose2d getTarget() {

@@ -1,6 +1,7 @@
 package frc.robot.util.pathfinding.zones;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.util.Zone;
 import edu.wpi.first.math.geometry.Translation2d;
 
 import java.util.ArrayList;
@@ -34,6 +35,16 @@ public class EventZone extends PathZone {
     public EventZone(String name, Translation2d min, Translation2d max, String namedcommand) {
         super(name, min, max);
         this.command = NamedCommands.getCommand(namedcommand);        
+    }
+
+    public EventZone(String name, Zone zone, Command command) {
+        super(name, zone);
+        this.command = CommandUtil.wrappedEventCommand(command);
+    }
+
+    public EventZone(String name, Zone zone, String namedcommand) {
+        super(name, zone);
+        this.command = NamedCommands.getCommand(namedcommand);
     }
 
     public Command getEvent() {

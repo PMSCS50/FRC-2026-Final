@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.misc;
 
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;

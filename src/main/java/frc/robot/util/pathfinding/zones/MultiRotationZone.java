@@ -11,6 +11,7 @@ import com.pathplanner.lib.path.RotationTarget;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.util.Zone;
 
 /**
  * // *A zone where the robot holds a fixed chassis heading throughout, and chooses the rotation that requires the least turning
@@ -23,6 +24,11 @@ public class MultiRotationZone extends PathZone {
 
     public MultiRotationZone(String name, Translation2d min, Translation2d max, List<Rotation2d> rotations) {
         super(name, min, max);
+        this.rotations = rotations;
+    }
+
+    public MultiRotationZone(String name, Zone zone, List<Rotation2d> rotations) {
+        super(name, zone);
         this.rotations = rotations;
     }
 

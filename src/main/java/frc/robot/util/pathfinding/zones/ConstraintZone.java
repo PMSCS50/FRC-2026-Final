@@ -10,6 +10,7 @@ import com.pathplanner.lib.path.PointTowardsZone;
 import com.pathplanner.lib.path.RotationTarget;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.util.Zone;
 
 /**
  * *A zone where the robot changes its path constraints
@@ -21,6 +22,11 @@ public class ConstraintZone extends PathZone {
 
     public ConstraintZone(String name,Translation2d min,Translation2d max, PathConstraints constraints) {
         super(name, min, max);
+        this.constraints = constraints;
+    }
+
+    public ConstraintZone(String name, Zone zone, PathConstraints constraints) {
+        super(name, zone);
         this.constraints = constraints;
     }
 

@@ -10,6 +10,7 @@ import com.pathplanner.lib.path.RotationTarget;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.util.Zone;
 
 /**
  * // *A zone where the robot holds a fixed chassis heading throughout.
@@ -21,6 +22,11 @@ public class RotationZone extends PathZone {
 
     public RotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation) {
         super(name, min, max);
+        this.rotation = rotation;
+    }
+
+    public RotationZone(String name, Zone zone, Rotation2d rotation) {
+        super(name, zone);
         this.rotation = rotation;
     }
 

@@ -49,7 +49,7 @@ import frc.robot.subsystems.swerve.DriveCommands;
 import frc.robot.subsystems.vision2.*;
 
 import frc.robot.util.Elastic;
-import frc.robot.util.ExtendedCommandXboxController;
+import frc.robot.util.misc.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
 
 

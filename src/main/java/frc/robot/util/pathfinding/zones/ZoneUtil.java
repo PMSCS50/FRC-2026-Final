@@ -9,7 +9,7 @@ import com.pathplanner.lib.path.RotationTarget;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 // *Utility class for helping more complex zones understand the path better
-// *Helps zones like MultiRotationZone get their last target, or DynamicOrientationZone get pathpoints inbetween entry and exit
+// *Helps zones like MultiRotationZone get their last target
 public final class ZoneUtil {
     private static List<PathPoint> points = List.of();
     private static Rotation2d startRotation = new Rotation2d();
