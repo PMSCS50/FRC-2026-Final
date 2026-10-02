@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
+import frc.robot.util.Zone;
 import frc.robot.util.misc.FieldUtil;
 import frc.robot.util.pathfinding.builders.*;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
@@ -129,61 +130,61 @@ public class Pathmaster {
     // !Zone Management
     // *Creates a rotation zone.
     // ?When the robot paths through it, it will rotate to and hold the given heading.
-    public void addRotationZone(String name, Translation2d min, Translation2d max, Rotation2d rotation, boolean active) {
-        RotationZone rz = new RotationZone(name, min, max, rotation);
+    public void addRotationZone(String name, Zone zone, Rotation2d rotation, boolean active) {
+        RotationZone rz = new RotationZone(name, zone, rotation);
 
         ZoneManager.addZone(rz, active);
 
-        Logger.recordOutput("Pathmaster/Rotation Zone " + name, rz.getPoints());
+        Logger.recordOutput("Pathmaster/Rotation Zone " + name, zone.getPoints());
     }
 
     // *Creates a rotation zone.
     // ?When the robot paths through it, it will rotate to and hold the given heading.
-    public void addMultiRotationZone(String name, Translation2d min, Translation2d max, List<Rotation2d> rotations, boolean active) {
-        MultiRotationZone mrz = new MultiRotationZone(name, min, max, rotations);
-        
+    public void addMultiRotationZone(String name, Zone zone, List<Rotation2d> rotations, boolean active) {
+        MultiRotationZone mrz = new MultiRotationZone(name, zone, rotations);
+
         ZoneManager.addZone(mrz, active);
 
-        Logger.recordOutput("Pathmaster/Multi-Rotation Zone " + name, mrz.getPoints());
+        Logger.recordOutput("Pathmaster/Multi-Rotation Zone " + name, zone.getPoints());
     }
 
-    // *Creates an orientation zone. 
+    // *Creates an orientation zone.
     // ?When the robot paths through it, it will continuously face the given target pose.
-    public void addOrientationZone(String name, Translation2d min, Translation2d max, Pose2d targetPose, boolean active) {
-        OrientationZone oz = new OrientationZone(name, min, max, targetPose);
-        
+    public void addOrientationZone(String name, Zone zone, Pose2d targetPose, boolean active) {
+        OrientationZone oz = new OrientationZone(name, zone, targetPose);
+
         ZoneManager.addZone(oz, active);
 
-        Logger.recordOutput("Pathmaster/Orientation Zone " + name, oz.getPoints());
+        Logger.recordOutput("Pathmaster/Orientation Zone " + name, zone.getPoints());
     }
-    
+
     // *Creates an orientation zone.
-    //?When the robot paths through it, it will continuously face the given target pose.
-    public void addConstraintZone(String name, Translation2d min, Translation2d max, PathConstraints constraints, boolean active) {
-        ConstraintZone cz = new ConstraintZone(name, min, max, constraints);
-        
+    // ?When the robot paths through it, it will continuously face the given target pose.
+    public void addConstraintZone(String name, Zone zone, PathConstraints constraints, boolean active) {
+        ConstraintZone cz = new ConstraintZone(name, zone, constraints);
+
         ZoneManager.addZone(cz, active);
 
-        Logger.recordOutput("Pathmaster/Constraint Zone " + name, cz.getPoints());
+        Logger.recordOutput("Pathmaster/Constraint Zone " + name, zone.getPoints());
     }
 
-    // *Creates an event zone
-     // ?When the robot paths through it, it will schedule the given command.
-    public void addEventZone(String name, Translation2d min, Translation2d max, Command command, boolean active) {
-        EventZone ez = new EventZone(name, min, max, command);
+    // *Creates an event zone.
+    // ?When the robot paths through it, it will schedule the given command.
+    public void addEventZone(String name, Zone zone, Command command, boolean active) {
+        EventZone ez = new EventZone(name, zone, command);
 
         ZoneManager.addZone(ez, active);
 
-        Logger.recordOutput("Pathmaster/Event Zone " + name, ez.getPoints());
+        Logger.recordOutput("Pathmaster/Event Zone " + name, zone.getPoints());
     }
 
-    // *Can make an EventZone out of a NamedCommand
-    public void addEventZone(String name, Translation2d min, Translation2d max, String namedcommand, boolean active) {
-        EventZone ez = new EventZone(name, min, max, namedcommand);
+    // *Can make an EventZone out of a NamedCommand.
+    public void addEventZone(String name, Zone zone, String namedcommand, boolean active) {
+        EventZone ez = new EventZone(name, zone, namedcommand);
 
         ZoneManager.addZone(ez, active);
 
-        Logger.recordOutput("Pathmaster/Event Zone " + name, ez.getPoints());
+        Logger.recordOutput("Pathmaster/Event Zone " + name, zone.getPoints());
     }
 
     // *Activates a single zone
