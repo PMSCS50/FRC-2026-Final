@@ -309,7 +309,7 @@ public interface Zone {
     private double sdEllipse(Translation2d point) {
       Translation2d local = point
               .minus(center)
-              .rotateBy(rotation);
+              .rotateBy(rotation.unaryMinus());
 
       double px = Math.abs(local.getX());
       double py = Math.abs(local.getY());
@@ -402,7 +402,7 @@ public interface Zone {
         // 2. Calculate the X and Y coordinates relative to the center
         double x = center.getX() + xAxis * Math.cos(angleRad);
         double y = center.getY() + yAxis * Math.sin(angleRad);
-        Translation2d pointLocation = new Translation2d(x, y).rotateAround(center, rotation.unaryMinus());
+        Translation2d pointLocation = new Translation2d(x, y).rotateAround(center, rotation);
 
         points[i] = new Pose2d(pointLocation, Rotation2d.kZero);
       }
