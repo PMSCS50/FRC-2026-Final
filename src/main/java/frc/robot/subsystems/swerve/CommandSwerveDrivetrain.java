@@ -33,6 +33,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
+import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 
@@ -172,6 +173,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+
+        registerMotors();
+
         configureAutoBuilder();
     }
 
@@ -198,6 +202,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        registerMotors();
+
         configureAutoBuilder();
     }
 
@@ -232,6 +238,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+
+        registerMotors();
+
         configureAutoBuilder();
     }
 
@@ -324,6 +333,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return applyRequest(() -> m_idle);
     }
 
+    public void registerMotors() {
+        for (int i = 0; i < 4; i++) {
+            SwerveModule<?, ?, ?> module = getModule(i);
+            VirtualPD.registerMotor(() -> module.getDriveMotor().getStatorCurrent().asSupplier(), "Drivetrain/Drive_Motors");
+            VirtualPD.registerMotor(() -> module.getSteerMotor().getStatorCurrent().asSupplier(), "Drivetrain/Steer_Motors");
+        }
+    }
+
     @Override
     public void periodic() {
         // *Update inputs; log inputs and other values in Advantagekit
@@ -338,14 +355,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             //BaseStatusSignal.refreshAll(m_logSignals);
             for (int i = 0; i < 4; i++) {
                 SwerveModule<?, ?, ?> module = getModule(i);
-
                 Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/Voltage", module.getDriveMotor().getMotorVoltage().getValueAsDouble());
-                Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/SupplyCurrent", module.getDriveMotor().getSupplyCurrent().getValueAsDouble());
-                Logger.recordOutput("Drive/Module_" + (i+1) + "/Drivemotor/StatorCurrent", module.getDriveMotor().getStatorCurrent().getValueAsDouble());
-
                 Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/Voltage", module.getSteerMotor().getMotorVoltage().getValueAsDouble());
-                Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/SupplyCurrent", module.getSteerMotor().getSupplyCurrent().getValueAsDouble());
-                Logger.recordOutput("Drive/Module_" + (i+1) + "/Turnmotor/StatorCurrent", module.getSteerMotor().getStatorCurrent().getValueAsDouble());
             }
 
             // |Raw Pigeon2 gyro logging

@@ -60,9 +60,9 @@ public class Elevator extends SubsystemBase {
         mmPositionRequest = new MotionMagicVoltage(0.0).withSlot(0);
         dutyCycleOut = new DutyCycleOut(0);
 
-        VirtualPD.registerMotor(elevatorOne.getSupplyCurrent().asSupplier(), "Elevator");
-        VirtualPD.registerMotor(elevatorTwo.getSupplyCurrent().asSupplier(), "Elevator");
-        VirtualPD.registerMotor(elevatorThree.getSupplyCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorOne.getStatorCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorTwo.getStatorCurrent().asSupplier(), "Elevator");
+        VirtualPD.registerMotor(elevatorThree.getStatorCurrent().asSupplier(), "Elevator");
 
         elevatorPosition = elevatorOne.getPosition();
         elevatorVelocity = elevatorOne.getRotorVelocity();
