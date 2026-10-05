@@ -41,12 +41,8 @@ public class VisionIOSim implements VisionIO {
         this.cameraName = cameraName;
         limelight = new Limelight(cameraName);
         limelight.getSettings()
-                .withCameraOffset(new Pose3d(
-                    robotToCamera.getX(),
-                    robotToCamera.getY(),
-                    robotToCamera.getZ(),
-                    robotToCamera.getRotation()
-                ));
+                .withCameraOffset(GeometryUtil.toPose3d(robotToCamera));
+                
         poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
 
         LimelightSimSettings imperfectCell = new LimelightSimSettings()
