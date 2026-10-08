@@ -10,7 +10,6 @@ import limelight.sim.LimelightSim;
 import limelight.sim.LimelightSimSettings;
 import limelight.networktables.LimelightResults;
 import limelight.networktables.Orientation3d;
-import limelight.networktables.PoseEstimate;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -71,25 +70,23 @@ public class VisionIOSim implements VisionIO {
     }
 
     // *Update IO
-    @Override
     public void updateInputs(VisionIOInputs inputs) {
 
-        Optional<LimelightResults> resultsOpt = limelight.getLatestResults();
+        Optional<LimelightResults> llresults = limelight.getLatestResults();
 
-        if (resultsOpt.isEmpty()) {
+        if (llresults.isEmpty()) {
             clear(inputs);
             return;
         }
 
-        LimelightResults results = resultsOpt.get();
-
-        inputs.hasTarget = results.valid;
+        inputs.hasTarget = llresults.get().valid;
 
         if (!inputs.hasTarget) {
             clear(inputs);
             return;
         }
 
+        LimelightResults results = llresults.get();
         AprilTagFiducial[] fiducials = results.targets_Fiducials;
 
         int tagCount = fiducials.length;
@@ -111,36 +108,41 @@ public class VisionIOSim implements VisionIO {
         inputs.visibleTagIds   = ids;
         inputs.visibleTagPoses = poses;
 
-        PoseEstimate pe = poseEstimator.getPoseEstimate().get();
+        poseEstimator.getPoseEstimate().ifPresentOrElse(
+            (pe) -> {
+                Pose2d pose = pe.pose.toPose2d();
+                inputs.hasEstimatedPose = pe.hasData;
 
-        Pose2d pose = pe.pose.toPose2d();
-        inputs.hasEstimatedPose = pe.hasData;
+                boolean notInFieldArea = pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X || 
+                                        pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y;
 
-        boolean notInFieldArea = pose.getX() < 0 || pose.getX() > Constants.FIELD_MAX_X || 
-                              pose.getY() < 0 || pose.getY() > Constants.FIELD_MAX_Y;
+                double age = Timer.getFPGATimestamp() - pe.timestampSeconds;
+                boolean old = age > 0.25;
 
-        double age = Timer.getFPGATimestamp() - pe.timestampSeconds;
-        boolean old = age > 0.25;
+                if (pe.getMinTagAmbiguity() > 0.3 || pe.rawFiducials == null ||
+                pe.rawFiducials.length == 0 || notInFieldArea || old) {
+                    clearPose(inputs);
+                    return;
+                }
 
+                // |Save last good pose
+                lastGoodPose = pose;
 
-        if (pe.getMinTagAmbiguity() > 0.3 || pe == null || pe.rawFiducials == null ||
-        pe.rawFiducials.length == 0 || notInFieldArea || old) {
-            clearPose(inputs);
-            return;
-        }
+                inputs.estimatedPose          = pose;
+                inputs.estimatedPoseTimestamp = pe.timestampSeconds;
+                inputs.numTagsUsed            = pe.tagCount;
 
-        // |Save last good pose
-        lastGoodPose = pose;
+                inputs.ambiguity[0] = pe.getMinTagAmbiguity();
+                inputs.ambiguity[1] = pe.getAvgTagAmbiguity();
+                inputs.ambiguity[2] = pe.getMaxTagAmbiguity();
 
-        inputs.estimatedPose          = pose;
-        inputs.estimatedPoseTimestamp = pe.timestampSeconds;
-        inputs.numTagsUsed            = pe.tagCount;
-        
-        inputs.ambiguity[0] = pe.getMinTagAmbiguity();
-        inputs.ambiguity[1] = pe.getAvgTagAmbiguity();
-        inputs.ambiguity[2] = pe.getMaxTagAmbiguity();
-
-        inputs.targetId = ids[0]; // best target = first fiducial
+                inputs.targetId = ids[0]; // best target = first fiducial
+            },
+            () -> {
+                clearPose(inputs);
+                return;
+            }
+        );
     }
 
     // private double[] calculateStdDevs(PoseEstimate pe) {

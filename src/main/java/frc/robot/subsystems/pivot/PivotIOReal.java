@@ -17,7 +17,7 @@ import frc.robot.Constants.IntakeConstants;
 import frc.robot.util.misc.VirtualPD;
 
 public class PivotIOReal implements PivotIO {
-    private final SparkMax motor = new SparkMax(IntakeConstants.intakeMotorCanId, MotorType.kBrushless);
+    private final SparkMax motor = new SparkMax(IntakeConstants.pivotMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder encoder = motor.getEncoder();
     private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
