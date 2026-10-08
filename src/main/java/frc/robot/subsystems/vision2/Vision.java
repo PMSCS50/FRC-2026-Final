@@ -114,9 +114,9 @@ public class Vision extends SubsystemBase {
             VisionIOInputsAutoLogged inputs = cameraInputs.get(i);
 
             // Update IO
-            if (io instanceof VisionIOReal realIO) {
-                realIO.setRobotYaw(yawDeg);
-            } else if (io instanceof VisionIOSim simIO) {
+            io.setRobotOrientation(drivetrain.getRobotOrientation3d());
+
+            if (io instanceof VisionIOSim simIO) {
                 simIO.updateSimPose(robotPose);
             }
 
@@ -152,6 +152,9 @@ public class Vision extends SubsystemBase {
                 inputs.estimatedPoseTimestamp) || inputs.numTagsUsed == 0) {
                 continue;
             }
+
+            double jump = robotPose.getTranslation().getDistance(inputs.estimatedPose.getTranslation());
+            if (jump > 0.75) continue; // strict jump rejection
 
             drivetrain.addVisionMeasurement(
                 inputs.estimatedPose,

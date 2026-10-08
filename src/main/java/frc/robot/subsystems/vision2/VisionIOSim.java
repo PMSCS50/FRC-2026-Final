@@ -1,11 +1,8 @@
 package frc.robot.subsystems.vision2;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-
 import java.util.Optional;
 
 import limelight.Limelight;
-import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 import limelight.networktables.target.AprilTagFiducial;
@@ -17,7 +14,6 @@ import limelight.networktables.PoseEstimate;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
@@ -64,17 +60,13 @@ public class VisionIOSim implements VisionIO {
     }
 
     // *Called by Vision each loop to seed LL orientation.
-    public void updateSimPose(Pose2d robotPose) {
+    public void setRobotOrientation(Orientation3d orientation) {
         limelight.getSettings()
-            .withRobotOrientation(
-                new Orientation3d(
-                    new Rotation3d(0, 0, robotPose.getRotation().getRadians()),
-                    new AngularVelocity3d(
-                        DegreesPerSecond.of(0),
-                        DegreesPerSecond.of(0),
-                        DegreesPerSecond.of(0))))
-        .save();
-
+            .withRobotOrientation(orientation)
+            .save();
+    }
+    
+    public void updateSimPose(Pose2d robotPose) {
         limelightSim.update(robotPose);
     }
 
@@ -132,7 +124,7 @@ public class VisionIOSim implements VisionIO {
 
 
         if (pe.getMinTagAmbiguity() > 0.3 || pe == null || pe.rawFiducials == null ||
-        pe.rawFiducials.length != 0 || notInFieldArea || old) {
+        pe.rawFiducials.length == 0 || notInFieldArea || old) {
             clearPose(inputs);
             return;
         }
