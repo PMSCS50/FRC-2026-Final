@@ -3,6 +3,7 @@ package frc.robot.subsystems.vision2;
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import limelight.networktables.Orientation3d;
 
 public interface VisionIO {
 
@@ -34,6 +35,8 @@ public interface VisionIO {
 
     // *Updates the set of loggable inputs. Called every loop in Vision.periodic()
     public void updateInputs(VisionIOInputs inputs);
+
+    public void setRobotOrientation(Orientation3d orientation);
 
     // *Returns the Camera Name
     public String getName();

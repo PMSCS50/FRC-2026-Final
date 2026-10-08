@@ -1,9 +1,6 @@
 package frc.robot.subsystems.vision2;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-
 import limelight.Limelight;
-import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 import limelight.networktables.target.AprilTagFiducial;
@@ -12,7 +9,6 @@ import limelight.networktables.LimelightResults;
 import limelight.networktables.Orientation3d;
 import limelight.networktables.PoseEstimate;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
@@ -46,18 +42,12 @@ public class VisionIOReal implements VisionIO {
     }
 
     // *Called by Vision each loop to seed LL orientation.
-    public void setRobotYaw(double yawDegrees) {
+    public void setRobotOrientation(Orientation3d orientation) {
         limelight.getSettings()
-            .withRobotOrientation(
-                new Orientation3d(
-                    new Rotation3d(0, 0, yawDegrees * 180 / Math.PI),
-                    new AngularVelocity3d(
-                        DegreesPerSecond.of(0),
-                        DegreesPerSecond.of(0),
-                        DegreesPerSecond.of(0))))
-        .save();
+            .withRobotOrientation(orientation)
+            .save();
     }
-
+    
     // *Update IO
     @Override
     public void updateInputs(VisionIOInputs inputs) {
@@ -102,7 +92,7 @@ public class VisionIOReal implements VisionIO {
         boolean old = age > 0.25;
 
         if (pe.getMinTagAmbiguity() > 0.3 || pe == null || pe.rawFiducials == null ||
-        pe.rawFiducials.length != 0 || notInFieldArea || old) {
+        pe.rawFiducials.length == 0 || notInFieldArea || old) {
             clearPose(inputs);
             return;
         }

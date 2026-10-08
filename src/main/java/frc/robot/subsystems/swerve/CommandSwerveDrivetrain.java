@@ -36,6 +36,9 @@ import frc.robot.util.Elastic;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
+import limelight.networktables.Orientation3d;
+import limelight.networktables.AngularVelocity3d;
+
 
 /**
  *  !Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -339,6 +342,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             VirtualPD.registerMotor(module.getDriveMotor().getStatorCurrent().asSupplier(), "Drivetrain/Drive Motors");
             VirtualPD.registerMotor(module.getSteerMotor().getStatorCurrent().asSupplier(), "Drivetrain/Steer Motors");
         }
+    }
+
+    public Orientation3d getRobotOrientation3d() {
+        Pigeon2 gyroZeppeli = getPigeon2();
+
+        return new Orientation3d(getRotation3d(), new AngularVelocity3d(
+            gyroZeppeli.getAngularVelocityXWorld().getValue(),
+            gyroZeppeli.getAngularVelocityYWorld().getValue(),
+            gyroZeppeli.getAngularVelocityZWorld().getValue()
+        ));
     }
 
     @Override
