@@ -23,7 +23,8 @@ import org.json.simple.parser.JSONParser;
  * Custom AD* pathfinder with support for many different Zones, as well as multistop pathfinding.
  * Zones are areas on the field that trigger certain behaviors when the robot is inside them.
  * 
- * Zones can be toggled active/inactive at runtime.
+ * Zones can be toggled active/inactive.
+ * 
  * * There are 4 types of zones:
  * 1. RotationZone: When the robot enters this zone, it starts rotating towards a specified angle
  * 2. OrientationZone: When the robot enters this zone, it starts orienting towards a specified target

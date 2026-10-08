@@ -336,8 +336,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void registerMotors() {
         for (int i = 0; i < 4; i++) {
             SwerveModule<?, ?, ?> module = getModule(i);
-            VirtualPD.registerMotor(() -> module.getDriveMotor().getStatorCurrent().asSupplier(), "Drivetrain/Drive_Motors");
-            VirtualPD.registerMotor(() -> module.getSteerMotor().getStatorCurrent().asSupplier(), "Drivetrain/Steer_Motors");
+            VirtualPD.registerMotor(module.getDriveMotor().getStatorCurrent().asSupplier(), "Drivetrain/Drive Motors");
+            VirtualPD.registerMotor(module.getSteerMotor().getStatorCurrent().asSupplier(), "Drivetrain/Steer Motors");
         }
     }
 
