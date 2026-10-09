@@ -38,13 +38,14 @@ public class ElevatorIOReal implements ElevatorIO {
         this.config = new TalonFXConfiguration();
 
         //Just initiliazing config here.
+        // |Numbers pulled out of Suhas's ass
         config.Slot0.withKP(3)
-                   .withKI(0.0)
-                   .withKD(0.02)
-                  .withKS(0.115)
-                  .withKV(0.0)
-                  .withKA(0.25)
-                  .withKG(0.1);
+                    .withKI(0.0)
+                    .withKD(0.02)
+                    .withKS(0.115)
+                    .withKV(0.0)
+                    .withKA(0.25)
+                    .withKG(0.1);
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;

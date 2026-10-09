@@ -41,6 +41,7 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.commands.*;
 
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.pivot.*;
 import frc.robot.subsystems.shooter.*;
@@ -75,6 +76,7 @@ public class RobotContainer {
     private final Shooter shooter;
     private final Intake intake;
     private final Pivot pivot;
+    private final Elevator elevator;
 
     public static final ExtendedCommandXboxController driverController = new ExtendedCommandXboxController(0);
     public static final ExtendedCommandXboxController operatorController = new ExtendedCommandXboxController(1);
@@ -115,6 +117,7 @@ public class RobotContainer {
         shooter = new Shooter(RobotBase.isReal() ? new ShooterIOReal() : new ShooterIOSim());
         intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
+        elevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
@@ -202,7 +205,8 @@ public class RobotContainer {
             )
         );
 
-        driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+        //driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+        driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
 
         driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
