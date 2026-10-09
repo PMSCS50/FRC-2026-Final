@@ -38,3 +38,31 @@ public class FixedPIDShooting extends Command {
         return false; // runs until interrupted by path planner
     }
 }
+
+// public class FixedPIDShooting extends Command {
+
+//     private final Shooter shooter;
+//     private double distance;
+
+//     public FixedPIDShooting(Shooter shooter, double distance) {
+//         this.shooter = shooter;
+//         this.distance = distance;
+//         addRequirements(shooter);
+//     }
+
+//     @Override
+//     public void run(Coroutine coroutine) throws InterruptedException{
+//         try {
+//             while (true) {
+//                 shooter.rpsControl(distance);
+//                 if (shooter.atCorrectRPSFixed(distance)) { 
+//                     shooter.spinKickersMax();
+//                 }
+//                 coroutine.yield();
+//             }
+//         } finally {
+//             shooter.stop();
+//         }
+//     }
+// }
+
