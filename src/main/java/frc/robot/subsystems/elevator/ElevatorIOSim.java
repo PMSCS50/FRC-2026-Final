@@ -3,6 +3,9 @@ package frc.robot.subsystems.elevator;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.Constants.ElevatorConstants;
+
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 
@@ -11,7 +14,7 @@ public class ElevatorIOSim implements ElevatorIO {
     private final ElevatorSim sim =
         new ElevatorSim(
             0.115, // |pulled out of Suhas' ass
-            0, // |pulled out of Suhas' ass
+            0.02, // |pulled out of Suhas' ass
             DCMotor.getKrakenX60(3), // 3 motors
             0, // min height
             10, // max height
@@ -53,7 +56,7 @@ public class ElevatorIOSim implements ElevatorIO {
     }
 
     @Override
-    public void setNeutralMode(Object neutralMode) {
-        // ignored in sim
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        return; // Sim does not care about neutral mode
     }
 }
