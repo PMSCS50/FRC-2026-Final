@@ -42,6 +42,7 @@ import frc.robot.commands.*;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.elevator.*;
+import frc.robot.subsystems.wrist.*;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.pivot.*;
 import frc.robot.subsystems.shooter.*;
@@ -66,6 +67,7 @@ public class RobotContainer {
     private double pathMaxLinearAcceleration = Constants.DriveConstants.pathMaxLinearAcceleration; // m/s^2
     private double pathMaxAngularAcceleration = Constants.DriveConstants.pathMaxAngularAcceleration; // rad/s^2
 
+    @SuppressWarnings("unused")
     private final SwerveRequest.SwerveDriveBrake xBrake = DriveConstants.xBrake;
 
     // *Declare and initialize subsystems and commands
@@ -77,6 +79,7 @@ public class RobotContainer {
     private final Intake intake;
     private final Pivot pivot;
     private final Elevator elevator;
+    private final Wrist wrist;
 
     public static final ExtendedCommandXboxController driverController = new ExtendedCommandXboxController(0);
     public static final ExtendedCommandXboxController operatorController = new ExtendedCommandXboxController(1);
@@ -118,6 +121,7 @@ public class RobotContainer {
         intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
         elevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
+        wrist = new Wrist(RobotBase.isReal() ? new WristIOReal() : new WristIOSim());
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
@@ -208,7 +212,8 @@ public class RobotContainer {
         //driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
         driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
 
-        driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
+        //driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
+        driverController.y().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
 
         
 

@@ -15,7 +15,7 @@ public class ElevatorIOSim implements ElevatorIO {
         new ElevatorSim(
             0.115, // |pulled out of Suhas' ass
             0.02, // |pulled out of Suhas' ass
-            DCMotor.getKrakenX60(3), // 3 motors
+            DCMotor.getKrakenX60(6), // 6 motors
             0, // min height
             30, // max height
             true, // Simulate gravity

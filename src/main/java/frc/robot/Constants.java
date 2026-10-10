@@ -240,12 +240,19 @@ public final class Constants {
     public static final int elevatorOneCanId = 51;
     public static final int elevatorTwoCanId = 52;
     public static final int elevatorThreeCanId = 53;
+    public static final int elevatorFourCanId = 54;
+    public static final int elevatorFiveCanId = 55;
+    public static final int elevatorSixCanId = 56;
 
     public static final double ELEVATOR_GEAR_RATIO = (40.0 / 12.0) * (36.0 / 40.0) * (34.0 / 14.0) * (62.0 / 78.0);
     public static final double ELEVATOR_PULLEY_DIAMETER = Meter.convertFrom(0.25 * 16.0 / Math.PI, Inch);
     public static final double ELEVATOR_CASCADE_COEFFICIENT = 2.0;
     public static final double ELEVATOR_POSITION_COEFFICIENT =
             Math.PI * ELEVATOR_PULLEY_DIAMETER / ELEVATOR_GEAR_RATIO * ELEVATOR_CASCADE_COEFFICIENT;
+  }
+
+  public static final class WristConstants {
+    public static final int wristMotorCanId = 61;
   }
      
   // *Field

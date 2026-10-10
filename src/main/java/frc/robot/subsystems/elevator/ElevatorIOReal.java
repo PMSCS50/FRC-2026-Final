@@ -23,6 +23,12 @@ public class ElevatorIOReal implements ElevatorIO {
     private final TalonFX elevatorOne = new TalonFX(ElevatorConstants.elevatorOneCanId);
     private final TalonFX elevatorTwo = new TalonFX(ElevatorConstants.elevatorTwoCanId);
     private final TalonFX elevatorThree = new TalonFX(ElevatorConstants.elevatorThreeCanId);
+    private final TalonFX elevatorFour = new TalonFX(ElevatorConstants.elevatorFourCanId);
+    private final TalonFX elevatorFive = new TalonFX(ElevatorConstants.elevatorFiveCanId);
+    private final TalonFX elevatorSix = new TalonFX(ElevatorConstants.elevatorSixCanId);
+
+    private final TalonFX[] motors = {elevatorOne, elevatorTwo, elevatorThree, elevatorFour, elevatorFive, elevatorSix};
+
 
     private final TalonFXConfiguration config;
     private final MotionMagicVoltage mmRequest = new MotionMagicVoltage(0).withSlot(0);
@@ -59,9 +65,16 @@ public class ElevatorIOReal implements ElevatorIO {
         elevatorTwo.getConfigurator().apply(config);
         elevatorThree.getConfigurator().apply(config);
 
-        Follower slave = new Follower(elevatorOne.getDeviceID(), MotorAlignmentValue.Aligned);
-        elevatorTwo.setControl(slave);
-        elevatorThree.setControl(slave);
+        //Good slaves obey their master
+        Follower goodSlave = new Follower(elevatorOne.getDeviceID(), MotorAlignmentValue.Aligned);
+        //Bad slaves do not obey their master
+        Follower badSlave = new Follower(elevatorOne.getDeviceID(), MotorAlignmentValue.Opposed);
+
+        elevatorTwo.setControl(goodSlave);
+        elevatorThree.setControl(goodSlave);
+        elevatorFour.setControl(badSlave);
+        elevatorFive.setControl(badSlave);
+        elevatorSix.setControl(badSlave);
 
         registerMotors();
 
@@ -106,8 +119,8 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void setNeutralMode(NeutralModeValue neutralMode) {
-        elevatorOne.setNeutralMode(neutralMode);
-        elevatorTwo.setNeutralMode(neutralMode);
-        elevatorThree.setNeutralMode(neutralMode);
+        for (TalonFX motor : motors) {
+            motor.setNeutralMode(neutralMode);
+        }
     }
 }

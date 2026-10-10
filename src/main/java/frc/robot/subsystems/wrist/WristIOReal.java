@@ -1,0 +1,70 @@
+package frc.robot.subsystems.wrist;
+
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.WristConstants;
+import frc.robot.util.misc.PhoenixUtil;
+
+public class WristIOReal implements WristIO {
+    private final TalonFX wristMotor = new TalonFX(WristConstants.wristMotorCanId);
+
+    private final TalonFXConfiguration config;
+    private final MotionMagicVoltage mmRequest = new MotionMagicVoltage(0).withSlot(0);
+    private final DutyCycleOut dutyCycle = new DutyCycleOut(0);
+
+    private final StatusSignal<Angle> pos = wristMotor.getPosition();
+    private final StatusSignal<AngularVelocity> vel = wristMotor.getRotorVelocity();
+    private final StatusSignal<AngularAcceleration> acc = wristMotor.getAcceleration();
+    private final StatusSignal<Voltage> volts = wristMotor.getMotorVoltage();
+
+    public WristIOReal() {
+        // |Configs pulled out of Suhas's ass
+        config = new TalonFXConfiguration();
+        config.Slot0.kP = 3.0;
+        config.Slot0.kI = 0.0;
+        config.Slot0.kD = 0.02;
+
+        wristMotor.getConfigurator().apply(config);
+
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.CurrentLimits.SupplyCurrentLimitEnable = true;
+
+        PhoenixUtil.registerStatusSignals();
+    }
+
+    @Override
+    public void updateInputs(WristIOInputs inputs) {
+        inputs.position = pos.getValueAsDouble();
+        inputs.velocity = vel.getValueAsDouble();
+        inputs.acceleration = acc.getValueAsDouble();
+        inputs.appliedVoltage = volts.getValueAsDouble();
+    }
+
+    @Override
+    public void setDutyCycle(double dc) {
+        wristMotor.setControl(dutyCycle.withOutput(dc));
+    }
+
+    @Override
+    public void setMotionMagicPosition(double positionDegrees) {
+        wristMotor.setControl(mmRequest.withPosition(positionDegrees));
+    }
+
+    @Override
+    public void stop() {
+        wristMotor.setControl(dutyCycle.withOutput(0));
+    }
+}
