@@ -2,7 +2,7 @@ package frc.robot.subsystems.telescoping_arm.elevator;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.ArmConstants;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -29,7 +29,7 @@ public class ElevatorIOSim implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         sim.update(0.02);
 
-        inputs.position = Units.Degrees.of(sim.getPositionMeters() / ElevatorConstants.ELEVATOR_POSITION_COEFFICIENT);
+        inputs.position = Units.Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
         inputs.velocity = Units.RadiansPerSecond.of(sim.getVelocityMetersPerSecond());
         inputs.acceleration = Units.RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
         inputs.appliedVoltage = Units.Volts.of(volts);

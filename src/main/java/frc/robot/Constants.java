@@ -236,31 +236,32 @@ public final class Constants {
     
   }
 
-  public static final class ElevatorConstants {
+  public static final class ArmConstants {
     public static final int elevatorOneCanId = 51;
     public static final int elevatorTwoCanId = 52;
     public static final int elevatorThreeCanId = 53;
-    public static final int elevatorFourCanId = 54;
-    public static final int elevatorFiveCanId = 55;
-    public static final int elevatorSixCanId = 56;
 
     public static final double ELEVATOR_GEAR_RATIO = (40.0 / 12.0) * (36.0 / 40.0) * (34.0 / 14.0) * (62.0 / 78.0);
     public static final double ELEVATOR_PULLEY_DIAMETER = Meter.convertFrom(0.25 * 16.0 / Math.PI, Inch);
     public static final double ELEVATOR_CASCADE_COEFFICIENT = 2.0;
     public static final double ELEVATOR_POSITION_COEFFICIENT =
             Math.PI * ELEVATOR_PULLEY_DIAMETER / ELEVATOR_GEAR_RATIO * ELEVATOR_CASCADE_COEFFICIENT;
+
+    public static final int wristMotorCanId = 54;
+    public static final double wristGearing = (9.0 / 44.0) * (12.0 / 32.0) * (12.0 / 32.0);
+
+    public static final double wristkP = 3.0;
+    public static final double wristkI = 0.0;
+    public static final double wristkD = 0.02;
+
+    public static final int pivotOneCanId = 55;
+    public static final int pivotTwoCanId = 56;
+    public static final int pivotThreeCanId = 57;
+
+    public static final double pivotGearing = (64.0 / 12.0) * (36.0 / 18.0) * (58.0 / 14.0);
+
   }
 
-  public static final class WristConstants {
-    public static final int wristMotorCanId = 61;
-    public static final double gearing = (9.0/44.0) * (12.0/32.0) * (12.0/32.0);
-
-    public static double kP = 3.0;
-    public static double kI = 0.0;
-    public static double kD = 0.02;
-
-  }
-     
   // *Field
   public static final double FIELD_MAX_X = FieldUtil.FIELD_MAX_X;
   public static final double FIELD_MAX_Y = FieldUtil.FIELD_MAX_Y;

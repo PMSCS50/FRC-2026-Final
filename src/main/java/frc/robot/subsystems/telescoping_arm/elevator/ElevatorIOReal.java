@@ -14,15 +14,15 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.ArmConstants;
 import frc.robot.util.misc.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 
 public class ElevatorIOReal implements ElevatorIO {
 
-    private final TalonFX elevatorOne = new TalonFX(ElevatorConstants.elevatorOneCanId);
-    private final TalonFX elevatorTwo = new TalonFX(ElevatorConstants.elevatorTwoCanId);
-    private final TalonFX elevatorThree = new TalonFX(ElevatorConstants.elevatorThreeCanId);
+    private final TalonFX elevatorOne = new TalonFX(ArmConstants.elevatorOneCanId);
+    private final TalonFX elevatorTwo = new TalonFX(ArmConstants.elevatorTwoCanId);
+    private final TalonFX elevatorThree = new TalonFX(ArmConstants.elevatorThreeCanId);
 
     private final TalonFXConfiguration config;
     private final MotionMagicVoltage mmRequest = new MotionMagicVoltage(0).withSlot(0);
@@ -96,7 +96,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void setMotionMagicPosition(double positionMeters) {
-        elevatorOne.setControl(mmRequest.withPosition(positionMeters / ElevatorConstants.ELEVATOR_POSITION_COEFFICIENT));
+        elevatorOne.setControl(mmRequest.withPosition(positionMeters / ArmConstants.ELEVATOR_POSITION_COEFFICIENT));
     }
 
     @Override

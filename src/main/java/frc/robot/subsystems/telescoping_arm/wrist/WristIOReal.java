@@ -11,11 +11,11 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.Constants.WristConstants;
+import frc.robot.Constants.ArmConstants;
 import frc.robot.util.misc.PhoenixUtil;
 
 public class WristIOReal implements WristIO {
-    private final TalonFX wristMotor = new TalonFX(WristConstants.wristMotorCanId);
+    private final TalonFX wristMotor = new TalonFX(ArmConstants.wristMotorCanId);
 
     private final TalonFXConfiguration config;
     private final MotionMagicVoltage mmRequest = new MotionMagicVoltage(0).withSlot(0);
@@ -29,9 +29,9 @@ public class WristIOReal implements WristIO {
     public WristIOReal() {
         // |Configs pulled out of Suhas's ass
         config = new TalonFXConfiguration();
-        config.Slot0.kP = WristConstants.kP;
-        config.Slot0.kI = WristConstants.kI;
-        config.Slot0.kD = WristConstants.kD;
+        config.Slot0.kP = ArmConstants.wristkP;
+        config.Slot0.kI = ArmConstants.wristkI;
+        config.Slot0.kD = ArmConstants.wristkD;
 
         wristMotor.getConfigurator().apply(config);
 

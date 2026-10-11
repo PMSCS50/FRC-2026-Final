@@ -6,7 +6,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
-import frc.robot.Constants.WristConstants;;
+import frc.robot.Constants.ArmConstants;;
 
 public class WristIOSim implements WristIO {
 
@@ -27,14 +27,14 @@ public class WristIOSim implements WristIO {
     
     public WristIOSim() {
         wristController = new PIDController(
-            WristConstants.kP,
-            WristConstants.kI,
-            WristConstants.kD
+            ArmConstants.wristkP,
+            ArmConstants.wristkI,
+            ArmConstants.wristkD
         );
 
         wristSim = new SingleJointedArmSim(
             krakenx44,
-            WristConstants.gearing, // gear ratio
+            ArmConstants.wristGearing, // gear ratio
             0.0025163795, // moment of inertia
             .5, // arm length
             Math.toRadians(60), // smallest angle

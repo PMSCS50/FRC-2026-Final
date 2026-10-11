@@ -48,6 +48,7 @@ import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.subsystems.swerve.DriveCommands;
 import frc.robot.subsystems.telescoping_arm.elevator.*;
 import frc.robot.subsystems.telescoping_arm.wrist.*;
+import frc.robot.subsystems.telescoping_arm.pivot.*;
 import frc.robot.subsystems.vision2.*;
 
 import frc.robot.util.Elastic;
@@ -80,6 +81,7 @@ public class RobotContainer {
     private final Pivot pivot;
     private final Elevator elevator;
     private final Wrist wrist;
+    private final ArmPivot armPivot;
 
     public static final ExtendedCommandXboxController driverController = new ExtendedCommandXboxController(0);
     public static final ExtendedCommandXboxController operatorController = new ExtendedCommandXboxController(1);
@@ -122,6 +124,7 @@ public class RobotContainer {
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
         elevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
         wrist = new Wrist(RobotBase.isReal() ? new WristIOReal() : new WristIOSim());
+        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim());
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
