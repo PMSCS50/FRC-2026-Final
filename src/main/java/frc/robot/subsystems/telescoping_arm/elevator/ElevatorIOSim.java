@@ -4,17 +4,26 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.Constants.ArmConstants;
 
-import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.Units;
 
 public class ElevatorIOSim implements ElevatorIO {
 
-    private final ElevatorSim sim =
-        new ElevatorSim(
+    private boolean motionMagic = false;
+    private double setpoint = 0.0;
+    private double volts = 0;
+
+    private PIDController elevatorController;
+    private final ElevatorSim sim;
+
+    public ElevatorIOSim() {
+        elevatorController = new PIDController(3.0, 0.0, 0.02);
+
+        sim = new ElevatorSim(
             0.115, // |pulled out of Suhas' ass
             0.02, // |pulled out of Suhas' ass
             DCMotor.getKrakenX60(3), // 3 motors
@@ -23,39 +32,48 @@ public class ElevatorIOSim implements ElevatorIO {
             true, // Simulate gravity
             0
         );
+    }
 
 
-    private double volts = 0;
+    
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         sim.update(0.02);
 
-        inputs.position = Units.Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
-        inputs.velocity = Units.RadiansPerSecond.of(sim.getVelocityMetersPerSecond());
-        inputs.acceleration = Units.RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
-        inputs.appliedVoltage = Units.Volts.of(volts);
+        inputs.position = Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
+        inputs.velocity = RadiansPerSecond.of(sim.getVelocityMetersPerSecond());
+        inputs.acceleration = RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
+        inputs.appliedVoltage = Volts.of(volts);
         inputs.atSetpoint = false; // Sim does not know MM target
-        inputs.extension = inputs.position.in(Degrees) * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
+        inputs.extension = sim.getPositionMeters();
+
+        if (motionMagic) {
+            double output = elevatorController.calculate(inputs.extension, setpoint);
+            sim.setInputVoltage(output);
+        }
+    }
+
+    private void setVoltage(double volts) {
+        motionMagic = false;
+        sim.setInputVoltage(volts);
     }
 
     @Override
     public void setDutyCycle(double dutyCycle) {
         volts = dutyCycle * RobotController.getBatteryVoltage();
-        sim.setInputVoltage(volts);
+        setVoltage(volts);
     }
 
     @Override
     public void setMotionMagicPosition(double positionMeters) {
-        // Simple P controller for sim
-        double error = positionMeters - sim.getPositionMeters();
-        double volts = error * 3 + 0.02 * sim.getVelocityMetersPerSecond(); // |pulled out of Suhas' ass
-        sim.setInputVoltage(volts);
+        motionMagic = true;
+        setpoint = positionMeters;
     }
 
     @Override
     public void stop() {
-        sim.setInputVoltage(0);
+        setVoltage(0);
     }
 
     @Override
