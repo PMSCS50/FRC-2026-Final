@@ -3,6 +3,7 @@ package frc.robot.subsystems.telescoping_arm.elevator;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.Constants.ArmConstants;
+import frc.robot.util.misc.VirtualPD;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -32,10 +33,13 @@ public class ElevatorIOSim implements ElevatorIO {
             true, // Simulate gravity
             0
         );
+
+        registerMotors();
     }
 
-
-    
+    private void registerMotors() {
+        VirtualPD.registerMotor(() -> Amps.of(sim.getCurrentDrawAmps()), "Elevator");
+    }
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
