@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.Constants.ArmConstants;
 
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Degrees;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -36,7 +36,7 @@ public class ElevatorIOSim implements ElevatorIO {
         inputs.acceleration = Units.RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
         inputs.appliedVoltage = Units.Volts.of(volts);
         inputs.atSetpoint = false; // Sim does not know MM target
-        inputs.extension = inputs.position.in(Radians) * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
+        inputs.extension = inputs.position.in(Degrees) * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
     }
 
     @Override
