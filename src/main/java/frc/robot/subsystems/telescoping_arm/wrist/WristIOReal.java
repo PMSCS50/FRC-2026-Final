@@ -1,4 +1,4 @@
-package frc.robot.subsystems.wrist;
+package frc.robot.subsystems.telescoping_arm.wrist;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -29,9 +29,9 @@ public class WristIOReal implements WristIO {
     public WristIOReal() {
         // |Configs pulled out of Suhas's ass
         config = new TalonFXConfiguration();
-        config.Slot0.kP = 3.0;
-        config.Slot0.kI = 0.0;
-        config.Slot0.kD = 0.02;
+        config.Slot0.kP = WristConstants.kP;
+        config.Slot0.kI = WristConstants.kI;
+        config.Slot0.kD = WristConstants.kD;
 
         wristMotor.getConfigurator().apply(config);
 

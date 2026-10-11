@@ -1,4 +1,4 @@
-package frc.robot.subsystems.elevator;
+package frc.robot.subsystems.telescoping_arm.elevator;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -23,12 +23,6 @@ public class ElevatorIOReal implements ElevatorIO {
     private final TalonFX elevatorOne = new TalonFX(ElevatorConstants.elevatorOneCanId);
     private final TalonFX elevatorTwo = new TalonFX(ElevatorConstants.elevatorTwoCanId);
     private final TalonFX elevatorThree = new TalonFX(ElevatorConstants.elevatorThreeCanId);
-    private final TalonFX elevatorFour = new TalonFX(ElevatorConstants.elevatorFourCanId);
-    private final TalonFX elevatorFive = new TalonFX(ElevatorConstants.elevatorFiveCanId);
-    private final TalonFX elevatorSix = new TalonFX(ElevatorConstants.elevatorSixCanId);
-
-    private final TalonFX[] motors = {elevatorOne, elevatorTwo, elevatorThree, elevatorFour, elevatorFive, elevatorSix};
-
 
     private final TalonFXConfiguration config;
     private final MotionMagicVoltage mmRequest = new MotionMagicVoltage(0).withSlot(0);
@@ -67,17 +61,10 @@ public class ElevatorIOReal implements ElevatorIO {
 
         //Good slaves obey their master
         Follower goodSlave = new Follower(elevatorOne.getDeviceID(), MotorAlignmentValue.Aligned);
-        //Bad slaves do not obey their master
-        Follower badSlave = new Follower(elevatorOne.getDeviceID(), MotorAlignmentValue.Opposed);
-
         elevatorTwo.setControl(goodSlave);
         elevatorThree.setControl(goodSlave);
-        elevatorFour.setControl(badSlave);
-        elevatorFive.setControl(badSlave);
-        elevatorSix.setControl(badSlave);
 
         registerMotors();
-
         PhoenixUtil.registerStatusSignals(
             pos,
             vel,
@@ -119,8 +106,8 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void setNeutralMode(NeutralModeValue neutralMode) {
-        for (TalonFX motor : motors) {
-            motor.setNeutralMode(neutralMode);
-        }
+        elevatorOne.setNeutralMode(neutralMode);
+        elevatorTwo.setNeutralMode(neutralMode);
+        elevatorThree.setNeutralMode(neutralMode);
     }
 }

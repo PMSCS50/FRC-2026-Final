@@ -253,6 +253,12 @@ public final class Constants {
 
   public static final class WristConstants {
     public static final int wristMotorCanId = 61;
+    public static final double gearing = (9.0/44.0) * (12.0/32.0) * (12.0/32.0);
+
+    public static double kP = 3.0;
+    public static double kI = 0.0;
+    public static double kD = 0.02;
+
   }
      
   // *Field

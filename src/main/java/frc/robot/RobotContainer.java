@@ -41,13 +41,13 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.commands.*;
 
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.elevator.*;
-import frc.robot.subsystems.wrist.*;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.pivot.*;
 import frc.robot.subsystems.shooter.*;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.subsystems.swerve.DriveCommands;
+import frc.robot.subsystems.telescoping_arm.elevator.*;
+import frc.robot.subsystems.telescoping_arm.wrist.*;
 import frc.robot.subsystems.vision2.*;
 
 import frc.robot.util.Elastic;

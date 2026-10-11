@@ -1,4 +1,4 @@
-package frc.robot.subsystems.elevator;
+package frc.robot.subsystems.telescoping_arm.elevator;
 
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -15,7 +15,7 @@ public class ElevatorIOSim implements ElevatorIO {
         new ElevatorSim(
             0.115, // |pulled out of Suhas' ass
             0.02, // |pulled out of Suhas' ass
-            DCMotor.getKrakenX60(6), // 6 motors
+            DCMotor.getKrakenX60(3), // 3 motors
             0, // min height
             30, // max height
             true, // Simulate gravity
@@ -46,7 +46,7 @@ public class ElevatorIOSim implements ElevatorIO {
     public void setMotionMagicPosition(double positionMeters) {
         // Simple P controller for sim
         double error = positionMeters - sim.getPositionMeters();
-        double volts = error * 3; // |pulled out of Suhas' ass
+        double volts = error * 3 + 0.02 * sim.getVelocityMetersPerSecond(); // |pulled out of Suhas' ass
         sim.setInputVoltage(volts);
     }
 

@@ -1,8 +1,9 @@
-package frc.robot.subsystems.elevator;
+package frc.robot.subsystems.telescoping_arm.elevator;
 
 import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.elevator.ElevatorIOInputsAutoLogged;
 
 public class Elevator extends SubsystemBase {
 
