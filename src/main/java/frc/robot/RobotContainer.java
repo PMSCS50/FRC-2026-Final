@@ -221,8 +221,8 @@ public class RobotContainer {
 
         // *POV Controls
         driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
-        driverController.povDown().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
-        driverController.povLeft().whileTrue(new RunCommand(() -> armPivot.goToPosition(60)));
+        driverController.a().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
+        driverController.y().whileTrue(new RunCommand(() -> armPivot.goToPosition(60)));
 
 
         //driverController.povUp()
