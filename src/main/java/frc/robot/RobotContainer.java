@@ -212,15 +212,19 @@ public class RobotContainer {
             )
         );
 
-        //driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
-        driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
+        driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
+        
 
-        //driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
-        driverController.y().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
+        driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
         
 
         // *POV Controls
+        driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
+        driverController.povDown().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
+        driverController.povLeft().whileTrue(new RunCommand(() -> armPivot.goToPosition(60)));
+
+
         //driverController.povUp()
         //driverController.povRight()
         //driverController.povLeft()

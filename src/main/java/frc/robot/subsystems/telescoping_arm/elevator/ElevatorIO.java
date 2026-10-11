@@ -17,6 +17,7 @@ public interface ElevatorIO {
         public AngularAcceleration acceleration;
         public Voltage appliedVoltage;
         public boolean atSetpoint;
+        public double extension;
     }
 
     void updateInputs(ElevatorIOInputs inputs);

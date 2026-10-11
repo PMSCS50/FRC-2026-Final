@@ -7,6 +7,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.Constants.ArmConstants;
@@ -27,11 +28,11 @@ public class ArmPivotIOSim implements ArmPivotIO {
             DCMotor.getKrakenX60(3),
             ArmConstants.pivotGearing, // gear ratio
             1, // moment of inertia
-            .5, // arm length
+            Units.inchesToMeters(30), // arm length
             0, // smallest angle
-            Math.PI/2, // largest angle
+            110, // largest angle
             true,   // simulate gravity
-            Math.PI/2     // starting angle
+            0     // starting angle
         );
     }
 

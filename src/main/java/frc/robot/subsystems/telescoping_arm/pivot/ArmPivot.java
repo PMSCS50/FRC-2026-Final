@@ -20,8 +20,8 @@ public class ArmPivot extends SubsystemBase {
 
     }
 
-    public void goToPosition(double positionMeters) {
-        io.setMotionMagicPosition(positionMeters);
+    public void goToPosition(double positionDeg) {
+        io.setMotionMagicPosition(Math.toRadians(positionDeg));
     }
 
     public void setNeutralMode(NeutralModeValue neutralMode) {
