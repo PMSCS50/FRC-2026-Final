@@ -214,15 +214,17 @@ public class RobotContainer {
 
         driverController.x().whileTrue(drivetrain.applyRequest(() -> xBrake));
         
-
         driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
         
 
         // *POV Controls
+
+        //Testing subsystems in sim
         driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
         driverController.a().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
-        driverController.y().whileTrue(Commands.runOnce(() -> pivot.setPivotAngle(3)));
+        driverController.y().whileTrue(Commands.runOnce(() -> pivot.setPivotAngle(Math.PI / 2)));
+        //driverController.y().onFalse(Commands.runOnce(() -> pivot.setPivotAngle(0.0)));
 
 
         //driverController.povUp()

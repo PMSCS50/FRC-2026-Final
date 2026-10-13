@@ -28,7 +28,7 @@ public class Pivot extends SubsystemBase {
     public Pivot(PivotIO io) {
         this.io = io;
         io.registerMotors();
-        resetPivot();
+        //resetPivot();
     }
 
     @Override
@@ -56,6 +56,8 @@ public class Pivot extends SubsystemBase {
                 }
             }
         }
+
+        Logger.recordOutput("Pivot/Stalled", stalled);
 
         Logger.processInputs("LoggedPivot", inputs);
     }

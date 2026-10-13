@@ -2,6 +2,7 @@ package frc.robot.subsystems.pivot;
 
 import static edu.wpi.first.units.Units.Amps;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -9,21 +10,26 @@ import frc.robot.util.misc.VirtualPD;
 
 public class PivotIOSim implements PivotIO {
 
-    private final PIDController pivotController = new PIDController(0.4, 0.0, 0.0);
+    private final PIDController pivotController;
     private boolean pidControl = false;
     private double setpoint = 0.0;
 
-    private final SingleJointedArmSim armSim =
-        new SingleJointedArmSim(
+    private final SingleJointedArmSim armSim;
+
+    public PivotIOSim() {
+        this.armSim = new SingleJointedArmSim(
             DCMotor.getNEO(1),
-            1, // gear ratio
-            1, // moment of inertia
-            .5, // arm length
+            3, // gear ratio
+            0.096, // moment of inertia
+            0.302441737, // arm length
             0, // smallest angle
-            Math.PI/2, // largest angle
-            true,   // simulate gravity
-            Math.PI/2     // starting angle
+            3*Math.PI/4, // largest angle
+            false,   // simulate gravity
+            Math.PI / 3     // starting angle
         );
+
+        this.pivotController = new PIDController(0.02, 0.0, 0.0);
+    }
 
     private double appliedVolts = 0.0;
 
@@ -57,16 +63,18 @@ public class PivotIOSim implements PivotIO {
 
     @Override
     public void updateInputs(PivotIOInputs inputs) {
-        armSim.update(0.02);
-
         inputs.motorVoltage = appliedVolts;
         inputs.motorPosition = armSim.getAngleRads();
         inputs.motorVelocity = armSim.getVelocityRadPerSec();
 
         if (pidControl) {
-            appliedVolts = pivotController.calculate(inputs.motorPosition, setpoint);
+            appliedVolts = MathUtil.clamp(pivotController.calculate(inputs.motorPosition, setpoint), -12.0, 12.0);
             inputs.motorVoltage = appliedVolts;
             armSim.setInputVoltage(appliedVolts);
+
+            inputs.motorPosition = armSim.getAngleRads();
+            inputs.motorVelocity = armSim.getVelocityRadPerSec();
         }
+        armSim.update(0.02);
     }
 }

@@ -1,5 +1,6 @@
-package com.pathplanner.lib.commands;
+package frc.robot.util.pathfinding.commands;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
