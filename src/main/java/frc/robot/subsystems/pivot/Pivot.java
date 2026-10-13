@@ -2,9 +2,6 @@ package frc.robot.subsystems.pivot;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.misc.VirtualPD;
@@ -14,45 +11,13 @@ public class Pivot extends SubsystemBase {
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    // Desired pivot angle (radians)
-    private double goalRad = 0.0;
+    private final boolean furrupowwada = false;
 
-    // -----------------------------
-    // Default tuning values
-    // -----------------------------
-
-    // PID gains (start simple)
-    private static final double kP = 2.0;
-    private static final double kI = 0.0;
-    private static final double kD = 0.1;
-
-    // Motion constraints
-    private static final double kMaxVel = 4.0;      // rad/s
-    private static final double kMaxAccel = 8.0;    // rad/s^2
-
-    // Feedforward gains
-    private static final double kS = 0.0;           // static friction
-    private static final double kG = 0.5;           // gravity gain
-    private static final double kV = 0.1;           // velocity gain
-    private static final double kA = 0.0;           // acceleration gain
 
     // Stall detection thresholds
     private static final double kStallAmps = 30.0;
     private static final double kStallMovementRad = 0.001;
     private static final int kStallReleaseCycles = 30;
-
-    // -----------------------------
-    // Controllers
-    // -----------------------------
-
-    private final ProfiledPIDController pid =
-        new ProfiledPIDController(
-            kP, kI, kD,
-            new TrapezoidProfile.Constraints(kMaxVel, kMaxAccel)
-        );
-
-    private final ArmFeedforward ff =
-        new ArmFeedforward(kS, kG, kV, kA);
 
     // Stall detection
     private boolean stalled = false;
@@ -63,8 +28,7 @@ public class Pivot extends SubsystemBase {
     public Pivot(PivotIO io) {
         this.io = io;
         io.registerMotors();
-        pid.setGoal(goalRad);
-        pid.reset(0.0);
+        resetPivot();
     }
 
     @Override
@@ -72,14 +36,6 @@ public class Pivot extends SubsystemBase {
         io.updateInputs(inputs);
 
         double pos = inputs.motorPosition;
-        double vel = inputs.motorVelocity;
-
-        // PID + Feedforward → voltage
-        double pidOut = pid.calculate(pos, goalRad);
-        double ffOut = ff.calculate(goalRad, vel);
-        double volts = pidOut + ffOut;
-
-        io.setVoltage(volts);
 
         // Stall detection
         double now = Timer.getFPGATimestamp();
@@ -107,8 +63,8 @@ public class Pivot extends SubsystemBase {
     // *Getters? Revealers? API?
     /** Set desired pivot angle (radians). */
     public void setPivotAngle(double targetRad) {
-        goalRad = targetRad;
-        pid.setGoal(targetRad);
+        targetRad = furrupowwada ? targetRad * 2*Math.PI : targetRad;
+        io.setPosition(targetRad);
     }
 
     /** Stop pivot movement. */
@@ -119,8 +75,7 @@ public class Pivot extends SubsystemBase {
     /** Reset encoder + controller. */
     public void resetPivot() {
         io.setEncoderPosition(0.0);
-        pid.reset(0.0);
-        goalRad = 0.0;
+        io.setPosition(0.0);
     }
 
     /** Current pivot angle (radians). */
@@ -144,12 +99,12 @@ public class Pivot extends SubsystemBase {
     }
 
     /** Manual percent output (for commands or teleop override). */
-    public void setManualDuty(double duty) {
+    public void setDutyCycle(double duty) {
         io.setDutyCycle(duty);
     }
 
     /** Manual voltage control (for debugging). */
-    public void setManualVoltage(double volts) {
+    public void setVoltage(double volts) {
         io.setVoltage(volts);
     }
 }

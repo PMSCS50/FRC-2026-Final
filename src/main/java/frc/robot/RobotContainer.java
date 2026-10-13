@@ -222,7 +222,7 @@ public class RobotContainer {
         // *POV Controls
         driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
         driverController.a().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
-        driverController.y().whileTrue(Commands.runOnce(() -> armPivot.goToPosition(60)));
+        driverController.y().whileTrue(Commands.runOnce(() -> pivot.setPivotAngle(3)));
 
 
         //driverController.povUp()
@@ -294,9 +294,9 @@ public class RobotContainer {
         // *Letters
         operatorController.a().whileTrue(new FixedPIDShooting(shooter, 5));
         operatorController.b().onTrue(new InstantCommand(() -> pivot.resetPivot(), pivot));
-        operatorController.x().whileTrue(new RunCommand(() -> pivot.setManualDuty(.3), pivot));
+        operatorController.x().whileTrue(new RunCommand(() -> pivot.setDutyCycle(.3), pivot));
         operatorController.x().onFalse(new RunCommand(() -> pivot.stop(), pivot));
-        operatorController.y().whileTrue(new RunCommand(() -> pivot.setManualDuty(-.3), pivot));
+        operatorController.y().whileTrue(new RunCommand(() -> pivot.setDutyCycle(-.3), pivot));
         operatorController.y().onFalse(new RunCommand(() -> pivot.stop(), pivot));        
     }
 

@@ -33,10 +33,10 @@ public class PivotIOReal implements PivotIO {
               .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
               .pid(0.4, 0.4, 0.0)
               .outputRange(-0.3, 0.3)
-              .positionWrappingEnabled(false)
-              .feedForward
-              .kCos(0.15)
-              .kCosRatio(0.375 / IntakeConstants.kPivotSetpointB);
+              .positionWrappingEnabled(false);
+            //   .feedForward
+            //   .kCos(0.15)
+            //   .kCosRatio(0.375 / IntakeConstants.kPivotSetpointB);
 
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }

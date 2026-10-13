@@ -2,11 +2,16 @@ package frc.robot.subsystems.pivot;
 
 import static edu.wpi.first.units.Units.Amps;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.util.misc.VirtualPD;
 
 public class PivotIOSim implements PivotIO {
+
+    private final PIDController pivotController = new PIDController(0.4, 0.0, 0.0);
+    private boolean pidControl = false;
+    private double setpoint = 0.0;
 
     private final SingleJointedArmSim armSim =
         new SingleJointedArmSim(
@@ -24,6 +29,7 @@ public class PivotIOSim implements PivotIO {
 
     @Override
     public void setVoltage(double volts) {
+        pidControl = false;
         appliedVolts = volts;
         armSim.setInputVoltage(volts);
     }
@@ -35,8 +41,8 @@ public class PivotIOSim implements PivotIO {
 
     @Override
     public void setPosition(double rotations) {
-        double error = rotations - armSim.getAngleRads();
-        setVoltage(error * 4.0);
+        pidControl = true;
+        setpoint = rotations;
     }
 
     @Override
@@ -56,5 +62,11 @@ public class PivotIOSim implements PivotIO {
         inputs.motorVoltage = appliedVolts;
         inputs.motorPosition = armSim.getAngleRads();
         inputs.motorVelocity = armSim.getVelocityRadPerSec();
+
+        if (pidControl) {
+            appliedVolts = pivotController.calculate(inputs.motorPosition, setpoint);
+            inputs.motorVoltage = appliedVolts;
+            armSim.setInputVoltage(appliedVolts);
+        }
     }
 }

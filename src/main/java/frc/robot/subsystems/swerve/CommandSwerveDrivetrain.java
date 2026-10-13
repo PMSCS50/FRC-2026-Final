@@ -356,12 +356,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         ));
     }
 
+    //Updates maplesim pose
+    @Override
+    public void simulationPeriodic() {
+        Logger.recordOutput("maplesimpose", mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
+    }
+
     @Override
     public void periodic() {
         // *Update inputs; log inputs and other values in Advantagekit
         updateInputs(m_inputs);
         Logger.processInputs("LoggedDrivetrain", m_inputs);  // also needed for AdvantageKit to log it
-        Logger.recordOutput("maplesimpose", mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
 
         boolean shouldLogSlowSignals = (++loggingLoopCounter % LOG_EVERY_N_LOOPS) == 0;
 
