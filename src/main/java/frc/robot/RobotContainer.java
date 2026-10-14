@@ -81,6 +81,7 @@ public class RobotContainer {
     private final Pivot pivot;
     private final Elevator elevator;
     private final Wrist wrist;
+    @SuppressWarnings("unused")
     private final ArmPivot armPivot;
 
     public static final ExtendedCommandXboxController driverController = new ExtendedCommandXboxController(0);
@@ -152,6 +153,7 @@ public class RobotContainer {
         monkeyDLuffy.addMultiRotationZone("TrenchTL", new RectangleZone(new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchBR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchTR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+        
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("TestingAuto");
         SmartDashboard.putData("Auto Mode", autoChooser);
@@ -216,15 +218,12 @@ public class RobotContainer {
         
         driverController.y().whileTrue(new InstantCommand(() -> monkeyDLuffy.selectNextWaypoint()));
 
-        
-
         // *POV Controls
 
         //Testing subsystems in sim
         driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
         driverController.a().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
-        driverController.y().whileTrue(Commands.runOnce(() -> pivot.setPivotAngle(Math.PI / 2)));
-        //driverController.y().onFalse(Commands.runOnce(() -> pivot.setPivotAngle(0.0)));
+        driverController.y().whileTrue(Commands.runOnce(() -> pivot.setPivotAngle(1.5)));
 
 
         //driverController.povUp()

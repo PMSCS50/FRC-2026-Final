@@ -20,7 +20,7 @@ public class PivotIOSim implements PivotIO {
         this.armSim = new SingleJointedArmSim(
             DCMotor.getNEO(1),
             3, // gear ratio
-            0.096, // moment of inertia
+            2.0, // moment of inertia
             0.302441737, // arm length
             0, // smallest angle
             3*Math.PI/4, // largest angle
@@ -28,7 +28,7 @@ public class PivotIOSim implements PivotIO {
             Math.PI / 3     // starting angle
         );
 
-        this.pivotController = new PIDController(0.02, 0.0, 0.0);
+        this.pivotController = new PIDController(1.5, 0.0, 3.5);
     }
 
     private double appliedVolts = 0.0;
