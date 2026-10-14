@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.math.filter.Debouncer;
 
 import static edu.wpi.first.units.Units.Seconds;
 
@@ -46,6 +47,7 @@ public class ShinFollowPathCommand extends Command {
   private PathPlannerTrajectory trajectory;
 
   //Path recovery backup if the robot gets beached
+  private final Debouncer fallenBehindPathDebouncer = new Debouncer(0.3);
   private boolean isRecoveryMode = false;
   private static RecoveryMode recoveryMode = RecoveryMode.NO_RECOVERY;
   private Command recoveryCommand = Commands.none();
@@ -166,7 +168,6 @@ public class ShinFollowPathCommand extends Command {
   @Override
   public void execute() {
 
-
     double currentTime = timer.get();
     var targetState = trajectory.sample(currentTime);
     if (!controller.isHolonomic() && path.isReversed()) {
@@ -178,10 +179,11 @@ public class ShinFollowPathCommand extends Command {
 
     //Recovery mode stuff
     if (recoveryMode == RecoveryMode.DRIVE_TO_POINT_RECOVERY) {
-      double positionError =
-          targetState.pose.getTranslation().getDistance(currentPose.getTranslation());
+      double positionError = targetState.pose.getTranslation().getDistance(currentPose.getTranslation())
+      
+      //double positionError = GeometryUtil.distanceAlongPath(originalPath, currentPose, targetState)
 
-      boolean shouldRecover = positionError >= 0.5;
+      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.75);
 
       if (shouldRecover && !isRecoveryMode) {
           timer.stop();
@@ -216,6 +218,9 @@ public class ShinFollowPathCommand extends Command {
 
               recoveryTimer.stop();
               isRecoveryMode = false;
+
+              //Reset path name from recovery
+              PathPlannerAuto.currentPathName = originalPath.name;
 
               // Reset controller state before resuming trajectory following.
               controller.reset(poseSupplier.get(), speedsSupplier.get());

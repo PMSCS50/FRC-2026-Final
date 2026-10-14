@@ -274,4 +274,39 @@ public class GeometryUtil {
     areaA.subtract(areaB);
     return createFlatPosesFromArea(areaA);
   }
+
+  /**
+   * Finds the distance between the current pose and the given point across a PathPlannerPath
+   * 
+   * <b>This really shouldnt be in GeometryUtil, I will make a PathUtil class later</b>
+   * 
+   * @param path The PathPlannerPath being followed 
+   * @param pose The robot's current pose
+   * @param wrp The waypoint-relative pose of the target pose
+   * 
+   * @return The distance along the path between the two points
+   */
+  public static double distanceAlongPath(PathPlannerPath path, Pose2d pose, PathPlannerTrajectoryState state) {
+    PathPoint currentPoint = new PathPoint();
+    PathPoint targetPoint = new PathPoint();
+    double minDist = Double.MAX_VALUE;
+    double dist;
+    for (PathPoint p : path.getAllPathPoints()) {
+      dist = p.position.getDistance(pose.getTranslation());
+      if (dist < minDist) {
+        minDist = dist;
+        currentPoint = p;
+      }
+    }
+
+    for (PathPoint p : path.getAllPathPoints()) {
+      dist = p.position.getDistance(state.pose.getTranslation());
+      if (dist < minDist) {
+        minDist = dist;
+        targetPoint = p;
+      }
+    }
+
+    return targetPoint.distanceAlongPath - currentPoint.distanceAlongPath;
+  }
 }
