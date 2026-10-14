@@ -50,10 +50,27 @@ public class PPRecoveryCommand extends Command{
 
             boolean position = diff.getTranslation().getNorm() < DriveConstants.kPositionTolerance.in(Meters);
 
-            boolean speed = Math.hypot(GoingMerry.getCurrentSpeeds().vxMetersPerSecond, GoingMerry.getCurrentSpeeds().vyMetersPerSecond) < DriveConstants.kSpeedTolerance.in(MetersPerSecond);
-            
-            return rotation && position && speed;
-        });
+            ChassisSpeeds currentRobotSpeeds = GoingMerry.getCurrentSpeeds();
+
+            ChassisSpeeds currentFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                currentRobotSpeeds,
+                GoingMerry.getCurrentPose().getRotation()
+            );
+
+            ChassisSpeeds targetVelocity = new ChassisSpeeds(
+                endState.linearVelocity * endState.heading.getCos(),
+                endState.linearVelocity * endState.heading.getSin(),
+                0.0
+            );
+
+            boolean speed =
+                Math.hypot(
+                    currentFieldSpeeds.vxMetersPerSecond - targetVelocity.vxMetersPerSecond,
+                    currentFieldSpeeds.vyMetersPerSecond - targetVelocity.vyMetersPerSecond
+                ) < DriveConstants.kSpeedTolerance.in(MetersPerSecond);
+                        return rotation && position && speed;
+            }
+        );
 
         endTriggerDebounced = endTrigger.debounce(DriveConstants.kEndTriggerDebounce.in(Seconds));
     }

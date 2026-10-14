@@ -513,7 +513,7 @@ public class GoingMerry {
   }
 
   public static void togglePathRecovery() {
-    ShinFollowPathCommand.setRecoveryMode(RecoveryMode.POSITION_BASED_RECOVERY);
+    ShinFollowPathCommand.setRecoveryMode(RecoveryMode.DRIVE_TO_POINT_RECOVERY);
   }
 
   

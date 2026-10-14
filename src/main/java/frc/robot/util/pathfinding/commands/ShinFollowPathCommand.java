@@ -16,10 +16,14 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+
+import static edu.wpi.first.units.Units.Seconds;
+
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -45,6 +49,10 @@ public class ShinFollowPathCommand extends Command {
   private boolean isRecoveryMode = false;
   private static RecoveryMode recoveryMode = RecoveryMode.NO_RECOVERY;
   private Command recoveryCommand = Commands.none();
+  private final Timer recoveryTimer = new Timer();
+  private Time recoveryTimeout = Seconds.of(7.0);
+
+  private boolean prematureFinish = false;
 
   /**
    * Construct a base path following command
@@ -146,6 +154,11 @@ public class ShinFollowPathCommand extends Command {
 
     eventScheduler.initialize(trajectory);
 
+    prematureFinish = false;
+    isRecoveryMode = false;
+    recoveryCommand = Commands.none();
+
+    recoveryTimer.reset();
     timer.reset();
     timer.start();
   }
@@ -163,30 +176,58 @@ public class ShinFollowPathCommand extends Command {
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    //Recovery mode
-    if ((targetState.pose.getTranslation().getDistance(currentPose.getTranslation()) >= 0.5 
-        && recoveryMode == RecoveryMode.POSITION_BASED_RECOVERY) && !isRecoveryMode) {
-      timer.stop();
-      isRecoveryMode = true;
+    //Recovery mode stuff
+    if (recoveryMode == RecoveryMode.DRIVE_TO_POINT_RECOVERY) {
+      double positionError =
+          targetState.pose.getTranslation().getDistance(currentPose.getTranslation());
 
-      recoveryCommand = PPRecoveryCommand.generateCommand(targetState);
-      recoveryCommand.initialize();
+      boolean shouldRecover = positionError >= 0.5;
+
+      if (shouldRecover && !isRecoveryMode) {
+          timer.stop();
+
+          isRecoveryMode = true;
+          recoveryTimer.reset();
+          recoveryTimer.start();
+
+          recoveryCommand = PPRecoveryCommand.generateCommand(targetState);
+          recoveryCommand.initialize();
+      }
+
+      // Execute recovery while it is active
+      if (isRecoveryMode) {
+          recoveryCommand.execute();
+
+          if (recoveryTimer.hasElapsed(recoveryTimeout.in(Seconds))) {
+              // Recovery timed out: terminate the child and the parent path command.
+              recoveryCommand.end(true);
+              recoveryCommand = Commands.none();
+
+              recoveryTimer.stop();
+              isRecoveryMode = false;
+              prematureFinish = true;
+
+              return;
+          }
+
+          if (recoveryCommand.isFinished()) {
+              recoveryCommand.end(false);
+              recoveryCommand = Commands.none();
+
+              recoveryTimer.stop();
+              isRecoveryMode = false;
+
+              // Reset controller state before resuming trajectory following.
+              controller.reset(poseSupplier.get(), speedsSupplier.get());
+
+              timer.start();
+          }
+
+          return;
+      }
     }
 
-    //IF recovery mode is activated, and the recovery command is defined, start running the recovery command.
-    if (isRecoveryMode && recoveryMode == RecoveryMode.POSITION_BASED_RECOVERY && !recoveryCommand.equals(Commands.none())) {
-        recoveryCommand.execute();
-        if (recoveryCommand.isFinished()) {
-          //Theres no way ts would be interrupted
-          recoveryCommand.end(false);
-          isRecoveryMode = false;
-          recoveryCommand = Commands.none();
-          //Finally continue the timer for normal pathfinding to ensue
-          timer.start();
-        }
-        return;
-    }
-
+    //Actual normal path following
     ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
     double currentVel =
@@ -211,6 +252,10 @@ public class ShinFollowPathCommand extends Command {
 
   @Override
   public boolean isFinished() {
+    if (prematureFinish) {
+      return true;
+    }
+
     if (isRecoveryMode) {
         return false;
     }
@@ -222,6 +267,14 @@ public class ShinFollowPathCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     timer.stop();
+    recoveryTimer.stop();
+
+    if (isRecoveryMode) {
+        recoveryCommand.end(true);
+        recoveryCommand = Commands.none();
+        isRecoveryMode = false;
+    }
+
     PathPlannerAuto.currentPathName = "";
     PathPlannerAuto.setCurrentTrajectory(null);
 
@@ -276,6 +329,6 @@ public class ShinFollowPathCommand extends Command {
 
   public static enum RecoveryMode {
     NO_RECOVERY,
-    POSITION_BASED_RECOVERY,
+    DRIVE_TO_POINT_RECOVERY,
   }
 }
