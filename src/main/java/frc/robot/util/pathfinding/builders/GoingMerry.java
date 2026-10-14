@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
-import com.pathplanner.lib.commands.*;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
@@ -17,7 +16,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
+import frc.robot.util.pathfinding.commands.ShinFollowPathCommand;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
+import frc.robot.util.pathfinding.commands.ShinFollowPathCommand.RecoveryMode;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +61,7 @@ public class GoingMerry {
 
     globals.pathFollowingCommandBuilder =
         (path) ->
-            new FollowPathCommand(
+            new ShinFollowPathCommand(
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
@@ -70,8 +71,12 @@ public class GoingMerry {
                 shouldFlipPath,
                 driveRequirements);
     globals.poseSupplier = poseSupplier;
-    globals.configured = true;
+    globals.robotRelativeSpeedsSupplier = robotRelativeSpeedsSupplier;
+    globals.output = output;
+    globals.controller = controller;
+    globals.robotConfig = robotConfig;
     globals.shouldFlipPath = shouldFlipPath;
+    globals.driveRequirements = driveRequirements.clone();
     globals.isHolonomic = robotConfig.isHolonomic;
 
     globals.pathfindToPoseCommandBuilder =
@@ -199,6 +204,7 @@ public class GoingMerry {
         shouldFlipPath,
         driveRequirements);
     }
+    globals.resetPoseSupplier = resetPoseSupplier;
   }
 
   /**
@@ -209,21 +215,35 @@ public class GoingMerry {
    */
   private static class Globals {
     boolean configured = false;
+    boolean pathfindingConfigured = false;
 
+    // Configuration parameters
     Supplier<Pose2d> poseSupplier;
-    Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
+    Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier;
+    BiConsumer<ChassisSpeeds, DriveFeedforwards> output;
+    PathFollowingController controller;
+    RobotConfig robotConfig;
     BooleanSupplier shouldFlipPath;
+    Subsystem[] driveRequirements;
+    Consumer<Pose2d> resetPoseSupplier;
+
     boolean isHolonomic;
 
-    // Pathfinding builders
-    boolean pathfindingConfigured = false;
-    TriFunction<Pose2d, PathConstraints, Double, Command> pathfindToPoseCommandBuilder;
-    QuadFunction<Pose2d, List<Pose2d>, PathConstraints, Double, Command> pathfindToPosesCommandBuilder;
+    // Existing command builders
+    Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
 
-    BiFunction<PathPlannerPath, PathConstraints, Command> pathfindThenFollowPathCommandBuilder;
-    TriFunction<PathPlannerPath, List<Pose2d>, PathConstraints, Command> pathfindThroughStopsThenFollowPathCommandBuilder;
+    TriFunction<Pose2d, PathConstraints, Double, Command>
+        pathfindToPoseCommandBuilder;
 
-  }
+    QuadFunction<Pose2d, List<Pose2d>, PathConstraints, Double, Command>
+        pathfindToPosesCommandBuilder;
+
+    BiFunction<PathPlannerPath, PathConstraints, Command>
+        pathfindThenFollowPathCommandBuilder;
+
+    TriFunction<PathPlannerPath, List<Pose2d>, PathConstraints, Command>
+        pathfindThroughStopsThenFollowPathCommandBuilder;
+}
 
   /**
    * Returns whether the GoingMerry has been configured.
@@ -260,6 +280,37 @@ public class GoingMerry {
   public static Pose2d getCurrentPose() {
     return globals.poseSupplier.get();
   }
+
+  public static ChassisSpeeds getCurrentSpeeds() {
+    return globals.robotRelativeSpeedsSupplier.get();
+  }
+
+  public static BiConsumer<ChassisSpeeds, DriveFeedforwards> getOutput() {
+    return globals.output;
+  }
+
+  public static PathFollowingController getController() {
+    return globals.controller;
+  }
+
+  public static RobotConfig getRobotConfig() {
+    return globals.robotConfig;
+  }
+
+  public static BooleanSupplier getShouldFlipPath() {
+    return globals.shouldFlipPath;
+  }
+
+  public static Subsystem[] getDriveRequirements() {
+    return globals.driveRequirements == null
+        ? new Subsystem[0]
+        : globals.driveRequirements.clone();
+  }
+
+  public static Consumer<Pose2d> getResetPoseSupplier() {
+    return globals.resetPoseSupplier;
+  }
+
 
   /**
    * Get if a path or field position should currently be flipped
@@ -459,6 +510,10 @@ public class GoingMerry {
     }
 
     return globals.isHolonomic;
+  }
+
+  public static void togglePathRecovery() {
+    ShinFollowPathCommand.setRecoveryMode(RecoveryMode.POSITION_BASED_RECOVERY);
   }
 
   

@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 
 /** Base command for following a path */
 // I will try and see if I can adjust it to better path recovery
-public class FollowPathCommand extends Command {
+public class ShinFollowPathCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
@@ -40,6 +40,11 @@ public class FollowPathCommand extends Command {
 
   private PathPlannerPath path;
   private PathPlannerTrajectory trajectory;
+
+  //Path recovery backup if the robot gets beached
+  private boolean isRecoveryMode = false;
+  private static RecoveryMode recoveryMode = RecoveryMode.NO_RECOVERY;
+  private Command recoveryCommand = Commands.none();
 
   /**
    * Construct a base path following command
@@ -58,7 +63,7 @@ public class FollowPathCommand extends Command {
    *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
-  public FollowPathCommand(
+  public ShinFollowPathCommand(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
@@ -147,6 +152,8 @@ public class FollowPathCommand extends Command {
 
   @Override
   public void execute() {
+
+
     double currentTime = timer.get();
     var targetState = trajectory.sample(currentTime);
     if (!controller.isHolonomic() && path.isReversed()) {
@@ -155,6 +162,30 @@ public class FollowPathCommand extends Command {
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
+
+    //Recovery mode
+    if ((targetState.pose.getTranslation().getDistance(currentPose.getTranslation()) >= 0.5 
+        && recoveryMode == RecoveryMode.POSITION_BASED_RECOVERY) && !isRecoveryMode) {
+      timer.stop();
+      isRecoveryMode = true;
+
+      recoveryCommand = PPRecoveryCommand.generateCommand(targetState);
+      recoveryCommand.initialize();
+    }
+
+    //IF recovery mode is activated, and the recovery command is defined, start running the recovery command.
+    if (isRecoveryMode && recoveryMode == RecoveryMode.POSITION_BASED_RECOVERY && !recoveryCommand.equals(Commands.none())) {
+        recoveryCommand.execute();
+        if (recoveryCommand.isFinished()) {
+          //Theres no way ts would be interrupted
+          recoveryCommand.end(false);
+          isRecoveryMode = false;
+          recoveryCommand = Commands.none();
+          //Finally continue the timer for normal pathfinding to ensue
+          timer.start();
+        }
+        return;
+    }
 
     ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
@@ -180,6 +211,10 @@ public class FollowPathCommand extends Command {
 
   @Override
   public boolean isFinished() {
+    if (isRecoveryMode) {
+        return false;
+    }
+
     double totalTime = trajectory.getTotalTimeSeconds();
     return timer.hasElapsed(totalTime) || !Double.isFinite(totalTime);
   }
@@ -217,7 +252,7 @@ public class FollowPathCommand extends Command {
             new IdealStartingState(0.0, Rotation2d.kZero),
             new GoalEndState(0.0, Rotation2d.kCW_90deg));
 
-    return new FollowPathCommand(
+    return new ShinFollowPathCommand(
             path,
             () -> Pose2d.kZero,
             ChassisSpeeds::new,
@@ -233,5 +268,14 @@ public class FollowPathCommand extends Command {
             () -> true)
         .andThen(Commands.print("[PathPlanner] FollowPathCommand finished warmup"))
         .ignoringDisable(true);
+  }
+
+  public static void setRecoveryMode(RecoveryMode rMode) {
+    recoveryMode = rMode;
+  }
+
+  public static enum RecoveryMode {
+    NO_RECOVERY,
+    POSITION_BASED_RECOVERY,
   }
 }
