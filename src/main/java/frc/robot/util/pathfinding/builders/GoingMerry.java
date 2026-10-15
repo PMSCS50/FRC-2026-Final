@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
@@ -13,16 +14,23 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.util.pathfinding.commands.ShinFollowPathCommand;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.commands.ShinFollowPathCommand.RecoveryMode;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // *GoingMerry is what builds the pathfinding commands, so its AutoBuilder Minus. Made to interact with ShinPathfindingCommand
 
@@ -497,6 +505,119 @@ public class GoingMerry {
           constraints,
           request.getGoalEndVel());
     }
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
+   * option will be Commands.none()
+   *
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooser() {
+    return buildAutoChooser("");
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project
+   *
+   * @param defaultAutoName The name of the auto that should be the default option. If this is an
+   *     empty string, or if an auto with the given name does not exist, the default option will be
+   *     Commands.none()
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooser(String defaultAutoName) {
+    return buildAutoChooserWithOptionsModifier(defaultAutoName, (stream) -> stream);
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
+   * option will be Commands.none()
+   *
+   * @param optionsModifier A lambda function that can be used to modify the options before they go
+   *     into the AutoChooser
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
+      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
+    return buildAutoChooserWithOptionsModifier("", optionsModifier);
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project
+   *
+   * @param defaultAutoName The name of the auto that should be the default option. If this is an
+   *     empty string, or if an auto with the given name does not exist, the default option will be
+   *     Commands.none()
+   * @param optionsModifier A lambda function that can be used to modify the options before they go
+   *     into the AutoChooser
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
+      String defaultAutoName,
+      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
+    if (!AutoBuilder.isConfigured()) {
+      throw new RuntimeException(
+          "AutoBuilder was not configured before attempting to build an auto chooser");
+    }
+
+    SendableChooser<Command> chooser = new SendableChooser<>();
+    List<String> autoNames = getAllAutoNames();
+
+    PathPlannerAuto defaultOption = null;
+    List<PathPlannerAuto> options = new ArrayList<>();
+
+    for (String autoName : autoNames) {
+      PathPlannerAuto auto = new PathPlannerAuto(autoName);
+
+      if (!defaultAutoName.isEmpty() && defaultAutoName.equals(autoName)) {
+        defaultOption = auto;
+      } else {
+        options.add(auto);
+      }
+    }
+
+    if (defaultOption == null) {
+      chooser.setDefaultOption("None", Commands.none());
+    } else {
+      chooser.setDefaultOption(defaultOption.getName(), defaultOption);
+      chooser.addOption("None", Commands.none());
+    }
+
+    optionsModifier
+        .apply(options.stream())
+        .forEach(auto -> chooser.addOption(auto.getName(), auto));
+
+    return chooser;
+  }
+
+  /**
+   * Get a list of all auto names in the project
+   *
+   * @return List of all auto names
+   */
+  public static List<String> getAllAutoNames() {
+    File[] autoFiles = new File(Filesystem.getDeployDirectory(), "pathplanner/autos").listFiles();
+
+    if (autoFiles == null) {
+      return new ArrayList<>();
+    }
+
+    return Stream.of(autoFiles)
+        .filter(file -> !file.isDirectory())
+        .map(File::getName)
+        .filter(name -> name.endsWith(".auto"))
+        .map(name -> name.substring(0, name.lastIndexOf(".")))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Builds an auto command for the given auto name.
+   *
+   * @param autoName the name of the auto to build
+   * @return an auto command for the given auto name
+   */
+  public static Command buildAuto(String autoName) {
+    return new PathPlannerAuto(autoName);
   }
   
   /**

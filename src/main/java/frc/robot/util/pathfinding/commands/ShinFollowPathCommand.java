@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.util.misc.GeometryUtil;
 import edu.wpi.first.math.filter.Debouncer;
 
 import static edu.wpi.first.units.Units.Seconds;
@@ -179,9 +180,9 @@ public class ShinFollowPathCommand extends Command {
 
     //Recovery mode stuff
     if (recoveryMode == RecoveryMode.DRIVE_TO_POINT_RECOVERY) {
-      double positionError = targetState.pose.getTranslation().getDistance(currentPose.getTranslation())
+      //double positionError = targetState.pose.getTranslation().getDistance(currentPose.getTranslation());
       
-      //double positionError = GeometryUtil.distanceAlongPath(originalPath, currentPose, targetState)
+      double positionError = GeometryUtil.distanceAlongPath(originalPath, currentPose, targetState);
 
       boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.75);
 
