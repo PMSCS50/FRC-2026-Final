@@ -58,8 +58,11 @@ public class Pivot extends SubsystemBase {
         }
 
         Logger.recordOutput("Pivot/Stalled", stalled);
-
         Logger.processInputs("LoggedPivot", inputs);
+
+        if (io instanceof PivotIOSim) {
+            Logger.recordOutput("Pivot/Visual", ((PivotIOSim) io).pivotVisual);
+        }
     }
 
     // *Getters? Revealers? API?
