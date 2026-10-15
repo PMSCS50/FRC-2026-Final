@@ -184,7 +184,8 @@ public class ShinFollowPathCommand extends Command {
       
       double positionError = GeometryUtil.distanceAlongPath(originalPath, currentPose, targetState);
 
-      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.75);
+      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.75) 
+                              && timer.get() >= 0.5;
 
       if (shouldRecover && !isRecoveryMode) {
           timer.stop();
