@@ -100,6 +100,7 @@ public class PivotIOSim implements PivotIO {
 
         Logger.recordOutput("Pivot/Sim/Position", inputs.motorPosition);
         Logger.recordOutput("Pivot/Sim/Setpoint", setpoint);
+        Logger.recordOutput("Pivot/Visual", pivotVisual);
 
     }
 }

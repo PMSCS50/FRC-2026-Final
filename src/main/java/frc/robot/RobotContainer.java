@@ -221,9 +221,9 @@ public class RobotContainer {
         // *POV Controls
 
         //Testing subsystems in sim
-        driverController.x().whileTrue(new RunCommand(() -> elevator.goToPosition(20.0)));
-        driverController.a().whileTrue(new RunCommand(() -> wrist.setDutyCycle(0.3)));
-        driverController.y().whileTrue(Commands.runOnce(() -> pivot.setPivotAngle(1.5)));
+        driverController.x().whileTrue(Commands.runOnce(() -> shooter.rpsControl(1.0)));
+        driverController.a().whileTrue(Commands.runOnce(() -> shooter.stop()));
+        driverController.y().whileTrue(Commands.runOnce(() -> shooter.rpsControl(4.0)));
 
 
         //driverController.povUp()
