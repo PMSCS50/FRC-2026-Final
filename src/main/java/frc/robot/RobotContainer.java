@@ -79,7 +79,9 @@ public class RobotContainer {
     private final Shooter shooter;
     private final Intake intake;
     private final Pivot pivot;
+    @SuppressWarnings("unused")
     private final Elevator elevator;
+    @SuppressWarnings("unused")
     private final Wrist wrist;
     @SuppressWarnings("unused")
     private final ArmPivot armPivot;

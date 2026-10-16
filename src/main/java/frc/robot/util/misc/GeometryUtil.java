@@ -15,9 +15,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-
 
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
@@ -278,44 +275,4 @@ public class GeometryUtil {
     return createFlatPosesFromArea(areaA);
   }
 
-  /**
-   * Finds the distance between the current pose and the given point across a PathPlannerPath
-   * <br>
-   * <b>This really shouldnt be in GeometryUtil, I will make a PathUtil class later</b>
-   * 
-   * @param path The PathPlannerPath being followed 
-   * @param pose The robot's current pose
-   * @param wrp The waypoint-relative pose of the target pose
-   * 
-   * @return The distance along the path between the two points
-   */
-  public static double distanceAlongPath(
-          PathPlannerPath path,
-          Pose2d pose,
-          PathPlannerTrajectoryState state) {
-
-      double currentMinDist = Double.MAX_VALUE;
-      double targetMinDist = Double.MAX_VALUE;
-
-      double currentDistance = 0.0;
-      double targetDistance = 0.0;
-
-      for (PathPoint p : path.getAllPathPoints()) {
-          double currentDist = p.position.getDistance(pose.getTranslation());
-
-          if (currentDist < currentMinDist) {
-              currentMinDist = currentDist;
-              currentDistance = p.distanceAlongPath;
-          }
-
-          double targetDist = p.position.getDistance(state.pose.getTranslation());
-
-          if (targetDist < targetMinDist) {
-              targetMinDist = targetDist;
-              targetDistance = p.distanceAlongPath;
-          }
-      }
-
-      return targetDistance - currentDistance;
-  }
 }
