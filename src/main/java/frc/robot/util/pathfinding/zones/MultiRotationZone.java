@@ -12,7 +12,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.util.Zone;
-import frc.robot.util.pathfinding.util.Utils;
+import frc.robot.util.pathfinding.util.PathUtil;
 
 /**
  * // *A zone where the robot holds a fixed chassis heading throughout, and chooses the rotation that requires the least turning
@@ -52,7 +52,7 @@ public class MultiRotationZone extends PathZone {
 
     @Override
     public List<RotationTarget> createRotationTargets(double entry, double exit) { 
-        Rotation2d rotation = getClosestRotation(Utils.getPreviousRotation(entry));
+        Rotation2d rotation = getClosestRotation(PathUtil.getPreviousRotation(entry));
         RotationTarget rt1 = new RotationTarget(entry, rotation);
         RotationTarget rt2 = new RotationTarget(entry, rotation);
         return List.of(rt1, rt2);

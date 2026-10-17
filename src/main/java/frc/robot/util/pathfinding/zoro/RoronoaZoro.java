@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.util.pathfinding.zones.*;
-import frc.robot.util.pathfinding.util.Utils;
+import frc.robot.util.pathfinding.util.PathUtil;
 
 
 import java.io.BufferedReader;
@@ -894,7 +894,7 @@ public class RoronoaZoro implements ShinPathfinder {
     List<PathZone> activeZones = ZoneManager.getActiveZones();
 
     // Initialize zone context
-    Utils.setPathInfo(basePath, requestRealStartRot);
+    PathUtil.setPathInfo(basePath, requestRealStartRot);
 
     // Since the rotation component of the stops was never injected into the path,
     // we have to artificially create rotation targets at those points.

@@ -11,16 +11,16 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
-public class Utils {
+public final class PathUtil {
 
     private static PathPlannerPath basePath;
     private static Rotation2d startRotation;
 
-    private Utils() {}
+    private PathUtil() {}
 
     public static void setPathInfo(PathPlannerPath basePath, Rotation2d startRotation) {
-        Utils.basePath = basePath;
-        Utils.startRotation = startRotation;
+        PathUtil.basePath = basePath;
+        PathUtil.startRotation = startRotation;
     }
     
     /**
