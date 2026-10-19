@@ -35,6 +35,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.util.pathfinding.builders.GoingMerry;
+import frc.robot.util.pathfinding.commands.ShinFollowPathCommand;
 import frc.robot.util.simulation.MapleSimSwerveDrivetrain;
 import limelight.networktables.Orientation3d;
 import limelight.networktables.AngularVelocity3d;
@@ -256,9 +257,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
             GoingMerry.configure(
                 this::getPose,   // Supplier of current robot pose
-                this::resetPose, // Consumer for seeding pose against auto
                 this::getSpeeds, // Supplier of current robot speeds
-
                 (speeds, feedforwards) -> {
                     setControl(
                         m_pathApplyRobotSpeeds.withSpeeds(speeds)
@@ -266,10 +265,32 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                             .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     );
                 },
-
-                DriveConstants.driveController,
+                DriveConstants.pathController,
                 config,
                 // *Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                this // Subsystem for requirements
+            );
+
+            AutoBuilder.configureCustom(
+                (path) -> new ShinFollowPathCommand(
+                    path,
+                    this::getPose,
+                    this::getSpeeds,
+                    (speeds, feedforwards) -> {
+                        setControl(
+                            m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                                .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                                .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                        );
+                    },
+                    DriveConstants.pathController,
+                    config,
+                    () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                    this
+                ),
+                this::getPose,
+                this::resetPose,
                 () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
                 this // Subsystem for requirements
             );

@@ -67,7 +67,7 @@ public final class Constants {
     public static final SwerveRequest.RobotCentric robotCentric = new SwerveRequest.RobotCentric()
             .withDriveRequestType(DriveRequestType.Velocity);
 
-    public static final PPHolonomicDriveController driveController =
+    public static final PPHolonomicDriveController pathController =
       new PPHolonomicDriveController(
           // *PID constants for translation
           //Lightened from 8.0 for sharp turns

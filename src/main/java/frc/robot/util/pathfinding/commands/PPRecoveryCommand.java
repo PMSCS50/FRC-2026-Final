@@ -28,7 +28,7 @@ public class PPRecoveryCommand extends Command{
     
     public Subsystem[] driveSubsystems;
     public final PathPlannerTrajectoryState endState;
-    private PathFollowingController driveController = GoingMerry.getController();
+    private PathFollowingController pathController = GoingMerry.getController();
 
     private final Trigger endTrigger;
     private final Trigger endTriggerDebounced;
@@ -90,7 +90,7 @@ public class PPRecoveryCommand extends Command{
 
         Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
 
-        ChassisSpeeds targetSpeeds = driveController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
+        ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
         GoingMerry.getOutput().accept(targetSpeeds, DriveFeedforwards.zeros(4));
         
         ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
