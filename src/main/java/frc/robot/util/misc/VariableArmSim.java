@@ -48,7 +48,7 @@ public class VariableArmSim extends SingleJointedArmSim {
         double currentLength = m_lengthSupplier.getAsDouble();
         double currentAngleRad = currentX.get(0, 0); 
 
-        double dynamicMOI = SingleJointedArmSim.estimateMOI(currentLength, m_armMassKg); 
+        double dynamicMOI = calculateMOI(m_lengthSupplier.getAsDouble());
         double gravityTorque = m_armMassKg * 9.80665 * (currentLength / 2.0) * Math.cos(currentAngleRad); 
         double accelerationFromGravity = gravityTorque / dynamicMOI;
 
@@ -60,6 +60,6 @@ public class VariableArmSim extends SingleJointedArmSim {
     }
 
     private double calculateMOI(double length) {
-        return (1.0/3.0) * m1 * l1 * l1 + (1.0/12.0) * m2 * l2 * l2 + m2 * (length - l2 / 2.0) * (length - l2 / 2.0);
+        return (1.0/3.0)*m1*l1*l1 + (1.0/3.0)*m2*l2*l2 + m2*((length - l3)/2)*((length-l3)/2) + (1.0/3.0)*m3*l3*l3 + m3*(length-l3)*(length-l3);
     }
 }
