@@ -20,6 +20,12 @@ public class ArmPivot extends SubsystemBase {
 
     }
 
+    @Override
+    public void simulationPeriodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("LoggedPivot (Arm)", inputs);
+    }
+
     public void goToPosition(double positionDeg) {
         io.setMotionMagicPosition(Math.toRadians(positionDeg));
     }

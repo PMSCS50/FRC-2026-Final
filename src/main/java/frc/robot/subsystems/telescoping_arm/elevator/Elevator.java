@@ -24,6 +24,10 @@ public class Elevator extends SubsystemBase {
         io.setMotionMagicPosition(positionMeters);
     }
 
+    public double getPositionMeters() {
+        return inputs.extension;
+    }
+
     public void setNeutralMode(NeutralModeValue neutralMode) {
         io.setNeutralMode(neutralMode);
     }
