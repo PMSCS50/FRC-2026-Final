@@ -157,7 +157,7 @@ public class RobotContainer {
         monkeyDLuffy.addMultiRotationZone("TrenchTR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         
         // *Configuring
-        autoChooser = AutoBuilder.buildAutoChooser("Left 1x + Climb");
+        autoChooser = AutoBuilder.buildAutoChooser("Comp Right 1x + OOW");
         SmartDashboard.putData("Auto Mode", autoChooser);
         configureBindings();
     }

@@ -22,7 +22,7 @@ import frc.robot.util.pathfinding.util.PathUtil;
 
 // * Modified Drive to Point Command that smoothly follows a path to a certain PPTrajState
 // * Can be used to smoothly get back on the path if temporarily beached.
-public class PPRecoveryCommand extends Command{
+public class PPRecoveryCommand extends Command {
     
     public Subsystem[] driveSubsystems;
     public final PathPlannerTrajectoryState endState;
@@ -65,9 +65,7 @@ public class PPRecoveryCommand extends Command{
                 velocityError <= 0.3;
 
             Logger.recordOutput("Pathmaster/recovery ended/at state", atState);
-            Logger.recordOutput("Pathmaster/recovery ended/speed", speed);
-            Logger.recordOutput("Pathmaster/recovery ended/v_Error", velocityError);
-
+            Logger.recordOutput("Pathmaster/recovery ended/rotation", rotation);
             return atState && rotation;
 
             }
@@ -83,6 +81,7 @@ public class PPRecoveryCommand extends Command{
         Logger.recordOutput("Drive/DriveToPointReached", false);
         PPLogging.logTargetPose(endState.pose);
         PPLibTelemetry.setTargetPose(endState.pose);
+        pathController.reset(GoingMerry.getCurrentPose(), GoingMerry.getCurrentSpeeds());
 
         PathPlannerAuto.currentPathName = "Recovery";
     }
@@ -93,7 +92,7 @@ public class PPRecoveryCommand extends Command{
         Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
 
         ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
-        GoingMerry.getOutput().accept(targetSpeeds.times(5), DriveFeedforwards.zeros(4));
+        GoingMerry.getOutput().accept(targetSpeeds, DriveFeedforwards.zeros(4));
         
         ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
 
