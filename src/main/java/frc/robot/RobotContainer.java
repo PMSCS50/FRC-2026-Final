@@ -127,7 +127,7 @@ public class RobotContainer {
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
         elevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
         wrist = new Wrist(RobotBase.isReal() ? new WristIOReal() : new WristIOSim());
-        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim());
+        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim(() -> elevator.getPositionMeters()));
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));

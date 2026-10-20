@@ -2,13 +2,19 @@ package frc.robot.subsystems.telescoping_arm.pivot;
 
 import static edu.wpi.first.units.Units.Amps;
 
+import java.util.function.DoubleSupplier;
+
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
+
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.robot.util.misc.VariableArmSim;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.Constants.ArmConstants;
 
@@ -17,18 +23,23 @@ public class ArmPivotIOSim implements ArmPivotIO {
     private final PIDController pivotController;
     private boolean motionMagic = false;
     private double setpoint = 0.0;
-    
 
-    private final SingleJointedArmSim pivotSim;
+    private final DoubleSupplier elevatorPositionMeters;
 
-    public ArmPivotIOSim() {
+    private final VariableArmSim pivotSim;
+    public final LoggedMechanism2d armPivotVisual = new LoggedMechanism2d(3, 3);
+    private final LoggedMechanismRoot2d armPivotRoot = armPivotVisual.getRoot("Pivot", 1.5, 0.5);
+    private final LoggedMechanismLigament2d armPivotLigament = new LoggedMechanismLigament2d("PivotArm", 1.0, 90);
+
+    public ArmPivotIOSim(DoubleSupplier elevatorPositionMeters) {
+        this.elevatorPositionMeters = elevatorPositionMeters;
         pivotController = new PIDController(3.0, 0.0, 0.02);
 
-        pivotSim = new SingleJointedArmSim(
+        pivotSim = new VariableArmSim(
             DCMotor.getKrakenX60(3),
             ArmConstants.pivotGearing, // gear ratio
             1, // moment of inertia
-            Units.inchesToMeters(30), // arm length
+            elevatorPositionMeters, // arm length
             0, // smallest angle
             110, // largest angle
             true,   // simulate gravity

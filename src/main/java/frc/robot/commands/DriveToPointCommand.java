@@ -27,7 +27,7 @@ public class DriveToPointCommand extends Command{
     
     public CommandSwerveDrivetrain drivetrain;
     public final Pose2d goalPose;
-    private PPHolonomicDriveController driveController = DriveConstants.driveController;
+    private PPHolonomicDriveController pathController = DriveConstants.pathController;
 
     private final Trigger endTrigger;
     private final Trigger endTriggerDebounced;
@@ -78,7 +78,7 @@ public class DriveToPointCommand extends Command{
 
         Logger.recordOutput("Drive/DriveToPointReached", endTrigger.getAsBoolean());
 
-        ChassisSpeeds targetSpeeds = driveController.calculateRobotRelativeSpeeds(drivetrain.getPose(), goalState);
+        ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(drivetrain.getPose(), goalState);
         drivetrain.runVelocity(targetSpeeds);
         
         ChassisSpeeds currentSpeeds = drivetrain.getSpeeds();
