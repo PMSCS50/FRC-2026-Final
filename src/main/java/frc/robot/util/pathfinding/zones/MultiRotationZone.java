@@ -33,7 +33,7 @@ public class MultiRotationZone extends PathZone {
         this.rotations = rotations;
     }
 
-    public Rotation2d getClosestRotation(Rotation2d lastRotation) {
+    private Rotation2d getClosestRotation(Rotation2d lastRotation) {
 
         double minDifference = Double.MAX_VALUE;
         Rotation2d bestRotation = Rotation2d.kZero;

@@ -24,12 +24,12 @@ public final class PathUtil {
     }
     
     /**
-     * Finds the distance between the current pose and the given point across a PathPlannerPath
+     * Finds the distance between the current pose and the given state across a PathPlannerPath
      * <br>
      * 
      * @param path The PathPlannerPath being followed 
      * @param pose The robot's current pose
-     * @param wrp The waypoint-relative pose of the target pose
+     * @param state The goal trajectory state
      * 
      * @return The distance along the path between the two points
      */
