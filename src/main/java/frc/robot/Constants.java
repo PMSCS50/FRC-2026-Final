@@ -260,6 +260,8 @@ public final class Constants {
 
     public static final double pivotGearing = (64.0 / 12.0) * (36.0 / 18.0) * (58.0 / 14.0);
 
+    public static final double[] armMasses = new double[] {4, 4, 5.6};
+    public static final double[] armLengths = new double[] {3, 3, 4};
   }
 
   // *Field

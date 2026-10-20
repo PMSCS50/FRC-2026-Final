@@ -21,7 +21,6 @@ public class Intaking extends Command {
 
     @Override
     public void execute() {
-        intake.runPID(.2);
         
     }
 

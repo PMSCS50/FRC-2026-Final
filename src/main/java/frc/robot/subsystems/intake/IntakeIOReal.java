@@ -6,6 +6,8 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -19,6 +21,8 @@ public class IntakeIOReal implements IntakeIO {
     private final SparkMax motor = new SparkMax(IntakeConstants.intakeMotorCanId, MotorType.kBrushless);
     private final RelativeEncoder encoder = motor.getEncoder();
     private final SparkMaxConfig motorConfig = new SparkMaxConfig();
+
+    public final SparkClosedLoopController intakeClosedLoopController;
 
     public IntakeIOReal() {
         motorConfig
@@ -34,6 +38,7 @@ public class IntakeIOReal implements IntakeIO {
                 .outputRange(-.95, .95).feedForward.kV(.6); // current value = .00017618
 
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        intakeClosedLoopController = motor.getClosedLoopController();
     }
 
     @Override
@@ -45,10 +50,14 @@ public class IntakeIOReal implements IntakeIO {
         motor.setVoltage(volts);
     }
 
+    public void runPID(double percent) {
+        double targetRPM = percent * 5676;
+        intakeClosedLoopController.setSetpoint(targetRPM, ControlType.kVelocity);    
+    }
+
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
         inputs.motorVoltage = motor.getBusVoltage();
         inputs.motorVelocity = encoder.getVelocity();
-
     }
 }

@@ -16,13 +16,8 @@ public class VariableArmSim extends SingleJointedArmSim {
     private final DCMotor m_gearbox;
     private final double m_gearing;
 
-    private final double m1;
-    private final double m2;
-    private final double m3;
-
-    private final double l1;
-    private final double l2;
-    private final double l3;
+    private final double[] masses;
+    private final double[] lengths;
 
     public VariableArmSim(double armMassKg, double[] masses, double[] lengths, DCMotor gearbox, double gearing, double startingMOI, DoubleSupplier lengthSupplier, double minAngle, double maxAngle) {
         // Pass a default fallback length to the super constructor
@@ -34,13 +29,8 @@ public class VariableArmSim extends SingleJointedArmSim {
         this.m_armMassKg = armMassKg;
         this.m_gearing = gearing;
 
-        this.m1 = masses[0];
-        this.m2 = masses[1];
-        this.m3 = masses[2];
-
-        this.l1 = lengths[0];
-        this.l2 = lengths[1];
-        this.l3 = lengths[2];
+        this.masses = masses;
+        this.lengths = lengths;
     }
 
     @Override
@@ -48,7 +38,7 @@ public class VariableArmSim extends SingleJointedArmSim {
         double currentLength = m_lengthSupplier.getAsDouble();
         double currentAngleRad = currentX.get(0, 0); 
 
-        double dynamicMOI = calculateMOI(m_lengthSupplier.getAsDouble());
+        double dynamicMOI = VariableArmSim.calculateMOI(m_lengthSupplier.getAsDouble(), masses, lengths);
         double gravityTorque = m_armMassKg * 9.80665 * (currentLength / 2.0) * Math.cos(currentAngleRad); 
         double accelerationFromGravity = gravityTorque / dynamicMOI;
 
@@ -59,7 +49,15 @@ public class VariableArmSim extends SingleJointedArmSim {
         return currentX.plus(xDot.times(dtSeconds));
     }
 
-    private double calculateMOI(double length) {
+    public static double calculateMOI(double length, double[] masses, double[] lengths) {
+        double m1 = masses[0];
+        double m2 = masses[1];
+        double m3 = masses[2];
+
+        double l1 = lengths[0];
+        double l2 = lengths[1];
+        double l3 = lengths[2];
+
         return (1.0/3.0)*m1*l1*l1 + (1.0/3.0)*m2*l2*l2 + m2*((length - l3)/2)*((length-l3)/2) + (1.0/3.0)*m3*l3*l3 + m3*(length-l3)*(length-l3);
     }
 }

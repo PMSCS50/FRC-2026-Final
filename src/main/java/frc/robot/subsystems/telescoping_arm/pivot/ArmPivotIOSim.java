@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.util.misc.VariableArmSim;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.Constants.ArmConstants;
+import frc.robot.subsystems.telescoping_arm.ArmCommands;
 
 public class ArmPivotIOSim implements ArmPivotIO {
 
@@ -36,14 +37,15 @@ public class ArmPivotIOSim implements ArmPivotIO {
         pivotController = new PIDController(3.0, 0.0, 0.02);
 
         pivotSim = new VariableArmSim(
+            13.6,
+            ArmConstants.armMasses,
+            ArmConstants.armLengths,
             DCMotor.getKrakenX60(3),
             ArmConstants.pivotGearing, // gear ratio
-            1, // moment of inertia
+            VariableArmSim.calculateMOI(elevatorPositionMeters.getAsDouble(), ArmConstants.armMasses, ArmConstants.armLengths), // moment of inertia
             elevatorPositionMeters, // arm length
             0, // smallest angle
-            110, // largest angle
-            true,   // simulate gravity
-            0     // starting angle
+            110
         );
     }
 

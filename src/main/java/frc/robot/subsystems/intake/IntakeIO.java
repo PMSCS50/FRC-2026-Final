@@ -10,8 +10,7 @@ public interface IntakeIO {
     }
 
     public void updateInputs(IntakeIOInputs inputs);
-
     public void setVoltage(double volts);
-
     public void registerMotors();
+    public void runPID(double percent);
 }

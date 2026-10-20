@@ -27,6 +27,10 @@ public class IntakeIOSim implements IntakeIO {
         VirtualPD.registerMotor(() -> Amps.of(sim.getCurrentDrawAmps()), "Intake");
     }
 
+    public void runPID(double percent) {
+        return;
+    }
+
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
         sim.setInputVoltage(appliedVolts);

@@ -2,6 +2,8 @@ package frc.robot.subsystems.intake;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.revrobotics.spark.SparkBase.ControlType;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -39,8 +41,7 @@ public class Intake extends SubsystemBase {
 
     public void runPID(double percent) {
         targetRPM = percent * 5676;
-        double voltage = pid.calculate(inputs.motorVelocity, targetRPM);
-        io.setVoltage(voltage);
+        io.runPID(percent);
     }
 
     // getters

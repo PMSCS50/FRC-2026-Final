@@ -677,6 +677,10 @@ public class TunableControls {
         public void reset() {
             pidController.reset();
         }
+
+        public double[] getPID() {
+            return new double[] {pidController.getP(), pidController.getI(), pidController.getD()};
+        }
     }
 
     /**
