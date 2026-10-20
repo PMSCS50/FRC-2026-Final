@@ -14,7 +14,6 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
@@ -24,21 +23,18 @@ import frc.robot.util.pathfinding.util.PathUtil;
 // * Can be used to smoothly get back on the path if temporarily beached.
 public class PPRecoveryCommand extends Command {
     
-    public Subsystem[] driveSubsystems;
-    public final PathPlannerTrajectoryState endState;
+    private final PathPlannerTrajectoryState endState;
     private PathFollowingController pathController;
 
     private final Trigger endTrigger;
 
     private PPRecoveryCommand(PathPlannerPath ogPath, PathPlannerTrajectoryState endState) {
-        this.driveSubsystems = GoingMerry.getDriveRequirements();
+
         this.endState = endState;
 
         this.pathController = new PPHolonomicDriveController(
-            new PIDConstants(4, 0, 0.04),
-            new PIDConstants(2, 0, 0.02));
-
-        //addRequirements(driveSubsystems);
+            new PIDConstants(1.45, 0, 0.01),
+            new PIDConstants(1, 0, 0));
 
         endTrigger = new Trigger(() -> {
 
@@ -48,21 +44,6 @@ public class PPRecoveryCommand extends Command {
                 endState.pose.getRotation().getDegrees(),
                 GoingMerry.getCurrentPose().getRotation().getDegrees(), 
                 10);
-
-            ChassisSpeeds currentFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                GoingMerry.getCurrentSpeeds(),
-                GoingMerry.getCurrentPose().getRotation()
-            );
-
-            ChassisSpeeds targetVelocity = endState.fieldSpeeds;
-
-            double velocityError = Math.hypot(
-                    currentFieldSpeeds.vxMetersPerSecond - targetVelocity.vxMetersPerSecond,
-                    currentFieldSpeeds.vyMetersPerSecond - targetVelocity.vyMetersPerSecond
-                );
-
-            boolean speed =
-                velocityError <= 0.3;
 
             Logger.recordOutput("Pathmaster/recovery ended/at state", atState);
             Logger.recordOutput("Pathmaster/recovery ended/rotation", rotation);

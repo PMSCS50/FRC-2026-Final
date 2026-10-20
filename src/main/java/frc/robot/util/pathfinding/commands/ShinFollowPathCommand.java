@@ -11,7 +11,6 @@ import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
-import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -23,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.util.PathUtil;
 import edu.wpi.first.math.filter.Debouncer;
+import frc.robot.util.pathfinding.builders.GoingMerry.RecoveryMode;
+import frc.robot.util.pathfinding.telemetry.PPLogging;
 
 import static edu.wpi.first.units.Units.Seconds;
 
@@ -152,7 +153,7 @@ public class ShinFollowPathCommand extends Command {
     PathPlannerAuto.setCurrentTrajectory(trajectory);
     PathPlannerAuto.currentPathName = originalPath.name;
 
-    PathPlannerLogging.logActivePath(path);
+    PPLogging.logActivePath(path);
     PPLibTelemetry.setCurrentPath(path);
 
     eventScheduler.initialize(trajectory);
@@ -177,6 +178,9 @@ public class ShinFollowPathCommand extends Command {
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
+
+    PPLogging.logCurrentPose(currentPose);
+    PPLibTelemetry.setCurrentPose(currentPose);
 
     //Recovery mode stuff
     if (recoveryMode == RecoveryMode.DRIVE_TO_POINT_RECOVERY) {
@@ -240,10 +244,16 @@ public class ShinFollowPathCommand extends Command {
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
 
     PPLibTelemetry.setCurrentPose(currentPose);
-    PathPlannerLogging.logCurrentPose(currentPose);
+    PPLogging.logCurrentPose(currentPose);
 
     PPLibTelemetry.setTargetPose(targetState.pose);
-    PathPlannerLogging.logTargetPose(targetState.pose);
+    PPLogging.logTargetPose(targetState.pose);
+
+    PPLogging.logVelocities(
+        currentVel,
+        targetState.linearVelocity,
+        currentSpeeds.omegaRadiansPerSecond,
+        targetSpeeds.omegaRadiansPerSecond);
 
     PPLibTelemetry.setVelocities(
         currentVel,
@@ -290,7 +300,7 @@ public class ShinFollowPathCommand extends Command {
       output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
     }
 
-    PathPlannerLogging.logActivePath(null);
+    PPLogging.logActivePath(null);
 
     eventScheduler.end();
   }
@@ -331,10 +341,5 @@ public class ShinFollowPathCommand extends Command {
 
   public static void setRecoveryMode(RecoveryMode rMode) {
     recoveryMode = rMode;
-  }
-
-  public static enum RecoveryMode {
-    NO_RECOVERY,
-    DRIVE_TO_POINT_RECOVERY,
   }
 }
