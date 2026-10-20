@@ -22,7 +22,7 @@ public class VariableArmSim extends SingleJointedArmSim {
     public VariableArmSim(double armMassKg, double[] masses, double[] lengths, DCMotor gearbox, double gearing, double startingMOI, DoubleSupplier lengthSupplier, double minAngle, double maxAngle) {
         // Pass a default fallback length to the super constructor
         super(LinearSystemId.createSingleJointedArmSystem(gearbox, armMassKg, gearing), 
-            gearbox, gearing, lengthSupplier.getAsDouble(), minAngle, maxAngle, false, maxAngle, null); 
+            gearbox, gearing, lengthSupplier.getAsDouble(), minAngle, maxAngle, false, maxAngle, new double[] {0, 0}); 
         
         this.m_lengthSupplier = lengthSupplier;
         this.m_gearbox = gearbox;
