@@ -83,7 +83,7 @@ public final class Constants {
     //Copied from 4915 Spartronics. Their Post Path Precise Alignment is far better than ours
     public static final Rotation2d kRotationTolerance = Rotation2d.fromDegrees(1.0);
     public static final Distance kPositionTolerance = Centimeter.of(1.0);
-    public static final LinearVelocity kSpeedTolerance = InchesPerSecond.of(2);
+    public static final LinearVelocity kSpeedTolerance = MetersPerSecond.of(0.3);
 
     public static final Time kEndTriggerDebounce = Seconds.of(0.04);
 

@@ -1,13 +1,10 @@
 package frc.robot.util.pathfinding.commands;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Seconds;
-
 import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforwards;
@@ -15,14 +12,13 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
+import frc.robot.util.pathfinding.util.PathUtil;
 
 // * Modified Drive to Point Command that smoothly follows a path to a certain PPTrajState
 // * Can be used to smoothly get back on the path if temporarily beached.
@@ -30,33 +26,28 @@ public class PPRecoveryCommand extends Command{
     
     public Subsystem[] driveSubsystems;
     public final PathPlannerTrajectoryState endState;
-    private PathFollowingController pathController = GoingMerry.getController();
+    private PathFollowingController pathController;
 
     private final Trigger endTrigger;
-    private final Trigger endTriggerDebounced;
 
-    private PPRecoveryCommand(PathPlannerTrajectoryState endState) {
+    private PPRecoveryCommand(PathPlannerPath ogPath, PathPlannerTrajectoryState endState) {
         this.driveSubsystems = GoingMerry.getDriveRequirements();
         this.endState = endState;
 
-        this.driveController = new PPHolonomicDriveController(
-            new PIDConstants(4, 0, 0),
-            new PIDConstants(2, 0, 0));
+        this.pathController = new PPHolonomicDriveController(
+            new PIDConstants(4, 0, 0.04),
+            new PIDConstants(2, 0, 0.02));
 
         //addRequirements(driveSubsystems);
 
         endTrigger = new Trigger(() -> {
-            Pose2d diff = GoingMerry.getCurrentPose().relativeTo(endState.pose);
+
+            boolean atState = PathUtil.distanceAlongPath(ogPath, GoingMerry.getCurrentPose(), endState) <= 0.2;
 
             boolean rotation = MathUtil.isNear(
-                0.0, 
-                diff.getRotation().getRotations(), 
-                DriveConstants.kRotationTolerance.getRotations(), 
-                0.0, 
-                1.0
-            );
-
-            boolean position = diff.getTranslation().getNorm() < DriveConstants.kPositionTolerance.in(Meters);
+                endState.pose.getRotation().getDegrees(),
+                GoingMerry.getCurrentPose().getRotation().getDegrees(), 
+                10);
 
             ChassisSpeeds currentFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
                 GoingMerry.getCurrentSpeeds(),
@@ -65,21 +56,26 @@ public class PPRecoveryCommand extends Command{
 
             ChassisSpeeds targetVelocity = endState.fieldSpeeds;
 
-            boolean speed =
-                Math.hypot(
+            double velocityError = Math.hypot(
                     currentFieldSpeeds.vxMetersPerSecond - targetVelocity.vxMetersPerSecond,
                     currentFieldSpeeds.vyMetersPerSecond - targetVelocity.vyMetersPerSecond
-                ) < DriveConstants.kSpeedTolerance.in(MetersPerSecond);
+                );
 
-            return rotation && position && speed;
+            boolean speed =
+                velocityError <= 0.3;
+
+            Logger.recordOutput("Pathmaster/recovery ended/at state", atState);
+            Logger.recordOutput("Pathmaster/recovery ended/speed", speed);
+            Logger.recordOutput("Pathmaster/recovery ended/v_Error", velocityError);
+
+            return atState && rotation;
+
             }
         );
-
-        endTriggerDebounced = endTrigger.debounce(DriveConstants.kEndTriggerDebounce.in(Seconds));
     }
 
-    public static Command generateCommand(PathPlannerTrajectoryState endState){
-        return new PPRecoveryCommand(endState);
+    public static Command generateCommand(PathPlannerPath ogPath, PathPlannerTrajectoryState endState){
+        return new PPRecoveryCommand(ogPath, endState);
     }
 
     @Override
@@ -97,7 +93,7 @@ public class PPRecoveryCommand extends Command{
         Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
 
         ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
-        GoingMerry.getOutput().accept(targetSpeeds, DriveFeedforwards.zeros(4));
+        GoingMerry.getOutput().accept(targetSpeeds.times(5), DriveFeedforwards.zeros(4));
         
         ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
 
@@ -119,7 +115,7 @@ public class PPRecoveryCommand extends Command{
 
     @Override
     public boolean isFinished() {
-        return endTriggerDebounced.getAsBoolean();
+        return endTrigger.getAsBoolean();
     }
 
     @Override

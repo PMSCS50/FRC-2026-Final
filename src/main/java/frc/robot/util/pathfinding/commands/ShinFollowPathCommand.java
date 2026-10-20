@@ -50,7 +50,7 @@ public class ShinFollowPathCommand extends Command {
   //Path recovery backup if the robot gets beached
   private final Debouncer fallenBehindPathDebouncer = new Debouncer(0.3);
   private boolean isRecoveryMode = false;
-  private static RecoveryMode recoveryMode = RecoveryMode.NO_RECOVERY;
+  private static RecoveryMode recoveryMode = RecoveryMode.DRIVE_TO_POINT_RECOVERY;
   private Command recoveryCommand = Commands.none();
   private final Timer recoveryTimer = new Timer();
   private Time recoveryTimeout = Seconds.of(7.0);
@@ -182,7 +182,7 @@ public class ShinFollowPathCommand extends Command {
     if (recoveryMode == RecoveryMode.DRIVE_TO_POINT_RECOVERY) {
       //double positionError = targetState.pose.getTranslation().getDistance(currentPose.getTranslation());
       
-      double positionError = PathUtil.distanceAlongPath(originalPath, currentPose, targetState);
+      double positionError = PathUtil.distanceAlongPath(path, currentPose, targetState);
 
       boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.75 && timer.get() >= 0.5);
 
@@ -193,7 +193,7 @@ public class ShinFollowPathCommand extends Command {
           recoveryTimer.reset();
           recoveryTimer.start();
 
-          recoveryCommand = PPRecoveryCommand.generateCommand(targetState);
+          recoveryCommand = PPRecoveryCommand.generateCommand(path, targetState);
           recoveryCommand.initialize();
       }
 
