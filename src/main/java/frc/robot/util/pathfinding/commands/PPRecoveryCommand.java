@@ -6,7 +6,9 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
+import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -36,6 +38,10 @@ public class PPRecoveryCommand extends Command{
     private PPRecoveryCommand(PathPlannerTrajectoryState endState) {
         this.driveSubsystems = GoingMerry.getDriveRequirements();
         this.endState = endState;
+
+        this.driveController = new PPHolonomicDriveController(
+            new PIDConstants(4, 0, 0),
+            new PIDConstants(2, 0, 0));
 
         //addRequirements(driveSubsystems);
 
