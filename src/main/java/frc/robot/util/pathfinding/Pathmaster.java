@@ -50,13 +50,7 @@ public class Pathmaster {
             double omegamax, 
             double alphamax) {
 
-        this.drivetrain = drivetrain;
-        this.constraints = new PathConstraints(vmax, amax, omegamax, alphamax);
-        this.robotPose = GoingMerry::getCurrentPose;
-
-        this.selectedWaypointIndex = 0;
-
-        createLoggingCallbacks();
+        this(drivetrain, vmax, amax, omegamax, alphamax, 12);
     }
 
     public Pathmaster(

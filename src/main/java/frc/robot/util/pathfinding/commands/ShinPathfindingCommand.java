@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;
+import frc.robot.util.misc.FieldUtil;
 import frc.robot.util.pathfinding.events.EventSupervisor;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 
@@ -683,7 +684,7 @@ public class ShinPathfindingCommand extends Command {
    */
   public static Command warmupCommand() {
     return new ShinPathfindingCommand(
-            new Pose2d(15.0, 4.0, Rotation2d.k180deg),
+            FieldUtil.allianceRelativePose(new Pose2d(3.0, 3.0, Rotation2d.k180deg)),
             new PathConstraints(4, 3, 4, 4),
             () -> new Pose2d(1.5, 4, Rotation2d.kZero),
             ChassisSpeeds::new,

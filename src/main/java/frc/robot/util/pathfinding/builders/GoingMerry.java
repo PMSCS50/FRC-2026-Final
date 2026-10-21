@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.util.pathfinding.commands.ShinFollowPathCommand;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
+import frc.robot.util.pathfinding.util.RecoveryType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -632,13 +633,8 @@ public class GoingMerry {
     return globals.isHolonomic;
   }
 
-  public static void togglePathRecovery() {
-    ShinFollowPathCommand.setRecoveryMode(RecoveryMode.DRIVE_TO_POINT_RECOVERY);
-  }
-
-  public static enum RecoveryMode {
-    NO_RECOVERY,
-    DRIVE_TO_POINT_RECOVERY,
+  public static void setPathRecovery(RecoveryType type) {
+    ShinFollowPathCommand.setRecoveryType(type);
   }
 
   
