@@ -50,9 +50,7 @@ public class WristIOSim implements WristIO {
 
         inputs.position = wristSim.getAngleRads();
         inputs.velocity = wristSim.getVelocityRadPerSec();
-        inputs.acceleration = 0.0; //sim does not expose accel
-        inputs.appliedVoltage = appliedVolts;
-
+        
         if (motionMagic) {
             double volts = MathUtil.clamp(wristController.calculate(inputs.position, setpoint), -12.0, 12.0);
             wristSim.setInputVoltage(volts);

@@ -12,10 +12,7 @@ import edu.wpi.first.units.measure.Voltage;
 public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {
-        public Angle position;
-        public AngularVelocity velocity;
-        public AngularAcceleration acceleration;
-        public Voltage appliedVoltage;
+        public double position;
         public boolean atSetpoint;
         public double extension;
     }

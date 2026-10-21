@@ -23,8 +23,6 @@ public class WristIOReal implements WristIO {
 
     private final StatusSignal<Angle> pos = wristMotor.getPosition();
     private final StatusSignal<AngularVelocity> vel = wristMotor.getRotorVelocity();
-    private final StatusSignal<AngularAcceleration> acc = wristMotor.getAcceleration();
-    private final StatusSignal<Voltage> volts = wristMotor.getMotorVoltage();
 
     public WristIOReal() {
         // |Configs pulled out of Suhas's ass
@@ -49,8 +47,6 @@ public class WristIOReal implements WristIO {
     public void updateInputs(WristIOInputs inputs) {
         inputs.position = pos.getValueAsDouble();
         inputs.velocity = vel.getValueAsDouble();
-        inputs.acceleration = acc.getValueAsDouble();
-        inputs.appliedVoltage = volts.getValueAsDouble();
     }
 
     @Override

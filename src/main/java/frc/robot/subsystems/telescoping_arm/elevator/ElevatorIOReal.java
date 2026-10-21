@@ -31,9 +31,6 @@ public class ElevatorIOReal implements ElevatorIO {
     private final DutyCycleOut dutyRequest = new DutyCycleOut(0);
 
     private final StatusSignal<Angle> pos = elevatorOne.getPosition();
-    private final StatusSignal<AngularVelocity> vel = elevatorOne.getRotorVelocity();
-    private final StatusSignal<AngularAcceleration> acc = elevatorOne.getAcceleration();
-    private final StatusSignal<Voltage> volts = elevatorOne.getMotorVoltage();
     private final StatusSignal<Boolean> atSetpoint = elevatorOne.getMotionMagicAtTarget();
 
     public ElevatorIOReal() {
@@ -78,10 +75,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.position = pos.getValue();
-        inputs.velocity = vel.getValue();
-        inputs.acceleration = acc.getValue();
-        inputs.appliedVoltage = volts.getValue();
+        inputs.position = pos.getValue().in(Radians);
         inputs.atSetpoint = atSetpoint.getValue();
         inputs.extension = inputs.position.in(Radians) * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
     }

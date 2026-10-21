@@ -46,9 +46,6 @@ public class ElevatorIOSim implements ElevatorIO {
         sim.update(0.02);
 
         inputs.position = Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
-        inputs.velocity = RadiansPerSecond.of(sim.getVelocityMetersPerSecond());
-        inputs.acceleration = RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
-        inputs.appliedVoltage = Volts.of(volts);
         inputs.atSetpoint = false; // Sim does not know MM target
         inputs.extension = sim.getPositionMeters();
 

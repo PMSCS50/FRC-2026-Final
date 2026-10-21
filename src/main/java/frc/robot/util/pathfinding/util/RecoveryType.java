@@ -9,10 +9,11 @@ import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.pathfinding.commands.PPRecoveryCommand;
 
 import java.util.function.BiFunction;
-// Enum determining the type of path recoveyr followed in ShinFollowPathCommand
-//NO_RECOVERY: No extra recovery mode, basically acts like a normal FollowPathCommand
-//DRIVE_TO_POINT_RECOVERY: Uses a simple drive-to-point command for recovery. Pretty cheap but can get caught
-//PATHFINDING_RECOVERY: Pathfinds to the desired state. Most resource heavy, but guarantees robot safety (hopefully)
+
+//*Enum determining the type of path recovery followed in ShinFollowPathCommand
+// NO_RECOVERY: No extra recovery mode, basically acts like a normal FollowPathCommand
+// DRIVE_TO_POINT_RECOVERY: Uses a simple drive-to-point command for recovery. Reliable but can get caught in narrow areas
+// PATHFINDING_RECOVERY: Pathfinds to the desired state. Most resource heavy, but guarantees robot safety (hopefully)
 public enum RecoveryType {
     NO_RECOVERY((path, state) -> Commands.none()),
     DRIVE_TO_POINT_RECOVERY((path, state) -> PPRecoveryCommand.generateCommand(path, state)),
