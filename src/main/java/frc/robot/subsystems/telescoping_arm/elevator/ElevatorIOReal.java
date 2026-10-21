@@ -13,11 +13,8 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.ArmConstants;
-import frc.robot.util.misc.PhoenixUtil;
+import frc.robot.util.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 
 public class ElevatorIOReal implements ElevatorIO {
@@ -66,9 +63,6 @@ public class ElevatorIOReal implements ElevatorIO {
         registerMotors();
         PhoenixUtil.registerStatusSignals(
             pos,
-            vel,
-            acc,
-            volts,
             atSetpoint
         );
     }
@@ -77,7 +71,7 @@ public class ElevatorIOReal implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.position = pos.getValue().in(Radians);
         inputs.atSetpoint = atSetpoint.getValue();
-        inputs.extension = inputs.position.in(Radians) * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
+        inputs.extension = inputs.position * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
     }
 
     @Override

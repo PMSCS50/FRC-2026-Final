@@ -4,11 +4,6 @@ import org.littletonrobotics.junction.AutoLog;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.Voltage;
-
 public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {

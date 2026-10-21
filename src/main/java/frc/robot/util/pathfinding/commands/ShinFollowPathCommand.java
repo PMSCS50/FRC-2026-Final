@@ -50,7 +50,7 @@ public class ShinFollowPathCommand extends Command {
 
   //Path recovery backup if the robot gets beached
   private final Debouncer fallenBehindPathDebouncer = new Debouncer(0.3);
-  private boolean isRecoveryType = false;
+  private boolean isRecovering = false;
   private static RecoveryType recoveryType = RecoveryType.PATHFINDING_RECOVERY;
   private Command recoveryCommand = Commands.none();
   private final Timer recoveryTimer = new Timer();
@@ -159,7 +159,7 @@ public class ShinFollowPathCommand extends Command {
     eventScheduler.initialize(trajectory);
 
     prematureFinish = false;
-    isRecoveryType = false;
+    isRecovering = false;
     recoveryCommand = Commands.none();
 
     recoveryTimer.reset();
@@ -187,12 +187,12 @@ public class ShinFollowPathCommand extends Command {
       
       double positionError = PathUtil.distanceAlongPath(path, currentPose, targetState);
 
-      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.75 && timer.get() >= 0.5);
+      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.25 && timer.get() >= 0.5);
 
-      if (shouldRecover && !isRecoveryType) {
+      if (shouldRecover && !isRecovering) {
           timer.stop();
 
-          isRecoveryType = true;
+          isRecovering = true;
           recoveryTimer.reset();
           recoveryTimer.start();
 
@@ -201,7 +201,7 @@ public class ShinFollowPathCommand extends Command {
       }
 
       // Execute recovery while it is active
-      if (isRecoveryType) {
+      if (isRecovering) {
           recoveryCommand.execute();
 
           if (recoveryTimer.hasElapsed(recoveryTimeout.in(Seconds))) {
@@ -210,7 +210,7 @@ public class ShinFollowPathCommand extends Command {
               recoveryCommand = Commands.none();
 
               recoveryTimer.stop();
-              isRecoveryType = false;
+              isRecovering = false;
               prematureFinish = true;
 
               return;
@@ -221,7 +221,7 @@ public class ShinFollowPathCommand extends Command {
               recoveryCommand = Commands.none();
 
               recoveryTimer.stop();
-              isRecoveryType = false;
+              isRecovering = false;
 
               //Reset path name from recovery
               PathPlannerAuto.currentPathName = originalPath.name;
@@ -271,7 +271,7 @@ public class ShinFollowPathCommand extends Command {
       return true;
     }
 
-    if (isRecoveryType) {
+    if (isRecovering) {
         return false;
     }
 
@@ -284,10 +284,10 @@ public class ShinFollowPathCommand extends Command {
     timer.stop();
     recoveryTimer.stop();
 
-    if (isRecoveryType) {
+    if (isRecovering) {
         recoveryCommand.end(true);
         recoveryCommand = Commands.none();
-        isRecoveryType = false;
+        isRecovering = false;
     }
 
     PathPlannerAuto.currentPathName = "";

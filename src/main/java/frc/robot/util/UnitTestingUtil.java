@@ -1,4 +1,4 @@
-package frc.robot.util.misc;
+package frc.robot.util;
 
 import static edu.wpi.first.units.Units.Seconds;
 

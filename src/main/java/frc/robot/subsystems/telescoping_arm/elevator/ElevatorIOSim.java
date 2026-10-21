@@ -45,7 +45,7 @@ public class ElevatorIOSim implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         sim.update(0.02);
 
-        inputs.position = Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
+        inputs.position = sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
         inputs.atSetpoint = false; // Sim does not know MM target
         inputs.extension = sim.getPositionMeters();
 

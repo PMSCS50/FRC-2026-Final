@@ -16,7 +16,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
-import frc.robot.util.misc.GeometryUtil;
+import frc.robot.util.GeometryUtil;
 
 public class VisionIOSim implements VisionIO {
 

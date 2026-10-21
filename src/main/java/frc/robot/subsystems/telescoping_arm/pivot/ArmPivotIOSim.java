@@ -13,11 +13,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.util.misc.VariableArmSim;
 import frc.robot.util.misc.VirtualPD;
 import frc.robot.Constants.ArmConstants;
-import frc.robot.subsystems.telescoping_arm.ArmCommands;
 
 public class ArmPivotIOSim implements ArmPivotIO {
 

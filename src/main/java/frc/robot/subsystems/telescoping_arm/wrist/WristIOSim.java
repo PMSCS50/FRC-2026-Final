@@ -10,7 +10,6 @@ import frc.robot.Constants.ArmConstants;;
 
 public class WristIOSim implements WristIO {
 
-    private double appliedVolts = 0.0;
     private PIDController wristController;
     private boolean motionMagic = false;
     private double setpoint = 0.0;
@@ -59,7 +58,6 @@ public class WristIOSim implements WristIO {
 
     private void setVoltage(double volts) {
         motionMagic = false;
-        appliedVolts = volts;
         wristSim.setInputVoltage(volts);
     }
 

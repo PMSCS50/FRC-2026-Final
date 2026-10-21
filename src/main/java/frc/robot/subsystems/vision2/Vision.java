@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
-import frc.robot.util.misc.GeometryUtil;
+import frc.robot.util.GeometryUtil;
 
 public class Vision extends SubsystemBase {
 
