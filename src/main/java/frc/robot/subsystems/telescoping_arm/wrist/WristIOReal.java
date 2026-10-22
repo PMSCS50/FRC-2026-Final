@@ -8,11 +8,9 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.ArmConstants;
-import frc.robot.util.misc.PhoenixUtil;
+import frc.robot.util.PhoenixUtil;
 
 public class WristIOReal implements WristIO {
     private final TalonFX wristMotor = new TalonFX(ArmConstants.wristMotorCanId);
@@ -23,8 +21,6 @@ public class WristIOReal implements WristIO {
 
     private final StatusSignal<Angle> pos = wristMotor.getPosition();
     private final StatusSignal<AngularVelocity> vel = wristMotor.getRotorVelocity();
-    private final StatusSignal<AngularAcceleration> acc = wristMotor.getAcceleration();
-    private final StatusSignal<Voltage> volts = wristMotor.getMotorVoltage();
 
     public WristIOReal() {
         // |Configs pulled out of Suhas's ass
@@ -49,8 +45,6 @@ public class WristIOReal implements WristIO {
     public void updateInputs(WristIOInputs inputs) {
         inputs.position = pos.getValueAsDouble();
         inputs.velocity = vel.getValueAsDouble();
-        inputs.acceleration = acc.getValueAsDouble();
-        inputs.appliedVoltage = volts.getValueAsDouble();
     }
 
     @Override

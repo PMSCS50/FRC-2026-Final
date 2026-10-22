@@ -20,7 +20,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.util.misc.PhoenixUtil;
+import frc.robot.util.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 
 public class ShooterIOReal implements ShooterIO {

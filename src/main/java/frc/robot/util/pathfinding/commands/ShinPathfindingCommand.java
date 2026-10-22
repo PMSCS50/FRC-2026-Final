@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.zoro.ShinPathfinding;
-import frc.robot.util.misc.FieldUtil;
+import frc.robot.util.FieldUtil;
 import frc.robot.util.pathfinding.events.EventSupervisor;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 

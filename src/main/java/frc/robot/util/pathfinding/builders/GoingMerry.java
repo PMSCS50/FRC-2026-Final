@@ -633,6 +633,17 @@ public class GoingMerry {
     return globals.isHolonomic;
   }
 
+  public static SendableChooser<RecoveryType> buildAutoRecoveryChooser() {
+    SendableChooser<RecoveryType> chooser = new SendableChooser<>();
+    chooser.setDefaultOption("No Recovery", RecoveryType.NO_RECOVERY);
+    chooser.addOption("Drive To Point Recovery", RecoveryType.DRIVE_TO_POINT_RECOVERY);
+    chooser.addOption("Pathfinding Recovery", RecoveryType.PATHFINDING_RECOVERY);
+
+    chooser.onChange((type) -> setPathRecovery(type));
+
+    return chooser;
+  }
+
   public static void setPathRecovery(RecoveryType type) {
     ShinFollowPathCommand.setRecoveryType(type);
   }

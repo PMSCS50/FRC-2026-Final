@@ -7,8 +7,6 @@ public interface WristIO {
     public static class WristIOInputs {
         public double position;
         public double velocity;
-        public double acceleration;
-        public double appliedVoltage;
     }
 
     void updateInputs(WristIOInputs inputs);

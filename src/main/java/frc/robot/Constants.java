@@ -29,7 +29,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import frc.robot.generated.TunerConstants;
-import frc.robot.util.misc.FieldUtil;
+import frc.robot.util.FieldUtil;
 
 // *The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean constants.
 // !This class should not be used for any other purpose. All constants should be declared globally (i.e. public static).

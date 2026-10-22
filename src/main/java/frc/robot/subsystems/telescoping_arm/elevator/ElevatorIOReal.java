@@ -13,11 +13,8 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.ArmConstants;
-import frc.robot.util.misc.PhoenixUtil;
+import frc.robot.util.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 
 public class ElevatorIOReal implements ElevatorIO {
@@ -31,9 +28,6 @@ public class ElevatorIOReal implements ElevatorIO {
     private final DutyCycleOut dutyRequest = new DutyCycleOut(0);
 
     private final StatusSignal<Angle> pos = elevatorOne.getPosition();
-    private final StatusSignal<AngularVelocity> vel = elevatorOne.getRotorVelocity();
-    private final StatusSignal<AngularAcceleration> acc = elevatorOne.getAcceleration();
-    private final StatusSignal<Voltage> volts = elevatorOne.getMotorVoltage();
     private final StatusSignal<Boolean> atSetpoint = elevatorOne.getMotionMagicAtTarget();
 
     public ElevatorIOReal() {
@@ -69,21 +63,15 @@ public class ElevatorIOReal implements ElevatorIO {
         registerMotors();
         PhoenixUtil.registerStatusSignals(
             pos,
-            vel,
-            acc,
-            volts,
             atSetpoint
         );
     }
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.position = pos.getValue();
-        inputs.velocity = vel.getValue();
-        inputs.acceleration = acc.getValue();
-        inputs.appliedVoltage = volts.getValue();
+        inputs.position = pos.getValue().in(Radians);
         inputs.atSetpoint = atSetpoint.getValue();
-        inputs.extension = inputs.position.in(Radians) * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
+        inputs.extension = inputs.position * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
     }
 
     @Override

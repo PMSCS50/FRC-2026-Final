@@ -15,7 +15,7 @@ import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.ArmConstants;
-import frc.robot.util.misc.PhoenixUtil;
+import frc.robot.util.PhoenixUtil;
 import frc.robot.util.misc.VirtualPD;
 
 public class ArmPivotIOReal implements ArmPivotIO {
