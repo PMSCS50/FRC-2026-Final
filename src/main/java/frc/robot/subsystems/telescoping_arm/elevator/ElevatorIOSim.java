@@ -7,10 +7,13 @@ import frc.robot.util.misc.VirtualPD;
 
 import static edu.wpi.first.units.Units.*;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 
 public class ElevatorIOSim implements ElevatorIO {
 
@@ -28,10 +31,10 @@ public class ElevatorIOSim implements ElevatorIO {
             0.115, // |pulled out of Suhas' ass
             0.02, // |pulled out of Suhas' ass
             DCMotor.getKrakenX60(3), // 3 motors
-            0, // min height
-            30, // max height
+            1, // min height
+            5, // max height
             true, // Simulate gravity
-            0
+            Units.inchesToMeters(31.032)
         );
 
         registerMotors();
@@ -39,23 +42,6 @@ public class ElevatorIOSim implements ElevatorIO {
 
     private void registerMotors() {
         VirtualPD.registerMotor(() -> Amps.of(sim.getCurrentDrawAmps()), "Elevator");
-    }
-
-    @Override
-    public void updateInputs(ElevatorIOInputs inputs) {
-        sim.update(0.02);
-
-        inputs.position = Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
-        inputs.velocity = RadiansPerSecond.of(sim.getVelocityMetersPerSecond());
-        inputs.acceleration = RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
-        inputs.appliedVoltage = Volts.of(volts);
-        inputs.atSetpoint = false; // Sim does not know MM target
-        inputs.extension = sim.getPositionMeters();
-
-        if (motionMagic) {
-            double output = elevatorController.calculate(inputs.extension, setpoint);
-            sim.setInputVoltage(output);
-        }
     }
 
     private void setVoltage(double volts) {
@@ -83,5 +69,24 @@ public class ElevatorIOSim implements ElevatorIO {
     @Override
     public void setNeutralMode(NeutralModeValue neutralMode) {
         return; // Sim does not care about neutral mode
+    }
+
+    @Override
+    public void updateInputs(ElevatorIOInputs inputs) {
+        sim.update(0.02);
+
+        inputs.position = Degrees.of(sim.getPositionMeters() / ArmConstants.ELEVATOR_POSITION_COEFFICIENT);
+        inputs.velocity = RadiansPerSecond.of(sim.getVelocityMetersPerSecond());
+        inputs.acceleration = RadiansPerSecondPerSecond.of(0); // WPILib sim does not expose accel
+        inputs.appliedVoltage = Volts.of(volts);
+        inputs.atSetpoint = false; // Sim does not know MM target
+        inputs.extension = sim.getPositionMeters();
+
+        if (motionMagic) {
+            double output = elevatorController.calculate(inputs.extension, setpoint);
+            sim.setInputVoltage(output);
+        }
+
+        Logger.recordOutput("Elevator/Position", inputs.position);
     }
 }

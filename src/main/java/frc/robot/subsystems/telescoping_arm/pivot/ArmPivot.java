@@ -16,18 +16,18 @@ public class ArmPivot extends SubsystemBase {
     public void periodic() {
         // This method will be called once per scheduler run
         io.updateInputs(inputs);
-        Logger.processInputs("LoggedPivot (Arm)", inputs);
+        Logger.processInputs("LoggedArm (Pivot)", inputs);
 
     }
 
     @Override
     public void simulationPeriodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("LoggedPivot (Arm)", inputs);
+        Logger.processInputs("LoggedArm (Pivot)", inputs);
     }
 
     public void goToPosition(double positionDeg) {
-        io.setMotionMagicPosition(Math.toRadians(positionDeg));
+        io.setMotionMagicPosition(positionDeg);
     }
 
     public void setNeutralMode(NeutralModeValue neutralMode) {

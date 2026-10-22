@@ -80,9 +80,9 @@ public class RobotContainer {
     private final Intake intake;
     private final Pivot pivot;
     @SuppressWarnings("unused")
-    private final Elevator elevator;
+    private final Elevator armElevator;
     @SuppressWarnings("unused")
-    private final Wrist wrist;
+    private final Wrist armWrist;
     @SuppressWarnings("unused")
     private final ArmPivot armPivot;
 
@@ -125,9 +125,9 @@ public class RobotContainer {
         shooter = new Shooter(RobotBase.isReal() ? new ShooterIOReal() : new ShooterIOSim());
         intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
-        elevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
-        wrist = new Wrist(RobotBase.isReal() ? new WristIOReal() : new WristIOSim());
-        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim(() -> elevator.getPositionMeters()));
+        armElevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
+        armWrist = new Wrist(RobotBase.isReal() ? new WristIOReal() : new WristIOSim());
+        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim(() -> armElevator.getPositionMeters()));
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));
@@ -246,34 +246,56 @@ public class RobotContainer {
         // operatorController.leftBumper().and(operatorController.leftTrigger())
         //     .onFalse(new RunCommand(() -> intake.stopIntake(), intake));
 
-        operatorController.leftTrigger().whileTrue(
-            new StartEndCommand(
-                () -> intake.runPID(.2),
-                () -> intake.stop(),
-                intake
+        // operatorController.leftTrigger().whileTrue(
+        //     new StartEndCommand(
+        //         () -> intake.runPID(.2),
+        //         () -> intake.stop(),
+        //         intake
+        //     )
+        // );
+
+        // operatorController.leftBumper().whileTrue(
+        //     new StartEndCommand(
+        //         () -> intake.runPID(-1),
+        //         () -> intake.stop(),
+        //         intake
+        //     )
+        // );
+
+        operatorController.leftTrigger().onTrue(
+            new InstantCommand(
+                () -> armElevator.goToPosition(1.0),
+                armElevator
             )
         );
 
-        operatorController.leftBumper().whileTrue(
-            new StartEndCommand(
-                () -> intake.runPID(-1),
-                () -> intake.stop(),
-                intake
+        operatorController.leftBumper().onTrue(
+            new InstantCommand(
+                () -> armElevator.goToPosition(4.0),
+                armElevator
             )
         );
 
         operatorController.rightTrigger().onTrue(
             new InstantCommand(
-                () -> pivot.setPivotAngle(IntakeConstants.kPivotSetpointB),
-                pivot
+                () -> armPivot.goToPosition(10.0),
+                armPivot
             )
+        // new InstantCommand(
+        //     () -> pivot.setPivotAngle(IntakeConstants.kPivotSetpointB),
+        //     pivot
+            // )
         );
 
         operatorController.rightBumper().onTrue(
             new InstantCommand(
-                () -> pivot.setPivotAngle(IntakeConstants.kPivotSetpointA),
-                pivot
+                () -> armPivot.goToPosition(170.0),
+                armPivot
             )
+            // new InstantCommand(
+            //     () -> pivot.setPivotAngle(IntakeConstants.kPivotSetpointA),
+            //     pivot
+            // )
         );
 
         // *POV Controls

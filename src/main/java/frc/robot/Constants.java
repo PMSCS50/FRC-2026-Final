@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Time;
@@ -260,8 +261,14 @@ public final class Constants {
 
     public static final double pivotGearing = (64.0 / 12.0) * (36.0 / 18.0) * (58.0 / 14.0);
 
-    public static final double[] armMasses = new double[] {4, 4, 5.6};
-    public static final double[] armLengths = new double[] {3, 3, 4};
+    public static final double[] armMasses = new double[] {4.392837, 1.791908, 1.575572};
+    // Interestingly onshape gives the moments of inertia of the arm from its COM, and from the pivot point according to the CAD
+    // |MOI = 432.78 kg * in^2 FOR STAGE ONE (holy shit)
+    // |MOI =  375.19 kg * in^2 FOR STAGE TWO (gawd damn)
+    // |MOI =  284.14 kg * in^2 FOR STAGE THREE (what the hell)
+    // I'll integrate these more accurate values once I get visualization sorted out but for now I'll just use rough estimations from my simple MOI formula
+    
+    public static final double[] armLengths = new double[] {Units.inchesToMeters(22.337), Units.inchesToMeters(24.330), Units.inchesToMeters(26.708)};
   }
 
   // *Field

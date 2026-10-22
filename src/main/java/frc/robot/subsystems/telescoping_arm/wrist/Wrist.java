@@ -15,7 +15,7 @@ public class Wrist extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("LoggedWrist", inputs);
+        Logger.processInputs("LoggedArm (Wrist)", inputs);
     }
 
     public void goToPosition(double positionDegrees) {

@@ -19,18 +19,37 @@ public class VariableArmSim extends SingleJointedArmSim {
     private final double[] masses;
     private final double[] lengths;
 
-    public VariableArmSim(double armMassKg, double[] masses, double[] lengths, DCMotor gearbox, double gearing, double startingMOI, DoubleSupplier lengthSupplier, double minAngle, double maxAngle) {
+    private final boolean gravity;
+
+    private double debugVal;
+
+    public VariableArmSim(double[] masses, double[] lengths, DCMotor gearbox, double gearing, double startingMOI, DoubleSupplier lengthSupplier, double minAngle, double maxAngle, boolean gravity) {
         // Pass a default fallback length to the super constructor
-        super(LinearSystemId.createSingleJointedArmSystem(gearbox, armMassKg, gearing), 
+        super(LinearSystemId.createSingleJointedArmSystem(gearbox, startingMOI, gearing), 
             gearbox, gearing, lengthSupplier.getAsDouble(), minAngle, maxAngle, false, maxAngle, new double[] {0, 0}); 
         
         this.m_lengthSupplier = lengthSupplier;
         this.m_gearbox = gearbox;
-        this.m_armMassKg = armMassKg;
+        this.m_armMassKg = masses[0] + masses[1] + masses[2]; // Total mass of the arm
         this.m_gearing = gearing;
 
         this.masses = masses;
         this.lengths = lengths;
+
+        this.gravity = gravity;
+    }
+
+    public double getLengthMeters() {
+        return m_lengthSupplier.getAsDouble();
+    }
+
+    public double getDebugVal() {
+        return debugVal;
+    }
+
+    public double calculateFF(double setpointRads) {
+        double torque = m_armMassKg * 9.80665 * calculateCOM(m_lengthSupplier.getAsDouble(), masses, lengths) * Math.cos(getAngleRads());
+        return torque * m_gearbox.rOhms / (m_gearbox.KtNMPerAmp * m_gearing);
     }
 
     @Override
@@ -38,15 +57,35 @@ public class VariableArmSim extends SingleJointedArmSim {
         double currentLength = m_lengthSupplier.getAsDouble();
         double currentAngleRad = currentX.get(0, 0); 
 
-        double dynamicMOI = VariableArmSim.calculateMOI(m_lengthSupplier.getAsDouble(), masses, lengths);
-        double gravityTorque = m_armMassKg * 9.80665 * (currentLength / 2.0) * Math.cos(currentAngleRad); 
-        double accelerationFromGravity = gravityTorque / dynamicMOI;
+        double dynamicMOI = calculateMOI(m_lengthSupplier.getAsDouble(), masses, lengths);
+        double gravityTorque = m_armMassKg * 9.80665 * calculateCOM(currentLength, masses, lengths) * Math.cos(currentAngleRad); 
+        double accelerationFromGravity = gravity ? gravityTorque/dynamicMOI : 0.0;
+        debugVal = gravityTorque/dynamicMOI;
 
         LinearSystem<N2, N1, N2> dynamicPlant = LinearSystemId.createSingleJointedArmSystem(m_gearbox, dynamicMOI, m_gearing); 
         Matrix<N2, N1> xDot = dynamicPlant.getA().times(currentX).plus(dynamicPlant.getB().times(u));
-        xDot.set(1, 0, xDot.get(1, 0) + accelerationFromGravity);
+        xDot.set(1, 0, xDot.get(1, 0) - accelerationFromGravity);
 
         return currentX.plus(xDot.times(dtSeconds));
+    }
+
+    public static double calculateCOM(double length, double[] masses, double[] lengths) {
+        double m1 = masses[0];
+        double m2 = masses[1];
+        double m3 = masses[2];
+
+        double l1 = lengths[0];
+        double l2 = lengths[1];
+        double l3 = lengths[2];
+
+        double x = (length - l3) / 2.0;
+
+        double x1 = l1 / 2.0;
+        double x2 = x + l2 / 2.0;
+        double x3 = 2.0 * x + l3 / 2.0;
+
+        return (m1*x1 + m2*x2 + m3*x3)
+                / (m1 + m2 + m3);
     }
 
     public static double calculateMOI(double length, double[] masses, double[] lengths) {

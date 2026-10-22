@@ -17,7 +17,7 @@ public class Elevator extends SubsystemBase {
     public void periodic() {
         io.updateInputs(inputs);
 
-        Logger.processInputs("LoggedElevator", inputs);
+        Logger.processInputs("LoggedArm (Elevator)", inputs);
     }
 
     public void goToPosition(double positionMeters) {
