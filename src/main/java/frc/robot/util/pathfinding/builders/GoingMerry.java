@@ -636,17 +636,21 @@ public class GoingMerry {
 
   public static SendableChooser<RecoveryType> buildAutoRecoveryChooser() {
     SendableChooser<RecoveryType> chooser = new SendableChooser<>();
-    chooser.setDefaultOption("No Recovery", RecoveryType.NO_RECOVERY);
-    chooser.addOption("Drive To Point Recovery", RecoveryType.DRIVE_TO_POINT_RECOVERY);
-    chooser.addOption("Pathfinding Recovery", RecoveryType.PATHFINDING_RECOVERY);
+    for (RecoveryType type : RecoveryType.values()) {
+      if (type == RecoveryType.NO_RECOVERY) {
+        chooser.setDefaultOption(type.toString(), type);
+        continue;
+      }
+      chooser.addOption(type.toString(), type);
+    }
 
     chooser.onChange((type) -> setPathRecovery(type));
 
     return chooser;
   }
 
-  public static void setPathRecovery(RecoveryType type) {
-    ShinFollowPathCommand.setRecoveryType(type);
+  private static void setPathRecovery(RecoveryType type) {
+    RecoveryType.current = type;
   }
 
   

@@ -55,6 +55,7 @@ import frc.robot.util.Elastic;
 import frc.robot.util.Zone.RectangleZone;
 import frc.robot.util.misc.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
+import frc.robot.util.pathfinding.builders.GoingMerry;
 
 
 public class RobotContainer {
@@ -157,8 +158,11 @@ public class RobotContainer {
         monkeyDLuffy.addMultiRotationZone("TrenchTR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         
         // *Configuring
-        autoChooser = AutoBuilder.buildAutoChooser("Comp Right 1x + OOW");
+        autoChooser = AutoBuilder.buildAutoChooser("Test Auto");
         SmartDashboard.putData("Auto Mode", autoChooser);
+
+        SmartDashboard.putData("Auto Recovery", GoingMerry.buildAutoRecoveryChooser());
+
         configureBindings();
     }
 

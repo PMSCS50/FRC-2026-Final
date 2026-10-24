@@ -16,7 +16,7 @@ public enum RecoveryType {
     //No extra recovery mode, just follows its path like normal
     NO_RECOVERY((path, state) -> Commands.none()),
 
-    //Uses a simple drive-to-point command for recovery. Reliable but can get caught in narrow areas or sharp turns
+    //Uses a modified drive-to-point command for recovery. Reliable but can get caught in narrow areas or sharp turns
     DRIVE_TO_POINT_RECOVERY((path, state) -> PPRecoveryCommand.generateCommand(path, state)),
 
     //PATHFINDING_RECOVERY: Pathfinds to the desired state. Most resource heavy, but guarantees robot safety (hopefully)
@@ -27,4 +27,6 @@ public enum RecoveryType {
     private RecoveryType(BiFunction<PathPlannerPath, PathPlannerTrajectoryState, Command> recoveryCommandBuilder) {
         this.recoveryCommandBuilder = recoveryCommandBuilder;
     }
+
+    public static RecoveryType current = DRIVE_TO_POINT_RECOVERY;
 }

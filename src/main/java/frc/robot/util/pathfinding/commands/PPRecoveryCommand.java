@@ -10,7 +10,6 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,19 +33,13 @@ public class PPRecoveryCommand extends Command {
 
         this.pathController = new PPHolonomicDriveController(
             new PIDConstants(1.45, 0, 0.01),
-            new PIDConstants(1, 0, 0));
+            new PIDConstants(1.2, 0, 0));
 
         endTrigger = new Trigger(() -> {
 
             boolean atState = PathUtil.distanceAlongPath(ogPath, GoingMerry.getCurrentPose(), endState) <= 0.2;
 
-            boolean rotation = MathUtil.isNear(
-                endState.pose.getRotation().getDegrees(),
-                GoingMerry.getCurrentPose().getRotation().getDegrees(), 
-                10);
-
             Logger.recordOutput("Pathmaster/recovery ended/at state", atState);
-            Logger.recordOutput("Pathmaster/recovery ended/rotation", rotation);
             return atState;
 
             }
@@ -73,7 +66,6 @@ public class PPRecoveryCommand extends Command {
         Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
 
         ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
-        targetSpeeds = ChassisSpeeds.discretize(targetSpeeds, 0.02);
         GoingMerry.getOutput().accept(targetSpeeds, DriveFeedforwards.zeros(4));
         
         ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();

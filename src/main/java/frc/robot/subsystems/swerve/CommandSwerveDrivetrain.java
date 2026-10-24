@@ -280,7 +280,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     this::getSpeeds,
                     (speeds, feedforwards) -> {
                         setControl(
-                            m_pathApplyRobotSpeeds.withSpeeds(speeds.times(0.2))
+                            m_pathApplyRobotSpeeds.withSpeeds(speeds.times(0.3))
                                 .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                                 .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                         );
