@@ -51,7 +51,7 @@ public class ShinFollowPathCommand extends Command {
   //Path recovery backup if the robot gets beached
   private final Debouncer fallenBehindPathDebouncer = new Debouncer(0.3);
   private boolean isRecovering = false;
-  private static RecoveryType recoveryType = RecoveryType.PATHFINDING_RECOVERY;
+  private static RecoveryType recoveryType = RecoveryType.DRIVE_TO_POINT_RECOVERY;
   private Command recoveryCommand = Commands.none();
   private final Timer recoveryTimer = new Timer();
   private Time recoveryTimeout = Seconds.of(7.0);
@@ -334,7 +334,7 @@ public class ShinFollowPathCommand extends Command {
                     0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
                 0.55),
             () -> true)
-        .andThen(Commands.print("[PathPlanner] FollowPathCommand finished warmup"))
+        .andThen(Commands.print("[PathPlanner] ShinFollowPathCommand finished warmup"))
         .ignoringDisable(true);
   }
 

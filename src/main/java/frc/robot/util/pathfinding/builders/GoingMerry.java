@@ -147,6 +147,7 @@ public class GoingMerry {
                 shouldFlipPath,
                 driveRequirements)
             .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+    globals.configured = true;
     globals.pathfindingConfigured = true;
   }
 

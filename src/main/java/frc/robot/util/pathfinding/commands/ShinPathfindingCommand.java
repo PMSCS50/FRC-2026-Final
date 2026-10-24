@@ -697,7 +697,7 @@ public class ShinPathfindingCommand extends Command {
                 new ModuleConfig(
                     0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
                 0.55))
-        .andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
+        .andThen(Commands.print("[PathPlanner] ShinPathfindingCommand finished warmup"))
         .ignoringDisable(true);
   }
 }

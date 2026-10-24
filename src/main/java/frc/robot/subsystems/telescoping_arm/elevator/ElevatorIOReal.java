@@ -1,7 +1,5 @@
 package frc.robot.subsystems.telescoping_arm.elevator;
 
-import static edu.wpi.first.units.Units.Radians;
-
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
@@ -69,7 +67,7 @@ public class ElevatorIOReal implements ElevatorIO {
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.position = pos.getValue().in(Radians);
+        inputs.position = pos.getValueAsDouble();
         inputs.atSetpoint = atSetpoint.getValue();
         inputs.extension = inputs.position * ArmConstants.ELEVATOR_POSITION_COEFFICIENT;
     }

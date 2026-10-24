@@ -3,7 +3,6 @@ package frc.robot.util.pathfinding.commands;
 import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
@@ -12,6 +11,7 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -24,7 +24,7 @@ import frc.robot.util.pathfinding.util.PathUtil;
 public class PPRecoveryCommand extends Command {
     
     private final PathPlannerTrajectoryState endState;
-    private PathFollowingController pathController;
+    private final PPHolonomicDriveController pathController;
 
     private final Trigger endTrigger;
 
@@ -47,7 +47,7 @@ public class PPRecoveryCommand extends Command {
 
             Logger.recordOutput("Pathmaster/recovery ended/at state", atState);
             Logger.recordOutput("Pathmaster/recovery ended/rotation", rotation);
-            return atState && rotation;
+            return atState;
 
             }
         );
@@ -60,10 +60,10 @@ public class PPRecoveryCommand extends Command {
     @Override
     public void initialize() {
         Logger.recordOutput("Drive/DriveToPointReached", false);
+        Logger.recordOutput("Drive/DriveToPointMap", new Pose2d[] {GoingMerry.getCurrentPose(), endState.pose});
         PPLogging.logTargetPose(endState.pose);
         PPLibTelemetry.setTargetPose(endState.pose);
         pathController.reset(GoingMerry.getCurrentPose(), GoingMerry.getCurrentSpeeds());
-
         PathPlannerAuto.currentPathName = "Recovery";
     }
 
@@ -73,6 +73,7 @@ public class PPRecoveryCommand extends Command {
         Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
 
         ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
+        targetSpeeds = ChassisSpeeds.discretize(targetSpeeds, 0.02);
         GoingMerry.getOutput().accept(targetSpeeds, DriveFeedforwards.zeros(4));
         
         ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
