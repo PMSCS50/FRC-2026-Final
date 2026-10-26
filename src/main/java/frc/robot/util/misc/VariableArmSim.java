@@ -9,6 +9,7 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.robot.Constants.ArmConstants;
 
 public class VariableArmSim extends SingleJointedArmSim {
     private final DoubleSupplier m_lengthSupplier;
@@ -22,6 +23,8 @@ public class VariableArmSim extends SingleJointedArmSim {
     private final boolean gravity;
 
     private double debugVal;
+
+    private final double g = 9.80665;
 
     public VariableArmSim(double[] masses, double[] lengths, DCMotor gearbox, double gearing, double startingMOI, DoubleSupplier lengthSupplier, double minAngle, double maxAngle, boolean gravity) {
         // Pass a default fallback length to the super constructor
@@ -48,7 +51,7 @@ public class VariableArmSim extends SingleJointedArmSim {
     }
 
     public double calculateFF(double setpointRads) {
-        double torque = m_armMassKg * 9.80665 * calculateCOM(m_lengthSupplier.getAsDouble(), masses, lengths) * Math.cos(getAngleRads());
+        double torque = m_armMassKg * g * calculateCOM(m_lengthSupplier.getAsDouble(), masses, lengths) * Math.cos(getAngleRads());
         return torque * m_gearbox.rOhms / (m_gearbox.KtNMPerAmp * m_gearing);
     }
 
@@ -58,7 +61,7 @@ public class VariableArmSim extends SingleJointedArmSim {
         double currentAngleRad = currentX.get(0, 0); 
 
         double dynamicMOI = calculateMOI(m_lengthSupplier.getAsDouble(), masses, lengths);
-        double gravityTorque = m_armMassKg * 9.80665 * calculateCOM(currentLength, masses, lengths) * Math.cos(currentAngleRad); 
+        double gravityTorque = m_armMassKg * g * calculateCOM(currentLength, masses, lengths) * Math.cos(currentAngleRad); 
         double accelerationFromGravity = gravity ? gravityTorque/dynamicMOI : 0.0;
         debugVal = gravityTorque/dynamicMOI;
 
@@ -66,7 +69,10 @@ public class VariableArmSim extends SingleJointedArmSim {
         Matrix<N2, N1> xDot = dynamicPlant.getA().times(currentX).plus(dynamicPlant.getB().times(u));
         xDot.set(1, 0, xDot.get(1, 0) - accelerationFromGravity);
 
-        return currentX.plus(xDot.times(dtSeconds));
+        var updatedX = currentX.plus(xDot.times(dtSeconds));
+        ArmConstants.pivotAngle.set(updatedX.get(0, 0));
+
+        return updatedX;
     }
 
     public static double calculateCOM(double length, double[] masses, double[] lengths) {

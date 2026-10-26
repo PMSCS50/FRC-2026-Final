@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.ctre.phoenix6.Orchestra;
 
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.Elastic;
 import frc.robot.util.FieldUtil;
@@ -196,6 +197,12 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.cancel();
     }
     setLimelightThrottle(0);
+    m_robotContainer.getDrivetrain().applyRequest(() ->
+      DriveConstants.driveRequest
+        .withVelocityX(0)
+        .withVelocityY(0)
+        .withRotationalRate(0)
+      );
   }
 
   @Override

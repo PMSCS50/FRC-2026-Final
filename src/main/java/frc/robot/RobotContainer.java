@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
+import frc.robot.Constants.ArmConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -126,9 +127,9 @@ public class RobotContainer {
         shooter = new Shooter(RobotBase.isReal() ? new ShooterIOReal() : new ShooterIOSim());
         intake = new Intake(RobotBase.isReal() ? new IntakeIOReal() : new IntakeIOSim());
         pivot = new Pivot(RobotBase.isReal() ? new PivotIOReal() : new PivotIOSim());
-        armElevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim());
+        armElevator = new Elevator(RobotBase.isReal() ? new ElevatorIOReal() : new ElevatorIOSim(ArmConstants.pivotAngle));
         armWrist = new Wrist(RobotBase.isReal() ? new WristIOReal() : new WristIOSim());
-        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim(() -> armElevator.getPositionMeters()));
+        armPivot = new ArmPivot(RobotBase.isReal() ? new ArmPivotIOReal() : new ArmPivotIOSim(ArmConstants.elevatorExtension));
         
         // *Shooting
         NamedCommands.registerCommand("Fixed Based Shooting Auton", new FixedPIDShooting(shooter, 3.3).withTimeout(4));

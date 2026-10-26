@@ -27,7 +27,7 @@ public class DriveToPointCommand extends Command{
     
     public CommandSwerveDrivetrain drivetrain;
     public final Pose2d goalPose;
-    private PPHolonomicDriveController pathController = DriveConstants.pathController;
+    private final PPHolonomicDriveController pathController = DriveConstants.pathController;
 
     private final Trigger endTrigger;
     private final Trigger endTriggerDebounced;
@@ -69,6 +69,8 @@ public class DriveToPointCommand extends Command{
         Logger.recordOutput("Drive/DriveToPointReached", false);
         PPLogging.logTargetPose(goalPose);
         PPLibTelemetry.setTargetPose(goalPose);
+        pathController.reset(drivetrain.getPose(), drivetrain.getSpeeds());
+
     }
 
     @Override

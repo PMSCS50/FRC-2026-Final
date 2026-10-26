@@ -1,11 +1,13 @@
 package frc.robot.subsystems.telescoping_arm.elevator;
 
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.Constants.ArmConstants;
+import frc.robot.util.misc.VariableElevatorSim;
 import frc.robot.util.misc.VirtualPD;
 
 import static edu.wpi.first.units.Units.*;
+
+import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -22,19 +24,20 @@ public class ElevatorIOSim implements ElevatorIO {
     private double volts = 0;
 
     private PIDController elevatorController;
-    private final ElevatorSim sim;
+    private final VariableElevatorSim sim;
 
-    public ElevatorIOSim() {
-        elevatorController = new PIDController(3.0, 0.0, 0.02);
+    public ElevatorIOSim(DoubleSupplier angleSupplier) {
+        elevatorController = new PIDController(0.40, 0.0, 0.04);
 
-        sim = new ElevatorSim(
+        sim = new VariableElevatorSim(
             0.115, // |pulled out of Suhas' ass
             0.02, // |pulled out of Suhas' ass
             DCMotor.getKrakenX60(3), // 3 motors
             1, // min height
             5, // max height
             true, // Simulate gravity
-            Units.inchesToMeters(31.032)
+            Units.inchesToMeters(31.032),
+            angleSupplier
         );
 
         registerMotors();

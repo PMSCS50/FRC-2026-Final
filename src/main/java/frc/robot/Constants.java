@@ -8,6 +8,8 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.Arrays;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -269,6 +271,9 @@ public final class Constants {
     // I'll integrate these more accurate values once I get visualization sorted out but for now I'll just use rough estimations from my simple MOI formula
     
     public static final double[] armLengths = new double[] {Units.inchesToMeters(22.337), Units.inchesToMeters(24.330), Units.inchesToMeters(26.708)};
+
+    public static final LoggedNetworkNumber pivotAngle = new LoggedNetworkNumber("Arm/PivotAngle", 0.0);
+    public static final LoggedNetworkNumber elevatorExtension = new LoggedNetworkNumber("Arm/ElevatorExtension", 0.0);
   }
 
   // *Field
