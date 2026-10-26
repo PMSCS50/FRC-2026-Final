@@ -28,5 +28,13 @@ public enum RecoveryType {
         this.recoveryCommandBuilder = recoveryCommandBuilder;
     }
 
-    public static RecoveryType current = PATHFINDING_RECOVERY;
+    private static RecoveryType current = PATHFINDING_RECOVERY;
+
+    public static RecoveryType getCurrentMode() {
+        return current;
+    }
+
+    public static void setCurrentMode(RecoveryType type) {
+        current = type;
+    }
 }

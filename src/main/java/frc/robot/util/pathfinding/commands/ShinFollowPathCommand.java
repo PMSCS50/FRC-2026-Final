@@ -182,11 +182,11 @@ public class ShinFollowPathCommand extends Command {
     PPLibTelemetry.setCurrentPose(currentPose);
 
     //Recovery mode stuff
-    if (RecoveryType.current != RecoveryType.NO_RECOVERY) {
+    if (RecoveryType.getCurrentMode() != RecoveryType.NO_RECOVERY) {
       
       double positionError = PathUtil.distanceAlongPath(path, currentPose, targetState);
 
-      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.25 && timer.get() >= 0.5);
+      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.25 && currentTime >= 0.5);
 
       if (shouldRecover && !isRecovering) {
           timer.stop();
@@ -195,7 +195,7 @@ public class ShinFollowPathCommand extends Command {
           recoveryTimer.reset();
           recoveryTimer.start();
 
-          recoveryCommand = RecoveryType.current.recoveryCommandBuilder.apply(path, targetState);
+          recoveryCommand = RecoveryType.getCurrentMode().recoveryCommandBuilder.apply(path, targetState);
           recoveryCommand.initialize();
       }
 

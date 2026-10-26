@@ -644,16 +644,10 @@ public class GoingMerry {
       chooser.addOption(type.toString(), type);
     }
 
-    chooser.onChange((type) -> setPathRecovery(type));
+    chooser.onChange((type) -> RecoveryType.setCurrentMode(type));
 
     return chooser;
   }
-
-  private static void setPathRecovery(RecoveryType type) {
-    RecoveryType.current = type;
-  }
-
-  
 
   /** Functional interface for a function that takes 3 inputs */
   @FunctionalInterface
