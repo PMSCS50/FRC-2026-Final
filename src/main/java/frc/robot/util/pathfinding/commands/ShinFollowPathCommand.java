@@ -222,8 +222,12 @@ public class ShinFollowPathCommand extends Command {
               recoveryTimer.stop();
               isRecovering = false;
 
-              //Reset path name from recovery
+              //Reset path metadata from recovery
+              PathPlannerAuto.setCurrentTrajectory(trajectory);
               PathPlannerAuto.currentPathName = originalPath.name;
+
+              PPLogging.logActivePath(path);
+              PPLibTelemetry.setCurrentPath(path);
 
               // Reset controller state before resuming trajectory following.
               controller.reset(poseSupplier.get(), speedsSupplier.get());

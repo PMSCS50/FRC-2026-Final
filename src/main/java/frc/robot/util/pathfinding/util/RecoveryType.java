@@ -28,5 +28,5 @@ public enum RecoveryType {
         this.recoveryCommandBuilder = recoveryCommandBuilder;
     }
 
-    public static RecoveryType current = DRIVE_TO_POINT_RECOVERY;
+    public static RecoveryType current = PATHFINDING_RECOVERY;
 }
