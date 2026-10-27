@@ -2,10 +2,11 @@ package frc.robot.commands;
 
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.subsystems.vision.Vision;
@@ -45,8 +46,8 @@ public class LL_Orient extends Command {
 
         double yaw = llVision.getYawDeg(tagId);
 
-        SmartDashboard.putNumber("LL_Orient/yaw", yaw);
-        SmartDashboard.putBoolean("LL_Orient/atSetpoint", rotController.atSetpoint());
+        Logger.recordOutput("LL_Orient/yaw", yaw);
+        Logger.recordOutput("LL_Orient/atSetpoint", rotController.atSetpoint());
 
         drivetrain.setControl(
             drive

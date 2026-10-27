@@ -1,10 +1,11 @@
 package frc.robot.commands;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.subsystems.vision.Vision;
@@ -59,20 +60,20 @@ public class PV_Align extends Command {
 
     @Override
     public void execute() {
-        SmartDashboard.putNumber("Vision X", vision.getX(targetId));
-        SmartDashboard.putNumber("Vision Y", vision.getY(targetId));
-        SmartDashboard.putNumber("Vision Yaw", vision.getYawRad(targetId));
+        Logger.recordOutput("PV_Align/Vision X", vision.getX(targetId));
+        Logger.recordOutput("PV_Align/Vision Y", vision.getY(targetId));
+        Logger.recordOutput("PV_Align/Vision Yaw", vision.getYawRad(targetId));
 
-        SmartDashboard.putBoolean("rotSetpoint", rotController.atSetpoint());
-        SmartDashboard.putNumber("rot Difference", vision.getYawRad(targetId) - rotController.getSetpoint());
+        Logger.recordOutput("PV_Align/rotSetpoint", rotController.atSetpoint());
+        Logger.recordOutput("PV_Align/rot Difference", vision.getYawRad(targetId) - rotController.getSetpoint());
         
-        SmartDashboard.putNumber("x Difference", vision.getX(targetId) - xController.getSetpoint());
-        SmartDashboard.putBoolean("x Setpoint", xController.atSetpoint());
+        Logger.recordOutput("PV_Align/x Difference", vision.getX(targetId) - xController.getSetpoint());
+        Logger.recordOutput("PV_Align/x Setpoint", xController.atSetpoint());
 
-        SmartDashboard.putNumber("y Difference", vision.getY(targetId) - yController.getSetpoint());
-        SmartDashboard.putBoolean("y Setpoint", yController.atSetpoint());
+        Logger.recordOutput("PV_Align/y Difference", vision.getY(targetId) - yController.getSetpoint());
+        Logger.recordOutput("PV_Align/y Setpoint", yController.atSetpoint());
 
-        SmartDashboard.putNumber("settle timer", settleTimer.get());
+        Logger.recordOutput("PV_Align/settle timer", settleTimer.get());
 
         if (!vision.hasTarget(targetId)) {
             drivetrain.setControl(new SwerveRequest.Idle());

@@ -22,7 +22,45 @@ public final class PathUtil {
         PathUtil.basePath = basePath;
         PathUtil.startRotation = startRotation;
     }
-    
+
+    public static List<PathPoint> getPoints() {
+        return basePath.getAllPathPoints();
+    }
+
+    public static Rotation2d getStartRotation() {
+        return startRotation;
+    }
+
+    public static Rotation2d getPreviousRotation(double position) {
+        RotationTarget best = null;
+
+        for (RotationTarget target : basePath.getRotationTargets()) {
+            if (target.position() < position) {
+                if (best == null || target.position() > best.position()) {
+                    best = target;
+                }
+            }
+        }
+
+        return best != null
+            ? best.rotation()
+            : startRotation;
+    }
+
+    public static List<PathPoint> getPointsBetween(double entry, double exit) {
+        ArrayList<PathPoint> result = new ArrayList<>();
+
+        for (PathPoint point : getPoints()) {
+            double pos = point.waypointRelativePos;
+
+            if (pos >= entry && pos <= exit) {
+                result.add(point);
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Finds the distance between the current pose and the given state across a PathPlannerPath
      * <br>
@@ -61,44 +99,6 @@ public final class PathUtil {
         }
 
         return targetDistance - currentDistance;
-    }
-
-    public static List<PathPoint> getPoints() {
-        return basePath.getAllPathPoints();
-    }
-
-    public static Rotation2d getStartRotation() {
-        return startRotation;
-    }
-
-    public static Rotation2d getPreviousRotation(double position) {
-        RotationTarget best = null;
-
-        for (RotationTarget target : basePath.getRotationTargets()) {
-            if (target.position() < position) {
-                if (best == null || target.position() > best.position()) {
-                    best = target;
-                }
-            }
-        }
-
-        return best != null
-            ? best.rotation()
-            : startRotation;
-    }
-
-    public static List<PathPoint> getPointsBetween(double entry, double exit) {
-        ArrayList<PathPoint> result = new ArrayList<>();
-
-        for (PathPoint point : getPoints()) {
-            double pos = point.waypointRelativePos;
-
-            if (pos >= entry && pos <= exit) {
-                result.add(point);
-            }
-        }
-
-        return result;
     }
 }
 

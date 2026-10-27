@@ -138,7 +138,7 @@ public class Robot extends LoggedRobot {
       batterytimer = 0;
     }
 
-    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
+    Logger.recordOutput("Match Time", DriverStation.getMatchTime());
     
     batterytimer += 20;
   }

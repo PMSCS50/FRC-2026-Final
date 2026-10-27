@@ -30,8 +30,8 @@
 
 //     @Override
 //     public void execute() {
-//         SmartDashboard.putNumber("Distance to tag", vision.getDistance(targetId));
-//         SmartDashboard.putNumber("Shooter velocity", shooter.getVelocity());
+//         Logger.recordOutput("Distance to tag", vision.getDistance(targetId));
+//         Logger.recordOutput("Shooter velocity", shooter.getVelocity());
 
 //         if (vision.hasTarget(targetId)) {
 //             double dist = vision.getDistance(targetId);

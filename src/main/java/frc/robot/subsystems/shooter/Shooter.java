@@ -49,7 +49,7 @@ public class Shooter extends SubsystemBase {
         double rps = this.rpsFromDistanceRegression(distance);
         io.setShooterVelocity(rps);
         
-        // SmartDashboard.putNumber("Target RPM", rpm);
+        // Logger.recordOutput("Target RPM", rpm);
         Logger.recordOutput("Shooter/rpsControl/Target RPS", rps);
         Logger.recordOutput("Shooter/rpsControl/Actual RPS", inputs.shooterVelocity);
         Logger.recordOutput("Shooter/rpsControl/RPS Difference", rps - inputs.shooterVelocity);

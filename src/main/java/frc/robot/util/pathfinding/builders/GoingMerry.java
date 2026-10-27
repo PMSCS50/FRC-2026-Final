@@ -637,7 +637,18 @@ public class GoingMerry {
   public static SendableChooser<RecoveryType> buildAutoRecoveryChooser() {
     SendableChooser<RecoveryType> chooser = new SendableChooser<>();
     for (RecoveryType type : RecoveryType.values()) {
-      if (type == RecoveryType.NO_RECOVERY) {
+      chooser.addOption(type.toString(), type);
+    }
+
+    chooser.onChange((type) -> RecoveryType.setCurrentMode(type));
+
+    return chooser;
+  }
+
+  public static SendableChooser<RecoveryType> buildAutoRecoveryChooser(RecoveryType defaulType) {
+    SendableChooser<RecoveryType> chooser = new SendableChooser<>();
+    for (RecoveryType type : RecoveryType.values()) {
+      if (type == defaulType) {
         chooser.setDefaultOption(type.toString(), type);
         continue;
       }
