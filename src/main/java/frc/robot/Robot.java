@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import com.ctre.phoenix6.Orchestra;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -125,6 +126,7 @@ public class Robot extends LoggedRobot {
     // |Drivetrain state logging
     Logger.recordOutput("Drive/Real Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleStates);
     Logger.recordOutput("Drive/Target Chassis Module States", m_robotContainer.getDrivetrain().getState().ModuleTargets);
+    Logger.recordOutput("Pathmaster/Current Path", PathPlannerAuto.currentPathName);
 
     // |Battery voltage error messages
     if (batteryVoltage <= 7.5 && batterytimer >= 20000) {

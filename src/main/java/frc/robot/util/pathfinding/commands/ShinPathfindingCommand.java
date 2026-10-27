@@ -555,6 +555,9 @@ public class ShinPathfindingCommand extends Command {
 
         eventSupervisor.initialize(currentTrajectory);
 
+        PathPlannerAuto.setCurrentTrajectory(currentTrajectory);
+        PathPlannerAuto.currentPathName = "Pathfinding";
+
         if (!Double.isFinite(currentTrajectory.getTotalTimeSeconds())) {
           finish = true;
           return;
