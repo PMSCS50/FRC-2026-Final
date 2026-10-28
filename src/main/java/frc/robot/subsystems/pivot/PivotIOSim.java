@@ -9,15 +9,17 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 import frc.robot.util.misc.VirtualPD;
+import frc.robot.util.tunable.TunableControls.ControlConstants;
+import frc.robot.util.tunable.TunableControls.TunableControlConstants;
+import frc.robot.util.tunable.TunableControls.TunablePIDController;
 
 public class PivotIOSim implements PivotIO {
 
-    private final PIDController pivotPID;
+    private final TunablePIDController pivotPID;
     private final ArmFeedforward pivotFF;
     private boolean pidControl = false;
     private double setpoint = 0.0;
@@ -40,7 +42,13 @@ public class PivotIOSim implements PivotIO {
             Math.PI / 3     // starting angle
         );
 
-        this.pivotPID = new PIDController(5, 0, 0.5);
+        this.pivotPID = new TunablePIDController(
+            new TunableControlConstants(
+                "PivotControls",
+                new ControlConstants()
+                .withPID(0.1, 0, 0)
+                .withTolerance(1.0))
+        );
         this.pivotFF = new ArmFeedforward(0, 1.3, 0);
     }
 
@@ -76,6 +84,7 @@ public class PivotIOSim implements PivotIO {
 
     @Override
     public void updateInputs(PivotIOInputs inputs) {
+        pivotPID.updateParams();
         inputs.motorVoltage = appliedVolts;
         inputs.motorPosition = armSim.getAngleRads();
         inputs.motorVelocity = armSim.getVelocityRadPerSec();
