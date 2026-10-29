@@ -28,9 +28,9 @@ import frc.robot.util.pathfinding.events.EventSupervisor;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -58,7 +58,7 @@ public class ShinPathfindingCommand extends Command {
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
-  private final HashSet<Subsystem> requirements;
+  private final Subsystem[] requirements;
 
   private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
@@ -99,8 +99,8 @@ public class ShinPathfindingCommand extends Command {
       BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
         
-    this.requirements = new HashSet<>(Set.of(requirements));
-    addRequirements(this.requirements.toArray(Subsystem[]::new));
+    this.requirements = requirements;
+    addRequirements(this.requirements);
     
 
     ShinPathfinding.ensureInitialized();
@@ -214,8 +214,8 @@ public class ShinPathfindingCommand extends Command {
       RobotConfig robotConfig,
       Subsystem... requirements) {
 
-    this.requirements = new HashSet<>(Set.of(requirements));
-    addRequirements(this.requirements.toArray(Subsystem[]::new));
+    this.requirements = requirements;
+    addRequirements(this.requirements);
 
     ShinPathfinding.ensureInitialized();
 
@@ -516,7 +516,7 @@ public class ShinPathfindingCommand extends Command {
         eventSupervisor.initialize(currentTrajectory);
 
         var eventReqs = EventSupervisor.getSchedulerRequirements(this.currentPath);
-        if (!Collections.disjoint(requirements, eventReqs)) {
+        if (!Collections.disjoint(Arrays.asList(requirements), eventReqs)) {
           throw new IllegalArgumentException(
               "Events that are triggered during path following cannot require the drive subsystem");
         }
@@ -546,7 +546,7 @@ public class ShinPathfindingCommand extends Command {
         
         if (!followingTargetPath) {
           var eventReqs = EventSupervisor.getSchedulerRequirements(this.currentPath);
-          if (!Collections.disjoint(requirements, eventReqs)) {
+          if (!Collections.disjoint(Arrays.asList(requirements), eventReqs)) {
             throw new IllegalArgumentException(
                 "Events that are triggered during path following cannot require the drive subsystem");
           }
