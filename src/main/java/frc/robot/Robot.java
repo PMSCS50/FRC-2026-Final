@@ -259,9 +259,7 @@ public class Robot extends LoggedRobot {
     );
     
     m_robotContainer.getDrivetrain().getPigeon2().setYaw(FieldUtil.getZeroRotation().getDegrees());
-
-    Logger.recordOutput("Gyro seed", m_robotContainer.getDrivetrain().getPigeon2().getYaw().getValueAsDouble());
-
+    
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();
 
