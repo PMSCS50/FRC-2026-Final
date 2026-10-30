@@ -2,21 +2,20 @@ package frc.robot.util.pathfinding.zoro;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 //Logging the minimal amount of stuff for us to perfectly recreate the original PathPlannerPath taken during log replay
+//Since the paths now can be fully decorated, there are alot of things here
 //This makes sure that when we are replaying a log file, the bot will take the same paths from the match
 public interface ZoroIO {
-
     @AutoLog
     public static class ZoroIOInputs {
         // Waypoints
         public int numWaypoints;
-        public Pose2d[] waypointAnchors;
-        public Pose2d[] waypointPrevControls;
-        public Pose2d[] waypointNextControls;
+        public Translation2d[] waypointAnchors;
+        public Translation2d[] waypointPrevControls;
+        public Translation2d[] waypointNextControls;
 
         // Rotation targets
         public double[] rotationTargetPositions;
@@ -42,7 +41,7 @@ public interface ZoroIO {
         public double[] eventPositions;
         public double[] eventEndPositions;
 
-        // Keep the isNewPathAvailable flag
+        // Is a new path available?
         public boolean isNewPathAvailable;
     }
     

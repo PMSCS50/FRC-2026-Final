@@ -14,17 +14,22 @@ public class FieldUtil {
   public static final double FIELD_MAX_X = 16.518;
   public static final double FIELD_MAX_Y = 8.043;
 
+  public static Alliance alliance = null;
+
   public static boolean isRedAlliance() {
+    if (alliance != null) return alliance == Alliance.Red;
+
     Optional<Alliance> alliance = DriverStation.getAlliance();
+    alliance.ifPresent((all) -> FieldUtil.alliance = all);
 
     return alliance.isPresent() && alliance.get() == Alliance.Red;
   }
 
   public static Rotation2d getZeroRotation() {
     if (isRedAlliance()) {
-      return Rotation2d.fromDegrees(180.0);
+      return Rotation2d.k180deg;
     } else {
-      return Rotation2d.fromDegrees(0.0);
+      return Rotation2d.kZero;
     }
   }
 
@@ -37,8 +42,14 @@ public class FieldUtil {
         : pose;
   }
 
-  public static int allianceRelativeFiducial(int blueId) {
-    return isRedAlliance() ? blueId - 16 : blueId;
+  public static int allianceRelativeFiducial(int id) {
+    //You could give even a red tag id and it works
+    if (id > 16) {
+      return isRedAlliance() ? id - 16 : id;
+    } else {
+      return isRedAlliance() ? id : id + 16;
+    }
+    
   }
 
   public static Pose2d facePose(Pose2d pose, Pose2d facing) {

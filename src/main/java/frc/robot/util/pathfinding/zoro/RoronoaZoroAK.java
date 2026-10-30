@@ -16,6 +16,8 @@ public class RoronoaZoroAK implements ShinPathfinder {
     private final ZoroIOInputsAutoLogged inputs = new ZoroIOInputsAutoLogged();
     private final String logKey = "RoronoaZoroAK";
 
+    //ShinPathfinder methods
+
     @Override
     public boolean isNewPathAvailable() {
         if (!Logger.hasReplaySource()) {
@@ -43,7 +45,44 @@ public class RoronoaZoroAK implements ShinPathfinder {
         }
     }
 
-    // ─── Logging ───────────────────────────────────────────────────────────
+    @Override
+    public void setStartPosition(Translation2d startPosition) {
+        if (!Logger.hasReplaySource()) {
+            zoro.setStartPosition(startPosition);
+        }
+    }
+
+    @Override
+    public void setStartRotation(Rotation2d startRotation) {
+        if (!Logger.hasReplaySource()) {
+            zoro.setStartRotation(startRotation);
+        }
+    }
+
+    @Override
+    public void setStops(List<Pose2d> stops) {
+        if (!Logger.hasReplaySource()) {
+            zoro.setStops(stops);
+        }
+    }
+
+    @Override
+    public void setGoalPosition(Translation2d goalPosition) {
+        if (!Logger.hasReplaySource()) {
+            zoro.setGoalPosition(goalPosition);
+        }
+    }
+
+    @Override
+    public void setDynamicObstacles(
+            List<Pair<Translation2d, Translation2d>> obs,
+            Translation2d currentRobotPos) {
+        if (!Logger.hasReplaySource()) {
+            zoro.setDynamicObstacles(obs, currentRobotPos);
+        }
+    }
+
+    // LOGGING AND RECONSTRUCTION HELPERS
 
     private void logPathData(PathPlannerPath path) {
         logWaypoints(path.getWaypoints());
@@ -56,19 +95,15 @@ public class RoronoaZoroAK implements ShinPathfinder {
     private void logWaypoints(List<Waypoint> waypoints) {
         int size = waypoints.size();
         inputs.numWaypoints = size;
-        inputs.waypointAnchors = new Pose2d[size];
-        inputs.waypointPrevControls = new Pose2d[size];
-        inputs.waypointNextControls = new Pose2d[size];
+        inputs.waypointAnchors = new Translation2d[size];
+        inputs.waypointPrevControls = new Translation2d[size];
+        inputs.waypointNextControls = new Translation2d[size];
 
         for (int i = 0; i < size; i++) {
             Waypoint w = waypoints.get(i);
-            inputs.waypointAnchors[i] = new Pose2d(w.anchor(), new Rotation2d());
-            inputs.waypointPrevControls[i] = w.prevControl() != null
-                    ? new Pose2d(w.prevControl(), new Rotation2d())
-                    : new Pose2d();
-            inputs.waypointNextControls[i] = w.nextControl() != null
-                    ? new Pose2d(w.nextControl(), new Rotation2d())
-                    : new Pose2d();
+            inputs.waypointAnchors[i] = w.anchor();
+            inputs.waypointPrevControls[i] = w.prevControl() != null ? w.prevControl() : Translation2d.kZero;
+            inputs.waypointNextControls[i] = w.nextControl() != null ? w.nextControl() : Translation2d.kZero;
         }
     }
 
@@ -138,9 +173,9 @@ public class RoronoaZoroAK implements ShinPathfinder {
 
     private void clearInputs() {
         inputs.numWaypoints = 0;
-        inputs.waypointAnchors = new Pose2d[0];
-        inputs.waypointPrevControls = new Pose2d[0];
-        inputs.waypointNextControls = new Pose2d[0];
+        inputs.waypointAnchors = new Translation2d[0];
+        inputs.waypointPrevControls = new Translation2d[0];
+        inputs.waypointNextControls = new Translation2d[0];
 
         inputs.rotationTargetPositions = new double[0];
         inputs.rotationTargetRotations = new Rotation2d[0];
@@ -163,8 +198,6 @@ public class RoronoaZoroAK implements ShinPathfinder {
         inputs.eventEndPositions = new double[0];
     }
 
-    // ─── Reconstruction ─────────────────────────────────────────────────────
-
     private PathPlannerPath reconstructPath(PathConstraints constraints, GoalEndState goalEndState) {
         if (inputs.numWaypoints <= 0) {
             return null;
@@ -185,7 +218,7 @@ public class RoronoaZoroAK implements ShinPathfinder {
     private List<Waypoint> rebuildWaypoints() {
         List<Waypoint> waypoints = new ArrayList<>();
         for (int i = 0; i < inputs.numWaypoints; i++) {
-            Translation2d anchor = inputs.waypointAnchors[i].getTranslation();
+            Translation2d anchor = inputs.waypointAnchors[i];
             Translation2d prev = extractControlPoint(inputs.waypointPrevControls[i]);
             Translation2d next = extractControlPoint(inputs.waypointNextControls[i]);
             waypoints.add(new Waypoint(prev, anchor, next));
@@ -193,11 +226,11 @@ public class RoronoaZoroAK implements ShinPathfinder {
         return waypoints;
     }
 
-    private Translation2d extractControlPoint(Pose2d pose) {
-        if (pose == null || pose.getTranslation().getNorm() < 1e-6) {
+    private Translation2d extractControlPoint(Translation2d pos) {
+        if (pos == null || pos.getNorm() < 1e-6) {
             return null;
         }
-        return pose.getTranslation();
+        return pos;
     }
 
     private List<RotationTarget> rebuildRotationTargets() {
@@ -249,45 +282,6 @@ public class RoronoaZoroAK implements ShinPathfinder {
                     ZoneManager.getEventCommand(inputs.eventTriggerNames[i])));
         }
         return markers;
-    }
-
-    // ─── Delegates ──────────────────────────────────────────────────────────
-
-    @Override
-    public void setStartPosition(Translation2d startPosition) {
-        if (!Logger.hasReplaySource()) {
-            zoro.setStartPosition(startPosition);
-        }
-    }
-
-    @Override
-    public void setStartRotation(Rotation2d startRotation) {
-        if (!Logger.hasReplaySource()) {
-            zoro.setStartRotation(startRotation);
-        }
-    }
-
-    @Override
-    public void setStops(List<Pose2d> stops) {
-        if (!Logger.hasReplaySource()) {
-            zoro.setStops(stops);
-        }
-    }
-
-    @Override
-    public void setGoalPosition(Translation2d goalPosition) {
-        if (!Logger.hasReplaySource()) {
-            zoro.setGoalPosition(goalPosition);
-        }
-    }
-
-    @Override
-    public void setDynamicObstacles(
-            List<Pair<Translation2d, Translation2d>> obs,
-            Translation2d currentRobotPos) {
-        if (!Logger.hasReplaySource()) {
-            zoro.setDynamicObstacles(obs, currentRobotPos);
-        }
     }
 }
 

@@ -15,7 +15,6 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
@@ -28,6 +27,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Elastic;
 import frc.robot.util.FieldUtil;
 import frc.robot.util.PhoenixUtil;
@@ -156,10 +156,6 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
     rumbleControllers(0);
 
-    // if (Constants.currentMode == Constants.simMode) {
-    //   DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
-    // }
-
     if (!m_orchestra.isPlaying() && allowOrchestra) {
       m_orchestra.play();
     }
@@ -172,11 +168,15 @@ public class Robot extends LoggedRobot {
       }
   }
 
+  @Override
+  public void driverStationConnected() {
+    applyAllianceConfig();
+  }
+
   // *Autonomous mode
   @Override
   public void autonomousInit() {
     Elastic.selectTab("Auto");
-    applyAllianceConfig();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
@@ -193,8 +193,8 @@ public class Robot extends LoggedRobot {
   // *Teleop mode
   @Override
   public void teleopInit() {
-    Elastic.selectTab("Teleop");
     applyAllianceConfig();
+    Elastic.selectTab("Teleop");
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -235,7 +235,7 @@ public class Robot extends LoggedRobot {
   // *Simulation mode
   @Override
   public void simulationInit() {
-    DriverStationSim.setAllianceStationId(AllianceStationID.Blue1); 
+    DriverStationSim.setAllianceStationId(AllianceStationID.Red2); 
     
     // Tell the code that FMS is actively connected
     DriverStationSim.setFmsAttached(true);
@@ -250,15 +250,9 @@ public class Robot extends LoggedRobot {
   }
 
   // !HELPERS
-    // *Set gyro yaw based on alliance color
-  private Alliance lastAppliedAlliance = null;
-
   private void applyAllianceConfig() {
     var allianceOpt = DriverStation.getAlliance();
     if (allianceOpt.isEmpty()) return;
-
-    Alliance alliance = allianceOpt.get();
-    if (alliance == lastAppliedAlliance) return;
 
     m_robotContainer.getDrivetrain().seedFieldCentric(
       FieldUtil.getZeroRotation()
@@ -266,17 +260,21 @@ public class Robot extends LoggedRobot {
     
     m_robotContainer.getDrivetrain().getPigeon2().setYaw(FieldUtil.getZeroRotation().getDegrees());
 
+    Logger.recordOutput("Gyro seed", m_robotContainer.getDrivetrain().getPigeon2().getYaw().getValueAsDouble());
+
     // *Clear caches first so getShootingSetpoint() recomputes with new alliance
     ShooterConstants.clearAllianceCache();
 
     // *Re-add waypoints with correct alliance-relative poses
     m_robotContainer.loadAllianceWaypoints();
 
-    m_robotContainer.getVision().cachedHubPose = null;
-    m_robotContainer.getVision().hasSeededPose = false;
+    m_robotContainer.getVision().cachedHubPose = VisionConstants.getHubPose();
+    m_robotContainer.getVision().hasSeededPose = true;
 
-    lastAppliedAlliance = alliance;
+    Logger.recordOutput("Alliance", FieldUtil.alliance);
   }
+
+
 
   private void rumbleControllers(double force) {
     RobotContainer.driverController.setRumble(RumbleType.kLeftRumble, force);
