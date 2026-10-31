@@ -160,7 +160,7 @@ public class RobotContainer {
         autoChooser = AutoBuilder.buildAutoChooser("Test Auto");
         SmartDashboard.putData("Auto Mode", autoChooser);
 
-        SmartDashboard.putData("Auto Recovery", GoingMerry.buildAutoRecoveryChooser("PATHFINDING_RECOVERY"));
+        SmartDashboard.putData("Auto Recovery", GoingMerry.buildAutoRecoveryChooser("AUTOPILOT_RECOVERY"));
 
         configureBindings();
     }

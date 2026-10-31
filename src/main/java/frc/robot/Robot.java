@@ -235,7 +235,7 @@ public class Robot extends LoggedRobot {
   // *Simulation mode
   @Override
   public void simulationInit() {
-    DriverStationSim.setAllianceStationId(AllianceStationID.Red2); 
+    DriverStationSim.setAllianceStationId(AllianceStationID.Blue2); 
     
     // Tell the code that FMS is actively connected
     DriverStationSim.setFmsAttached(true);
