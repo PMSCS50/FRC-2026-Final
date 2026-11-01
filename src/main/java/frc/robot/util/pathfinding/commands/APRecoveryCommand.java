@@ -112,7 +112,7 @@ public class APRecoveryCommand extends Command {
     public void execute() {
 
         Pose2d currentPose = GoingMerry.getCurrentPose();
-        ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds().times(1.0);
+        ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
 
         // AutoPilot returns field-relative translational velocities
         // and a desired robot heading.
