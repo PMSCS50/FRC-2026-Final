@@ -75,11 +75,10 @@ public class APRecoveryCommand extends Command {
             endState, 
             new Autopilot(
                 new APProfile(
-                    new APConstraints(path.getGlobalConstraints().maxVelocityMPS() * 1.3, path.getGlobalConstraints().maxAccelerationMPSSq(), 2.0))
+                    new APConstraints(path.getGlobalConstraints().maxAccelerationMPSSq(), 2.0))
                     .withErrorXY(Centimeter.of(20))
                     .withErrorTheta(Degrees.of(10))
-                    .withBeelineRadius(Meters.of(0.5)
-                )
+                    .withBeelineRadius(Meters.of(0.75))
             )
         );
     }
@@ -96,17 +95,16 @@ public class APRecoveryCommand extends Command {
                 endState.pose
             }
         );
-
         Logger.recordOutput(
             "Drive/DriveToPointReached",
             false
         );
+        
+        headingController.reset();
+
 
         PPLogging.logTargetPose(endState.pose);
         PPLibTelemetry.setTargetPose(endState.pose);
-
-        headingController.reset();
-
         PathPlannerAuto.currentPathName = "Recovery";
     }
 
@@ -114,7 +112,7 @@ public class APRecoveryCommand extends Command {
     public void execute() {
 
         Pose2d currentPose = GoingMerry.getCurrentPose();
-        ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
+        ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds().times(10.0 / 3.0);
 
         // AutoPilot returns field-relative translational velocities
         // and a desired robot heading.
