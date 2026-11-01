@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -16,12 +15,13 @@ import com.therekrab.autopilot.APTarget;
 import com.therekrab.autopilot.Autopilot;
 import com.therekrab.autopilot.Autopilot.APResult;
 
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
+import frc.robot.Constants.DriveConstants;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 
@@ -29,23 +29,18 @@ import frc.robot.util.pathfinding.telemetry.PPLogging;
 public class APRecoveryCommand extends Command {
 
     private final PathPlannerTrajectoryState endState;
-    @SuppressWarnings("unused")
-    private final PathPlannerPath ogPath;
 
     private final Autopilot autopilot;
     private final APTarget target;
-
-    private final PIDController headingController;
+    private final ProfiledPIDController headingController;
 
     private final Trigger endTrigger;
 
     private APRecoveryCommand(
-        PathPlannerPath ogPath,
         PathPlannerTrajectoryState endState,
         Autopilot autopilot
     ) {
 
-        this.ogPath = ogPath;
         this.endState = endState;
         this.autopilot = autopilot;
 
@@ -53,7 +48,7 @@ public class APRecoveryCommand extends Command {
             .withVelocity(endState.linearVelocity)
             .withEntryAngle(endState.heading);
 
-        headingController = new PIDController(4.0, 0, 0);
+        headingController = new ProfiledPIDController(4.0, 0, 0, new TrapezoidProfile.Constraints(DriveConstants.MaxAngularRate, 87.0));
         headingController.enableContinuousInput(-Math.PI, Math.PI);
 
         endTrigger = new Trigger(() -> {
@@ -66,19 +61,15 @@ public class APRecoveryCommand extends Command {
         });
     }
 
-    public static Command generateCommand(
-        PathPlannerPath path,
-        PathPlannerTrajectoryState endState
-    ) {
+    public static Command generateCommand(PathPlannerTrajectoryState endState) {
         return new APRecoveryCommand(
-            path, 
             endState, 
             new Autopilot(
                 new APProfile(
-                    new APConstraints(path.getGlobalConstraints().maxAccelerationMPSSq() * 5, 2.0))
+                    new APConstraints(15.0, 2.0))
                     .withErrorXY(Centimeter.of(20))
                     .withErrorTheta(Degrees.of(10))
-                    .withBeelineRadius(Meters.of(0.75))
+                    .withBeelineRadius(Meters.of(0.5))
             )
         );
     }
@@ -87,21 +78,9 @@ public class APRecoveryCommand extends Command {
     public void initialize() {
 
         Logger.recordOutput("Drive/DriveToPointReached", false);
+        Logger.recordOutput("Drive/DriveToPointMap",new Pose2d[] {GoingMerry.getCurrentPose(),endState.pose});
 
-        Logger.recordOutput(
-            "Drive/DriveToPointMap",
-            new Pose2d[] {
-                GoingMerry.getCurrentPose(),
-                endState.pose
-            }
-        );
-        Logger.recordOutput(
-            "Drive/DriveToPointReached",
-            false
-        );
-        
-        headingController.reset();
-
+        headingController.reset(GoingMerry.getCurrentPose().getRotation().getRadians(), GoingMerry.getCurrentSpeeds().omegaRadiansPerSecond);
 
         PPLogging.logTargetPose(endState.pose);
         PPLibTelemetry.setTargetPose(endState.pose);

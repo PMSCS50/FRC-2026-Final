@@ -19,7 +19,7 @@ public enum RecoveryType {
     DRIVE_TO_POINT_RECOVERY((path, state) -> PPRecoveryCommand.generateCommand(path, state)),
 
     // Uses Autopilot to create a profile to drive to the desired state
-    AUTOPILOT_RECOVERY((path, state) -> APRecoveryCommand.generateCommand(path, state)),
+    AUTOPILOT_RECOVERY((path, state) -> APRecoveryCommand.generateCommand(state)),
 
     // Pathfinds to the desired state
     PATHFINDING_RECOVERY((path, state) -> GoingMerry.pathfindToPose(state.pose, path.getGlobalConstraints(), state.linearVelocity)),

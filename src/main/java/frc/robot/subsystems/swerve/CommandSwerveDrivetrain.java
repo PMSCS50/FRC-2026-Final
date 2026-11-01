@@ -70,6 +70,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     */
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
+    private final SwerveRequest.ApplyRobotSpeeds m_pathFindApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
     // *Separate request object for runVelocity (teleop/default command).
     // *MUST NOT be the same instance as m_pathApplyRobotSpeeds: the path follower
     // *mutates m_pathApplyRobotSpeeds with .withWheelForceFeedforwardsX/Y at every
@@ -261,7 +263,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this::getSpeeds, // Supplier of current robot speeds
                 (speeds, feedforwards) -> {
                     setControl(
-                        m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                        m_pathFindApplyRobotSpeeds.withSpeeds(speeds)
                             .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                             .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     );
