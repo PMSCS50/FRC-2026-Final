@@ -1,8 +1,11 @@
 package frc.robot.util.pathfinding.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.RotationTarget;
@@ -10,6 +13,9 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.util.pathfinding.zones.PathZone;
+import frc.robot.util.pathfinding.zones.RecoveryZone;
+import frc.robot.util.pathfinding.zones.ZoneManager;
 
 public final class PathUtil {
 
@@ -103,7 +109,8 @@ public final class PathUtil {
 
     //Incomplete implementation that fills up a PathPlannerPath with RecoveryZones.
     public static PathPlannerPath fillRecoveryPath(PathPlannerPath path) {
-        List<EventMarkers> eventMarkers = path.getEventMarkers();
+        List<PathPoint> points = path.getAllPathPoints();
+        List<EventMarker> eventMarkers = path.getEventMarkers();
         List<PathZone> activeZones = ZoneManager.getActiveZones();
         Map<PathZone, Integer> activeZoneEntries = new HashMap<>();
 
