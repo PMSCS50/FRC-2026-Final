@@ -170,6 +170,7 @@ public final class PathUtil {
                 )
             );
         }
+        
         path.getEventMarkers().addAll(eventMarkers);
         return path;
     }
