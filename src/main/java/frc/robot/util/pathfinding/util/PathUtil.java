@@ -100,6 +100,79 @@ public final class PathUtil {
 
         return targetDistance - currentDistance;
     }
+
+    //Incomplete implementation that fills up a PathPlannerPath with RecoveryZones.
+    public static PathPlannerPath fillRecoveryPath(PathPlannerPath path) {
+        List<EventMarkers> eventMarkers = path.getEventMarkers();
+        List<PathZone> activeZones = ZoneManager.getActiveZones();
+        Map<PathZone, Integer> activeZoneEntries = new HashMap<>();
+
+        for (int i = 0; i < points.size(); i++) {
+            PathPoint currentPoint = points.get(i);
+
+            for (PathZone zone : activeZones) {
+                if (!(zone instanceof RecoveryZone)) continue;
+                boolean isInside = zone.contains(currentPoint.position);
+                boolean isActive = activeZoneEntries.containsKey(zone);
+
+                // Track zone entry
+                if (isInside && !isActive) {
+                    activeZoneEntries.put(zone, i);
+                }
+
+                // Process zone exit OR segment split at stop
+                if (isActive && !isInside) {
+                    int entryIndex = activeZoneEntries.get(zone);
+                    int exitIndex = isInside ? i : i - 1;
+
+                    if (exitIndex >= entryIndex) {
+                        double entryWaypointIndex =
+                            points.get(entryIndex).waypointRelativePos;
+
+                        double exitWaypointIndex =
+                            points.get(exitIndex).waypointRelativePos;
+
+                        eventMarkers.addAll(
+                            zone.createEventMarkers(
+                                entryWaypointIndex,
+                                exitWaypointIndex
+                            )
+                        );
+                    }
+
+                    activeZoneEntries.remove(zone);
+
+                    // Resume zone tracking immediately after a stop if still inside
+                    if (isInside) {
+                        activeZoneEntries.put(zone, i);
+                    }
+                }
+            }
+        }
+
+        for (Map.Entry<PathZone, Integer> entry : activeZoneEntries.entrySet()) {
+            PathZone zone = entry.getKey();
+            if (!(zone instanceof RecoveryZone)) continue;
+            
+            int entryIndex = entry.getValue();
+            int exitIndex = points.size() - 1;
+
+            double entryWaypointIndex =
+                points.get(entryIndex).waypointRelativePos;
+
+            double exitWaypointIndex =
+                points.get(exitIndex).waypointRelativePos;
+
+            eventMarkers.addAll(
+                zone.createEventMarkers(
+                    entryWaypointIndex,
+                    exitWaypointIndex
+                )
+            );
+        }
+        path.getEventMarkers().addAll(eventMarkers);
+        return path;
+    }
 }
 
 /*

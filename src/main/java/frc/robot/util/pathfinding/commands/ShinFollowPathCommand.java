@@ -118,6 +118,9 @@ public class ShinFollowPathCommand extends Command {
       path = originalPath;
     }
 
+    //Fill recovery Zones inside a path
+    path = PathUtil.fillRecoveryPath(path);
+
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
