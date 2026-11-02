@@ -17,6 +17,7 @@ import frc.robot.util.Zone;
 import frc.robot.util.pathfinding.builders.*;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
+import frc.robot.util.pathfinding.util.RecoveryType;
 import frc.robot.util.pathfinding.zones.*;
 
 import java.util.ArrayList;
@@ -179,6 +180,15 @@ public class Pathmaster {
         ZoneManager.addZone(ez, active);
 
         Logger.recordOutput("Pathmaster/Event Zone " + name, zone.getPoints());
+    }
+
+    // *Can make an EventZone out of a NamedCommand.
+    public void addRecoveryZone(String name, Zone zone, RecoveryType type, boolean active) {
+        RecoveryZone rz = new RecoveryZone(name, zone, type);
+
+        ZoneManager.addZone(rz, active);
+
+        Logger.recordOutput("Pathmaster/Recovery Zone " + name, zone.getPoints());
     }
 
     // *Activates a single zone

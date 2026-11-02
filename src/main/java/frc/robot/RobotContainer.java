@@ -55,6 +55,7 @@ import frc.robot.util.Zone.RectangleZone;
 import frc.robot.util.misc.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.builders.GoingMerry;
+import frc.robot.util.pathfinding.util.RecoveryType;
 
 
 public class RobotContainer {
@@ -155,6 +156,11 @@ public class RobotContainer {
         monkeyDLuffy.addMultiRotationZone("TrenchTL", new RectangleZone(new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchBR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
         monkeyDLuffy.addMultiRotationZone("TrenchTR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+        
+        monkeyDLuffy.addRecoveryZone("TrenchBL", new RectangleZone(new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86))), RecoveryType.PATHFINDING_RECOVERY, true);
+        monkeyDLuffy.addRecoveryZone("TrenchTL", new RectangleZone(new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64))), RecoveryType.PATHFINDING_RECOVERY, true);
+        monkeyDLuffy.addRecoveryZone("TrenchBR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86))), RecoveryType.PATHFINDING_RECOVERY, true);
+        monkeyDLuffy.addRecoveryZone("TrenchTR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64))), RecoveryType.PATHFINDING_RECOVERY, true);
         
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Test Auto");

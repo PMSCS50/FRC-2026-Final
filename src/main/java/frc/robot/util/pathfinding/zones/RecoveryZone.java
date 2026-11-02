@@ -1,6 +1,7 @@
 package frc.robot.util.pathfinding.zones;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.robot.util.Zone;
 import frc.robot.util.pathfinding.util.RecoveryType;
 import edu.wpi.first.math.geometry.Translation2d;
 
@@ -23,9 +24,14 @@ public class RecoveryZone extends PathZone {
 
     private final RecoveryType type;
 
-    //Register an EventZone
+    //Register an RecoveryZone
     public RecoveryZone(String name, Translation2d min, Translation2d max, RecoveryType type) {
         super(name, min, max);
+        this.type = type;
+    }
+
+    public RecoveryZone(String name, Zone zone, RecoveryType type) {
+        super(name, zone);
         this.type = type;
     }
 
