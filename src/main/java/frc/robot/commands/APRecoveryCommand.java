@@ -27,7 +27,7 @@ public class APRecoveryCommand extends Command {
 
     private final SwerveRequest.FieldCentricFacingAngle drive = 
         new SwerveRequest.FieldCentricFacingAngle()
-        .withForwardPerspective(ForwardPerspectiveValue.OperatorPerspective)
+        .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
         .withDriveRequestType(DriveRequestType.Velocity)
         .withHeadingPID(4.0, 0, 0);
 
@@ -101,11 +101,7 @@ public class APRecoveryCommand extends Command {
             .withTargetDirection(result.targetAngle())
         );
 
-        Logger.recordOutput("AP Speeds/Vx", result.vx());
-        Logger.recordOutput("AP Speeds/Vy", result.vy());
-        Logger.recordOutput("AP Speeds/Target Angle", result.targetAngle().getDegrees());
-
-        //Only for logging
+        //Only for logging. Keep until WE KNOW APRecoveryCommand is good
         ChassisSpeeds targetSpeeds =
             ChassisSpeeds.fromFieldRelativeSpeeds(
                 result.vx().magnitude(),

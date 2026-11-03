@@ -77,7 +77,7 @@ public class Pathmaster {
 
         createLoggingCallbacks();
 
-        Recovery.registerRecoveryMode("Drive to Point Recovery", (path, state) -> PPRecoveryCommand.generateCommand(path, state));
+        Recovery.registerRecoveryMode("Drive to Point Recovery", (path, state) -> PPRecoveryCommand.generateCommand(drivetrain, path, state));
         Recovery.registerRecoveryMode("Autopilot Recovery", (path, state) ->
             APRecoveryCommand.generateCommand(drivetrain, state, new Autopilot(
                 new APProfile(
