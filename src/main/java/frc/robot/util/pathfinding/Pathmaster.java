@@ -2,6 +2,9 @@ package frc.robot.util.pathfinding;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.*;
+import com.therekrab.autopilot.APConstraints;
+import com.therekrab.autopilot.APProfile;
+import com.therekrab.autopilot.Autopilot;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 
@@ -15,10 +18,14 @@ import frc.robot.util.Elastic;
 import frc.robot.util.FieldUtil;
 import frc.robot.util.Zone;
 import frc.robot.util.pathfinding.builders.*;
+import frc.robot.util.pathfinding.commands.APRecoveryCommand;
+import frc.robot.util.pathfinding.commands.PPRecoveryCommand;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
-import frc.robot.util.pathfinding.util.RecoveryType;
+import frc.robot.util.pathfinding.util.Recovery;
 import frc.robot.util.pathfinding.zones.*;
+
+import static edu.wpi.first.units.Units.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -69,6 +76,19 @@ public class Pathmaster {
         this.selectedWaypointIndex = 0;
 
         createLoggingCallbacks();
+
+        Recovery.registerRecoveryMode("Drive to Point Recovery", (path, state) -> PPRecoveryCommand.generateCommand(path, state));
+        Recovery.registerRecoveryMode("Autopilot Recovery", (path, state) ->
+            APRecoveryCommand.generateCommand(state, new Autopilot(
+                new APProfile(
+                    new APConstraints(15.0, 2.0))
+                    .withErrorXY(Centimeter.of(20))
+                    .withErrorTheta(Degrees.of(10))
+                    .withBeelineRadius(Meters.of(0.5))
+                )
+            )
+        );
+        Recovery.registerRecoveryMode("Pathfinding Recovery", (path, state) -> GoingMerry.pathfindToPose(state.pose, path.getGlobalConstraints(), state.linearVelocity));
     }
 
     // *Call in Robot.java as the last line in Robot contructor
@@ -183,7 +203,7 @@ public class Pathmaster {
     }
 
     // *Can make an EventZone out of a NamedCommand.
-    public void addRecoveryZone(String name, Zone zone, RecoveryType type, boolean active) {
+    public void addRecoveryZone(String name, Zone zone, String type, boolean active) {
         RecoveryZone rz = new RecoveryZone(name, zone, type);
 
         ZoneManager.addZone(rz, active);

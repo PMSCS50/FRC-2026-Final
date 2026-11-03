@@ -2,7 +2,7 @@ package frc.robot.util.pathfinding.zones;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.util.Zone;
-import frc.robot.util.pathfinding.util.RecoveryType;
+import frc.robot.util.pathfinding.util.Recovery;
 import edu.wpi.first.math.geometry.Translation2d;
 
 import java.util.ArrayList;
@@ -22,20 +22,20 @@ import com.pathplanner.lib.path.RotationTarget;
  */
 public class RecoveryZone extends PathZone {
 
-    private final RecoveryType type;
+    private final String type;
 
     //Register an RecoveryZone
-    public RecoveryZone(String name, Translation2d min, Translation2d max, RecoveryType type) {
+    public RecoveryZone(String name, Translation2d min, Translation2d max, String type) {
         super(name, min, max);
         this.type = type;
     }
 
-    public RecoveryZone(String name, Zone zone, RecoveryType type) {
+    public RecoveryZone(String name, Zone zone, String type) {
         super(name, zone);
         this.type = type;
     }
 
-    public RecoveryType getRecoveryType() {
+    public String getRecovery() {
         return type;
     }
 
@@ -50,9 +50,9 @@ public class RecoveryZone extends PathZone {
 
     @Override
     public List<EventMarker> createEventMarkers(double entry, double exit) { 
-        RecoveryType previousType = RecoveryType.getCurrentMode();
-        EventMarker em1 = new EventMarker(name, entry, exit, new InstantCommand(() -> RecoveryType.setCurrentMode(type)));
-        EventMarker em2 = new EventMarker(name, exit, new InstantCommand(() -> RecoveryType.setCurrentMode(previousType)));
+        String previousType = Recovery.getCurrentMode();
+        EventMarker em1 = new EventMarker(name, entry, exit, new InstantCommand(() -> Recovery.setCurrentMode(type)));
+        EventMarker em2 = new EventMarker(name, exit, new InstantCommand(() -> Recovery.setCurrentMode(previousType)));
         return List.of(em1, em2);
     }
 

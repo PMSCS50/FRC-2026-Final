@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.util.pathfinding.commands.ShinFollowPathCommand;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
-import frc.robot.util.pathfinding.util.RecoveryType;
+import frc.robot.util.pathfinding.util.Recovery;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -634,27 +634,23 @@ public class GoingMerry {
     return globals.isHolonomic;
   }
 
-  public static SendableChooser<RecoveryType> buildAutoRecoveryChooser() {
-    return buildAutoRecoveryChooser("NO_RECOVERY");
+  public static SendableChooser<String> buildAutoRecoveryChooser() {
+    return buildAutoRecoveryChooser(Recovery.NO_RECOVERY);
   }
 
-  public static SendableChooser<RecoveryType> buildAutoRecoveryChooser(RecoveryType defaultType) {
-    return buildAutoRecoveryChooser(defaultType.toString());
-  }
-
-  public static SendableChooser<RecoveryType> buildAutoRecoveryChooser(String defaultType) {
-    SendableChooser<RecoveryType> chooser = new SendableChooser<>();
-    for (RecoveryType type : RecoveryType.values()) {
-      if (type.toString() == defaultType) {
-        chooser.setDefaultOption(type.toString(), type);
+  public static SendableChooser<String> buildAutoRecoveryChooser(String defaultType) {
+    SendableChooser<String> chooser = new SendableChooser<>();
+    for (String type : Recovery.getAllRecoveryModes()) {
+      if (type == defaultType) {
+        chooser.setDefaultOption(type, type);
         //Init default option
-        RecoveryType.setCurrentMode(type);
+        Recovery.setCurrentMode(type);
         continue;
       }
-      chooser.addOption(type.toString(), type);
+      chooser.addOption(type, type);
     }
 
-    chooser.onChange((type) -> RecoveryType.setCurrentMode(type));
+    chooser.onChange((type) -> Recovery.setCurrentMode(type));
 
     return chooser;
   }

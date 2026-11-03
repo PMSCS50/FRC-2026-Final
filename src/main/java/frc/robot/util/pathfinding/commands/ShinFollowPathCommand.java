@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.pathfinding.util.PathUtil;
 import edu.wpi.first.math.filter.Debouncer;
-import frc.robot.util.pathfinding.util.RecoveryType;
+import frc.robot.util.pathfinding.util.Recovery;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
 
 import static edu.wpi.first.units.Units.Seconds;
@@ -185,7 +185,7 @@ public class ShinFollowPathCommand extends Command {
     PPLibTelemetry.setCurrentPose(currentPose);
 
     //Recovery mode stuff
-    if (RecoveryType.getCurrentMode() != RecoveryType.NO_RECOVERY) {
+    if (Recovery.getCurrentMode() != Recovery.NO_RECOVERY) {
       
       double positionError = PathUtil.distanceAlongPath(path, currentPose, targetState);
 
@@ -198,7 +198,7 @@ public class ShinFollowPathCommand extends Command {
           recoveryTimer.reset();
           recoveryTimer.start();
 
-          recoveryCommand = RecoveryType.getCurrentMode().recoveryCommandBuilder.apply(path, targetState);
+          recoveryCommand = Recovery.getCommandBuilder(Recovery.getCurrentMode()).apply(path, targetState);
           recoveryCommand.initialize();
       }
 
