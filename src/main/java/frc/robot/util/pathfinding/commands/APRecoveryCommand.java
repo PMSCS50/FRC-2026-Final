@@ -9,8 +9,6 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.commands.PathPlannerAuto;
-import com.therekrab.autopilot.APConstraints;
-import com.therekrab.autopilot.APProfile;
 import com.therekrab.autopilot.APTarget;
 import com.therekrab.autopilot.Autopilot;
 import com.therekrab.autopilot.Autopilot.APResult;
@@ -61,16 +59,10 @@ public class APRecoveryCommand extends Command {
         });
     }
 
-    public static Command generateCommand(PathPlannerTrajectoryState endState) {
+    public static Command generateCommand(PathPlannerTrajectoryState endState, Autopilot autopilot) {
         return new APRecoveryCommand(
             endState, 
-            new Autopilot(
-                new APProfile(
-                    new APConstraints(15.0, 2.0))
-                    .withErrorXY(Centimeter.of(20))
-                    .withErrorTheta(Degrees.of(10))
-                    .withBeelineRadius(Meters.of(0.5))
-            )
+            autopilot
         );
     }
 

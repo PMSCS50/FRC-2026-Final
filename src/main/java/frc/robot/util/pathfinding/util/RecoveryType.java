@@ -2,11 +2,17 @@ package frc.robot.util.pathfinding.util;
 
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.therekrab.autopilot.APConstraints;
+import com.therekrab.autopilot.APProfile;
+import com.therekrab.autopilot.Autopilot;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.util.pathfinding.builders.GoingMerry;
 import frc.robot.util.pathfinding.commands.APRecoveryCommand;
 import frc.robot.util.pathfinding.commands.PPRecoveryCommand;
+
+import static edu.wpi.first.units.Units.*;
 
 import java.util.function.BiFunction;
 
@@ -19,7 +25,16 @@ public enum RecoveryType {
     DRIVE_TO_POINT_RECOVERY((path, state) -> PPRecoveryCommand.generateCommand(path, state)),
 
     // Uses Autopilot to create a profile to drive to the desired state
-    AUTOPILOT_RECOVERY((path, state) -> APRecoveryCommand.generateCommand(state)),
+    AUTOPILOT_RECOVERY((path, state) -> 
+            APRecoveryCommand.generateCommand(state, new Autopilot(
+                new APProfile(
+                    new APConstraints(15.0, 2.0))
+                    .withErrorXY(Centimeter.of(20))
+                    .withErrorTheta(Degrees.of(10))
+                    .withBeelineRadius(Meters.of(0.5))
+            )
+        )
+    ),
 
     // Pathfinds to the desired state
     PATHFINDING_RECOVERY((path, state) -> GoingMerry.pathfindToPose(state.pose, path.getGlobalConstraints(), state.linearVelocity)),

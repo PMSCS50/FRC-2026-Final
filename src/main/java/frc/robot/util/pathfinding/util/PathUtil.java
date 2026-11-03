@@ -110,7 +110,7 @@ public final class PathUtil {
     //Incomplete implementation that fills up a PathPlannerPath with RecoveryZones.
     public static PathPlannerPath fillRecoveryPath(PathPlannerPath path) {
         List<PathPoint> points = path.getAllPathPoints();
-        List<EventMarker> eventMarkers = path.getEventMarkers();
+        List<EventMarker> eventMarkers = new ArrayList<>(path.getEventMarkers());
         List<PathZone> activeZones = ZoneManager.getActiveZones();
         Map<PathZone, Integer> activeZoneEntries = new HashMap<>();
 
@@ -178,7 +178,17 @@ public final class PathUtil {
             );
         }
         
-        path.getEventMarkers().addAll(eventMarkers);
+        path = new PathPlannerPath(
+            path.getWaypoints(),
+            path.getRotationTargets(),
+            path.getPointTowardsZones(),
+            path.getConstraintZones(),
+            eventMarkers,
+            path.getGlobalConstraints(),
+            path.getIdealStartingState(),
+            path.getGoalEndState(),
+            path.isReversed()
+        );
         return path;
     }
 }
