@@ -1,86 +1,148 @@
-package frc.robot.util.pathfinding.commands;
+
+package frc.robot.commands;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.therekrab.autopilot.APTarget;
+import com.therekrab.autopilot.Autopilot;
+import com.therekrab.autopilot.Autopilot.APResult;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.util.pathfinding.builders.GoingMerry;
+import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
-import frc.robot.util.pathfinding.util.PathUtil;
 
-// * Modified Drive to Point Command that smoothly follows a path to a certain PPTrajState
-// * Can be used to smoothly get back on the path if temporarily beached.
-public class PPRecoveryCommand extends Command {
-    
+// Command that uses Autopilot to recover to a PathPlanner trajectory state.
+public class APRecoveryCommand extends Command {
+
+    private final CommandSwerveDrivetrain drivetrain;
+
+    private final SwerveRequest.FieldCentricFacingAngle drive = 
+        new SwerveRequest.FieldCentricFacingAngle()
+        .withForwardPerspective(ForwardPerspectiveValue.OperatorPerspective)
+        .withDriveRequestType(DriveRequestType.Velocity)
+        .withHeadingPID(4.0, 0, 0);
+
     private final PathPlannerTrajectoryState endState;
-    private final PPHolonomicDriveController pathController;
+
+    private final Autopilot autopilot;
+    private final APTarget target;
 
     private final Trigger endTrigger;
 
-    private PPRecoveryCommand(PathPlannerPath ogPath, PathPlannerTrajectoryState endState) {
+    private APRecoveryCommand(
+        CommandSwerveDrivetrain drivetrain,
+        PathPlannerTrajectoryState endState,
+        Autopilot autopilot
+    ) {
 
+        this.drivetrain = drivetrain;
         this.endState = endState;
+        this.autopilot = autopilot;
 
-        this.pathController = new PPHolonomicDriveController(
-            new PIDConstants(1.45, 0, 0.01),
-            new PIDConstants(1.2, 0, 0));
+        this.target = new APTarget(endState.pose)
+            .withVelocity(endState.linearVelocity)
+            .withEntryAngle(endState.heading);
 
         endTrigger = new Trigger(() -> {
 
-            boolean atState = PathUtil.distanceAlongPath(ogPath, GoingMerry.getCurrentPose(), endState) <= 0.2;
+            boolean atState = autopilot.atTarget(drivetrain.getPose(), target);
 
             Logger.recordOutput("Pathmaster/recovery ended/at state", atState);
-            return atState;
 
-            }
-        );
+            return atState;
+        });
     }
 
-    public static Command generateCommand(PathPlannerPath ogPath, PathPlannerTrajectoryState endState){
-        return new PPRecoveryCommand(ogPath, endState);
+    public static Command generateCommand(CommandSwerveDrivetrain drivetrain, PathPlannerTrajectoryState endState, Autopilot autopilot) {
+        return new APRecoveryCommand(
+            drivetrain,
+            endState, 
+            autopilot
+        );
     }
 
     @Override
     public void initialize() {
+
         Logger.recordOutput("Drive/DriveToPointReached", false);
-        Logger.recordOutput("Drive/DriveToPointMap", new Pose2d[] {GoingMerry.getCurrentPose(), endState.pose});
+        Logger.recordOutput("Drive/DriveToPointMap",new Pose2d[] {drivetrain.getPose(), endState.pose});
+
         PPLogging.logTargetPose(endState.pose);
         PPLibTelemetry.setTargetPose(endState.pose);
-        pathController.reset(GoingMerry.getCurrentPose(), GoingMerry.getCurrentSpeeds());
         PathPlannerAuto.currentPathName = "Recovery";
     }
 
     @Override
     public void execute() {
 
-        Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
+        Pose2d currentPose = drivetrain.getPose();
+        ChassisSpeeds currentSpeeds = drivetrain.getSpeeds();
 
-        ChassisSpeeds targetSpeeds = pathController.calculateRobotRelativeSpeeds(GoingMerry.getCurrentPose(), endState);
-        GoingMerry.getOutput().accept(targetSpeeds, DriveFeedforwards.zeros(4));
+        // AutoPilot returns field-relative translational velocities
+        // and a desired robot heading.
+        APResult result = autopilot.calculate(
+            currentPose,
+            currentSpeeds,
+            target
+        );
+
+        drivetrain.setControl(drive
+            .withVelocityX(result.vx())
+            .withVelocityY(result.vy())
+            .withTargetDirection(result.targetAngle())
+        );
+
+        Logger.recordOutput("AP Speeds/Vx", result.vx());
+        Logger.recordOutput("AP Speeds/Vy", result.vy());
+        Logger.recordOutput("AP Speeds/Target Angle", result.targetAngle().getDegrees());
+
+        //Only for logging
+        ChassisSpeeds targetSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                result.vx().magnitude(),
+                result.vy().magnitude(),
+                0,
+                currentPose.getRotation()
+            );
+
         
-        ChassisSpeeds currentSpeeds = GoingMerry.getCurrentSpeeds();
+
+        Logger.recordOutput(
+            "Pathmaster/Recovered Path",
+            endTrigger.getAsBoolean()
+        );
 
         PPLogging.logVelocities(
-            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
-            Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
+            Math.hypot(
+                currentSpeeds.vxMetersPerSecond,
+                currentSpeeds.vyMetersPerSecond
+            ),
+            Math.hypot(
+                targetSpeeds.vxMetersPerSecond,
+                targetSpeeds.vyMetersPerSecond
+            ),
             currentSpeeds.omegaRadiansPerSecond,
             targetSpeeds.omegaRadiansPerSecond
         );
 
-        
         PPLibTelemetry.setVelocities(
-            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
-            Math.hypot(targetSpeeds.vxMetersPerSecond,  targetSpeeds.vyMetersPerSecond),
+            Math.hypot(
+                currentSpeeds.vxMetersPerSecond,
+                currentSpeeds.vyMetersPerSecond
+            ),
+            Math.hypot(
+                targetSpeeds.vxMetersPerSecond,
+                targetSpeeds.vyMetersPerSecond
+            ),
             currentSpeeds.omegaRadiansPerSecond,
             targetSpeeds.omegaRadiansPerSecond
         );
@@ -93,7 +155,14 @@ public class PPRecoveryCommand extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        Logger.recordOutput("Pathmaster/Recovered Path", endTrigger.getAsBoolean());
+        Logger.recordOutput(
+            "Drive/DriveToPointReached",
+            endTrigger.getAsBoolean()
+        );
+        Logger.recordOutput(
+            "Pathmaster/Recovered Path",
+            endTrigger.getAsBoolean()
+        );
     }
 }
 

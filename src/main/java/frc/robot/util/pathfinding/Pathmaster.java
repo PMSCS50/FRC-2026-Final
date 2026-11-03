@@ -13,13 +13,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.APRecoveryCommand;
+import frc.robot.commands.PPRecoveryCommand;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 import frc.robot.util.Elastic;
 import frc.robot.util.FieldUtil;
 import frc.robot.util.Zone;
 import frc.robot.util.pathfinding.builders.*;
-import frc.robot.util.pathfinding.commands.APRecoveryCommand;
-import frc.robot.util.pathfinding.commands.PPRecoveryCommand;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
 import frc.robot.util.pathfinding.util.Recovery;
@@ -79,7 +79,7 @@ public class Pathmaster {
 
         Recovery.registerRecoveryMode("Drive to Point Recovery", (path, state) -> PPRecoveryCommand.generateCommand(path, state));
         Recovery.registerRecoveryMode("Autopilot Recovery", (path, state) ->
-            APRecoveryCommand.generateCommand(state, new Autopilot(
+            APRecoveryCommand.generateCommand(drivetrain, state, new Autopilot(
                 new APProfile(
                     new APConstraints(15.0, 2.0))
                     .withErrorXY(Centimeter.of(20))
