@@ -54,6 +54,7 @@ public class ShinFollowPathCommand extends Command {
   private Command recoveryCommand = Commands.none();
   private final Timer recoveryTimer = new Timer();
   private Time recoveryTimeout = Seconds.of(7.0);
+  private double recoveryMinDist = 1.5;
 
   private boolean prematureFinish = false;
 
@@ -189,7 +190,7 @@ public class ShinFollowPathCommand extends Command {
       
       double positionError = PathUtil.distanceAlongPath(path, currentPose, targetState);
 
-      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= 1.25 && currentTime >= 0.5);
+      boolean shouldRecover = fallenBehindPathDebouncer.calculate(positionError >= recoveryMinDist && currentTime >= 0.5);
 
       if (shouldRecover && !isRecovering) {
           timer.stop();

@@ -45,6 +45,7 @@ public class APRecoveryCommand extends Command {
     ) {
 
         this.drivetrain = drivetrain;
+        addRequirements(drivetrain);
         this.endState = endState;
         this.autopilot = autopilot;
 

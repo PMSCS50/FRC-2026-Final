@@ -76,19 +76,7 @@ public class Pathmaster {
         this.selectedWaypointIndex = 0;
 
         createLoggingCallbacks();
-
-        Recovery.registerRecoveryMode("Drive to Point Recovery", (path, state) -> PPRecoveryCommand.generateCommand(drivetrain, path, state));
-        Recovery.registerRecoveryMode("Autopilot Recovery", (path, state) ->
-            APRecoveryCommand.generateCommand(drivetrain, state, new Autopilot(
-                new APProfile(
-                    new APConstraints(15.0, 2.0))
-                    .withErrorXY(Centimeter.of(20))
-                    .withErrorTheta(Degrees.of(10))
-                    .withBeelineRadius(Meters.of(0.5))
-                )
-            )
-        );
-        Recovery.registerRecoveryMode("Pathfinding Recovery", (path, state) -> GoingMerry.pathfindToPose(state.pose, path.getGlobalConstraints(), state.linearVelocity));
+        registerRecoveryModes();
     }
 
     // *Call in Robot.java as the last line in Robot contructor
@@ -117,6 +105,21 @@ public class Pathmaster {
         PPLogging.setLogVelocitiesCallback((linAct, linCom, angAct, angCom) -> {
             PPLogger.logVelocities(linAct, linCom, angAct, angCom);
         });
+    }
+
+    private void registerRecoveryModes() {
+        Recovery.registerRecoveryMode("Drive to Point Recovery", (path, state) -> PPRecoveryCommand.generateCommand(drivetrain, path, state));
+        Recovery.registerRecoveryMode("Autopilot Recovery", (path, state) ->
+            APRecoveryCommand.generateCommand(drivetrain, state, new Autopilot(
+                new APProfile(
+                    new APConstraints(15.0, 2.0))
+                    .withErrorXY(Centimeter.of(20))
+                    .withErrorTheta(Degrees.of(10))
+                    .withBeelineRadius(Meters.of(0.5))
+                )
+            )
+        );
+        Recovery.registerRecoveryMode("Pathfinding Recovery", (path, state) -> GoingMerry.pathfindToPose(state.pose, path.getGlobalConstraints(), state.linearVelocity));
     }
 
     // *Register a waypoint on the field. By calling gotoWaypoint() we can align here automatically
