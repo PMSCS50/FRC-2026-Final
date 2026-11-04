@@ -35,6 +35,7 @@ public class PPRecoveryCommand extends Command {
     private PPRecoveryCommand(CommandSwerveDrivetrain drivetrain, PathPlannerPath ogPath, PathPlannerTrajectoryState endState) {
 
         this.drivetrain = drivetrain;
+        addRequirements(drivetrain);
         this.endState = endState;
 
         this.pathController = new PPHolonomicDriveController(
