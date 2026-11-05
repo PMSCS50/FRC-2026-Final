@@ -9,8 +9,8 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.util.Elastic;
+import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.util.pathfinding.util.PathUtil;
 
 // *An alternate way of creating pathfinder commands.
 // ?Run PathRequest with Pathmaster.submitRequest()
@@ -45,18 +45,10 @@ public class PathRequest {
 
     public PathRequest withGoal(String targetPath) {
         try {
-            if (targetPath.startsWith(DriveConstants.choreoKey)) {
-                this.targetPath = PathPlannerPath.fromChoreoTrajectory(targetPath.substring(DriveConstants.choreoKey.length()));
-            } else {
-                this.targetPath = PathPlannerPath.fromPathFile(targetPath);
-            }
+            this.targetPath = PathUtil.getPath(targetPath);
         }
         catch (Exception e) {
-            Elastic.sendNotification(
-                new Elastic.Notification()
-                .withLevel(Elastic.NotificationLevel.ERROR)
-                .withTitle("Pathmaster Error")
-                .withDescription( "Path " + targetPath + " is not defined"));
+            DriverStation.reportError("[PathRequest] CANNOT FIND PATH: " + targetPath, true);
         }
         finally {
             pathFindThenFollowPath = true;

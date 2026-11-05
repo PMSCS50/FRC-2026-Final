@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.APRecoveryCommand;
 import frc.robot.commands.PPRecoveryCommand;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
@@ -22,7 +21,7 @@ import frc.robot.util.Zone;
 import frc.robot.util.pathfinding.builders.*;
 import frc.robot.util.pathfinding.commands.ShinPathfindingCommand;
 import frc.robot.util.pathfinding.telemetry.*;
-import frc.robot.util.pathfinding.util.Recovery;
+import frc.robot.util.pathfinding.util.*;
 import frc.robot.util.pathfinding.zones.*;
 
 import static edu.wpi.first.units.Units.*;
@@ -85,6 +84,7 @@ public class Pathmaster {
         warmup = true;
     }
 
+    /** Creates the logging callbacks for pathfinding.*/
     private void createLoggingCallbacks() {
         PPLogging.setLogCurrentPoseCallback((pose) -> {
             PPLogger.logCurrentPose(pose);
@@ -340,8 +340,8 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith(DriveConstants.choreoKey)) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(DriveConstants.choreoKey.length()));
+            if (pathName.startsWith(PathUtil.choreoKey)) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(PathUtil.choreoKey.length()));
             } else {
                 path = PathPlannerPath.fromPathFile(pathName);
             }
@@ -371,8 +371,8 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith(DriveConstants.choreoKey)) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(DriveConstants.choreoKey.length()));
+            if (pathName.startsWith(PathUtil.choreoKey)) {
+                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(PathUtil.choreoKey.length()));
             } else {
                 path = PathPlannerPath.fromPathFile(pathName);
             }

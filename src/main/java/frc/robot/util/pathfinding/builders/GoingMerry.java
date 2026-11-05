@@ -634,10 +634,21 @@ public class GoingMerry {
     return globals.isHolonomic;
   }
 
+  /**
+   * Builds a sendable chooser for selecting the auto recovery mode, defaulting to no recovery
+   *
+   * @return A SendableChooser populated with all recovery modes.
+   */
   public static SendableChooser<String> buildAutoRecoveryChooser() {
     return buildAutoRecoveryChooser(Recovery.NO_RECOVERY);
   }
 
+  /**
+   * Builds a sendable chooser for selecting the auto recovery mode.
+   *
+   * @param defaultType The default recovery mode to select in the chooser.
+   * @return A SendableChooser populated with all recovery modes.
+   */
   public static SendableChooser<String> buildAutoRecoveryChooser(String defaultType) {
     SendableChooser<String> chooser = new SendableChooser<>();
     for (String type : Recovery.getAllRecoveryModes()) {

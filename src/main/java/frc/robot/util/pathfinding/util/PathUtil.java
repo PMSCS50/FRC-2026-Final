@@ -1,15 +1,19 @@
 package frc.robot.util.pathfinding.util;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.json.simple.parser.ParseException;
 
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.RotationTarget;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.util.FileVersionException;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,28 +23,68 @@ import frc.robot.util.pathfinding.zones.ZoneManager;
 
 public final class PathUtil {
 
-    private static PathPlannerPath basePath;
+    private static PathPlannerPath setPath;
     private static Rotation2d startRotation;
+
+    public static final String choreoKey = "choreo/";
 
     private PathUtil() {}
 
-    public static void setPathInfo(PathPlannerPath basePath, Rotation2d startRotation) {
-        PathUtil.basePath = basePath;
+    /**
+     * Retrieves a PathPlannerPath based on the provided path name.
+     * <br>
+     * If the path name starts with "choreo/", it will retrieve a choreo path. Otherwise, it will retrieve a PathPlanner path.
+     *
+     * @param pathName The name of the path or choreo trajectory.
+     * @return The retrieved PathPlannerPath.
+     * @throws IOException If there is an error reading the path file.
+     * @throws ParseException If there is an error parsing the path file.
+     * @throws FileVersionException If the path file version is incompatible.
+     */
+    public static PathPlannerPath getPath(String pathName) throws IOException, ParseException, FileVersionException {
+        if (pathName.startsWith(choreoKey)) {
+                return PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
+            } else {
+                return PathPlannerPath.fromPathFile(pathName);
+            }
+    }
+
+    /**
+     * Sets the path and starting rotation for zone calculations
+     *
+     * @param setPath The base PathPlannerPath to be used.
+     * @param startRotation The starting rotation (Rotation2d) for the path.
+     */
+    public static void setPathInfo(PathPlannerPath newPath, Rotation2d startRotation) {
+        PathUtil.setPath = newPath;
         PathUtil.startRotation = startRotation;
     }
 
+    /**
+     * Retrieves all PathPoints from the path retrieved from {@link #setPathInfo()}.
+     * @return all the PathPoints from the path
+     */
     public static List<PathPoint> getPoints() {
-        return basePath.getAllPathPoints();
+        return setPath.getAllPathPoints();
     }
 
+    /**
+     * Retrieves the starting rotation for the path retrieved from {@link #setPathInfo()}.
+     * @return the starting rotation
+     */
     public static Rotation2d getStartRotation() {
         return startRotation;
     }
 
+    /**
+     * Retrieves the previous rotation for the path retrieved from {@link #setPathInfo()}. This is used in MultiRotationZone
+     * @param position The position along the path.
+     * @return the previous rotation.
+     */
     public static Rotation2d getPreviousRotation(double position) {
         RotationTarget best = null;
 
-        for (RotationTarget target : basePath.getRotationTargets()) {
+        for (RotationTarget target : setPath.getRotationTargets()) {
             if (target.position() < position) {
                 if (best == null || target.position() > best.position()) {
                     best = target;
@@ -53,6 +97,12 @@ public final class PathUtil {
             : startRotation;
     }
 
+    /**
+     * Retrieves all PathPoints between the given entry and exit positions along the path.
+     * @param entry The entry position along the path.
+     * @param exit The exit position along the path.
+     * @return A list of PathPoints between the entry and exit positions.
+     */
     public static List<PathPoint> getPointsBetween(double entry, double exit) {
         ArrayList<PathPoint> result = new ArrayList<>();
 
