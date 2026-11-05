@@ -120,6 +120,8 @@ public class Pathmaster {
             )
         );
         Recovery.registerRecoveryMode("Pathfinding Recovery", (path, state) -> GoingMerry.pathfindToPose(state.pose, path.getGlobalConstraints(), state.linearVelocity));
+
+        Recovery.setRecoveryTimeoutSeconds(7.0);
     }
 
     // *Register a waypoint on the field. By calling gotoWaypoint() we can align here automatically

@@ -15,7 +15,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -24,8 +23,6 @@ import frc.robot.util.pathfinding.util.PathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import frc.robot.util.pathfinding.util.Recovery;
 import frc.robot.util.pathfinding.telemetry.PPLogging;
-
-import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -53,8 +50,8 @@ public class ShinFollowPathCommand extends Command {
   private boolean isRecovering = false;
   private Command recoveryCommand = Commands.none();
   private final Timer recoveryTimer = new Timer();
-  private Time recoveryTimeout = Seconds.of(7.0);
-  private double recoveryMinDist = 1.5;
+  private double recoveryTimeout = Recovery.getRecoveryTimeoutSeconds();
+  private double recoveryMinDist = Recovery.getMinRecoveryDistMeters();
 
   private boolean prematureFinish = false;
 
@@ -207,7 +204,7 @@ public class ShinFollowPathCommand extends Command {
       if (isRecovering) {
           recoveryCommand.execute();
 
-          if (recoveryTimer.hasElapsed(recoveryTimeout.in(Seconds))) {
+          if (recoveryTimer.hasElapsed(recoveryTimeout)) {
               // Recovery timed out: terminate the child and the parent path command.
               recoveryCommand.end(true);
               recoveryCommand = Commands.none();

@@ -254,7 +254,7 @@ public class Robot extends LoggedRobot {
     var allianceOpt = DriverStation.getAlliance();
     if (allianceOpt.isEmpty()) return;
 
-    m_robotContainer.getDrivetrain().seedFieldCentric(
+    m_robotContainer.getDrivetrain().setOperatorPerspectiveForward(
       FieldUtil.getZeroRotation()
     );
     

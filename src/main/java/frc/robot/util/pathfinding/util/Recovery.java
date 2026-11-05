@@ -1,5 +1,8 @@
 package frc.robot.util.pathfinding.util;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Seconds;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.BiFunction;
@@ -7,14 +10,20 @@ import java.util.function.BiFunction;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 public class Recovery {
-    private static HashMap<String, BiFunction<PathPlannerPath, PathPlannerTrajectoryState, Command>> recoveryCommands = new HashMap<>();
-    private static String currentRecoveryMode = "No Recovery";
-    
+
     public static final String NO_RECOVERY = "No Recovery";
+
+    private static final HashMap<String, BiFunction<PathPlannerPath, PathPlannerTrajectoryState, Command>> recoveryCommands = new HashMap<>();
+    private static String currentRecoveryMode = NO_RECOVERY;
+    private static double minRecoveryDistMeters = 1.5; // Minimum distance in meters to trigger recovery
+    private static double recoveryTimeoutSeconds = 5.0; // After this many seconds, recovery gives up
+    
 
     private Recovery() {
         // Private constructor to prevent instantiation
@@ -48,5 +57,29 @@ public class Recovery {
         return new ArrayList<>(recoveryCommands.keySet());
     }
 
+    public static void setMinRecoveryDist(Distance minDist) {
+        minRecoveryDistMeters = minDist.in(Meters);
+    }
+
+
+    public static void setMinRecoveryDistMeters(double minDist) {
+        minRecoveryDistMeters = minDist;
+    }
+
+    public static double getMinRecoveryDistMeters() {
+        return minRecoveryDistMeters;
+    }
+
+    public static void setRecoveryTimeout(Time timeout) {
+        recoveryTimeoutSeconds = timeout.in(Seconds);
+    }
+
+    public static void setRecoveryTimeoutSeconds(double timeout) {
+        recoveryTimeoutSeconds = timeout;
+    }
+
+    public static double getRecoveryTimeoutSeconds() {
+        return recoveryTimeoutSeconds;
+    }
 
 }
