@@ -29,6 +29,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -340,11 +341,7 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith(PathUtil.choreoKey)) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(PathUtil.choreoKey.length()));
-            } else {
-                path = PathPlannerPath.fromPathFile(pathName);
-            }
+            path = PathUtil.getPath(pathName);
             return Commands.defer(
                 () -> GoingMerry.pathfindThenFollowPath(path, constraints),
                 Set.of(drivetrain)
@@ -371,11 +368,7 @@ public class Pathmaster {
         try {
             pathing = true;
             PathPlannerPath path;
-            if (pathName.startsWith(PathUtil.choreoKey)) {
-                path = PathPlannerPath.fromChoreoTrajectory(pathName.substring(PathUtil.choreoKey.length()));
-            } else {
-                path = PathPlannerPath.fromPathFile(pathName);
-            }
+            path = PathUtil.getPath(pathName);
             return Commands.defer(
                 () -> GoingMerry.pathfindThenFollowPath(path, stops, constraints),
                 Set.of(drivetrain)

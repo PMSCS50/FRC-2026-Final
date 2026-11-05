@@ -33,7 +33,7 @@ public final class PathUtil {
     /**
      * Retrieves a PathPlannerPath based on the provided path name.
      * <br>
-     * If the path name starts with "choreo/", it will retrieve a choreo path. Otherwise, it will retrieve a PathPlanner path.
+     * If the path name starts with "choreo/", it will retrieve a Choreo trajectory. Otherwise, it will retrieve a PathPlanner path.
      *
      * @param pathName The name of the path or choreo trajectory.
      * @return The retrieved PathPlannerPath.
@@ -43,10 +43,10 @@ public final class PathUtil {
      */
     public static PathPlannerPath getPath(String pathName) throws IOException, ParseException, FileVersionException {
         if (pathName.startsWith(choreoKey)) {
-                return PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
-            } else {
-                return PathPlannerPath.fromPathFile(pathName);
-            }
+            return PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
+        } else {
+            return PathPlannerPath.fromPathFile(pathName);
+        }
     }
 
     /**
@@ -157,7 +157,11 @@ public final class PathUtil {
         return targetDistance - currentDistance;
     }
 
-    //Incomplete implementation that fills up a PathPlannerPath with RecoveryZones.
+    /**
+     * Fills in the path with recovery zones.
+     * @param path the base PathPlannerPath to be filled with recovery zones
+     * @return the updated PathPlannerPath with recovery zones added as event markers
+     */
     public static PathPlannerPath fillRecoveryPath(PathPlannerPath path) {
         List<PathPoint> points = path.getAllPathPoints();
         List<EventMarker> eventMarkers = new ArrayList<>(path.getEventMarkers());
