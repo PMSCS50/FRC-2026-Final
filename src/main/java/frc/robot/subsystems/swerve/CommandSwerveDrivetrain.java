@@ -186,6 +186,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         registerMotors();
 
         configureAutoBuilder();
+
+        registerTelemetry((state) -> updateInputs(m_inputs, state));
     }
 
     /**
@@ -389,7 +391,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void periodic() {
         // *Update inputs; log inputs and other values in Advantagekit
-        updateInputs(m_inputs);
+        //updateInputs(m_inputs);
         Logger.processInputs("LoggedDrivetrain", m_inputs);  // also needed for AdvantageKit to log it
 
         boolean shouldLogSlowSignals = (++loggingLoopCounter % LOG_EVERY_N_LOOPS) == 0;
@@ -459,8 +461,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
-    public void updateInputs(SwerveIOInputs inputs) {
-        var state = getState();
+    public void updateInputs(SwerveIOInputs inputs, SwerveDriveState state) {
 
         inputs.moduleStates = state.ModuleStates;
 
@@ -478,8 +479,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         inputs.totalVoltage = RobotController.getBatteryVoltage();
         
-        inputs.isFieldOriented = false;
-
         inputs.robotPose = state.Pose;
     }
 

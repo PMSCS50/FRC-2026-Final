@@ -2,6 +2,8 @@ package frc.robot.subsystems.swerve;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -33,11 +35,11 @@ public interface SwerveIO {
         public double totalVoltage;
 
         /** Whether the drive is field oriented (currently always false). */
-        public boolean isFieldOriented;
+        public boolean isFieldOriented = false;
 
         /** Full robot pose from CTRE swerve state. */
         public Pose2d robotPose;
     }
 
-    public void updateInputs(SwerveIOInputs inputs);
+    public void updateInputs(SwerveIOInputs inputs, SwerveDriveState state);
 }
