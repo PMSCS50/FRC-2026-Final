@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.util.pathfinding.util.PathUtil;
 
 // *An alternate way of creating pathfinder commands.
-// ?Run PathRequest with Pathmaster.submitRequest()
+// ?Run PathRequest with Pathmaster.runRequest()
 // ?Best used for more complex pathfinding operations
 
 public class PathRequest {

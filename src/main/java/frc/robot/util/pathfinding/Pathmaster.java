@@ -446,19 +446,45 @@ public class Pathmaster {
 
     // *Runs a PathRequest as a ShinPathfindingCommand or a PathPlannerAuto, depending on what you want
     // *Best for more complex pathfinding routines or if you are stupid enough to use this library for auton routines
-    public Command submitRequest(PathRequest request) {
+    public Command runRequest(PathRequest request) {
         pathing = true;
+
         return Commands.defer(() -> {
+            // Activate only the requested zones
             if (request.getActiveZones().length > 0) {
                 activateOnly(request.getActiveZones());
             }
-            if (request.runsAsAuto()) {
-                //Creates a PathPlannerAuto out of the ShinPathfindingCommand, and fills in added event triggers
-                return request.EventTriggerFunction().apply(
-                    new PathPlannerAuto(GoingMerry.buildRequest(request, constraints), robotPose.get())
+
+            // Use requested constraints if present; otherwise use defaults
+            PathConstraints constraints = Objects.requireNonNullElse(request.getConstraints(), this.constraints);
+
+            // Build the pathfinding command
+            Command command;
+
+            if (request.isPathFindThenFollowPath()) {
+                command = GoingMerry.pathfindThenFollowPath(
+                    request.getTargetPath(),
+                    request.getStops(),
+                    constraints
+                );
+            } else {
+                command = GoingMerry.pathfindToPose(
+                    request.getTargetPose(),
+                    request.getStops(),
+                    constraints,
+                    request.getGoalEndVel()
                 );
             }
-            return GoingMerry.buildRequest(request, constraints);
+
+            // Optionally wrap the command in a PathPlannerAuto
+            if (request.runsAsAuto()) {
+                command = request.EventTriggerFunction().apply(
+                    new PathPlannerAuto(command, robotPose.get())
+                );
+            }
+
+            return command;
+
         }, Set.of(drivetrain))
         .finallyDo(() -> {
             pathing = false;
