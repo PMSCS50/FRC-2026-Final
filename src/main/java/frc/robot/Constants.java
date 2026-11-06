@@ -62,7 +62,7 @@ public final class Constants {
 
     public static final SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
       .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 2% deadband
-      .withDriveRequestType(DriveRequestType.Velocity) // Use open-loop control for drive motors
+      .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
       .withDesaturateWheelSpeeds(true); // Desaturate wheel speeds to avoid exceeding max speed
 
     public static final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
@@ -89,8 +89,6 @@ public final class Constants {
     public static final LinearVelocity kSpeedTolerance = MetersPerSecond.of(0.3);
 
     public static final Time kEndTriggerDebounce = Seconds.of(0.04);
-
-    public static final String choreoKey = "choreo/";
 
   }
 

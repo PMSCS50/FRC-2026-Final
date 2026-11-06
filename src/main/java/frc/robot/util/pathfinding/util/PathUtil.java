@@ -1,5 +1,6 @@
 package frc.robot.util.pathfinding.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public final class PathUtil {
     /**
      * Retrieves a PathPlannerPath based on the provided path name.
      * <br>
-     * If the path name starts with "choreo/", it will retrieve a Choreo trajectory. Otherwise, it will retrieve a PathPlanner path.
+     * If the path name starts with <b>"choreo/"</b>, it will retrieve a Choreo trajectory. Otherwise, it will search Pathplanner and then Choreo for the path
      *
      * @param pathName The name of the path or choreo trajectory.
      * @return The retrieved PathPlannerPath.
@@ -45,7 +46,11 @@ public final class PathUtil {
         if (pathName.startsWith(choreoKey)) {
             return PathPlannerPath.fromChoreoTrajectory(pathName.substring(choreoKey.length()));
         } else {
-            return PathPlannerPath.fromPathFile(pathName);
+            try {
+                return PathPlannerPath.fromPathFile(pathName);
+            } catch (FileNotFoundException e) {
+                return PathPlannerPath.fromChoreoTrajectory(pathName);
+            }
         }
     }
 
