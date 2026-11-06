@@ -279,6 +279,7 @@ public interface Zone {
     private final Translation2d center;
     private final double xAxis;
     private final double yAxis;
+    private final Translation2d[] foci;
     private final Rotation2d rotation;
 
     public EllipseZone(
@@ -293,7 +294,19 @@ public interface Zone {
         this.center = center;
         this.xAxis = xAxis;
         this.yAxis = yAxis;
+        this.foci = new Translation2d[2];
+
+        double c = Math.sqrt(Math.abs(xAxis * xAxis - yAxis * yAxis));
+        if (xAxis > yAxis) {
+            foci[0] = new Translation2d(center.getX() - c, center.getY()).rotateAround(center, rotation);
+            foci[1] = new Translation2d(center.getX() + c, center.getY()).rotateAround(center, rotation);
+        } else {
+            foci[0] = new Translation2d(center.getX(), center.getY() - c).rotateAround(center, rotation);
+            foci[1] = new Translation2d(center.getX(), center.getY() + c).rotateAround(center, rotation);
+        }
+
         this.rotation = rotation;
+
     }
 
     public EllipseZone(
@@ -303,89 +316,9 @@ public interface Zone {
       this(center, xAxis, yAxis, Rotation2d.kZero);
     }
 
-    //If you are confused... Then I cant help you idk wtf is going on
-    //This sdEllipse algorithm was copied from https://iquilezles.org/articles/distfunctions2d/#:~:text=float-,sdEllipse,-(%20in%20vec2
-    private double sdEllipse(Translation2d point) {
-      Translation2d local = point
-              .minus(center)
-              .rotateBy(rotation.unaryMinus());
-
-      double px = Math.abs(local.getX());
-      double py = Math.abs(local.getY());
-
-      double ax = xAxis;
-      double ay = yAxis;
-
-      if (px > py) {
-          double temp = px;
-          px = py;
-          py = temp;
-
-          temp = ax;
-          ax = ay;
-          ay = temp;
-      }
-
-      if (Math.abs(ax - ay) < 1e-12) {
-          return Math.hypot(px, py) - ax;
-      }
-
-      double l = ay * ay - ax * ax;
-      double m = ax * px / l;
-      double m2 = m * m;
-      double n = ay * py / l;
-      double n2 = n * n;
-      double c = (m2 + n2 - 1.0) / 3.0;
-      double c3 = c * c * c;
-      double q = c3 + m2 * n2 * 2.0;
-      double d = c3 + m2 * n2;
-      double g = m + m * n2;
-
-      double co;
-
-      if (d < 0.0) {
-          double h = Math.acos(q / c3) / 3.0;
-          double s = Math.cos(h);
-          double t = Math.sin(h) * Math.sqrt(3.0);
-          double rx = Math.sqrt(-c * (s + t + 2.0) + m2);
-          double ry = Math.sqrt(-c * (s - t + 2.0) + m2);
-
-          co = (
-                  ry
-                  + Math.signum(l) * rx
-                  + Math.abs(g) / (rx * ry)
-                  - m
-          ) / 2.0;
-      } else {
-          double h = 2.0 * m * n * Math.sqrt(d);
-          double s = Math.signum(q + h)
-                  * Math.pow(Math.abs(q + h), 1.0 / 3.0);
-          double u = Math.signum(q - h)
-                  * Math.pow(Math.abs(q - h), 1.0 / 3.0);
-
-          double rx = -s - u - c * 4.0 + 2.0 * m2;
-          double ry = (s - u) * Math.sqrt(3.0);
-          double rm = Math.sqrt(rx * rx + ry * ry);
-
-          co = (
-                  ry / Math.sqrt(rm - rx)
-                  + 2.0 * g / rm
-                  - m
-          ) / 2.0;
-      }
-
-      double sin = Math.sqrt(Math.max(0.0, 1.0 - co * co));
-
-      double closestX = ax * co;
-      double closestY = ay * sin;
-
-      return Math.hypot(closestX - px, closestY - py)
-              * Math.signum(py - closestY);
-    }
-
     @Override
     public boolean contains(Translation2d point) {
-        return sdEllipse(point) <= 0.0;
+        return point.getDistance(foci[0]) + point.getDistance(foci[1]) <= 2 * Math.max(xAxis, yAxis);
     }
 
     @Override
