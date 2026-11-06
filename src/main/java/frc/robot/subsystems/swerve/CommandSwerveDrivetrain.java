@@ -65,20 +65,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private final SwerveIOInputsAutoLogged m_inputs = new SwerveIOInputsAutoLogged();
 
-    /** // !Swerve request to apply during robot-centric path following 
-     *  // *This also takes in our robot's physical constrants to create optimal path speeds.
-    */
+    /** // !Swerve request to apply during robot-centric path following */
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     private final SwerveRequest.ApplyRobotSpeeds m_pathFindApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     // *Separate request object for runVelocity (teleop/default command).
-    // *MUST NOT be the same instance as m_pathApplyRobotSpeeds: the path follower
-    // *mutates m_pathApplyRobotSpeeds with .withWheelForceFeedforwardsX/Y at every
-    // *step. Those feedforward forces persist on the shared object even after the path
-    // *ends. runVelocity() only calls .withSpeeds() and never clears the feedforwards,
-    // *so the stale path-end forces keep the drive motors spinning at cruise speed
-    // *regardless of what velocity is commanded — causing the observed drift.
     private final SwerveRequest.ApplyRobotSpeeds m_teleopApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
     
     //** Swerve request to apply after the robot finished going through a path in Pathmaster. */

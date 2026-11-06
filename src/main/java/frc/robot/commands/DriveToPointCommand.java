@@ -60,7 +60,7 @@ public class DriveToPointCommand extends Command{
     public static Command generateCommand(CommandSwerveDrivetrain swerve, Pose2d goalPose, Time timeout){
         return new DriveToPointCommand(swerve, goalPose).withTimeout(timeout).finallyDo(() -> {
             swerve.runVelocity(new ChassisSpeeds());
-            swerve.applyRequest(() -> DriveConstants.xBrake);
+            swerve.setControl(DriveConstants.xBrake);
         });
     }
 

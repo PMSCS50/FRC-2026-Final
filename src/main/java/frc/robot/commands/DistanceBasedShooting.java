@@ -25,7 +25,7 @@ public class DistanceBasedShooting extends Command {
 
     @Override
     public void initialize() {
-        drivetrain.applyRequest(() -> brake);
+        drivetrain.setControl(brake);
     }
 
     @Override
