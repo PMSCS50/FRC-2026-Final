@@ -14,7 +14,7 @@ public class RegionUtil {
     public static Zone fromRegionBool(String zoneName) {
         try {
             Class<?> clazz = FieldRegions.class;
-            String functionName = "isIn" + toPascalCase(zoneName);
+            String functionName = getFunctionName(zoneName);
             Method containsMethod = clazz.getMethod(functionName, Translation2d.class);
 
             return new Zone() {
@@ -38,7 +38,8 @@ public class RegionUtil {
         }
     }
 
-    private static String toPascalCase(String input) {
+    //Formats the function name how FieldRegions does it. Very very similar to PascalCase
+    private static String getFunctionName(String input) {
         if (input == null || input.isEmpty()) {
             return input;
         }
@@ -50,11 +51,11 @@ public class RegionUtil {
             if (!word.isEmpty()) {
                 result.append(Character.toUpperCase(word.charAt(0)));
                 if (word.length() > 1) {
-                    result.append(word.substring(1).toLowerCase());
+                    result.append(word.substring(1));
                 }
             }
         }
 
-        return result.toString();
+        return "isIn" + result.toString();
     }
 }
