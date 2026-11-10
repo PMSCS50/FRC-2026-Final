@@ -150,7 +150,7 @@ public class RobotContainer {
         // *Multi-Rotation Zones (trenches)
         monkeyDLuffy.addMultiRotationZone("Trenches", RegionUtil.fromRegionBool("Trenches"), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
 
-        FieldRegions.forEachOutline((name, points) -> Logger.recordOutput("Zones/" + name, points));
+        FieldRegions.forEachOutline((name, points) -> Logger.recordOutput("Zones/" + name.substring(4), points));
         
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Test Auto");
