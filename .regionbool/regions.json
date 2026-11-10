@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "field": {
+    "lengthMeters": 16.518,
+    "widthMeters": 8.043,
+    "symmetry": "rotational",
+    "fieldId": "2026-rebuilt-andymark"
+  },
+  "output": {
+    "packageName": "frc.robot.generated",
+    "className": "FieldRegions",
+    "javaProfile": "legacy"
+  },
+  "regions": [
+    {
+      "id": "region-mwa0yt9h-6",
+      "name": "Trenches",
+      "allianceMode": "alliance-relative",
+      "shapes": [
+        {
+          "kind": "rect",
+          "cx": 4.625,
+          "cy": 7.375,
+          "width": 1.75,
+          "height": 1.25,
+          "rotationDeg": 0,
+          "id": "shape-mwa0z01y-7",
+          "mode": "add"
+        },
+        {
+          "kind": "rect",
+          "cx": 4.625,
+          "cy": 0.625,
+          "width": 1.75,
+          "height": 1.25,
+          "rotationDeg": 0,
+          "id": "shape-mwa0zzlk-12",
+          "mode": "add"
+        },
+        {
+          "kind": "rect",
+          "cx": 11.875,
+          "cy": 7.375,
+          "width": 1.75,
+          "height": 1.25,
+          "rotationDeg": 0,
+          "id": "shape-mwa1o3og-19",
+          "mode": "add"
+        },
+        {
+          "kind": "rect",
+          "cx": 11.875,
+          "cy": 0.625,
+          "width": 1.75,
+          "height": 1.25,
+          "rotationDeg": 0,
+          "id": "shape-mwa1oi4s-20",
+          "mode": "add"
+        }
+      ]
+    }
+  ],
+  "generatedHash": "af5088db9394a2165421eba06f92b87881b3c8d7cb68e9b3e967e50f575adea0"
+}

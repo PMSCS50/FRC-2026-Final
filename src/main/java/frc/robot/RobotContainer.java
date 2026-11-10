@@ -21,10 +21,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-
-import edu.wpi.first.math.util.Units;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -38,7 +35,7 @@ import frc.robot.Constants.ArmConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.commands.*;
-
+import frc.robot.generated.FieldRegions;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.pivot.*;
@@ -51,7 +48,7 @@ import frc.robot.subsystems.telescoping_arm.pivot.*;
 import frc.robot.subsystems.vision2.*;
 
 import frc.robot.util.Elastic;
-import frc.robot.util.Zone.RectangleZone;
+import frc.robot.util.RegionUtil;
 import frc.robot.util.misc.ExtendedCommandXboxController;
 import frc.robot.util.pathfinding.Pathmaster;
 import frc.robot.util.pathfinding.builders.GoingMerry;
@@ -151,11 +148,9 @@ public class RobotContainer {
         }
 
         // *Multi-Rotation Zones (trenches)
-        monkeyDLuffy.addMultiRotationZone("TrenchBL", new RectangleZone(new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(49.86))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
-        monkeyDLuffy.addMultiRotationZone("TrenchTL", new RectangleZone(new Translation2d(Units.inchesToMeters(181.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(181.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
-        monkeyDLuffy.addMultiRotationZone("TrenchBR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(0)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(49.86))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
-        monkeyDLuffy.addMultiRotationZone("TrenchTR", new RectangleZone(new Translation2d(Units.inchesToMeters(468.56-44.4), Units.inchesToMeters(316.64-49.86)), new Translation2d(Units.inchesToMeters(468.56+44.4), Units.inchesToMeters(316.64))), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
-        
+        monkeyDLuffy.addMultiRotationZone("Trenches", RegionUtil.fromRegionBool("Trenches"), List.of(Rotation2d.k180deg, Rotation2d.kZero), true);
+
+        FieldRegions.forEachOutline((name, points) -> Logger.recordOutput("Zones/" + name, points));
         
         // *Configuring
         autoChooser = AutoBuilder.buildAutoChooser("Test Auto");

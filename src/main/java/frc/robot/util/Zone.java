@@ -340,36 +340,4 @@ public interface Zone {
       return points;
     }
   }
-
-  // *Blueprint for importing regionBool zones as regular zones.
-  // *Literally only should be used for creating PathZones
-
-  // public static Zone fromRegionBool(String zoneName) {
-  //   try {
-  //       Class<?> clazz = FieldRegions.class;
-  //       String functionName = "isIn" + zoneName.replace(" ", "");
-  //       Method containsMethod = clazz.getMethod(functionName, Pose2d.class);
-
-  //       // Pre-allocate array to avoid recreating it on every call
-  //       Pose2d[] emptyPoints = new Pose2d[0];
-
-  //       return new Zone() {
-  //           @Override
-  //           public boolean contains(Translation2d point) {
-  //               try {
-  //                   return (boolean) containsMethod.invoke(null, new Pose2d(point, Rotation2d.kZero));
-  //               } catch (Exception e) {
-  //                   throw new RuntimeException("Failed to invoke region check: " + functionName, e);
-  //               }
-  //           }
-
-  //           @Override
-  //           public Pose2d[] getPoints() {
-  //               return emptyPoints;
-  //           }
-  //       };
-  //   } catch (NoSuchMethodException e) {
-  //       throw new IllegalArgumentException("No matching region method found for: " + zoneName, e);
-  //   }
-  // }
 }
