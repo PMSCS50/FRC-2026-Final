@@ -8,8 +8,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +16,6 @@ import java.util.function.BiConsumer;
 /** Field regions drawn in RegionBool. Coordinates are WPILib field coordinates in meters. */
 public final class FieldRegions {
   private static final double EDGE_TOLERANCE = 1e-9;
-  private static final double FIELD_LENGTH_METERS = 16.518;
-  private static final double FIELD_WIDTH_METERS = 8.043;
   private static final Map<String, StructArrayPublisher<Pose2d>> OUTLINE_PUBLISHERS =
       new HashMap<>();
 
@@ -28,7 +24,7 @@ public final class FieldRegions {
   /**
    * Returns whether a robot pose is inside the region "Trenches".
    *
-   * <p>Alliance-relative: drawn from blue's side and flipped when on red. An unknown alliance counts as blue.
+   * <p>Field-fixed: the same physical area on both alliances.
    */
   public static boolean isInTrenches(Pose2d pose) {
     return isInTrenches(pose.getTranslation());
@@ -37,15 +33,11 @@ public final class FieldRegions {
   /**
    * Returns whether a point is inside the region "Trenches".
    *
-   * <p>Alliance-relative: drawn from blue's side and flipped when on red. An unknown alliance counts as blue.
+   * <p>Field-fixed: the same physical area on both alliances.
    */
   public static boolean isInTrenches(Translation2d point) {
     double x = point.getX();
     double y = point.getY();
-    if (isRedAlliance()) {
-      x = FIELD_LENGTH_METERS - x;
-      y = FIELD_WIDTH_METERS - y;
-    }
     return inRect(x, y, 4.625, 7.375, 0.875, 0.625, 1.0, 0.0)
         || inRect(x, y, 4.625, 0.625, 0.875, 0.625, 1.0, 0.0)
         || inRect(x, y, 11.875, 7.375, 0.875, 0.625, 1.0, 0.0)
@@ -84,30 +76,21 @@ public final class FieldRegions {
    * logger. Circles are approximated. This allocates, so don't call it every loop.
    */
   public static void forEachOutline(BiConsumer<String, Pose2d[]> consumer) {
-    boolean red = isRedAlliance();
-    acceptOutline(consumer, "isInTrenches 0", red, new double[] {5.5, 5.5, 3.75, 3.75}, new double[] {8.0, 6.75, 6.75, 8.0});
-    acceptOutline(consumer, "isInTrenches 1", red, new double[] {5.5, 5.5, 3.75, 3.75}, new double[] {1.25, 0.0, 0.0, 1.25});
-    acceptOutline(consumer, "isInTrenches 2", red, new double[] {12.75, 12.75, 11.0, 11.0}, new double[] {8.0, 6.75, 6.75, 8.0});
-    acceptOutline(consumer, "isInTrenches 3", red, new double[] {12.75, 12.75, 11.0, 11.0}, new double[] {1.25, 0.0, 0.0, 1.25});
+    acceptOutline(consumer, "isInTrenches 0", new double[] {5.5, 5.5, 3.75, 3.75}, new double[] {8.0, 6.75, 6.75, 8.0});
+    acceptOutline(consumer, "isInTrenches 1", new double[] {5.5, 5.5, 3.75, 3.75}, new double[] {1.25, 0.0, 0.0, 1.25});
+    acceptOutline(consumer, "isInTrenches 2", new double[] {12.75, 12.75, 11.0, 11.0}, new double[] {8.0, 6.75, 6.75, 8.0});
+    acceptOutline(consumer, "isInTrenches 3", new double[] {12.75, 12.75, 11.0, 11.0}, new double[] {1.25, 0.0, 0.0, 1.25});
   }
 
   private static void acceptOutline(
-      BiConsumer<String, Pose2d[]> consumer, String name, boolean flip, double[] xs, double[] ys) {
+      BiConsumer<String, Pose2d[]> consumer, String name, double[] xs, double[] ys) {
     Pose2d[] poses = new Pose2d[xs.length + 1];
     for (int i = 0; i < poses.length; i++) {
       double x = xs[i % xs.length];
       double y = ys[i % ys.length];
-      if (flip) {
-        x = FIELD_LENGTH_METERS - x;
-        y = FIELD_WIDTH_METERS - y;
-      }
       poses[i] = new Pose2d(x, y, new Rotation2d());
     }
     consumer.accept(name, poses);
-  }
-
-  private static boolean isRedAlliance() {
-    return DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
   }
 
   private static boolean inRect(
